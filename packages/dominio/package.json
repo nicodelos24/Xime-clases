@@ -1,0 +1,10 @@
+{
+  "name": "@xime/dominio",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Núcleo de dominio puro de Clases: ciclos de mensualidad, estados, tarifas. Sin base de datos, sin UI, sin framework.",
+  "scripts": {
+    "test": "node --test test/"
+  }
+}
