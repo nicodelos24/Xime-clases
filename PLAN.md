@@ -104,10 +104,10 @@ Se hace desde la ficha del alumno con «Cambiar modalidad», sin tocar pagos vie
 
 | Fase | Entrega | Sale cuando… |
 |---|---|---|
-| 0. Descubrimiento / decisiones | País/moneda, entrevista con 1–3 institutos, reglas de cobro, matriz de permisos y alcance MVP firmados | Nico valida supuestos y casos borde con usuaria real |
-| 1. Diseño visual (Fina + Ada) | Sistema visual, wireframes, prototipo móvil, estados y handoff | Una usuaria completa alta, asistencia y cobro sin ayuda; se corrigen tropiezos; Nico aprueba estética |
+| 0. Descubrimiento / decisiones | País/moneda, reglas de cobro, matriz de permisos y alcance MVP documentados | Nico valida supuestos disponibles; Q2/Q3 y entrevista quedan pendientes sin bloquear unidades independientes |
+| 1. Diseño visual (Fina + Vito + Ada) | Sistema visual, SVG, Agenda principal, prototipo móvil compartible, estados y handoff | Nico revisa la demo y se corrigen tropiezos observables; la prueba con una dueña se retoma cuando se pueda, sin declarar validación inexistente |
 | 2. Datos y seguridad (Ada + Emma + Reina) | Diagrama de entidades, migraciones, RLS, auditoría, retención, contrato API | Gino prueba aislamientos, bordes de fechas y reversos en staging |
-| 3. Implementación por verticales (Reina) | Auth/tenancy → alumnos/tutores → clases/inscripciones → cargos/asistencia → pagos → tablero/reportes | Cada vertical tiene historias, tests y demo móvil, sin simular persistencia |
+| 3. Implementación por verticales (Reina, sesión externa) | Base Expo visual → Auth/tenancy → alumnos adultos → Agenda/clases/asistencia → mensualidades y pagos → tablero/reportes | Cada vertical tiene historias, tests y demo móvil; la demo estática no simula persistencia productiva |
 | 4. Piloto y operación (Gino + Zaira) | Staging/prod, backups probados, tiendas, soporte y métricas, onboarding piloto | 1–3 institutos operan pagos reales registrados durante 1–2 ciclos mensuales sin diferencias de saldo |
 | 5. Escala | Suscripción automatizada, portal, pagos online y notificaciones según evidencia | Se evalúan costos, cumplimiento y demanda de cada módulo |
 
@@ -144,7 +144,7 @@ Orden de Nico: diseño visual primero, base de datos después. Se lanzan en para
 | Gino | **ENTREGADO.** Matriz independiente y resultados: 22/22 tests del dominio pasan; flujos app/BD aún no verificados | `docs/qa/` | §3, §3.5 |
 | Emma | **ENTREGADO (especificación, no implementada).** Doce amenazas y cuarenta controles SEC-01–40; aislamiento/RLS/MFA, pagos/auditoría y privacidad/operación con límites legales explícitos | `docs/seguridad/` | §2, §5 |
 
-Después (no empezar antes): base de datos (Reina + Emma + Gino), luego módulos de la app. Zaira queda en espera hasta definir entornos (fase base de datos). Reina no recibe nuevas tareas por APX: Nico la usa en una sesión externa de OpenCode.
+Después de integrar Agenda e iconografía en la demo: base Expo visual y fase de datos (Reina en sesión externa + Emma + Gino), según `docs/HOJA-DE-RUTA.md`. La prueba con dueña se difiere por disponibilidad y no equivale a aprobación; Nico autorizó avanzar con las reglas conocidas. Q2/Q3 no se implementan hasta definirlas con la clienta. Zaira queda en espera hasta definir entornos (fase base de datos). Reina no recibe nuevas tareas por APX: Nico la usa en una sesión externa de OpenCode.
 
 ### 8.1 Bordes de UX pendientes de conciliación (Fina, 15/11)
 
