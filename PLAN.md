@@ -146,6 +146,12 @@ Orden de Nico: diseño visual primero, base de datos después. Se lanzan en para
 
 Después de integrar Agenda e iconografía en la demo: base Expo visual y fase de datos (Reina en sesión externa + Emma + Gino), según `docs/HOJA-DE-RUTA.md`. La prueba con dueña se difiere por disponibilidad y no equivale a aprobación; Nico autorizó avanzar con las reglas conocidas. Q2/Q3 no se implementan hasta definirlas con la clienta. Zaira queda en espera hasta definir entornos (fase base de datos). Reina no recibe nuevas tareas por APX: Nico la usa en una sesión externa de OpenCode.
 
+### Agenda e iconografía (ENC-07A/B recibidos, ENC-08 en curso)
+
+Conciliación Ada: `docs/diseno/ux/agenda.md` define el calendario solicitado como **destino propio**, no solamente una tarjeta en Hoy. Barra con cinco destinos: Hoy · Alumnos · Agenda · Cobros · Más. Asistencia conserva su pantalla y accesos desde Hoy/ficha/clase, como subruta de Agenda. Semana es lista vertical operativa; Mes permite seleccionar fecha y consultar detalle. Calendario no inicia ciclos, no marca asistencia ni crea cobros por mostrar un horario.
+
+Vito entregó guía y seis pictogramas SVG originales en `docs/diseno/visual/`; WhatsApp es pictograma genérico acompañado de etiqueta, no logotipo oficial ni prueba de envío. Fina ejecuta ENC-08: integración visual en la **demo estática**, con fixtures, regresión y evidencia Chrome. Tras su entrega: revisión estructural Ada, QA independiente Gino y publicación del candidato aceptado. Sin sesión APX de Reina, sin Expo/Supabase aún; el handoff modular ya queda en `docs/HOJA-DE-RUTA.md`.
+
 ### 8.1 Bordes de UX pendientes de conciliación (Fina, 15/11)
 
 Estas precisiones **no sustituyen decisiones de Nico o la clienta**. El recorrido normal de diseño sigue; los bordes sin regla no se implementan hasta cerrar su política.

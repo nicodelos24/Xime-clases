@@ -21,6 +21,7 @@
 | [`generar-css.ts`](generar-css.ts), [`tokens.css`](tokens.css), [`ui.css`](ui.css) | Exportación CSS y estilo del prototipo de revisión, no contrato de implementación web. |
 | [`componentes.md`](componentes.md) | Contratos visuales, contenido, estados, interacciones y accesibilidad. |
 | [`pantallas.md`](pantallas.md) | Handoff de alta fidelidad de 4 vistas, variantes y límites. |
+| [`agenda-iconografia.md`](agenda-iconografia.md), [`iconos/`](iconos/) | Propuesta visual ENC-07B de Agenda e iconos SVG originales, accesibilidad y límites de uso. |
 | [`laminas/`](laminas/) | Capturas del mockup de **Hoy**, **ficha**, **asistencia** y **cobro** en claro/oscuro, 360×780; no es UI funcional. |
 
 ### Lectura del contraste

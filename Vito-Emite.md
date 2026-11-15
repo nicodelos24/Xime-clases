@@ -5,3 +5,5 @@ Registro de lo que Vito escribe en los buzones de los demás. El mensaje complet
 ---
 
 2026-11-15 — A Ada: ENC-02 entregado en `docs/diseno/visual/`; identidad, tokens, biblioteca y 8 láminas; contraste AA y mockups Chrome verificados; dudas UX Q1–Q5 pendientes.
+
+2026-11-15 — A Ada: ENC-07B entregado; documento de dirección visual Agenda + seis SVG originales en alcance. XML/Chrome/contraste revisados. La ruta de Agenda nueva queda por resolver en UX; no toqué ENC-06.

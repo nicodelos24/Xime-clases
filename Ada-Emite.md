@@ -23,3 +23,4 @@ Registro de lo que Ada escribe en los buzones de los demás. (El contenido va en
 - 2026-11-15: revisé e integré ENC-05 de Emma como especificación, corregí simplificaciones jurídicas en PLAN §5 y mantuve la puerta de diseño antes de BD.
 - 2026-11-15: integré ENC-06 de Fina (prototipo y guion) en master; la prueba con dueña y Q2/Q3 siguen pendientes antes de habilitar base de datos.
 - 2026-11-15: plan modular y secuencia D1–D4/I1–I5 documentados para Reina en docs/HOJA-DE-RUTA.md y Reina-Recibe.md; no se inicia sesión APX. GitHub Pages de demo pública activado con fixtures.
+- 2026-11-15: revisé ENC-07A/B; conciliación: Agenda es calendario separado, reemplaza Asistencia en barra y conserva esa subruta. Asigné ENC-08 a Fina para integrar la demo con SVG; QA independiente con Gino después del candidato. No implica iniciar app ni BD.
