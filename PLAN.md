@@ -140,7 +140,7 @@ Orden de Nico: diseño visual primero, base de datos después. Se lanzan en para
 |---|---|---|---|
 | Fina | Flujos, mapa de navegación, wireframes y estados (§4, entregables 1-3) | `docs/diseno/ux/` | §3 y §7 |
 | Vito | Identidad visual, tokens y componentes; alta fidelidad desde los wireframes de Fina | `docs/diseno/visual/` | Fina (wireframes) para alta fidelidad |
-| Reina | Núcleo de dominio puro en TypeScript (ciclos, ancla, estados, tarifas) con tests, sin base ni UI | `packages/dominio/` | §3 |
+| Reina | **EN PAUSA (Nico, 15/11).** Núcleo de dominio puro en TypeScript (ciclos, ancla, estados, tarifas) con tests, sin base ni UI. Instrucciones guardadas en `Reina-Recibe.md` (ENC-03); no ejecutar hasta que Ada o Nico lo reactiven | `packages/dominio/` | §3 |
 | Gino | Matriz de casos de prueba independiente de reglas de fechas y cobro | `docs/qa/` | §3, §3.5 |
 | Emma | Modelo de amenazas y especificación de aislamiento/RLS/auditoría (documento, sin SQL aún) | `docs/seguridad/` | §2, §5 |
 
