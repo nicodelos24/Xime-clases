@@ -1,8 +1,8 @@
 # Clases — plan de producto y arquitectura (v3, Agenda y Alumnos, 15/11/2026)
 
-> **Estado D3, integración 15/11:** ENC-08R aceptado para demo: revisión estructural Ada OK y QA independiente Gino APPROVED en `docs/qa/ENC-10-DEMO.md`. Identidad local: manifiesto `docs/diseno/ux/prototipo/evidencia/manifest-enc08r.json`, SHA-256 `25997a8c17521413da9441b09643c89355e9936bbbec579a55ddd41440d5db27` (base 4388754 + cambios). Publicación/verificación pública en curso; I1 detallada en `docs/ENCARGO-I1-REINA.md`, aún sin habilitar. Las pruebas son de demo, no app/BD ni aprobación de usuaria.
+> **D3 cerrado técnicamente · 15/11:** demo integrada y publicada en `6d81cb6bd2b9993f27e20230de12c0c1b1258265`, Ada estructura OK, Gino QA local APPROVED. Ada comprobó Pages en Chrome: cinco destinos, agendar/retirar con ficha conservada, sin errores observados y 43/43 hashes públicos iguales al manifiesto. Evidencia: `docs/qa/ENC-10-DEMO.md` y `ENC-11-PUBLICACION.md`. **I1 habilitada para que Nico la inicie en OpenCode externo** según `docs/ENCARGO-I1-REINA.md`; no se inicia por APX. Solo base Expo/TS y fixtures, no I2–I5. D4/prueba con dueña, aprobación estética y Q2/Q3 siguen pendientes: no se declara app/BD ni diseño validado.
 
-> **Decisión vigente de Nico, 02:26:** [Agenda y Alumnos](docs/DECISION-AGENDA-ALUMNOS.md) reemplaza el eje escolar «pasar lista» de las propuestas anteriores. Agenda muestra y permite agendar quién viene por fecha; Alumnos conserva fichas e historial y filtra/ordena mensuales e individuales. Los apartados históricos de asistencia se interpretan bajo este cambio: programar no prueba asistencia, no inicia ciclo ni genera cobro. ENC-08R adapta la demo; ENC-09 define movimiento/SVG livianos. Reina externa sigue sin orden de inicio hasta el aviso de unidad preparada.
+> **Decisión vigente de Nico, 02:26:** [Agenda y Alumnos](docs/DECISION-AGENDA-ALUMNOS.md) reemplaza el eje escolar «pasar lista» de las propuestas anteriores. Agenda muestra y permite agendar quién viene por fecha; Alumnos conserva fichas e historial y filtra/ordena mensuales e individuales. Los apartados históricos de asistencia se interpretan bajo este cambio: programar no prueba asistencia, no inicia ciclo ni genera cobro. ENC-08R adapta la demo; ENC-09 define movimiento/SVG livianos. La unidad I1 queda habilitada para inicio externo por Nico tras el cierre técnico D3; no se inicia por APX.
 
 **Fecha:** 14/11/2026. **Estado:** propuesta, no especificación aprobada ni orden de implementar. Consulté a Fina (UX), Reina (desarrollo), Gino (QA), Emma (seguridad) y Zaira (infra/billing). El repositorio todavía no tiene aplicación ni base de datos. **Secuencia acordada con Nico:** definición del producto y diseño visual primero; después modelo de datos e implementación. Las reglas del negocio se definen *antes* de dibujar pantallas, aunque el esquema SQL se haga después.
 
@@ -134,7 +134,7 @@ Se hace desde la ficha del alumno con «Cambiar modalidad», sin tocar pagos vie
 
 **Documentación y modularidad (requisito de Nico):** cada módulo (Alumnos, Asistencia, Mensualidades, Pagos, Tarifas, Avisos, Ajustes) tiene su carpeta con un `README` que dice qué hace, qué expone, qué reglas aplica y cómo extenderlo; las reglas de §3 viven en un único lugar de código con tests (§3.5); las decisiones se anotan en `docs/decisiones/`. Se revisa al cerrar cada módulo.
 
-Siguiente: Fina (flujos y diseño visual); luego base de datos con Reina, Emma y Gino.
+Siguiente: I1 visual con fixtures, solo si Nico inicia a Reina en OpenCode externo; después se asignarán por separado las unidades de datos/seguridad con Emma y Gino. D4 y Q2/Q3 continúan diferidos.
 
 ## 8. Encargos vigentes (15/11/2026)
 
@@ -142,19 +142,19 @@ Orden de Nico: diseño visual primero, base de datos después. Se lanzan en para
 
 | Responsable | Encargo | Carpeta propia | Depende de |
 |---|---|---|---|
-| Fina | **ENTREGADO (ENC-01 y ENC-06).** 9 flujos, 14 wireframes ASCII, estados/copy/accesibilidad y prototipo navegable con guion; 28 comprobaciones sintéticas pasaron. Falta prueba con una dueña y aprobación del diseño | `docs/diseno/ux/` | §3 y §7 |
-| Vito | **ENTREGADO (propuesta visual estática).** Identidad «Ritmo sereno», tokens RN/CSS, contratos de componentes y ocho láminas de Hoy, ficha, asistencia y cobro (claro/oscuro). Verificó contraste de pares AA y láminas en Chrome 360×780; faltan prototipo navegable y prueba con dueña | `docs/diseno/visual/` | Fina (wireframes) para alta fidelidad |
+| Fina | **ACEPTADO para demo (ENC-08R, tras ENC-01/06).** Agenda y Alumnos adaptados; 132 comprobaciones propias y handoff/manifiesto. Integrado/publicado tras QA independiente; sin prueba con una dueña ni aprobación estética | `docs/diseno/ux/` | §3 y §7 |
+| Vito | **INTEGRADO en demo (ENC-02/07B/09).** Identidad, tokens, láminas, SVG y guía de movimiento ligero/reduced-motion. Evidencia y límites en docs visuales; sin aprobación estética ni uso con dueña | `docs/diseno/visual/` | Fina (wireframes) para alta fidelidad |
 | Reina | **ENTREGADO (15/11, sesión externa).** Núcleo de dominio puro en TypeScript (ciclos, ancla, estados, tarifas); 22/22 tests con `npm test` en `packages/dominio/`. Matriz independiente de Gino aprobó el alcance cubierto; app/BD no verificados | `packages/dominio/` | §3 |
-| Gino | **ENTREGADO.** Matriz independiente y resultados: 22/22 tests del dominio pasan; flujos app/BD aún no verificados | `docs/qa/` | §3, §3.5 |
+| Gino | **ENTREGADO.** ENC-04 aprobó alcance del dominio (22/22); ENC-10 APPROVED para demo local ENC-08R (132 checks en reintento y recorridos propios). App/BD productivas aún no verificadas | `docs/qa/` | §3, §3.5 |
 | Emma | **ENTREGADO (especificación, no implementada).** Doce amenazas y cuarenta controles SEC-01–40; aislamiento/RLS/MFA, pagos/auditoría y privacidad/operación con límites legales explícitos | `docs/seguridad/` | §2, §5 |
 
 Después de integrar Agenda e iconografía en la demo: base Expo visual y fase de datos (Reina en sesión externa + Emma + Gino), según `docs/HOJA-DE-RUTA.md`. La prueba con dueña se difiere por disponibilidad y no equivale a aprobación; Nico autorizó avanzar con las reglas conocidas. Q2/Q3 no se implementan hasta definirlas con la clienta. Zaira queda en espera hasta definir entornos (fase base de datos). Reina no recibe nuevas tareas por APX: Nico la usa en una sesión externa de OpenCode.
 
-### Agenda e iconografía (ENC-07A/B recibidos, ENC-08 en curso)
+### Agenda e iconografía (ENC-08R/09 integrados y publicados; D3 técnico cerrado)
 
 Conciliación Ada: `docs/diseno/ux/agenda.md` define el calendario solicitado como **destino propio**, no solamente una tarjeta en Hoy. Barra con cinco destinos: Hoy · Alumnos · Agenda · Cobros · Más. Asistencia conserva su pantalla y accesos desde Hoy/ficha/clase, como subruta de Agenda. Semana es lista vertical operativa; Mes permite seleccionar fecha y consultar detalle. Calendario no inicia ciclos, no marca asistencia ni crea cobros por mostrar un horario.
 
-Vito entregó guía y seis pictogramas SVG originales en `docs/diseno/visual/`; WhatsApp es pictograma genérico acompañado de etiqueta, no logotipo oficial ni prueba de envío. Fina ejecuta ENC-08: integración visual en la **demo estática**, con fixtures, regresión y evidencia Chrome. Tras su entrega: revisión estructural Ada, QA independiente Gino y publicación del candidato aceptado. Sin sesión APX de Reina, sin Expo/Supabase aún; el handoff modular ya queda en `docs/HOJA-DE-RUTA.md`.
+Vito entregó guía y seis pictogramas SVG originales en `docs/diseno/visual/`; WhatsApp es pictograma genérico acompañado de etiqueta, no logotipo oficial ni prueba de envío. Fina entregó ENC-08R en la **demo estática**, con fixtures, regresión y evidencia Chrome. Ada revisó estructura, Gino aprobó QA ENC-10 y Ada publicó/comprobó el candidato en Pages (ENC-11). Sin sesión APX de Reina, sin Expo/Supabase aún; I1 está habilitada para inicio externo por Nico, con alcance limitado en `docs/ENCARGO-I1-REINA.md`.
 
 ### 8.1 Bordes de UX pendientes de conciliación (Fina, 15/11)
 

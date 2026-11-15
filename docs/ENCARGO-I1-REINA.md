@@ -1,10 +1,10 @@
 # I1 · Base móvil y contratos visuales
 
-**Responsable:** Reina, en la sesión externa OpenCode que activa Nico. **Estado:** preparado, todavía no habilitado. No iniciar una sesión APX ni interpretar este documento como una orden de ejecución. Ada avisa al cerrar D3 (demo integrada, revisión, QA y publicación comprobada).
+**Responsable:** Reina, en la sesión externa OpenCode que activa Nico. **Estado 15/11/2026:** **habilitada I1**, tras cerrar técnicamente D3: demo integrada, revisión Ada OK, QA Gino APPROVED y publicación comprobada ([ENC-11](qa/ENC-11-PUBLICACION.md)). Nico puede indicarle que comience esta única unidad. No iniciar una sesión APX ni ejecutar automáticamente desde este documento; no habilita I2–I5.
 
 ## Base y fuentes
 
-Al empezar: comprobar rama, HEAD, cambios locales y reglas `AGENTS.md` / `PROTOCOLO-AGENTES.md`. Preservar trabajo ajeno y `packages/dominio/`. El SHA de la demo aceptada se registra al cerrar D3; no tomar un árbol parcial como candidato aprobado.
+Al empezar: comprobar rama, HEAD, cambios locales y reglas `AGENTS.md` / `PROTOCOLO-AGENTES.md`. Preservar trabajo ajeno y `packages/dominio/`. La demo aceptada está en **`6d81cb6bd2b9993f27e20230de12c0c1b1258265`**, sobre `master`; commits posteriores de coordinación no cambian el candidato visual. No tomar un árbol parcial como candidato aprobado.
 
 Precedencia: decisión de Nico en `DECISION-AGENDA-ALUMNOS.md`, `PLAN.md` §3/§8.1 y `HOJA-DE-RUTA.md`; después UX `diseno/ux/agenda.md`, prototipo/HANDOFF y guías visuales `diseno/visual/`. Las mutaciones JavaScript del prototipo son simulaciones: no portarlas como reglas de negocio.
 
@@ -12,7 +12,7 @@ Precedencia: decisión de Nico en `DECISION-AGENDA-ALUMNOS.md`, `PLAN.md` §3/§
 
 Crear la base Expo / React Native / TypeScript y trasladar la estructura visual de cinco destinos **Hoy · Alumnos · Agenda · Cobros · Más**, con proveedor de datos ficticios explícito. No implementar Supabase, autenticación o comandos financieros en esta unidad.
 
-- **Alumnos:** ficha canónica y duradera, alta de adulto y búsqueda. Filtros Todos / Mensuales / Por clase individual, independientes del orden Más recientes (fecha de alta, ambas modalidades mezcladas) / Mensuales primero / Por clase individual primero. Alta descendente dentro de cada grupo y desempate estable por ID. No ocultar al que dejó de venir ni duplicarlo cuando retorna.
+- **Alumnos:** ficha canónica que conserva identidad durante la sesión de fixtures, alta de adulto y búsqueda. La conservación durable entre sesiones pertenece a I2–I3: no prometer guardado real en I1. Filtros Todos / Mensuales / Por clase individual, independientes del orden Más recientes (fecha de alta, ambas modalidades mezcladas) / Mensuales primero / Por clase individual primero. Alta descendente dentro de cada grupo y desempate estable por ID. No ocultar al que dejó de venir ni duplicarlo cuando retorna.
 - **Agenda:** Semana como lista y Mes con detalle del día. Ver personas programadas, agendar una ficha existente y retirar solo su programación, volviendo a la misma fecha/vista. No recurrencias, cupos ni lista de espera inventados. Identidad de programación por alumno y ocurrencia de clase, no un booleano global del alumno.
 - **Separación:** alumno, programación, clase efectivamente realizada y pago son conceptos distintos. Agendar, navegar o retirar programación no confirma asistencia, no inicia mensualidad, no genera deuda ni cobra. Una falta mensual no prorroga ni penaliza.
 - **Visual:** componentes y tokens compartidos, SVG locales con etiquetas, objetivos táctiles accesibles, temas claro/oscuro y movimiento breve con reducción de animaciones. Agenda es el eje, no una lista escolar.
