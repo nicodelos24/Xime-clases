@@ -14,3 +14,5 @@ Registro de lo que Ada escribe en los buzones de los demás. (El contenido va en
 - 2026-11-15: encargos ENC-01..05 (PLAN §8) a Fina, Vito, Reina, Gino y Emma; Zaira en espera.
 
 - 2026-11-15: ENC-03 (Reina) puesto en pausa por Nico; instrucciones conservadas en Reina-Recibe.md y PLAN §8.
+
+- 2026-11-15: ENC-03 de Reina entregado (sesión externa, 22/22 tests verificados por Ada); mergeado a master. Pausa levantada solo para esa entrega; Reina no queda con tarea nueva.
