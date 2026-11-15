@@ -1,47 +1,59 @@
-# Handoff UX · ENC-06
+# Handoff UX · ENC-08R · Agenda y Alumnos
 
-**Fecha:** 15/11/2026. **Base leída:** `2c6ed6d8a6de8d8ac109ce16cdb9e283d0b4aa9b`, ENC-01, ENC-02 y PLAN §8.1. Prototipo documental/navegable separado del código productivo. Cambios exclusivos en esta carpeta, más los tres avisos de buzón exigidos. Sin commit/push. No habilita SQL, app ni publicación.
+**Fina · 15/11/2026.** Candidato de diseño local, sin commit/push ni publicación. La [decisión de Nico](../../../DECISION-AGENDA-ALUMNOS.md) prevalece sobre el eje escolar de ENC-01/06/07. La recuperación conservó los archivos parciales de ENC-08; no reemplazó ni descartó trabajo ajeno. Base al recuperar `0cfd74eb40203e8021598c205fc74bce8e19faf6`; HEAD al cierre **`4388754bfd4591a1f576a003f2f3955d330a3d3a`**. Los cambios de esta entrega están sin commit: el HEAD solo **no identifica el candidato**. Usar [manifiesto de archivos](evidencia/manifest-enc08r.json).
 
-## Interacciones que se pueden observar
+## Resultado entregado
 
-- Cinco destinos persistentes, acción + Pago visible sin flotar sobre listas, filas con nombres y estado textual/ícono/color. Los destinos conservan contexto del alumno por hash; Volver y navegación de Chrome funcionan dentro de los recorridos de la sesión.
-- Alta y cobro son pantallas completas en vez de una hoja baja: mantienen los contenidos de ENC-01/ENC-02 y evitan ocultar campos/Confirmar con formularios largos en 360 px. No agrega pasos. Dialog nativo se reserva para feedback contextual/límites; Escape cierra, foco contenido en el modal y retorno al botón por comportamiento de Chrome.
-- Alta no cobra. La presencia de clase suelta ofrece cobrar o cerrar conservando deuda. Cobro simulado exige medio, permite cambiar monto completo con motivo; no genera parciales. No muestra éxito hasta terminar la pausa de simulación.
-- Borradores solo en memoria: escenario de error/sin conexión o salir y volver dentro de la sesión conserva campos. Reiniciar/recargar los elimina. No es persistencia ni manejo de datos productivos.
-- Seis estados de mensualidad disponibles entre fixtures y recorridos: Vigente, Por vencer, Vence hoy, Vencida, Pagada sin iniciar, Sin mensualidad. Último día y renovación separados. Fecha fija, sin cálculo de calendario ni pruebas de ancla aquí.
-- Inicio pendiente hasta primera asistencia real del escenario; se usa 15/11–14/12 → 15/12 como salida fija. Si se cobra estando presente hoy, el fixture inicia hoy. La presencia no simula iniciar por un horario previsto.
-- Renovación de Ana conserva ciclo actual y muestra siguiente pago por separado. Un segundo cobro anticipado no está disponible. Cambio normal a clase suelta conserva **toda** la cobertura pagada, incluido ciclo anticipado de la sesión. Deudas históricas por clase no se condonan al contratar mensualidad.
-- WhatsApp deja editar texto, pero solo informa la apertura simulada: no número, wa.me real, envío, constancia de entrega ni supresión de push. No confundir este resultado con prueba del enlace de producción.
-- Vacío/carga/error/sin conexión se activan desde controles de facilitación. Carga/error son estados manuales, no latencia ni falla de una API. Cobros y presencia se deshabilitan en offline simulado; no cola ni confirmación optimista.
+- Cinco destinos Hoy / Alumnos / Agenda / Cobros / Más. Agenda Semana/Mes muestra **quién viene cada día**, horarios y vencimientos vinculados; no toma asistencia ni cobra al navegar.
+- Agendar desde fecha: buscar alumno existente, filtrar modalidad, elegir horario y confirmar. Si el día carece de clase, la demo pide hora explícita para una sola ocurrencia. No duración/cupo/serie predeterminados.
+- Crear ficha desde Agenda usa la misma alta canónica de Alumnos y vuelve al selector; crear no cobra ni agenda automáticamente. Ver programación permite ir a ficha o retirar solo esa relación, con confirmación.
+- Fichas duraderas **en memoria de la sesión** aunque no vengan un tiempo. Un alumno mensual antiguo y un individual salteado se reutilizan por ID, sin duplicarse por evento.
+- Alumnos combina búsqueda, filtros Todos / Mensuales / Por clase individual y orden Más recientes (alta mezclando modalidades) / Mensuales primero / Por clase individual primero. Dentro de grupos: alta descendente + ID estable. Pagar, reservar o faltar no cambia la fecha de alta.
+- Preserva la subruta `#asistencia`, ahora **Clase realizada**, con acceso secundario desde Hoy/ficha. Es registro puntual del hecho efectivo, no obligación de pasar lista diaria. No se habilitan realizaciones de fechas futuras.
+- SVG locales de Vito con texto; filtro/orden ENC-09 integrados. Tema claro/oscuro sin modificar tokens. Transiciones 160 ms de opacity/transform, sin dependencias, reducidas a cero por reduced-motion. Texto ampliado y ancho estrecho usan lista alternativa; detalle del día primero.
+- Aviso visible «Sin guardado real. Recargar reinicia la demo» y datos ficticios. Toda confirmación de programación/retiro es de sesión, no afirmación de BD o sincronización.
 
-## Q2/Q3: sin comportamiento financiero inventado
+## Límites que no deben cambiar al portar
 
-**Q2:** la corrección de presencia registrada y la cancelación de clase muestran un aviso, sin mutación. El prototipo simplifica también la corrección de una presencia sin pago: no es una prohibición de producto. Debe diseñarse el resumen de ajuste auditado cuando la clienta defina el impacto.
+**Alumno ≠ modalidad ≠ programación ≠ clase realizada ≠ pago.** `programacion.js` mantiene reservas `{id, alumnoId, claseId}` y hechos efectivos por clave `claseId:alumnoId`; los nombres/estado/modalidad se leen de la ficha. No copiar fichas a cada evento ni agregar un booleano global de presencia del alumno.
 
-**Q3:** Terminar mensualidad hoy abre el aviso de política pendiente; no hay formulario que prometa fecha efectiva ni resultado de corte. Motivo/no devolución automática siguen definidos en el plan, pero este recorrido no los ejecuta.
+Agendar/retirar no toca hechos, pagos, deuda, vencimiento ni inicio. Un mensual que falta no obtiene prórroga/descuento ni cargo extra. Un individual no adeuda por reservar o faltar. Primera clase efectiva posterior al pago o fecha manual siguen siendo la regla de inicio; la **fecha manual no se ejecuta** aquí. No inferir inicio por una fecha prevista.
 
-## Para Reina: no reutilizar como lógica
+El registro/cobro heredado ENC-06 usa **solo la ocurrencia fija del 15/11** y campos económicos de fixture. Su simulación financiera no está generalizada a múltiples clases ni es modelo de datos productivo. Q2/Q3 solo explican políticas pendientes, sin reintegros, reimputaciones, correcciones económicas ni corte anticipado. Cambiar modalidad no borra deudas históricas ni cobertura pagada; doble toque protegido solo en memoria, no idempotencia de servidor.
 
-La interfaz usa HTML/CSS/JS simple para observación, **no** el stack Expo ni un backend. Los IDs, importes, tiempos y fechas son fixtures. Reutilizable: jerarquía de información, copy, orden de campos y estados; tokens son los de Vito. No copiar funciones de mutación de memoria a Pagos/Asistencia ni interpretarlas como autorización, unicidad, idempotencia, transacción o auditoría.
+No se agregan recurrencias, cupos/listas de espera, docentes, grupos visibles, recuperos, roles, portal, envío WhatsApp, tarifa real o nuevas reglas. WhatsApp tiene pictograma genérico, editor y apertura **simulada**; no logo oficial, número real, wa.me ni envío/entrega. No app/BD, SQL, autenticación, red offline real o publicación.
 
-Anulaciones solo se explican como información, no se ejecutan; tampoco están configurador de tarifas, fecha manual, horario, reportes, exportación, login o notificaciones. Volver a PLAN y dominio para implementarlos después de la fase de diseño y de las decisiones correspondientes.
+## Módulos y reutilización para Reina externa
 
-## Revisión realizada por Fina
-
-Chrome real por herramientas **MCP Kaia Chrome**, con pestaña propia aislada. Recorrido sintético automatizado de 28 comprobaciones; capturas inspeccionadas en claro/oscuro; comprobación de desborde horizontal en 320, 360 y 390 px en las vistas consignadas. Detalle y errores encontrados/corregidos en `evidencia/RESULTADOS.md`.
-
-No es QA independiente de Gino ni aprobación de Ada/Nico. Vito sigue siendo responsable de la propuesta visual; no se modificaron sus archivos ni sus tokens.
-
-## Sigue pendiente de validación presencial/real
-
-| Tema | Evidencia que falta | Responsable siguiente |
+| Fuente | Reutilizable | No trasladar como regla productiva |
 |---|---|---|
-| Facilidad de operación | Una dueña hace alta, asistencia y cobro sin ayuda; errores y tiempos observados con guion | Ada coordina; Fina observa y ajusta |
-| Estética y vocabulario | Juicio de la clienta y aprobación estética de Nico | Ada / Nico, con Vito |
-| Q2 y Q3 | Política explícita de ajuste y corte, antes de diseñar confirmación de resultado | Ada con Nico/clienta |
-| Teléfono físico | Teclado virtual, safe area, toque real, orientación y vuelta desde otras apps | Fina; luego Gino sobre producto |
-| Accesibilidad completa | Texto nativo ampliado al 200 %, VoiceOver/TalkBack, zoom, foco y contraste sobre combinaciones finales | Fina / Vito; luego Gino |
-| Concurrencia/red/persistencia | Reintentos reales, resultado incierto, dos dueños, servidor autoritativo, auditoría e idempotencia | Reina / Gino / Emma en fase autorizada |
-| Canales externos | Permisos push, wa.me real, dispositivos y ausencia de falsos «enviado» | Reina / Gino en fase autorizada |
+| `agenda.js` / `agenda.css` | Semana vertical, Mes/detalle, contexto, estados, reflow | Aritmética de navegación del calendario no calcula mensualidades |
+| `alumnos.js` | Labels, filtro/orden independientes, selector canónico | No deducir identidad por nombre ni alta por último pago |
+| `programacion.js` | Separación conceptual reserva/hecho y referencias a ficha | Arrays/Map de memoria no son repositorio persistente ni autorización |
+| `datos-demo.js` | Casos sintéticos y vocabulario de fechas | Fechas, tarifas e IDs fijos no son datos de la clienta |
+| `presentacion.js` / `iconografia.js` | Componentes, etiquetas y SVG locales de Vito | No interpretar color/icono como única fuente de estado |
+| `prototipo.js` | Recorridos, foco/retorno, confirmaciones y límites de diseño | Mutaciones de cobro/ciclo heredadas son salidas fijas, no dominio ni backend |
 
-**No se entrevistó ni observó una usuaria en esta entrega.** No marcar como superada la salida de diseño de PLAN §6 ni la fase de datos por el resultado del callback de diseño.
+I1 se inicia únicamente cuando Ada/Nico lo indiquen en el handoff de Reina externa. Este documento no inicia sesión APX de Reina ni autoriza Expo/Supabase. La conservación durable necesita repositorio/BD, permisos, unicidad/idempotencia, concurrencia y auditoría en una unidad posterior.
+
+## Revisión propia y evidencia
+
+Chrome real **157.0.8103.38**, solo MCP Kaia, contexto propio `fina-enc08r-cierre`, origen `127.0.0.1:8783` servido desde `docs/diseno`. **132 comprobaciones sintéticas PASS:** 86 Agenda/programación/Alumnos/matriz, 28 regresión ENC-06 y 18 accesibilidad focal. Resultados brutos y capturas en [ENC-08R.md](evidencia/ENC-08R.md). Reflow en 320/360/390 y ambos temas; texto ampliado también en esos seis pares. Se midieron doce pares concretos de contraste, no todas las combinaciones del producto.
+
+AG-02/07/08 conservan ID pero sustituyen el recorrido escolar por programación separada y realización efectiva secundaria. El callback de regresión conserva sus 28 escenarios; cambia etiquetas y entrada de navegación. En el cierre solo se corrigieron carreras del **harness** (recarga antes de completar SVG y aserciones antes de `hashchange`), sin nueva implementación de pantallas.
+
+No se autoaprueba producto: esta es revisión del autor. **Ada (`7e0c8d1df108-architect`) revisa estructura/integra; Gino hace QA independiente del mismo manifiesto antes de publicar.** Vito mantiene responsabilidad sobre sistema visual y guía ENC-09; sus archivos no fueron modificados por Fina.
+
+## Lo que sigue NO VERIFICADO
+
+| Tema | Falta / responsable posterior |
+|---|---|
+| Uso real | Sesión autorizada con una dueña, tiempos/errores observados; Ada coordina y Fina observa |
+| Tareas para esa sesión | Agendar alumno antiguo que vuelve; agendar individual en dos días salteados; retirar fecha conservando ficha; filtrar/ordenar y retornar al mismo día. No imponer pasar lista |
+| Apariencia/vocabulario | Aprobación estética de Nico/clienta; no se infiere de las capturas |
+| Dispositivo/accesibilidad | Teclado virtual, safe area real, font scale del SO, zoom, VoiceOver/TalkBack y auditoría completa; Fina/Vito y luego Gino sobre app |
+| Q2/Q3/inicio manual | Política e interacción definitiva antes de implementar bordes; Ada con Nico/clienta |
+| Persistencia y seguridad | BD/autorización/concurrencia/red/idempotencia/auditoría; Reina/Gino/Emma en fase autorizada |
+| Canal/publicación | WhatsApp real, notificaciones y sitio publicado; Reina/Gino y Ada según alcance |
+
+**No se entrevistó ni observó una usuaria.** No marcar cerrada la salida de diseño de PLAN por estos callbacks ni afirmar conservación de alumnos después de recargar.

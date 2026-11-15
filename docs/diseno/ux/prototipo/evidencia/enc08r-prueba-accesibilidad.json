@@ -1,0 +1,112 @@
+{
+  "archivo": "prueba-accesibilidad.js",
+  "browser": "157.0.8103.38",
+  "fecha": "2026-11-15T08:44:55.638Z",
+  "resultado": "PASS",
+  "cantidad": 18,
+  "checks": [
+    "AA-01: texto crítico/selección/nav/ayuda claro >=4.5:1",
+    "AA-02: objetivos >=44 px 320/claro",
+    "AA-03: texto ampliado 200 sin overflow 320/claro",
+    "AA-02: objetivos >=44 px 360/claro",
+    "AA-03: texto ampliado 200 sin overflow 360/claro",
+    "AA-02: objetivos >=44 px 390/claro",
+    "AA-03: texto ampliado 200 sin overflow 390/claro",
+    "AA-01: texto crítico/selección/nav/ayuda oscuro >=4.5:1",
+    "AA-02: objetivos >=44 px 320/oscuro",
+    "AA-03: texto ampliado 200 sin overflow 320/oscuro",
+    "AA-02: objetivos >=44 px 360/oscuro",
+    "AA-03: texto ampliado 200 sin overflow 360/oscuro",
+    "AA-02: objetivos >=44 px 390/oscuro",
+    "AA-03: texto ampliado 200 sin overflow 390/oscuro",
+    "AA-04: SVG decorativo no duplica nombre",
+    "AA-05: última acción fuera de barra fija al final",
+    "AA-06: fecha inválida recuperable",
+    "AA-07: hash mal codificado no rompe JS"
+  ],
+  "contrastes": [
+    {
+      "tema": "claro",
+      "pares": [
+        {
+          "selector": "h1",
+          "texto": "rgb(31, 23, 25)",
+          "fondo": "rgb(251, 247, 244)",
+          "ratio": 16.497773104444178
+        },
+        {
+          "selector": ".ayuda",
+          "texto": "rgb(95, 82, 88)",
+          "fondo": "rgb(244, 237, 232)",
+          "ratio": 6.394810916977364
+        },
+        {
+          "selector": ".btn.p",
+          "texto": "rgb(255, 255, 255)",
+          "fondo": "rgb(122, 47, 140)",
+          "ratio": 8.03732062138943
+        },
+        {
+          "selector": ".fecha-seleccionada",
+          "texto": "rgb(122, 47, 140)",
+          "fondo": "rgb(241, 228, 245)",
+          "ratio": 6.566119660039607
+        },
+        {
+          "selector": ".navegacion [aria-current]",
+          "texto": "rgb(122, 47, 140)",
+          "fondo": "rgb(241, 228, 245)",
+          "ratio": 6.566119660039607
+        },
+        {
+          "selector": ".aviso-sesion",
+          "texto": "rgb(95, 82, 88)",
+          "fondo": "rgb(251, 247, 244)",
+          "ratio": 6.954697386751133
+        }
+      ]
+    },
+    {
+      "tema": "oscuro",
+      "pares": [
+        {
+          "selector": "h1",
+          "texto": "rgb(255, 248, 248)",
+          "fondo": "rgb(23, 18, 20)",
+          "ratio": 17.68176578085777
+        },
+        {
+          "selector": ".ayuda",
+          "texto": "rgb(203, 191, 197)",
+          "fondo": "rgb(46, 37, 41)",
+          "ratio": 8.350611343205143
+        },
+        {
+          "selector": ".btn.p",
+          "texto": "rgb(42, 14, 51)",
+          "fondo": "rgb(217, 162, 234)",
+          "ratio": 8.524408566763494
+        },
+        {
+          "selector": ".fecha-seleccionada",
+          "texto": "rgb(217, 162, 234)",
+          "fondo": "rgb(58, 33, 66)",
+          "ratio": 6.982207373585211
+        },
+        {
+          "selector": ".navegacion [aria-current]",
+          "texto": "rgb(217, 162, 234)",
+          "fondo": "rgb(58, 33, 66)",
+          "ratio": 6.982207373585211
+        },
+        {
+          "selector": ".aviso-sesion",
+          "texto": "rgb(203, 191, 197)",
+          "fondo": "rgb(23, 18, 20)",
+          "ratio": 10.412434064593631
+        }
+      ]
+    }
+  ],
+  "limites": "Contraste de pares concretos calculado sobre CSS renderizado; no auditoría completa de WCAG, lector, dispositivo físico ni texto nativo del sistema."
+}

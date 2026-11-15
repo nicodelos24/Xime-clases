@@ -1,4 +1,12 @@
-# Diseño UX — ENC-01
+# Diseño UX · fuentes actuales e históricas
+
+## Vigente: Agenda y Alumnos (ENC-08R)
+
+La [decisión de Nico del 15/11/2026](../../DECISION-AGENDA-ALUMNOS.md) reemplaza el eje escolar por **ver quién viene y agendar alumnos por día**. Ver [especificación Agenda/Alumnos](agenda.md), [demo navegable](prototipo/README.md), [handoff](prototipo/HANDOFF.md) y [pruebas/evidencia ENC-08R](prototipo/evidencia/ENC-08R.md). Cinco destinos: Hoy / Alumnos / Agenda / Cobros / Más. Fichas canónicas aunque no vengan un tiempo; programación sin efectos económicos; filtros y orden por alta en Alumnos. Todo es sintético y de sesión, sin persistencia productiva ni validación con usuaria.
+
+Los wireframes y flujos de ENC-01 siguientes se conservan como **históricos**: no portar el predominio de asistencia escolar ni tratar sus límites de verificación como estado del candidato nuevo. Q2/Q3 continúan pendientes. Publicación y QA independiente siguen a cargo de Ada/Gino, separados de la revisión propia.
+
+## Histórico: ENC-01
 
 **Fina · 15/11/2026 · propuesta documental revisada contra PLAN.md §3, §4, §7 y §8.** Wireframes de baja fidelidad; no es una aplicación, prototipo navegable ni validación con usuarias. Sin commit ni push.
 

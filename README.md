@@ -1,6 +1,6 @@
 # Clases · instituto de danza
 
-**Demo visual navegable, con alumnos e importes ficticios (no es la aplicación operativa):** [abrir prototipo en GitHub Pages](https://nicodelos24.github.io/Xime-clases/diseno/ux/prototipo/index.html#hoy). En el prototipo podés recorrer Hoy, alumnos, asistencia, cobros y estados de prueba. No hay cuentas, servidor de datos ni cobros reales; recargar borra la sesión. La Agenda principal y la nueva iconografía SVG están en preparación.
+**Demo visual navegable, con alumnos e importes ficticios (no es la aplicación operativa):** [abrir prototipo en GitHub Pages](https://nicodelos24.github.io/Xime-clases/diseno/ux/prototipo/index.html#hoy). En el prototipo podés recorrer Hoy, Alumnos, Agenda, Cobros y Más. Agenda permite ver/agendar/retirar personas por día sin registrar asistencia ni cobrar; Alumnos combina filtros y orden independientes. Incluye SVG locales, temas claro/oscuro y movimiento reducido. No hay cuentas, servidor de datos ni cobros reales; recargar borra la sesión. QA local independiente: [`ENC-10-DEMO.md`](docs/qa/ENC-10-DEMO.md).
 
 - [`PLAN.md`](PLAN.md): reglas de negocio y fases.
 - [`docs/HOJA-DE-RUTA.md`](docs/HOJA-DE-RUTA.md): tareas, prioridades, dependencias y límites modulares para la implementación posterior.

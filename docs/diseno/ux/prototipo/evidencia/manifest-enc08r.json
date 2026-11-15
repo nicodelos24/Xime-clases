@@ -1,0 +1,260 @@
+{
+  "candidato": "ENC-08R · cambios sin commit",
+  "creado_utc": "2026-11-15T08:50:44.320749+00:00",
+  "head": "4388754bfd4591a1f576a003f2f3955d330a3d3a",
+  "rama": "master",
+  "browser": "157.0.8103.38",
+  "origen": "http://127.0.0.1:8783",
+  "pruebas": [
+    {
+      "archivo": "docs/diseno/ux/prototipo/evidencia/enc08r-prueba-accesibilidad.json",
+      "fecha": "2026-11-15T08:44:55.638Z",
+      "cantidad": 18,
+      "resultado": "PASS"
+    },
+    {
+      "archivo": "docs/diseno/ux/prototipo/evidencia/enc08r-prueba-agenda.json",
+      "fecha": "2026-11-15T08:43:16.864Z",
+      "cantidad": 86,
+      "resultado": "PASS"
+    },
+    {
+      "archivo": "docs/diseno/ux/prototipo/evidencia/enc08r-prueba-navegacion.json",
+      "fecha": "2026-11-15T08:44:51.262Z",
+      "cantidad": 28,
+      "resultado": "PASS"
+    }
+  ],
+  "resumen_capturas": {
+    "archivo": "enc08r-resumen.png",
+    "fuentes": [
+      "enc08r-dia-390-viewport.png",
+      "enc08r-agendar-360-viewport.png",
+      "enc08r-alumnos-360-oscuro-viewport.png"
+    ],
+    "transformacion": "Composición sin recorte ni reescalado, solo margen y títulos externos"
+  },
+  "limites": [
+    "No commit/push/publicación",
+    "No usuaria ni dispositivo físico",
+    "No app/BD/persistencia productiva",
+    "No QA independiente"
+  ],
+  "archivos": [
+    {
+      "path": "docs/diseno/ux/README.md",
+      "bytes": 6227,
+      "sha256": "8d7546764fb57eff8f240152952294bc0979e824d2980002e7d79d52c67d389a"
+    },
+    {
+      "path": "docs/diseno/ux/agenda.md",
+      "bytes": 14036,
+      "sha256": "6da6999cc94f18bd4e7f825c8c6912aa3a9bada1c36cd344ea16060f3a2cd708"
+    },
+    {
+      "path": "docs/diseno/ux/prototipo/HANDOFF.md",
+      "bytes": 7654,
+      "sha256": "503e807980ee3cfce16c25e59ed8833a7bd0a5e67b18fa30e78f4dd1b3b8fd3a"
+    },
+    {
+      "path": "docs/diseno/ux/prototipo/README.md",
+      "bytes": 7078,
+      "sha256": "7f1a5016590bee9d798b6a9bfa91ed55e126662ecdf79c6da74e8b54c499a728"
+    },
+    {
+      "path": "docs/diseno/ux/prototipo/agenda.css",
+      "bytes": 6488,
+      "sha256": "ccea36cf5f79e7cc85310634bdea1316116b154f6b781553aadf968ff93d5af2"
+    },
+    {
+      "path": "docs/diseno/ux/prototipo/agenda.js",
+      "bytes": 8566,
+      "sha256": "281df565c67fc3d94be212a2ac4d668d6509404ca3680377bf4632e558b1f17a"
+    },
+    {
+      "path": "docs/diseno/ux/prototipo/alumnos.js",
+      "bytes": 4798,
+      "sha256": "b7ee5270daeecdb307af8a9895d75434fe8316a011339cc6edae434cff040cad"
+    },
+    {
+      "path": "docs/diseno/ux/prototipo/datos-demo.js",
+      "bytes": 1842,
+      "sha256": "a5643cc65e83547480e2fc39605d796b98e7f4afc5291ea55002ab0a988d02cf"
+    },
+    {
+      "path": "docs/diseno/ux/prototipo/evidencia/ENC-08R.md",
+      "bytes": 10313,
+      "sha256": "e44c519421cbb271d53595954f1caec43d2dfa93990af7d52e375d8e09b82782"
+    },
+    {
+      "path": "docs/diseno/ux/prototipo/evidencia/enc08r-agenda-320-lineal.png",
+      "bytes": 306789,
+      "sha256": "52ae7ad1c763e38536c26e7f337d199145de179b218c0a7dd877537e5062fac7"
+    },
+    {
+      "path": "docs/diseno/ux/prototipo/evidencia/enc08r-agendar-360-viewport.png",
+      "bytes": 54322,
+      "sha256": "90cc12168c4feabe8a2a606356f49465e1ec1d0cf3d3cb98e1b08854ed074c93"
+    },
+    {
+      "path": "docs/diseno/ux/prototipo/evidencia/enc08r-alumnos-360-oscuro-viewport.png",
+      "bytes": 54149,
+      "sha256": "4a061de07f591dc15ea0194c439270897bad46a1920b3ab90885befb357f74b1"
+    },
+    {
+      "path": "docs/diseno/ux/prototipo/evidencia/enc08r-alumnos-390.png",
+      "bytes": 140268,
+      "sha256": "69ecc8b9176dc5d5a512f54f1cc4e0b6da1d0c9d357c6e94f596254ec8768de9"
+    },
+    {
+      "path": "docs/diseno/ux/prototipo/evidencia/enc08r-dia-390-viewport.png",
+      "bytes": 57179,
+      "sha256": "baac864fff4209f558bf2a66095ffcde90ecae3debef8c30444343c1d455d36e"
+    },
+    {
+      "path": "docs/diseno/ux/prototipo/evidencia/enc08r-mes-360-claro.png",
+      "bytes": 142130,
+      "sha256": "f246375b3155eb18d40e6b0ae773c37b66b3da6a5b302b0580db03d3768410ce"
+    },
+    {
+      "path": "docs/diseno/ux/prototipo/evidencia/enc08r-mes-360-oscuro.png",
+      "bytes": 141641,
+      "sha256": "b72433d7f9ad1450e7c275397b52627d86605d5fe9d0e4248f302be9a79c5054"
+    },
+    {
+      "path": "docs/diseno/ux/prototipo/evidencia/enc08r-mes-390-viewport.png",
+      "bytes": 67176,
+      "sha256": "bed18e8899688ea661b7e3a44b01b8823191901a6cb0d99dc00b28cac7de7273"
+    },
+    {
+      "path": "docs/diseno/ux/prototipo/evidencia/enc08r-prueba-accesibilidad.json",
+      "bytes": 3504,
+      "sha256": "e05094faf35ee1a2ea147dd028023b93c4c2f9236bcde4a599ffed3742162085"
+    },
+    {
+      "path": "docs/diseno/ux/prototipo/evidencia/enc08r-prueba-agenda.json",
+      "bytes": 8522,
+      "sha256": "70c7e0321ec55a6dee1cdf373c2510512ac8ccce95732d8365ddb06a807ae8ad"
+    },
+    {
+      "path": "docs/diseno/ux/prototipo/evidencia/enc08r-prueba-navegacion.json",
+      "bytes": 1676,
+      "sha256": "8232f42e589cdb972cdaad1fdcec049ecaee5330d3b37c6c879025ae07747433"
+    },
+    {
+      "path": "docs/diseno/ux/prototipo/evidencia/enc08r-resumen.png",
+      "bytes": 162129,
+      "sha256": "4efe48333721a5aa58f02470ff27962a3dc212616288194f68bf42c31d3b1052"
+    },
+    {
+      "path": "docs/diseno/ux/prototipo/evidencia/enc08r-texto200-360.png",
+      "bytes": 660797,
+      "sha256": "3261f4966db3462456e7ee30ee73fe25ab9ae6643f7ec258bb0da5b941dccff7"
+    },
+    {
+      "path": "docs/diseno/ux/prototipo/iconografia.js",
+      "bytes": 1776,
+      "sha256": "794a1debc3068335321932d9039cbdab3a491f0a814f15e91cb7400b26fd4fcd"
+    },
+    {
+      "path": "docs/diseno/ux/prototipo/index.html",
+      "bytes": 2477,
+      "sha256": "61c7e51082c65bcc6545498041295ff2a2d90dfe6c6b943dccf9030a6b0b4f4c"
+    },
+    {
+      "path": "docs/diseno/ux/prototipo/presentacion.js",
+      "bytes": 1115,
+      "sha256": "32e7330df450fc045772b937decded5af500ba120bfb9a8c533945216363c207"
+    },
+    {
+      "path": "docs/diseno/ux/prototipo/programacion.js",
+      "bytes": 2208,
+      "sha256": "ba02cf456561de2394001c38dcff8f8b40947040a5ec68ab89f55d4b1d23b80a"
+    },
+    {
+      "path": "docs/diseno/ux/prototipo/prototipo.css",
+      "bytes": 6275,
+      "sha256": "1081b4eb49a19c99ea2d7b7ac095740c036d99517081977888b5507d91fbd035"
+    },
+    {
+      "path": "docs/diseno/ux/prototipo/prototipo.js",
+      "bytes": 36448,
+      "sha256": "932729a9379901a1cc36dc1631d314d5b475eb58a1006bfb32b505de40dbe579"
+    },
+    {
+      "path": "docs/diseno/ux/prototipo/prueba-accesibilidad.js",
+      "bytes": 3811,
+      "sha256": "8b6cb1dd658177e2a172ee1fcf5b5f1911b7acf80c40367158477612c79ffe49"
+    },
+    {
+      "path": "docs/diseno/ux/prototipo/prueba-agenda.js",
+      "bytes": 15936,
+      "sha256": "e38eae166b8cccaf1b4cba72f136213e3465a5b4199417dce782685c47af3526"
+    },
+    {
+      "path": "docs/diseno/ux/prototipo/prueba-navegacion.js",
+      "bytes": 9238,
+      "sha256": "1cf94b6ccc7cb101f1b4381a4aed374aa479c38a7cd10eab1189e86b995f809d"
+    },
+    {
+      "path": "docs/diseno/visual/agenda-iconografia.md",
+      "bytes": 12412,
+      "sha256": "9a4cd7f30d5f2981894e7c8725073132f3d2a21bab9df7186428a38a30e81929"
+    },
+    {
+      "path": "docs/diseno/visual/iconos/agenda-calendario.svg",
+      "bytes": 341,
+      "sha256": "1de87eb57387a0580a6f4cb649f310bb0fd5d7d0b1caf2ec9968d8ebc737873a"
+    },
+    {
+      "path": "docs/diseno/visual/iconos/agenda-hoy.svg",
+      "bytes": 388,
+      "sha256": "2679bc2bd1a1e6083d6fd4660087c8f073612e9f382d623763943f796aadc3ab"
+    },
+    {
+      "path": "docs/diseno/visual/iconos/cobros.svg",
+      "bytes": 297,
+      "sha256": "e88d4b04a5bcf9de5a9644ac0caeca79a0782618d76f9f5fa7be07b172c74189"
+    },
+    {
+      "path": "docs/diseno/visual/iconos/estudiantes.svg",
+      "bytes": 328,
+      "sha256": "544b9d7b71c82bfcd85869b206551e5983a4b7263caee72851d41d1285f23cd0"
+    },
+    {
+      "path": "docs/diseno/visual/iconos/filtro.svg",
+      "bytes": 223,
+      "sha256": "a6d59d8c76da18c02ace771d40b36b53f6b3b0d497348845daf04b178326fbe0"
+    },
+    {
+      "path": "docs/diseno/visual/iconos/lista-asistencia.svg",
+      "bytes": 317,
+      "sha256": "7fb8210106260700ebfe07c77e666b88699a05e2d6bf05abeb5346d078ddd38d"
+    },
+    {
+      "path": "docs/diseno/visual/iconos/orden.svg",
+      "bytes": 230,
+      "sha256": "c5131504ddda661a1962f1f47f86d40d942365962338091bbe8d5dc3ec2ec9d4"
+    },
+    {
+      "path": "docs/diseno/visual/iconos/whatsapp-mensaje.svg",
+      "bytes": 615,
+      "sha256": "2b75f698f44a942bc69f890f7926d4a81e841c7c648b94ad0590885712483fde"
+    },
+    {
+      "path": "docs/diseno/visual/movimiento.md",
+      "bytes": 14951,
+      "sha256": "35ca5a6ccda9247cc57a7cb4627388e160e674eeff71d38bd641ec5dc8bec53f"
+    },
+    {
+      "path": "docs/diseno/visual/tokens.css",
+      "bytes": 2708,
+      "sha256": "952225b42749c3321f7c1af16ec8c709cbf85b970f76e9c064bb82b449ca2cc6"
+    },
+    {
+      "path": "docs/diseno/visual/ui.css",
+      "bytes": 10287,
+      "sha256": "ca90e62ee6804305d13031341d7711ac436dd2e69fcd6d4f5ce2e1c390e54d4e"
+    }
+  ]
+}

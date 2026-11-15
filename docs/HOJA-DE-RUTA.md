@@ -1,6 +1,6 @@
 # Hoja de ruta modular · Xime-clases
 
-> **Actualización de Nico, 15/11/2026 02:26:** rige [DECISION-AGENDA-ALUMNOS.md](DECISION-AGENDA-ALUMNOS.md). La integración parcial ENC-08 se interrumpió por fallo de conexión del motor, no se publicó. ENC-08R adapta lo pendiente: calendario con alumnos agendados (no lista escolar), fichas conservadas, filtros por modalidad y orden de alta o modalidad. ENC-09 incorpora guía de movimiento ligero e iconos. D3 aún no cumple la puerta para iniciar I1; Ada avisa a Nico al verificarla.
+> **Actualización 15/11/2026:** rige [DECISION-AGENDA-ALUMNOS.md](DECISION-AGENDA-ALUMNOS.md). ENC-08R y ENC-09 están integrados en el candidato: calendario con alumnos agendados (no lista escolar), fichas canónicas, filtros/orden independientes, SVG y movimiento ligero. Ada: estructura OK. Gino: [ENC-10 APPROVED](qa/ENC-10-DEMO.md) para demo local. D3 en publicación/verificación pública, todavía sin habilitar I1; Ada avisa al cerrar esa comprobación.
 
 **15/11/2026 · Encargo de Nico.** La prueba con una dueña no se puede coordinar por ahora: no se inventa una aprobación UX. En su lugar se comparte una **demo pública con datos ficticios** para revisión visual y se avanza con las reglas ya acordadas. Q2 (corregir clase cobrada) y Q3 (corte anticipado de mensualidad) permanecen sin automatizar hasta una decisión de la clienta. La demo no es la app de producción.
 
@@ -19,6 +19,8 @@
 | I5 | Gino + Ada | Alta, puerta de release | Pruebas end-to-end y RLS A/B, dinero/fechas, navegación y accesibilidad móvil, sin errores ni promesas falsas; evidencia de staging | I1–I4; legal/infra por responsables externos antes de producción |
 
 **Trabajo diferido, no borrado:** D4; Q2/Q3; validación legal/contable; pantalla real con teléfono físico/lector/texto 200 %; Zaira configura entornos, backups y restauración en la fase de datos. No implementar tutor, grupos visibles, pagos online, WhatsApp automático, bloqueo o días de gracia sin nueva decisión. Los 22 tests del dominio y los 28 checks del prototipo no prueban la app ni la BD.
+
+**Unidad concreta I1:** [`ENCARGO-I1-REINA.md`](ENCARGO-I1-REINA.md) detalla alcance, fronteras y aceptación para la sesión externa. Preparada, no habilitada hasta el cierre comprobado de D3.
 
 ## Límites de módulos para Reina
 

@@ -1,21 +1,23 @@
-async (page) => {
+async (activa) => {
+  const page=activa.context().pages().find(p=>p.url().includes(':8783/'));
+  if(!page)throw Error('No está la pestaña dedicada ENC-08R');
   // Ejecutar exclusivamente desde MCP Kaia Chrome browser_run_code_unsafe.
   // Callback sin dependencias. No es QA del producto ni pruebas del dominio.
   const checks=[], errores=[];
   const ok=(cond,nombre)=>{if(!cond)throw Error(nombre);checks.push(nombre);};
   page.on('pageerror',e=>errores.push(e.message));
   page.on('console',m=>{if(m.type()==='error')errores.push(m.text());});
-  const base='http://127.0.0.1:8768/ux/prototipo/index.html';
-  const btn=(name)=>page.getByRole('button',{name,exact:true});
+  const base='http://127.0.0.1:8783/ux/prototipo/index.html';
+  const btn=(name)=>{const l=page.getByRole('button',{name,exact:true});const click=l.click.bind(l);l.click=async opciones=>{await click(opciones);await page.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));};return l;};
   const abrirPruebas=async()=>{if(!await page.locator('#pruebas').isVisible())await btn('Pruebas').click();};
   const cerrarPruebas=async()=>{if(await page.locator('#pruebas').isVisible())await btn('Pruebas').click();};
   await page.setViewportSize({width:360,height:780});
-  await page.goto(base+'?verificacion=enc06#hoy');await page.reload();
+  await page.goto(base+'?verificacion=enc06#hoy');await page.getByRole('heading',{name:'Hoy',exact:true}).waitFor();await page.reload();await page.getByRole('heading',{name:'Hoy',exact:true}).waitFor();
   await btn('Alumnos').click();await btn('+ Alumno').click();
-  await page.getByLabel('Nombre y apellido').fill('Celeste Demo');await page.getByRole('radio',{name:'Clase suelta',exact:true}).check();await btn('Guardar alumno de prueba').click();
+  await page.getByLabel('Nombre y apellido').fill('Celeste Demo');await page.getByRole('radio',{name:'Por clase individual',exact:true}).check();await btn('Guardar alumno de prueba').click();
   await page.getByRole('heading',{name:'Celeste Demo',exact:true}).waitFor();
   ok(await page.getByText('No hay clases adeudadas.',{exact:true}).count()===1,'Alta no crea pago ni deuda');
-  await btn('Ver asistencia').click();await btn('Marcar presente a Celeste Demo').click();await page.getByRole('dialog').waitFor();await btn('Cobrar clase $ 250 UYU').last().click();
+  await btn('Registrar clase realizada').click();await btn('Registrar clase realizada de Celeste Demo').click();await page.getByRole('dialog').waitFor();await btn('Cobrar clase $ 250 UYU').last().click();
   await page.getByLabel('Monto total').fill('200');await page.getByLabel('Motivo del cambio de monto').fill('Descuento de prueba');await page.getByLabel('Medio de pago').selectOption('Transferencia');
   await abrirPruebas();await page.getByLabel('Estado de pantalla').selectOption('offline');
   ok(await btn('Confirmar registro de prueba').isDisabled(),'Sin conexión impide confirmar');
@@ -25,24 +27,24 @@ async (page) => {
   ok(await page.getByText('$ 200 UYU',{exact:true}).count()===1,'Comprobante simulado con importe confirmado');
   await btn('Ver ficha').click();ok(await page.getByText('No hay clases adeudadas.',{exact:true}).count()===1,'Cobro quita clase de la bandeja de deuda');
   ok(await page.getByRole('button',{name:'Clase suelta · $ 200 UYU',exact:true}).count()===1,'Doble toque no duplica el registro en memoria');
-  await btn('Ver asistencia').click();await btn('Marcar ausente a Celeste Demo').click();
+  await btn('Registrar clase realizada').click();await btn('Registrar que no vino Celeste Demo').click();
   await page.getByRole('heading',{name:'Regla pendiente · no se aplica ningún cambio'}).waitFor();
   ok(await page.getByRole('dialog').getByText(/Q2:/).count()===1,'Q2 informa pendiente sin resolver ajuste');
   await page.keyboard.press('Escape');
-  ok(await btn('Revisar presencia de Celeste Demo').getAttribute('aria-pressed')==='true','Q2 no modifica la presencia cobrada');
+  ok(await btn('Revisar clase realizada de Celeste Demo').getAttribute('aria-pressed')==='true','Q2 no modifica la presencia cobrada');
   await btn('Alumnos').click();await btn('+ Alumno').click();await page.getByLabel('Nombre y apellido').fill('Nora Demo');await btn('Guardar alumno de prueba').click();await btn('Cobrar mensualidad').click();
   ok(await page.getByText('Inicio: pendiente de primera clase.',{exact:true}).count()===1,'Mensualidad sin iniciar no inventa fecha');
   await page.getByLabel('Medio de pago').selectOption('Efectivo');await btn('Confirmar registro de prueba').click();await page.getByRole('heading',{name:'Pago de prueba registrado'}).waitFor();await btn('Ver ficha').click();
   ok(await page.locator('.chip.sin-iniciar').count()===1,'Pago anterior a asistencia queda Pagada, sin iniciar');
-  await btn('Ver asistencia').click();await btn('Marcar presente a Nora Demo').click();await btn('Revisar presencia de Nora Demo').waitFor();
+  await btn('Registrar clase realizada').click();await btn('Registrar clase realizada de Nora Demo').click();await btn('Revisar clase realizada de Nora Demo').waitFor();
   await page.locator('button.nombre').filter({hasText:'Nora Demo'}).click();
   ok(await page.locator('.chip.vigente').count()===1 && await page.getByText('14/12/2026',{exact:true}).count()===1,'Primera asistencia inicia fixture 15/11, cubre hasta 14/12');
-  await btn('Asistencia').click();await btn('Marcar presente a Lucía Silva').click();await page.getByRole('dialog').waitFor();await btn('Entendido').click();
+  await btn('Hoy').click();await btn('Registrar clase realizada').click();await btn('Registrar clase realizada de Lucía Silva').click();await page.getByRole('dialog').waitFor();await btn('Entendido').click();
   await page.locator('button.nombre').filter({hasText:'Lucía Silva'}).click();await btn('Cambiar modalidad').click();await btn('Continuar a cobrar mensualidad').click();
   await page.getByLabel('Medio de pago').selectOption('Efectivo');await btn('Confirmar registro de prueba').click();await page.getByRole('heading',{name:'Pago de prueba registrado'}).waitFor();await btn('Ver ficha').click();
   ok(await page.locator('.chip.vigente').count()===1,'Mensualidad contratada asistiendo hoy inicia en fixture de hoy');
   ok(await btn('Cobrar clase adeudada').count()===1,'Cambio a mensualidad conserva clase adeudada histórica Q4');
-  await btn('Hoy').click();await page.locator('article').filter({hasText:'Ana Pérez'}).getByRole('button',{name:'Ver ficha',exact:true}).click();await btn('Renovar mensualidad').click();
+  await btn('Hoy').click();await page.locator('article').filter({hasText:'Ana Pérez'}).getByRole('button',{name:'Ver ficha',exact:true}).click();await btn('Renovar mensualidad').click();await page.getByText('17/12/2026',{exact:true}).waitFor();
   ok(await page.getByText('18/11/2026',{exact:true}).count()===1 && await page.getByText('17/12/2026',{exact:true}).count()===1,'Renovación muestra próximo ciclo sin esperar clase');
   await page.getByLabel('Medio de pago').selectOption('Transferencia');await btn('Confirmar registro de prueba').click();await page.getByRole('heading',{name:'Pago de prueba registrado'}).waitFor();await btn('Ver ficha').click();
   ok(await page.getByText('Renovación ya pagada · demo',{exact:true}).count()===1 && await btn('Renovar mensualidad').count()===0,'Q5 no ofrece otra renovación anticipada');
@@ -59,7 +61,7 @@ async (page) => {
   ok(await page.locator('html').getAttribute('data-tema')==='oscuro','Tema oscuro usa tokens ENC-02');
   await page.setViewportSize({width:320,height:780});
   ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'Lista sin desborde horizontal a 320 px');
-  await btn('Asistencia').click();ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'Asistencia sin desborde horizontal a 320 px');
+  await btn('Hoy').click();await btn('Registrar clase realizada').click();ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'Asistencia sin desborde horizontal a 320 px');
   await page.setViewportSize({width:390,height:844});await btn('Hoy').click();ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'Hoy sin desborde horizontal a 390 px');
   ok(errores.length===0,'Sin errores JS/consola durante el recorrido completo');
   return {fecha:new Date().toISOString(),resultado:'PASS',cantidad:checks.length,checks,errores,limites:'Prueba sintética en Chrome real, no usuaria ni teléfono físico; fixtures, sin backend ni dominio productivo'};

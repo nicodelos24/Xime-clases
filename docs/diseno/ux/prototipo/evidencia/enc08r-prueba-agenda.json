@@ -1,0 +1,290 @@
+{
+  "archivo": "prueba-agenda.js",
+  "browser": "157.0.8103.38",
+  "fecha": "2026-11-15T08:43:16.864Z",
+  "resultado": "PASS",
+  "cantidad": 86,
+  "checks": [
+    "AG-01: Hoy inicial y cinco destinos",
+    "AG-01: Semana inicial y Agenda activa",
+    "AG-02R: horario y quién viene, no lista escolar",
+    "AG-02R: detalle separado de realización",
+    "AG-02R: consultar no marca clase realizada",
+    "AG-03: semana siguiente conserva domingo seleccionado",
+    "AG-03: individuales salteados y mensual por programación explícita",
+    "AG-04: vencimiento y renovación distintos",
+    "AG-04: vuelve al mes, día y expansión",
+    "AG-04: foco vuelve al disparador",
+    "AG-05: vacío confirmado con salida para agendar",
+    "AG-06: noviembre tiene seis filas lunes-domingo",
+    "AG-06: cruce de año",
+    "PG-01: alumno antiguo mensual vuelve por misma ficha",
+    "PG-02: no autoagenda recurrencias",
+    "PG-03: retirar solo programación conserva contexto",
+    "PG-03: ficha antigua no se duplicó ni borró",
+    "AL-01: más recientes por alta, mezclando modalidades",
+    "AL-02: filtro por clase individual",
+    "AL-03: filtro mensuales",
+    "AL-04: mensuales primero conserva fecha dentro del grupo",
+    "AL-05: por clase primero",
+    "AL-06: desempate estable por ID",
+    "AL-07: búsqueda combina filtro y orden",
+    "PG-09: mensual que falta no prorroga ni genera extra",
+    "PG-04: individual en otro día salteado, misma ficha",
+    "PG-05: doble programación no duplica",
+    "PG-06: alta desde día vuelve a selector con misma ficha",
+    "PG-07: día nuevo pide hora explícita, solo ese día",
+    "PG-08: agendar no inicia mensualidad ni genera deuda",
+    "AG-09: mensualidad pagada sin clase efectiva queda sin iniciar",
+    "AG-09: no inventa vencimiento por programación",
+    "AG-10: falla vencimientos y mantiene programación sana",
+    "AG-10: error de clases no informa cero",
+    "AG-11: carga por secciones explícita",
+    "AG-11: vacío no afirma todos pagos",
+    "AG-11: sin conexión impide programar",
+    "AG-12: vencimiento histórico no deuda repetida",
+    "AG-12: evento fuera de próximos siete días",
+    "AG-08: cancelada sin nuevas reservas/cobros",
+    "AG-07/08: futura no usa los hechos de hoy ni registra clase",
+    "AG-14: horario sin edición ni guardado falso",
+    "AG-14: Más conserva acceso a Agenda",
+    "AG-13: 320/claro/agenda/mes/2026-11-15 sin overflow",
+    "AG-13: 320/claro/agenda/semana/2026-11-15 sin overflow",
+    "AG-13: 320/claro/alumnos sin overflow",
+    "AG-13: 320/claro/agendar/2026-11-18 sin overflow",
+    "AG-13: 320/claro/whatsapp/ana sin overflow",
+    "AG-13: 320/claro/asistencia sin overflow",
+    "AG-13: 320/oscuro/agenda/mes/2026-11-15 sin overflow",
+    "AG-13: 320/oscuro/agenda/semana/2026-11-15 sin overflow",
+    "AG-13: 320/oscuro/alumnos sin overflow",
+    "AG-13: 320/oscuro/agendar/2026-11-18 sin overflow",
+    "AG-13: 320/oscuro/whatsapp/ana sin overflow",
+    "AG-13: 320/oscuro/asistencia sin overflow",
+    "AG-13: 360/claro/agenda/mes/2026-11-15 sin overflow",
+    "AG-13: 360/claro/agenda/semana/2026-11-15 sin overflow",
+    "AG-13: 360/claro/alumnos sin overflow",
+    "AG-13: 360/claro/agendar/2026-11-18 sin overflow",
+    "AG-13: 360/claro/whatsapp/ana sin overflow",
+    "AG-13: 360/claro/asistencia sin overflow",
+    "AG-13: 360/oscuro/agenda/mes/2026-11-15 sin overflow",
+    "AG-13: 360/oscuro/agenda/semana/2026-11-15 sin overflow",
+    "AG-13: 360/oscuro/alumnos sin overflow",
+    "AG-13: 360/oscuro/agendar/2026-11-18 sin overflow",
+    "AG-13: 360/oscuro/whatsapp/ana sin overflow",
+    "AG-13: 360/oscuro/asistencia sin overflow",
+    "AG-13: 390/claro/agenda/mes/2026-11-15 sin overflow",
+    "AG-13: 390/claro/agenda/semana/2026-11-15 sin overflow",
+    "AG-13: 390/claro/alumnos sin overflow",
+    "AG-13: 390/claro/agendar/2026-11-18 sin overflow",
+    "AG-13: 390/claro/whatsapp/ana sin overflow",
+    "AG-13: 390/claro/asistencia sin overflow",
+    "AG-13: 390/oscuro/agenda/mes/2026-11-15 sin overflow",
+    "AG-13: 390/oscuro/agenda/semana/2026-11-15 sin overflow",
+    "AG-13: 390/oscuro/alumnos sin overflow",
+    "AG-13: 390/oscuro/agendar/2026-11-18 sin overflow",
+    "AG-13: 390/oscuro/whatsapp/ana sin overflow",
+    "AG-13: 390/oscuro/asistencia sin overflow",
+    "AG-13: teclado llega a control de rango en orden",
+    "AG-13: fecha seleccionable por teclado",
+    "AG-13: texto ampliado cambia a lista sin overflow",
+    "MV-01: reduced-motion desactiva animación",
+    "AL-08: alta más reciente primero y ficha duradera única",
+    "AG-15: cero errores JS/red HTTP",
+    "PR-01: sin solicitudes externas ni WhatsApp real"
+  ],
+  "errores": [],
+  "advertencias": [],
+  "peticiones": 40,
+  "fallosHTTP": [],
+  "externas": [],
+  "matriz": [
+    {
+      "ancho": 320,
+      "tema": "claro",
+      "ruta": "agenda/mes/2026-11-15"
+    },
+    {
+      "ancho": 320,
+      "tema": "claro",
+      "ruta": "agenda/semana/2026-11-15"
+    },
+    {
+      "ancho": 320,
+      "tema": "claro",
+      "ruta": "alumnos"
+    },
+    {
+      "ancho": 320,
+      "tema": "claro",
+      "ruta": "agendar/2026-11-18"
+    },
+    {
+      "ancho": 320,
+      "tema": "claro",
+      "ruta": "whatsapp/ana"
+    },
+    {
+      "ancho": 320,
+      "tema": "claro",
+      "ruta": "asistencia"
+    },
+    {
+      "ancho": 320,
+      "tema": "oscuro",
+      "ruta": "agenda/mes/2026-11-15"
+    },
+    {
+      "ancho": 320,
+      "tema": "oscuro",
+      "ruta": "agenda/semana/2026-11-15"
+    },
+    {
+      "ancho": 320,
+      "tema": "oscuro",
+      "ruta": "alumnos"
+    },
+    {
+      "ancho": 320,
+      "tema": "oscuro",
+      "ruta": "agendar/2026-11-18"
+    },
+    {
+      "ancho": 320,
+      "tema": "oscuro",
+      "ruta": "whatsapp/ana"
+    },
+    {
+      "ancho": 320,
+      "tema": "oscuro",
+      "ruta": "asistencia"
+    },
+    {
+      "ancho": 360,
+      "tema": "claro",
+      "ruta": "agenda/mes/2026-11-15"
+    },
+    {
+      "ancho": 360,
+      "tema": "claro",
+      "ruta": "agenda/semana/2026-11-15"
+    },
+    {
+      "ancho": 360,
+      "tema": "claro",
+      "ruta": "alumnos"
+    },
+    {
+      "ancho": 360,
+      "tema": "claro",
+      "ruta": "agendar/2026-11-18"
+    },
+    {
+      "ancho": 360,
+      "tema": "claro",
+      "ruta": "whatsapp/ana"
+    },
+    {
+      "ancho": 360,
+      "tema": "claro",
+      "ruta": "asistencia"
+    },
+    {
+      "ancho": 360,
+      "tema": "oscuro",
+      "ruta": "agenda/mes/2026-11-15"
+    },
+    {
+      "ancho": 360,
+      "tema": "oscuro",
+      "ruta": "agenda/semana/2026-11-15"
+    },
+    {
+      "ancho": 360,
+      "tema": "oscuro",
+      "ruta": "alumnos"
+    },
+    {
+      "ancho": 360,
+      "tema": "oscuro",
+      "ruta": "agendar/2026-11-18"
+    },
+    {
+      "ancho": 360,
+      "tema": "oscuro",
+      "ruta": "whatsapp/ana"
+    },
+    {
+      "ancho": 360,
+      "tema": "oscuro",
+      "ruta": "asistencia"
+    },
+    {
+      "ancho": 390,
+      "tema": "claro",
+      "ruta": "agenda/mes/2026-11-15"
+    },
+    {
+      "ancho": 390,
+      "tema": "claro",
+      "ruta": "agenda/semana/2026-11-15"
+    },
+    {
+      "ancho": 390,
+      "tema": "claro",
+      "ruta": "alumnos"
+    },
+    {
+      "ancho": 390,
+      "tema": "claro",
+      "ruta": "agendar/2026-11-18"
+    },
+    {
+      "ancho": 390,
+      "tema": "claro",
+      "ruta": "whatsapp/ana"
+    },
+    {
+      "ancho": 390,
+      "tema": "claro",
+      "ruta": "asistencia"
+    },
+    {
+      "ancho": 390,
+      "tema": "oscuro",
+      "ruta": "agenda/mes/2026-11-15"
+    },
+    {
+      "ancho": 390,
+      "tema": "oscuro",
+      "ruta": "agenda/semana/2026-11-15"
+    },
+    {
+      "ancho": 390,
+      "tema": "oscuro",
+      "ruta": "alumnos"
+    },
+    {
+      "ancho": 390,
+      "tema": "oscuro",
+      "ruta": "agendar/2026-11-18"
+    },
+    {
+      "ancho": 390,
+      "tema": "oscuro",
+      "ruta": "whatsapp/ana"
+    },
+    {
+      "ancho": 390,
+      "tema": "oscuro",
+      "ruta": "asistencia"
+    }
+  ],
+  "capturas": [
+    "/home/nico/.cache/kaia-mcp-output/enc08r-mes-360-claro.png",
+    "/home/nico/.cache/kaia-mcp-output/enc08r-mes-360-oscuro.png",
+    "/home/nico/.cache/kaia-mcp-output/enc08r-texto200-360.png",
+    "/home/nico/.cache/kaia-mcp-output/enc08r-alumnos-390.png",
+    "/home/nico/.cache/kaia-mcp-output/enc08r-agenda-320-lineal.png"
+  ],
+  "limites": "Chrome real MCP; fixtures de sesión. No usuaria, BD, teléfono físico, lector de pantalla ni producción. Regresión ENC-06 en callback separado."
+}

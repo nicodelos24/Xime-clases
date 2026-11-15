@@ -1,55 +1,73 @@
-# ENC-06 · Prototipo móvil navegable
+# Demo de Agenda y Alumnos · ENC-08R
 
-**Fina · 15/11/2026 · diseño para observar recorridos, no aplicación de gestión.** Basado en ENC-01 y ENC-02 de Vito integrados en `2c6ed6d8a6de8d8ac109ce16cdb9e283d0b4aa9b`. Sin commit ni push de esta entrega.
+**15/11/2026 · Fina.** Candidato local de diseño con datos inventados, sin app/BD ni publicación. Continúa ENC-08 tras una falla de conexión del motor y adapta ENC-06/07 a la [decisión de Nico](../../../DECISION-AGENDA-ALUMNOS.md). **No se hizo prueba con una dueña ni se declara aprobación de usuaria.**
 
-## Abrir
+## Abrir y explorar
 
-Desde la raíz del repositorio, servir solo la carpeta de diseño:
+Desde la raíz del repo:
 
 ```bash
-python3 -m http.server 8768 --bind 127.0.0.1 --directory docs/diseno
+python3 -m http.server 8783 --bind 127.0.0.1 --directory docs/diseno
 ```
 
-Abrir **http://127.0.0.1:8768/ux/prototipo/index.html#hoy** en Chrome. Si el puerto está ocupado, usar otro y ajustar la URL; el callback de verificación usa 8768. El servidor de revisión fue levantado temporalmente para esta entrega, no es un servicio instalado ni una publicación. No expone el repo completo ni permite conexión de otro dispositivo.
+Abrir **http://127.0.0.1:8783/ux/prototipo/index.html#hoy**. Servir por HTTP, no abrir `file://`: los módulos y SVG locales lo requieren. Puerto de revisión dedicado a Fina; si está ocupado, usar otro y ajustar los callbacks. No es servicio instalado, despliegue ni enlace público. La publicación la revisa/realiza Ada por separado.
 
-- Vista recomendada: **360×780**; también se recorrió a 320 px y 390×844. El contenedor crece hasta 440 px en escritorio.
-- Arrancá en Hoy, sin abrir «Pruebas» cuando observes a la dueña.
-- «Pruebas» permite alternar tema y estados vacío/cargando/error/sin conexión, y reiniciar. Cambiar escenario no guarda datos reales; los formularios conservan borrador en memoria al recuperarse.
-- **Recargar reinicia todo.** No hay localStorage, base de datos, cuentas reales ni sincronización entre pestañas. No ingresar nombres/teléfonos reales.
-- Fecha fija **15/11/2026 · America/Montevideo**. Tarifas de **ejemplo**: mensualidad $ 1.800 UYU, clase $ 250 UYU. No son precios confirmados ni configuración de producción.
+- Tamaño recomendado **360×780**; comprobaciones en 320/360/390 y claro/oscuro. Contenedor hasta 440 px en escritorio.
+- Barra con cinco destinos: **Hoy / Alumnos / Agenda / Cobros / Más**. Semana es la primera vista de Agenda; Mes permite elegir fecha y ver detalle. A 320 px/texto ampliado, lista de días alternativa con detalle seleccionado primero.
+- **Recargar reinicia todo.** Aviso visible arriba y pie: sin guardado real. No localStorage, API, base de datos, autenticación ni sincronización. No ingresar datos personales reales.
+- Fecha fija **15/11/2026, America/Montevideo**; fechas/horas presentadas en es-UY/24 h. Importes inventados: mensualidad $ 1.800 UYU, clase $ 250 UYU. No son tarifas de la clienta.
+- «Pruebas» abre temas, carga, vacío, error global/parcial, offline simulado, cancelada de ejemplo, texto ampliado y reinicio. No es menú necesario para usar la demo.
 
-## Recorridos disponibles
+## Recorridos actuales
 
-| Entrada | Qué permite explorar |
+| Entrada | Comportamiento observable |
 |---|---|
-| Hoy → Por vencer → Ana | Ficha con inicio, vencimiento y renovación; renovación continua; WhatsApp editable |
-| Alumnos → + Alumno | Alta ficticia por mensualidad o clase suelta → ficha (guardar no cobra) |
-| Ficha → Ver asistencia | Presente/ausente; propuesta de cobro; presencia de clase suelta sin cobrar deja deuda |
-| Cobrar desde asistencia/ficha/+ Pago | Monto de ejemplo, cambio con motivo, medio, revisión → registro **simulado** → ficha/lista |
-| Nuevo mensual → cobrar → asistencia | Pagada, sin iniciar → primera presencia; fechas fijas del fixture 15/11–14/12, renueva 15/12 |
-| Clase suelta → mensualidad | Clases adeudadas anteriores permanecen; si está asistiendo hoy, el fixture inicia hoy |
-| Ana → cambiar modalidad | Preserva cobertura pagada. Si se renovó en la sesión, incluye también ese ciclo futuro; no borra pagos |
-| Cobros | Listas filtradas de vencidas, por vencer, clases adeudadas e historial de la sesión |
-| Más / acciones sensibles | Explicación de límites y de Q2/Q3, sin ejecutar esos bordes |
-| Pruebas | Vacío, carga, error con reintento, sin conexión; ambos temas |
+| Agenda → día | Ver horarios y **quién viene**; no marcar presencia ni cobrar por consultar |
+| Día → Agendar alumno | Buscar ficha existente, filtrar modalidad y elegir horario; confirmar solo reserva de sesión |
+| Día sin clase → Agendar | Pedir hora explícita para esa fecha; no asumir duración, cupo ni recurrencia |
+| Agendar → Crear ficha nueva | Misma alta de Alumnos → vuelve al selector; todavía hay que confirmar programación |
+| Ver programación → Retirar | Confirmación: retira esa relación, conserva ficha, hechos e historial financiero |
+| Alumno que vuelve | Misma ficha aunque tenga alta antigua; individuales salteados sin crear otra persona |
+| Alumnos | Filtros Todos / Mensuales / Por clase individual; orden Más recientes por **alta** / Mensuales primero / Por clase individual primero; búsqueda combinable |
+| Vencimientos del día → ficha | Último día cubierto y próxima renovación separados; evento histórico no prueba deuda actual |
+| Ficha / Hoy → Registrar clase realizada | Recorrido secundario heredado, puntual y de prueba; **no lista escolar obligatoria**. Ruta `#asistencia` conservada |
+| Cobro heredado | Monto entero, motivo si cambia, medio → registro simulado; doble toque protegido solo en memoria |
+| Mensualidad pagada antes de clase efectiva | Pagada, sin iniciar. Agendar no inicia; fecha manual no se ejecuta en esta demo |
+| Ficha → WhatsApp | Pictograma genérico (no logo oficial), mensaje editable, apertura solo simulada; sin número/enlace real/envío |
+| Más / Ver horario | Límite visible: no editor general de horario, tarifas, reportes ni cuentas reales |
 
-**No automatizar como reglas:** el JS contiene salidas fijas de casos de diseño, no cálculos de meses, anclas, zona horaria ni precios productivos. Las pausas de 550 ms imitan una espera para observar feedback; no hay servidor de pagos. La protección del doble toque existe solo dentro de la sesión del prototipo, **no prueba idempotencia transaccional**.
+**Alumno ≠ programación ≠ clase realizada ≠ pago.** Los eventos contienen referencias a la ficha, no copias de alumnos. Los hechos efectivos se separan por ocurrencia. Si un mensual no viene, Agenda no prorroga ni cobra extra. Clase individual se cobra por clase efectivamente realizada, nunca por reservar. Los hechos/cobros heredados solo tienen fixture operativo del 15/11; fechas futuras no reutilizan su estado ni permiten marcar realizaciones.
 
-## Políticas pendientes y funciones no incluidas
+## Qué no hace
 
-- **Q2:** corregir una presencia cobrada o cancelar clase abre explicación de política pendiente; no ajusta dinero, deuda ni inicio de ciclo. Para mantener alcance reducido, la demo tampoco ejecuta correcciones de presencias ya registradas: las informa; no es una regla nueva del producto.
-- **Q3:** «Terminar mensualidad hoy» informa pendiente; no propone fecha efectiva ni corta cobertura.
-- Q1/Q4/Q5 siguen la conciliación de **PLAN §8.1**, posterior al README original de ENC-01: inicio con asistencia real (no por horario), deuda histórica no se condona y no se ofrece segunda renovación anticipada.
-- Sin tutor, grupos, roles adicionales, envío WhatsApp, push, pagos online, offline real, anulaciones ejecutables, editor de horario, precios configurables, CSV, autenticación ni backend. «Más» lo declara; no aparenta que esas pantallas existen.
-- Para una beca total, montos negativos o fechas arbitrarias no hay fixture: la demo acepta solo enteros positivos; esto **no fija** la política del dominio.
+- Q2/Q3 siguen explicativos: sin corrección cobrada, reintegro/reimputación, cancelación económica ni corte anticipado.
+- Sin recurrencias automáticas, cupos/lista de espera, profesores, grupos, tutor, recuperos, portal del alumno, canales reales, pagos online, anulaciones ejecutables, servidor o BD.
+- No generalizar el JS financiero de ENC-06: fechas/resultados son fijos. No prueba dinero real, idempotencia transaccional, auditoría, permisos, conservación durable ni múltiples dueños.
+- Offline/carga/error son controles de diseño, no cache, latencia o sincronización real. Las mutaciones no se encolan.
+- Texto ampliado 200 % es una simulación CSS de facilitación; no reemplaza font scale del SO, teléfono físico ni lector de pantalla.
 
-## Archivos y handoff
+## Módulos
 
-- `index.html`, `prototipo.css`, `prototipo.js`: fuente del prototipo; importa **sin modificar** `../../visual/tokens.css` y `../../visual/ui.css`.
-- [guion-sesion.md](guion-sesion.md): sesión breve con una dueña, tareas sin indicar botones, métricas y consentimiento.
-- [HANDOFF.md](HANDOFF.md): decisiones de interacción, alcance para Reina y validación todavía pendiente.
-- `prueba-navegacion.js`: callback Playwright ejecutado por **MCP Kaia Chrome**, sin dependencias de app. No es un test de Node ni un script para pegar en una consola de un sitio externo.
-- [evidencia/RESULTADOS.md](evidencia/RESULTADOS.md): comandos, resultados y límites de la revisión de Fina.
-- `evidencia/*.png`: capturas actuales con fixtures. `resumen.png` compone tres vistas sin alterar el contenido de las capturas.
+| Archivo | Responsabilidad |
+|---|---|
+| `index.html` | Shell, aviso de demo, controles de facilitación |
+| `datos-demo.js` | Fichas/fechas/ocurrencias sintéticas y vencimientos ya fechados |
+| `programacion.js` | Relaciones alumno–ocurrencia, anti-duplicado, retiro y hechos efectivos por clave compuesta |
+| `agenda.js` / `agenda.css` | Presentación Semana/Mes/detalle, aritmética de calendario **no financiera**, responsive y movimiento |
+| `alumnos.js` | Filtros/orden por alta, selector canónico y detalle de programación |
+| `iconografia.js` / `presentacion.js` | SVG locales de Vito, estados, botones y ayudas; no emojis ni dependencia externa |
+| `prototipo.js` / `prototipo.css` | Router/contexto y recorridos ENC-06 preservados; no lógica productiva |
 
-**Estado real:** prototipo recorrido por Fina mediante Chrome real. **No se realizó sesión con usuaria**, no se certificó accesibilidad, no hay validación presencial ni aprobación estética de Nico. ENC-06 prepara esa sesión; no cierra la salida de diseño de PLAN §6.
+Tokens/estilos base se importan sin modificar de `../../visual/`. Se usan los seis SVG ENC-07B y filtro/orden ENC-09. Transiciones 160 ms de opacity/transform y reduced-motion efectivo, sin librerías.
+
+## Pruebas y handoff
+
+- [Especificación UX actual](../agenda.md) y [HANDOFF.md](HANDOFF.md).
+- `prueba-agenda.js`: AG-01–15 conciliados, PG/AL, matriz de 36 combinaciones de pantalla/ancho/tema y movimiento.
+- `prueba-navegacion.js`: los **28 checks ENC-06**, con etiquetas nuevas Clase realizada / Por clase individual y acceso por Hoy/ficha en lugar de pestaña Asistencia.
+- `prueba-accesibilidad.js`: pares de contraste renderizados, objetivos, texto ampliado 320/360/390 en ambos temas, foco/última acción/fechas inválidas.
+- Todos son callbacks **MCP Kaia Chrome**, no pruebas Node, E2E de producción ni QA independiente. Deben localizar su pestaña por `:8783`, nunca asumir la actual. El callback Agenda desactiva caché HTTP de su origen de prueba para no medir módulos anteriores.
+- [Evidencia ENC-08R](evidencia/ENC-08R.md), manifiesto SHA-256 y capturas `evidencia/enc08r-*`. [Resultados ENC-06](evidencia/RESULTADOS.md) y su manifiesto/capturas se conservan como historia, no evidencia del candidato nuevo.
+- [Guion histórico](guion-sesion.md): preparado para ENC-06, **no ejecutado**. Para la futura sesión se deben usar las tareas actuales de agenda/retorno/filtros del handoff, no imponer pasar lista.
+
+Ada revisa e integra; Gino verifica independientemente el mismo candidato. Sin commit/push/publicación de Fina; Expo/Supabase y validación con usuaria quedan fuera de esta entrega.

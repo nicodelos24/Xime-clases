@@ -42,6 +42,10 @@ La fase 2 sigue: Fina entregó flujos/wireframes y estados documentales; Vito en
 
 Bordes Q1–Q5 registrados en `PLAN.md` §8.1: Q2 (ajuste de asistencia/clase ya cobrada) y Q3 (efecto temporal de «Terminar hoy») requieren definición de la clienta antes de implementarse; no frenan los wireframes normales. Precios, descuentos y gracia/bloqueo siguen pendientes de la clienta. Contador (DGI) y abogado (privacidad/hosting) son externos.
 
+## Recuperación ENC-08R e I1 preparada
+
+Fina cerró ENC-08R tras retomar solo el remanente del corte por cuota, sin reimplementar. Entregó manifiesto SHA-256 `25997a8c17521413da9441b09643c89355e9936bbbec579a55ddd41440d5db27` y 132 comprobaciones propias PASS, con fallas del arnés documentadas y reintentos exitosos. Ada revisó estructura y recorrió Agenda/agendar localmente en Chrome 390×844, sin overflow ni errores observados. Gino entregó ENC-10 APPROVED para el mismo manifiesto; sin defectos funcionales reproducibles. Ada acepta el candidato de demo para integrar/publicar, aún pendiente de comprobar la URL pública. ENC-09 de Vito está integrado; el 404 parcial de agenda.css no reapareció en el cierre local de Fina. `docs/ENCARGO-I1-REINA.md` concreta base Expo/TS con fixtures, navegación, Agenda y filtros/orden, con límites y aceptación. Sigue preparada **sin habilitar** hasta verificar D3 y QA. No se inicia Reina por APX.
+
 ## Informes
 
 Comunicar a Nico de forma simple, explicitar si pide decisión y recomendar una opción con consecuencias. Distinguir propuesta/decisión, pedido/entrega, revisión/aceptación e integración/publicación. Nunca declarar una fase aprobada sin evidencia.
