@@ -34,7 +34,9 @@ Una unidad por vez, con responsable, propósito, dependencias, resultado comprob
 
 ## Estado (15/11/2026)
 
-Reglas del producto cerradas; faltan solo precios, descuentos y gracia/bloqueo (dependen de la clienta). Fase 1 (definiciones) completa; sigue la fase 2: diseño visual (Fina), luego base de datos y seguridad (Reina, Emma, Gino). Sin código todavía. Pendientes externos: contador (DGI) y abogado (datos personales, región de hosting); no bloquean el piloto.
+La fase 2 sigue: Fina entregó flujos/wireframes y estados documentales; Vito trabaja la identidad y alta fidelidad. Reina entregó desde OpenCode externo el paquete `packages/dominio/` (mergeado, 22/22 tests); **no asignarle sesiones APX** mientras Nico use ese motor externo. Gino entregó matriz independiente y aprobó solo el alcance del dominio; asistencia, app, BD, auditoría y multi-tenant no están verificados. Emma prepara el documento de seguridad. Aún no hay app ni base de datos.
+
+Bordes Q1–Q5 registrados en `PLAN.md` §8.1: Q2 (ajuste de asistencia/clase ya cobrada) y Q3 (efecto temporal de «Terminar hoy») requieren definición de la clienta antes de implementarse; no frenan los wireframes normales. Precios, descuentos y gracia/bloqueo siguen pendientes de la clienta. Contador (DGI) y abogado (privacidad/hosting) son externos.
 
 ## Informes
 

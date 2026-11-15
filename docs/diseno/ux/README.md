@@ -1,56 +1,44 @@
-# Diseño UX — Clases (ENC-01)
+# Diseño UX — ENC-01
 
-**Autora:** Fina · **Fecha:** 15/11/2026 · **Estado:** propuesta para revisión de Ada y base para Vito (alta fidelidad). Cubre los entregables 1–3 de PLAN.md §4 (mapa y flujos, wireframes, estados).
-No hay código ni prototipo: todo lo de acá es papel. Nada se probó con usuarias reales.
+**Fina · 15/11/2026 · propuesta documental revisada contra PLAN.md §3, §4, §7 y §8.** Wireframes de baja fidelidad; no es una aplicación, prototipo navegable ni validación con usuarias. Sin commit ni push.
 
-## Contenido
+## Entrega
 
-| Archivo | Qué trae |
+| Archivo | Contenido |
 |---|---|
-| [`01-mapa-y-flujos.md`](01-mapa-y-flujos.md) | Mapa de navegación, reglas de presentación, los 9 flujos y la tabla de cobertura de los casos de PLAN §3.5 |
-| [`02-wireframes.md`](02-wireframes.md) | 14 wireframes de baja fidelidad (ASCII, móvil 360×780) con variantes de estado |
-| [`03-estados-copy-a11y.md`](03-estados-copy-a11y.md) | Catálogo de estados (vacío / cargando / error / sin conexión / confirmación), copy es-UY, accesibilidad, contrato de datos UI↔dominio |
+| [01-mapa-y-flujos.md](01-mapa-y-flujos.md) | Navegación y nueve flujos; trazabilidad de los doce casos de §3.5 |
+| [02-wireframes.md](02-wireframes.md) | Catorce wireframes ASCII móviles, jerarquía y variantes |
+| [03-estados-copy-a11y.md](03-estados-copy-a11y.md) | Matriz por pantalla: vacío, carga, error, sin conexión, confirmación; copy, comportamiento accesible y contratos de componentes |
 
-## Principios (guían todo el resto)
+**Entregables 1–3:** Fina define tareas, flujos, wireframes y comportamiento de componentes. Vito (`7e0c8d1df108-vito`, ENC-02) es responsable de identidad, tokens exportables, biblioteca visual y alta fidelidad en `docs/diseno/visual/`. No duplico su paleta ni doy su parte por terminada.
 
-1. **La UI no calcula reglas de cobro.** Fechas de ciclo, estado, ancla y precio los devuelve el dominio (`packages/dominio`, módulo Tarifas). La pantalla muestra una **vista previa** devuelta por el dominio antes de confirmar. Si el dominio no responde, no se muestra una fecha inventada.
-2. **Siempre dos fechas explícitas** en cualquier lugar donde aparezca una mensualidad: «vence el DD/MM» (último día cubierto) y «renueva el DD/MM».
-3. **Estado = ícono + texto + color**, nunca solo color. No hay estados editables a mano.
-4. **Pago en ≤ 3 toques desde donde estés** (alumno → confirmar con monto precargado), sin teclado salvo que se cambie el monto.
-5. **Sin gestos como único camino** para acciones críticas (el swipe, si existe, duplica un botón visible).
-6. **Acciones irreversibles dicen su consecuencia** en la confirmación («Anular pago» deja el ciclo sin efecto).
-7. **Sin conexión no hay pagos ni cambios de deuda** (PLAN §4): se muestra el motivo y «Reintentar»; nunca una falsa confirmación.
-8. **Un solo grupo, adultos, dos dueños:** no hay pantallas de grupos, tutor, ni roles de recepción/profesor en el MVP. Cada acción muestra «registrado por <dueño>».
+## Criterios transversales
 
-## Decisiones de diseño tomadas (propuestas por mí; Ada confirma o corrige)
+- Uruguay; moneda UYU, importes enteros, zona `America/Montevideo`; dos dueños nominales y alumnos adultos. Sin campo tutor, interfaz de grupos, selector de roles ni pantallas de funciones futuras.
+- Inicio del ciclo = primera clase posterior al pago (hoy si está asistiendo hoy al contratar mensualidad), o fecha manual. **Una clase prevista no prueba asistencia ni inicia por sí sola el ciclo.** Pago e inicio se distinguen en todos los textos.
+- Fechas/estado/precio vienen del dominio y de la respuesta autorizada del servidor. En ficha: inicio, «Vence el DD/MM» (último día cubierto) y «Próxima renovación: DD/MM». Sin inicio confirmado: «Pendiente de primera clase»; no inventar vencimiento. Si se muestra una estimación de horario, se etiqueta «Previsto, sujeto al inicio».
+- Se conserva el ancla en ciclos continuos: 31/01 → 28 o 29/02 → 31/03. El último día cubierto no es la fecha de renovación.
+- Ícono + texto + color para los seis estados. Conexión requerida para pagos, cambios de deuda y asistencia en este alcance; no cola offline ni éxito optimista.
+- Objetivo de cobro rápido **desde contexto conocido**: abrir cobro → elegir medio → confirmar con monto precargado. No se promete ese número de toques si hay búsqueda, edición o correcciones.
+- WhatsApp manual: editar texto, abrir `wa.me`, nunca afirmar envío/entrega. La constancia de apertura no reemplaza ni suprime los avisos internos a dueños.
+- Montos reales aún sin definir: `$… UYU` en wireframes, sin precios hardcodeados. No parciales, saldos a favor, varios meses juntos ni cobro online.
 
-| # | Decisión | Por qué |
+## Aclaraciones de producto para Ada (no resueltas por el diseño)
+
+No detienen la navegación ni la alta fidelidad del recorrido normal. No hay hipótesis de cobro implementables detrás de estas preguntas.
+
+| ID | Aclaración necesaria | Tratamiento en la entrega |
 |---|---|---|
-| U1 | Navegación inferior de 5 ítems + botón flotante «+ Pago» (visible en Hoy, Alumnos, Cobros; oculto en Asistencia y en formularios) | Plan §4; evita tapar la lista de asistencia |
-| U2 | «Cobros» = bandeja de trabajo (Vencidas · Por vencer · Clases adeudadas · Historial), no solo historial | Es la pregunta diaria de las dueñas: «¿a quién le cobro?» |
-| U3 | El cobro es una **hoja inferior (bottom sheet)** de un solo paso con resumen + «Confirmar», no un asistente de varias pantallas | Menos toques; el concepto y el monto ya vienen sabidos desde el contexto |
-| U4 | «Avisado por WhatsApp» se registra al abrir wa.me (no sabemos si lo envió); se muestra como «Aviso abierto el DD/MM» | Honesto con lo que la app sabe (PLAN §3.4) |
-| U5 | Hoy tiene dos tarjetas-número que abren listas filtradas: «Por vencer» y «Vencidas» (+ «Clases adeudadas»), más la lista «Por vencer» visible directamente | Pedido de Ada §3.1 |
-| U6 | Vista previa del ciclo en un componente único `CicloPreview` usado en alta, cobro, renovación y cambio de modalidad | Un solo lugar para mostrar «comienza / último día / renueva» |
+| Q1 | Cómo se confirma el inicio al pasar lista y al fijarlo manualmente, cuando no hay próxima clase o la prevista no se asiste | Mostrar `Pagada, sin iniciar`, fecha pendiente; solo presentar fechas definitivas del dominio. Fecha manual existe por §3.1, sin tomar la fecha de horario como hecho |
+| Q2 | Corrección de asistencia ya cobrada o cancelación de una clase cobrada: qué ajuste, deuda y ciclo resultan | Solicitar al servidor resumen del ajuste auditado y mostrar impacto antes de guardar; no diseñar reintegros ni extensiones automáticas |
+| Q3 | Efecto exacto de «Terminar mensualidad hoy»: si deja de cubrir la clase de hoy y desde cuándo cobra por clase | Motivo y no devolución automática ya están definidos; fecha efectiva del resultado pendiente del dominio. No asumir «desde mañana» |
+| Q4 | Clase suelta **adeudada**, anterior a nueva mensualidad: cómo se trata | Mostrar historial existente; sin condonar, convertir o eliminar deuda. §3.2.3 solo resuelve clases ya pagadas |
+| Q5 | Si ya existe una renovación anticipada pagada: qué operación permite el producto | No ofrecer compra de varios meses. Si el servidor rechaza otro cobro, explicar y enlazar al pago existente; no fijar una regla adicional |
 
-## Dudas abiertas para Ada (no inventé la regla; el diseño marca la hipótesis)
+**Propuestas UX, no reglas comerciales:** teléfono opcional con acción «Agregar teléfono» si falta; mensaje de WhatsApp editable sin pedir aprobación de plantilla a Nico; apertura visible como «WhatsApp abierto», no «Aviso enviado». Para confirmar cambios con otro dueño operando, refrescar la información y mostrar la respuesta del servidor; la UI no define claves de unicidad financieras.
 
-| # | Duda | Hipótesis usada en los wireframes | Impacto si cambia |
-|---|---|---|---|
-| Q1 | «Primera clase posterior al pago»: ¿se toma la **próxima clase del horario** o la **primera asistencia registrada**? | Próxima clase del horario (el dominio la devuelve en la vista previa); la dueña puede fijar el inicio a mano | Cambia la vista previa en alta/cobro |
-| Q2 | Si no hay clase futura en el horario (horario vacío o fin de año), ¿qué inicio se muestra? | «Sin clases en el horario: cargá el horario o fijá el inicio a mano»; el pago se puede registrar igual como *Pagada, sin iniciar* | Flujo F3 estado de error |
-| Q3 | Mensualidad vigente y ya **renovada por adelantado**: ¿se permite pagar otra más? (D4 deja «varios meses juntos» fuera) | Se bloquea con aviso «Ya tiene la renovación pagada (renueva el DD/MM)» | Flujo F6 |
-| Q4 | **Clase cancelada por el instituto** (§3.2): ¿hay acción en la app? ¿Mueve fechas de ciclo? | Acción «Cancelar clase» en Asistencia; no cobra y **no** extiende ciclos | Flujo F2 |
-| Q5 | **«Terminar mensualidad hoy»** (§3.6): ¿qué estado queda, y qué pasa con los días ya cubiertos? | Queda «Sin mensualidad» desde mañana, con motivo; sin devolución en la app | Flujo F5 |
-| Q6 | **Teléfono** del alumno: ¿obligatorio? Sin teléfono no hay wa.me | Opcional; el botón WhatsApp queda deshabilitado con el motivo «Cargá su teléfono» | Alta y ficha |
-| Q7 | **Plantilla del mensaje de WhatsApp**: ¿texto por defecto lo define Ada/Nico? | Propongo uno (ver 03), editable por alumno antes de enviar | Copy |
-| Q8 | **Dos dueños a la vez**: si el otro ya cobró lo mismo, ¿qué ve el segundo? | Al confirmar, el servidor responde «ya registrado por <Dueño B>» y no duplica (idempotencia por alumno+concepto+ciclo) | Estado de error en cobro |
-| Q9 | **Clase adeudada con alumno que luego paga mensualidad**: ¿se cancela la deuda? §3.2.3 dice que las pagadas no se reembolsan; las adeudadas no están dichas | Se mantienen adeudadas hasta cobrarlas o **condonarlas** (acción nueva con motivo, auditada) | Aparece una acción «Condonar» no prevista en el plan |
-| Q10 | **Aviso a dueños para «Pagada, sin iniciar»** que lleva muchos días sin iniciar (no vino a clase) | No hay aviso; chip informativo | — |
-| Q11 | Rol de recepción/profesor (PLAN §2) vs D6 («solo dueños usan la app») | Sin UI de roles en el MVP | Si vuelve, hay que diseñar vistas sin montos |
+## Verificación y límites
 
-## Dónde sigue
+Revisión documental: flujos pedidos, los doce casos de §3.5, seis estados de mensualidad, fechas explícitas, ausencia de UI de tutor/grupos y matriz de estados por pantalla. Evidencia reproducible en `verificacion.json` (incluye hashes de los cuatro Markdown; auditoría local, **no tests de app**).
 
-- **Ada:** responder Q1–Q11 (o confirmar hipótesis) en `Fina-Recibe.md`.
-- **Vito (ENC-02):** pasar a alta fidelidad desde `02-wireframes.md`; los nombres de tokens semánticos que uso están en `03`.
-- **Fina (siguiente):** componentes con nombre y contrato (entregable 2 de §4) y revisión de contraste cuando Vito entregue tokens.
+No se verificaron pantallas corriendo, contraste real, layout a 360 px, lector de pantalla, Android/iPhone, persistencia, push, WhatsApp real ni uso con una dueña. La fase de alta fidelidad y validación de PLAN §4 sigue a cargo de Vito/Ada; las especificaciones de accesibilidad son criterios a comprobar, no certificación.
