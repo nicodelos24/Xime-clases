@@ -24,7 +24,8 @@ export type ErrorComando =
   | { codigo: 'ALUMNO_INEXISTENTE'; mensaje: string }
   | { codigo: 'OCURRENCIA_INEXISTENTE'; mensaje: string }
   | { codigo: 'OCURRENCIA_CANCELADA'; mensaje: string }
-  | { codigo: 'PROGRAMACION_DUPLICADA'; mensaje: string };
+  | { codigo: 'PROGRAMACION_DUPLICADA'; mensaje: string }
+  | { codigo: 'FECHA_HORA_INVALIDA'; mensaje: string };
 
 export type Resultado<T> =
   | { ok: true; valor: T }
@@ -38,6 +39,7 @@ export interface ComandosProgramacion {
     /* clave idempotente para doble toque */ idempotencia?: string,
   ): Resultado<Programacion>;
   retirar(programacionId: string): Resultado<void>;
+  reprogramar(programacionId: string, fecha: string, hora: string): Resultado<Programacion>;
 }
 
 let contador = 0;
@@ -159,6 +161,27 @@ export class RepositorioFixtures
     };
     this.programaciones.push(programacion);
     return { ok: true, valor: programacion };
+  }
+
+  /** Mueve solo esta relación: nunca desplaza a otras personas de una ocurrencia compartida. */
+  reprogramar(programacionId: string, fecha: string, hora: string): Resultado<Programacion> {
+    const p = this.programaciones.find((x) => x.id === programacionId && x.activa);
+    if (!p) return { ok: false, error: { codigo: 'OCURRENCIA_INEXISTENTE', mensaje: 'La programación ya no está activa' } };
+    const valida = /^\d{4}-\d{2}-\d{2}$/.test(fecha) && /^([01]\d|2[0-3]):[0-5]\d$/.test(hora);
+    const d = new Date(`${fecha}T12:00:00Z`);
+    if (!valida || Number.isNaN(d.getTime()) || d.toISOString().slice(0, 10) !== fecha) {
+      return { ok: false, error: { codigo: 'FECHA_HORA_INVALIDA', mensaje: 'Ingresá fecha AAAA-MM-DD y hora HH:mm válidas' } };
+    }
+    const actual = this.ocurrencias.find(o => o.id === p.ocurrenciaId);
+    if (actual?.fecha === fecha && actual.hora === hora) return { ok: true, valor: p };
+    const destino = this.ocurrencias.find(o => o.fecha === fecha && o.hora === hora && o.estado === 'programada');
+    if (destino && this.programacionDe(p.alumnoId, destino.id)) {
+      return { ok: false, error: { codigo: 'PROGRAMACION_DUPLICADA', mensaje: 'El alumno ya está programado para ese horario' } };
+    }
+    const o = destino ?? { id: nuevoId('oc'), fecha, hora, estado: 'programada' as const };
+    if (!destino) this.ocurrencias.push(o);
+    p.ocurrenciaId = o.id;
+    return { ok: true, valor: p };
   }
 
   retirar(programacionId: string): Resultado<void> {

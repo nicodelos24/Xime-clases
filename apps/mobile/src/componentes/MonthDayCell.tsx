@@ -3,7 +3,14 @@ import { usarTema } from '../tema/tema';
 import type { ActividadDia } from '../datos/logica';
 import { MODALIDAD_COLOR } from '../tema/tokens';
 
-/** Celda del Mes: punto violeta mensual, rombo azul individual, personas únicas si cabe. */
+/**
+ * Celda del Mes ENC-13:
+ * - Sin borde ni fondo de celda.
+ * - Hoy: círculo sólido de acento detrás del número.
+ * - Día seleccionado: círculo suave (semitransparente) detrás del número.
+ * - Punto violeta = mensual, rombo azul = individual.
+ * - Sin contador, sin nombres, sin vencimientos.
+ */
 export function MonthDayCell({
   fecha,
   enOtroMes,
@@ -22,58 +29,72 @@ export function MonthDayCell({
   enTocar: () => void;
 }) {
   const { color, oscuro } = usarTema();
-  const ocupado = (actividad?.personas ?? 0) > 0;
-  const celda: string[] = [];
-  if (actividad?.tieneMensual) {
-    celda.push(MODALIDAD_COLOR[oscuro ? 'oscuro' : 'claro'].mensual.texto);
-  }
-  if (actividad?.tieneIndividual) {
-    celda.push(MODALIDAD_COLOR[oscuro ? 'oscuro' : 'claro'].individual.texto);
-  }
+  const pal = MODALIDAD_COLOR[oscuro ? 'oscuro' : 'claro'];
+  const tieneMensual = actividad?.tieneMensual ?? false;
+  const tieneIndividual = actividad?.tieneIndividual ?? false;
+  const personas = actividad?.personas ?? 0;
+
+  // Etiqueta accesible completa
+  const dia = Number(fecha.slice(8));
+  const modalLabel =
+    tieneMensual && tieneIndividual
+      ? ', mensual e individual'
+      : tieneMensual
+        ? ', mensual'
+        : tieneIndividual
+          ? ', individual'
+          : '';
+  const accLabel =
+    `Día ${dia}` +
+    (esHoy ? ', Hoy' : '') +
+    (seleccionada && !esHoy ? ', seleccionado' : '') +
+    (personas > 0
+      ? `, ${personas} alumno${personas === 1 ? '' : 's'} programado${personas === 1 ? '' : 's'}${modalLabel}`
+      : ', sin alumnos agendados');
+
+  const alto = Math.max(48, Math.min(60, ancho));
+
   return (
     <Pressable
       onPress={enTocar}
       accessibilityRole="button"
-      accessibilityLabel={
-        `Día ${fecha.slice(8)}, ` +
-        (ocupado
-          ? `${actividad?.personas} persona${actividad?.personas === 1 ? '' : 's'} programada${actividad?.personas === 1 ? '' : 's'}`
-          : 'sin programación')
-      }
+      accessibilityLabel={accLabel}
       accessibilityState={{ selected: seleccionada }}
-      style={[
-        s.celda,
-        {
-          width: ancho,
-          height: Math.max(44, Math.min(56, ancho)),
-          borderColor: color.borde,
-        },
-        seleccionada && { borderColor: color.acento, borderWidth: 2 },
-      ]}
+      style={[s.celda, { width: ancho, height: alto }]}
     >
+      {/* Círculo de Hoy o selección */}
+      {(esHoy || seleccionada) && (
+        <View
+          style={[
+            s.circulo,
+            esHoy
+              ? { backgroundColor: color.acento }
+              : { backgroundColor: color.acento + '33' },
+          ]}
+        />
+      )}
       <Text
         style={[
           s.num,
           { color: enOtroMes ? color.textoSuave : color.texto },
-          esHoy && { color: color.acento, fontWeight: '800' },
+          esHoy && { color: color.sobreAcento },
         ]}
       >
-        {fecha.slice(8)}
+        {dia}
       </Text>
-      <View style={s.marcas}>
-        {celda.map((c, i) => (
+      {/* Marcadores de modalidad: punto y/o rombo debajo del número */}
+      <View style={s.marcas} accessibilityElementsHidden>
+        {tieneMensual && (
           <View
-            key={i}
-            style={[
-              i === 1 ? s.rombo : s.punto,
-              { backgroundColor: c },
-            ]}
+            style={[s.punto, { backgroundColor: pal.mensual.texto }]}
+            accessibilityLabel="mensual"
           />
-        ))}
-        {ocupado && (actividad?.personas ?? 0) <= 9 && (
-          <Text style={[s.total, { color: color.textoSuave }]}>
-            {actividad?.personas}
-          </Text>
+        )}
+        {tieneIndividual && (
+          <View
+            style={[s.rombo, { backgroundColor: pal.individual.texto }]}
+            accessibilityLabel="individual"
+          />
         )}
       </View>
     </Pressable>
@@ -85,11 +106,22 @@ const s = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 2,
-    borderWidth: 1,
+    // Sin borderWidth ni backgroundColor: grilla limpia.
   },
-  num: { fontSize: 14, fontWeight: '600' },
-  marcas: { flexDirection: 'row', alignItems: 'center', gap: 3 },
-  punto: { width: 7, height: 7, borderRadius: 4 },
-  rombo: { width: 7, height: 7, transform: [{ rotate: '45deg' }] },
-  total: { fontSize: 10, fontWeight: '600', marginLeft: 2 },
+  circulo: {
+    position: 'absolute',
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+  },
+  num: { fontSize: 15, fontWeight: '600', zIndex: 1 },
+  marcas: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    height: 8,
+    zIndex: 1,
+  },
+  punto: { width: 6, height: 6, borderRadius: 3 },
+  rombo: { width: 6, height: 6, transform: [{ rotate: '45deg' }] },
 });

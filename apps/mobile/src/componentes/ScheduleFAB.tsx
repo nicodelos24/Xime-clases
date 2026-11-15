@@ -4,7 +4,6 @@ import { usarTema } from '../tema/tema';
 /** FAB extendido «+ Agendar» con fecha contextual explícita. */
 export function ScheduleFAB({ fecha, enAgendar }: { fecha: string; enAgendar: () => void }) {
   const { color } = usarTema();
-  const corto = fecha.slice(8) + '/' + fecha.slice(5, 7);
   return (
     <Pressable
       onPress={enAgendar}
@@ -13,7 +12,7 @@ export function ScheduleFAB({ fecha, enAgendar }: { fecha: string; enAgendar: ()
       style={[s.fab, { backgroundColor: color.acento }]}
     >
       <Text style={[s.texto, { color: color.sobreAcento }]}>
-        + Agendar · {corto}
+        + Agendar
       </Text>
     </Pressable>
   );

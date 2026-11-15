@@ -1,23 +1,31 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Text, View, StyleSheet } from 'react-native';
 
-/** Avatar de inicial, 40 px, con accesibilidad textual. */
-export function AvatarInitials({ nombre }: { nombre: string }) {
+/** Avatar de iniciales; tamaño configurable (por defecto 40 px). */
+export function AvatarInitials({
+  nombre,
+  tamaño = 40,
+}: {
+  nombre: string;
+  tamaño?: number;
+}) {
   const inicial = nombre.trim().charAt(0).toUpperCase() || '?';
+  const radio = tamaño / 2;
   return (
-    <View style={s.circulo} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-      <Text style={s.letra}>{inicial}</Text>
+    <View
+      style={[s.circulo, { width: tamaño, height: tamaño, borderRadius: radio }]}
+      accessibilityElementsHidden
+      importantForAccessibility="no-hide-descendants"
+    >
+      <Text style={[s.letra, { fontSize: tamaño * 0.42 }]}>{inicial}</Text>
     </View>
   );
 }
 
 const s = StyleSheet.create({
   circulo: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
     backgroundColor: '#E4DCE8',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  letra: { fontSize: 17, fontWeight: '600', color: '#5E2370' },
+  letra: { fontWeight: '600', color: '#5E2370' },
 });

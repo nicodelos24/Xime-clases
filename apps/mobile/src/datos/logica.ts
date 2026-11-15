@@ -72,7 +72,7 @@ export function personasUnicasDelDia(
   fecha: string,
 ): Set<string> {
   const idsOcurrenciasDelDia = new Set(
-    ocurrencias.filter((o) => o.fecha === fecha).map((o) => o.id),
+    ocurrencias.filter((o) => o.fecha === fecha && o.estado !== 'cancelada').map((o) => o.id),
   );
   const unicas = new Set<string>();
   for (const p of programaciones) {
@@ -102,12 +102,13 @@ export function actividadPorDia(
   const alumnosPorId = new Map(alumnos.map((a) => [a.id, a]));
   const ocPorId = new Map(ocurrencias.map((o) => [o.id, o]));
   const mapa = new Map<string, ActividadDia>();
+  const unicos = new Map<string, Set<string>>();
   for (const p of programaciones) {
     if (!p.activa) continue;
     const oc = ocPorId.get(p.ocurrenciaId);
     if (!oc || oc.estado === 'cancelada') continue;
     const alumno = alumnosPorId.get(p.alumnoId);
-    if (!alumno) continue;
+    if (!alumno || !alumno.activo) continue;
     let act = mapa.get(oc.fecha);
     if (!act) {
       act = {
@@ -120,15 +121,12 @@ export function actividadPorDia(
       mapa.set(oc.fecha, act);
     }
     act.programaciones += 1;
+    const ids = unicos.get(oc.fecha) ?? new Set<string>();
+    ids.add(alumno.id);
+    unicos.set(oc.fecha, ids);
     if (alumno.modalidad === 'mensual') act.tieneMensual = true;
     else act.tieneIndividual = true;
   }
-  for (const act of mapa.values()) {
-    act.personas = personasUnicasDelDia(
-      programaciones,
-      ocurrencias,
-      act.fecha,
-    ).size;
-  }
+  for (const act of mapa.values()) act.personas = unicos.get(act.fecha)?.size ?? 0;
   return mapa;
 }

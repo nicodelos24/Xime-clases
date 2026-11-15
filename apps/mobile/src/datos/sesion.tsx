@@ -48,7 +48,7 @@ export function ProveedorSesion({ children }: { children: React.ReactNode }) {
     [],
   );
   const [fecha, setFecha] = useState(hoy);
-  const [modo, setModo] = useState<'semana' | 'mes'>('semana');
+  const [modo, setModo] = useState<'semana' | 'mes'>('mes');
   const [origen, setOrigen] = useState<
     { vista: 'semana' | 'mes'; fecha: string } | undefined
   >(undefined);

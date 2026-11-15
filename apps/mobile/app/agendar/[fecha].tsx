@@ -48,9 +48,10 @@ export default function Agendar() {
     if (!seleccion || enviando) return; // un solo envío: evita doble toque
     setEnviando(true);
     let ocId = ocurrencia?.id;
+    let creadaEnEsteIntento = false;
     if (requiereHora) {
       // En I1 sin ocurrencia ese día se exige hora concreta (crea ocurrencia de fixture).
-      if (!/^\d{2}:\d{2}$/.test(hora)) {
+      if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(hora)) {
         setError('Escribí la hora (HH:mm) para ese día concreto');
         setEnviando(false);
         return;
@@ -63,10 +64,15 @@ export default function Agendar() {
       };
       repo.ocurrencias.push(nueva);
       ocId = nueva.id;
+      creadaEnEsteIntento = true;
     }
     const r = repo.agendar(seleccion, ocId as string, `prog-${seleccion}-${ocId}`);
     if (!r.ok) {
-      // El error conserva el borrador (búsqueda, selección, hora).
+      // El error conserva el borrador y no deja una ocurrencia huérfana.
+      if (creadaEnEsteIntento) {
+        const i = repo.ocurrencias.findIndex(o => o.id === ocId);
+        if (i >= 0) repo.ocurrencias.splice(i, 1);
+      }
       setError(r.error.mensaje);
       setEnviando(false);
       return;
