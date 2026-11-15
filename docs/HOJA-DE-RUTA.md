@@ -1,5 +1,7 @@
 # Hoja de ruta modular · Xime-clases
 
+> **Actualización de Nico, 15/11/2026 02:26:** rige [DECISION-AGENDA-ALUMNOS.md](DECISION-AGENDA-ALUMNOS.md). La integración parcial ENC-08 se interrumpió por fallo de conexión del motor, no se publicó. ENC-08R adapta lo pendiente: calendario con alumnos agendados (no lista escolar), fichas conservadas, filtros por modalidad y orden de alta o modalidad. ENC-09 incorpora guía de movimiento ligero e iconos. D3 aún no cumple la puerta para iniciar I1; Ada avisa a Nico al verificarla.
+
 **15/11/2026 · Encargo de Nico.** La prueba con una dueña no se puede coordinar por ahora: no se inventa una aprobación UX. En su lugar se comparte una **demo pública con datos ficticios** para revisión visual y se avanza con las reglas ya acordadas. Q2 (corregir clase cobrada) y Q3 (corte anticipado de mensualidad) permanecen sin automatizar hasta una decisión de la clienta. La demo no es la app de producción.
 
 ## Prioridad y dependencias
@@ -10,9 +12,9 @@
 | D2 | Vito | Alta | Lenguaje visual más guiado y colorido, íconos SVG reutilizables y WhatsApp SVG, sin emojis, contraste y licencias (`docs/diseno/visual/agenda-iconografia.md`) | ENC-02/06 |
 | D3 | Ada | Alta | Integrar D1/D2 sin conflictos, convertir el prototipo estático en demo visual navegable de Agenda y publicarlo por GitHub Pages, comprobar ruta, vistas y errores en Chrome | D1 + D2 |
 | D4 | Nico y una dueña cuando se pueda | Media, diferida | Revisar demo compartida, anotar problemas y elegir política Q2/Q3; no atribuirles pruebas que no hicieron | D3 y disponibilidad |
-| I1 | Reina (sesión externa OpenCode, **no iniciar por APX**) | Alta, después del diseño demo | Base Expo/React Native TypeScript con rutas Hoy, Agenda, Alumnos, Asistencia, Cobros, Más y sistema de componentes/tokens/SVG; estados explícitos, navegación y fixtures sin fingir cobros reales | D3, handoff visual/UX |
+| I1 | Reina (sesión externa OpenCode, **no iniciar por APX**) | Alta, después del diseño demo | Base Expo/React Native TypeScript con cinco destinos Hoy, Alumnos, Agenda, Cobros, Más; detalle de día con alumnos agendados y alta desde calendario, filtros y orden en Alumnos, componentes/tokens/SVG y movimiento reducido; fixtures sin fingir persistencia ni cobros reales | D3, handoff visual/UX |
 | I2 | Reina + Emma; Gino prueba | Alta, después de I1 o en unidad aislada | Supabase esquema/migraciones, Auth de dos dueños con MFA, RLS multi-tenant, roles, auditoría y pruebas negativas; contrato de datos | PLAN §3, docs/seguridad/, I1; Q2/Q3 excluidos |
-| I3 | Reina; Gino prueba | Alta | CRUD alumnos adultos, horario/agenda, ocurrencias/asistencia y mensualidad según `packages/dominio`, pruebas de fecha y estados | I2, dominio; calendario no infiere asistencia del horario |
+| I3 | Reina; Gino prueba | Alta | Registro durable de alumnos adultos e historial, horario/ocurrencias y programación alumno–ocurrencia, confirmación puntual de clase efectiva separada de reserva y mensualidad según `packages/dominio`, pruebas de fecha y estados | I2, dominio; calendario no infiere asistencia del horario |
 | I4 | Reina; Emma revisa, Gino prueba | Alta | Cobros manuales e idempotentes, deuda de clase suelta, ajustes de monto con motivo, anulación auditable, aviso de vencimiento a dueños y enlace WhatsApp **editable/manual** | I2–I3; Q2/Q3 aislados sin automatizar |
 | I5 | Gino + Ada | Alta, puerta de release | Pruebas end-to-end y RLS A/B, dinero/fechas, navegación y accesibilidad móvil, sin errores ni promesas falsas; evidencia de staging | I1–I4; legal/infra por responsables externos antes de producción |
 

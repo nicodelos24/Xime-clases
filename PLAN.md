@@ -1,10 +1,12 @@
-# Clases — plan de producto y arquitectura (v2, decisiones de Nico del 15/11/2026 integradas)
+# Clases — plan de producto y arquitectura (v3, Agenda y Alumnos, 15/11/2026)
+
+> **Decisión vigente de Nico, 02:26:** [Agenda y Alumnos](docs/DECISION-AGENDA-ALUMNOS.md) reemplaza el eje escolar «pasar lista» de las propuestas anteriores. Agenda muestra y permite agendar quién viene por fecha; Alumnos conserva fichas e historial y filtra/ordena mensuales e individuales. Los apartados históricos de asistencia se interpretan bajo este cambio: programar no prueba asistencia, no inicia ciclo ni genera cobro. ENC-08R adapta la demo; ENC-09 define movimiento/SVG livianos. Reina externa sigue sin orden de inicio hasta el aviso de unidad preparada.
 
 **Fecha:** 14/11/2026. **Estado:** propuesta, no especificación aprobada ni orden de implementar. Consulté a Fina (UX), Reina (desarrollo), Gino (QA), Emma (seguridad) y Zaira (infra/billing). El repositorio todavía no tiene aplicación ni base de datos. **Secuencia acordada con Nico:** definición del producto y diseño visual primero; después modelo de datos e implementación. Las reglas del negocio se definen *antes* de dibujar pantallas, aunque el esquema SQL se haga después.
 
 ## 1. Objetivo y límites
 
-Herramienta mobile-first para que un instituto de danza uruguayo inscriba alumnos, pase asistencia, registre cobros (mensualidad o clase suelta) y sepa qué vence y qué está impago, con **avisos de vencimiento**. Producto SaaS vendible a varios institutos aislados entre sí. El instituto cobra a sus alumnos; nuestra empresa cobra una suscripción **al instituto** (dos circuitos de dinero distintos).
+Herramienta mobile-first para que un instituto de danza uruguayo conserve sus alumnos, agende quién viene cada día y registre cobros (mensualidad o clase suelta) y sepa qué vence y qué está impago, con **avisos de vencimiento**. Producto SaaS vendible a varios institutos aislados entre sí. El instituto cobra a sus alumnos; nuestra empresa cobra una suscripción **al instituto** (dos circuitos de dinero distintos).
 
 **MVP (piloto con 1 instituto, 2 dueños, 1 solo grupo):** login por usuario (2 dueños), alumnos (adultos; el tutor queda como campo opcional apagado), horario de clases, asistencia, mensualidades con ciclo y vencimiento, clases sueltas cobradas al asistir, pagos manuales con anulación auditada, tablero «Hoy» (cobrado, por vencer, vencidos, clases del día), avisos de vencimiento (§3.4), reportes simples y exportación CSV, ajustes (precios, N de aviso).
 

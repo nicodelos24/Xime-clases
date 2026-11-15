@@ -32,6 +32,10 @@ Una unidad por vez, con responsable, propósito, dependencias, resultado comprob
 - Pagos solo registrados a mano, nunca editados ni borrados: se anulan con usuario y motivo.
 - Modularidad y documentación: cada módulo con README y reglas en un único lugar con tests.
 
+## Decisión vigente: Agenda y Alumnos (15/11/2026, 02:26)
+
+Nico reemplaza el enfoque escolar de pasar lista por calendario para ver/agendar quién viene cada día. Alumnos conserva fichas aunque no vengan por un tiempo; filtros Todos/Mensuales/Por clase individual y orden Más recientes (ambas modalidades mezcladas), Mensuales primero o Por clase individual primero. Ver `docs/DECISION-AGENDA-ALUMNOS.md`: alumno, programación, clase efectiva y pago separados. Una falta mensual no prorroga ni penaliza; una reserva no inicia ciclo ni genera deuda. Más visual/moderno con SVG y movimiento leve, sin ralentizar. Fina continúa ENC-08R tras error EAI_AGAIN con archivos parciales preservados; Vito ENC-09 de movimiento. Ada avisa a Nico cuándo la unidad I1 esté preparada para Reina externa tras demo/QA/handoff, sin iniciar sesión APX.
+
 ## Estado (15/11/2026)
 
 La fase 2 sigue: Fina entregó flujos/wireframes y estados documentales; Vito entregó identidad, tokens y ocho láminas estáticas (temas claro/oscuro). Las láminas visuales de Vito no sustituyen la validación con la dueña; el prototipo de Fina tampoco se probó con ella. Fina entregó ENC-06: prototipo navegable, guion y evidencia de recorrido sintético; falta observar a una dueña y aprobar el diseño. Emma entregó especificación documental de seguridad (12 amenazas, SEC-01–40), sin SQL ni controles reales probados; `PLAN.md` §5 remite a su análisis legal para evitar simplificaciones anteriores. Nada de esto habilita pasar a BD antes del cierre del diseño. Reina entregó desde OpenCode externo el paquete `packages/dominio/` (mergeado, 22/22 tests); **no asignarle sesiones APX** mientras Nico use ese motor externo. Gino entregó matriz independiente y aprobó solo el alcance del dominio; asistencia, app, BD, auditoría y multi-tenant no están verificados. La seguridad documental está entregada; no hay app productiva ni base de datos.
