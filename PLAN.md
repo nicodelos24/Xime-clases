@@ -139,7 +139,7 @@ Orden de Nico: diseño visual primero, base de datos después. Se lanzan en para
 | Responsable | Encargo | Carpeta propia | Depende de |
 |---|---|---|---|
 | Fina | **ENTREGADO (documental).** 9 flujos, 14 wireframes ASCII y estados/copy/accesibilidad; faltan prototipo y validación con dueña | `docs/diseno/ux/` | §3 y §7 |
-| Vito | Identidad visual, tokens y componentes; alta fidelidad desde los wireframes de Fina | `docs/diseno/visual/` | Fina (wireframes) para alta fidelidad |
+| Vito | **ENTREGADO (propuesta visual estática).** Identidad «Ritmo sereno», tokens RN/CSS, contratos de componentes y ocho láminas de Hoy, ficha, asistencia y cobro (claro/oscuro). Verificó contraste de pares AA y láminas en Chrome 360×780; faltan prototipo navegable y prueba con dueña | `docs/diseno/visual/` | Fina (wireframes) para alta fidelidad |
 | Reina | **ENTREGADO (15/11, sesión externa).** Núcleo de dominio puro en TypeScript (ciclos, ancla, estados, tarifas); 22/22 tests con `npm test` en `packages/dominio/`. Matriz independiente de Gino aprobó el alcance cubierto; app/BD no verificados | `packages/dominio/` | §3 |
 | Gino | **ENTREGADO.** Matriz independiente y resultados: 22/22 tests del dominio pasan; flujos app/BD aún no verificados | `docs/qa/` | §3, §3.5 |
 | Emma | Modelo de amenazas y especificación de aislamiento/RLS/auditoría (documento, sin SQL aún) | `docs/seguridad/` | §2, §5 |
