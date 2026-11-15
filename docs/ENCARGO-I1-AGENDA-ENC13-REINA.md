@@ -1,0 +1,29 @@
+# ENC-13 · Corrección de Agenda en I1 — encargo a Reina
+
+**15/11/2026 · Prioridad alta · unidad única de implementación.** Nico rechazó el aspecto de los calendarios de I1 (`feat/i1-base-movil` @ `2897387`): los días como cuadros individuales resultan aparatosos. Pide calendario **mes compacto** como la primera imagen compartida en chat y expansión a **día por horas con eventos editables** como la segunda. Esta tarea **sustituye solo la presentación/navegación de Agenda ENC-12**, no descarta la base I1 ni habilita I2. Nico autoriza iniciar ahora a Reina directamente en un chat nuevo de APX. No integrar ni publicar por esta orden.
+
+## Base y dependencias
+
+- Trabajar incrementalmente sobre la rama/worktree de Reina `feat/i1-base-movil` @ `2897387` (`.worktrees/i1-base-movil`); verificar estado y archivos propios/ajenos antes de editar. **El master contiene archivos de la app staged por un intento interrumpido de Ada; no tocarlos ni usarlos como base.** Dejar la rama I1 independiente y reportar SHA/cambios.
+- UX canónico: [`diseno/ux/agenda-enc13.md`](diseno/ux/agenda-enc13.md). Visual: [`diseno/visual/agenda-enc13.md`](diseno/visual/agenda-enc13.md) y tokens existentes de ENC-12. Reglas de negocio: [`DECISION-AGENDA-ALUMNOS.md`](DECISION-AGENDA-ALUMNOS.md), [`ENCARGO-I1-REINA.md`](ENCARGO-I1-REINA.md). Dos imágenes originales: `/tmp/apx-scratch-4f023747/th_bc445dfe11da4f1f/attachments/upload-iDHSWm/image.png` y `upload-zHhQJh/image.png` en la misma carpeta. Son referencias, no diseños para copiar pixel a pixel.
+- Leer `AGENTS.md`, `PROTOCOLO-AGENTES.md`, `apps/mobile/AGENTS.md`, `Reina-Recibe.md`, `Clases-Reina.md` y `PLAN.md`. Preservar el trabajo concurrente y la revisión visual transversal de Fina. Enviar entrega a Ada y Gino por buzones.
+
+## Comportamiento verificable
+
+1. **Entrada Agenda = Mes compacto:** siete columnas de fechas sin bordes, fondo ni tarjeta individual; encabezado mes, Hoy, flechas, números discretos; objetivo táctil ≥44 px. Punto violeta para presencia de mensual y rombo azul para individual; ambos si coexisten, ninguno si no hay alumnos activos; leyenda y etiquetas accesibles. Hoy y fecha activa distinguibles solo alrededor del número, no en toda la celda. Si 7×44 no caben, fallback lineal sin achicar toque; sin nombres, contadores cero ni pagos/vencimientos dentro de la grilla.
+2. **Tocar cualquier día abre expandido:** un día cronológico con columna de horas y tira de siete fechas para cambiar de día, no siete columnas microscópicas en móvil. Botón «‹ Mes» devuelve al mes/fecha/foco; swipe vertical opcional, nunca obligatorio ni interfiere con scroll. Transición corta y reduced-motion instantáneo. En eventos, mostrar alumno (avatar inicial), nombre, hora real de inicio, fin **solo si existe dato fiable**, modalidad textual y color/forma. Bloques suaves, con contraste y solapamientos legibles. Fecha vacía conserva horas + mensaje + CTA.
+3. **Editar/agregar desde el día:** tocar evento abre edición de **esa programación**, o detalle que expone Editar sin escrituras implícitas. Permitir cambiar fecha/hora/ocurrencia según el contrato actual, retirarla con confirmación sin tocar ficha/pagos, y volver al mismo día con bloques/puntos actualizados; menú visible accesible alternativo al long-press. `+ Agendar` precarga fecha y, si corresponde, hora, pero exige confirmación; anti-duplicado y borrador ante error siguen vigentes.
+4. **Límite importante de datos I1:** `Ocurrencia` hoy tiene `fecha` y `hora`, **no tiene fin ni duración**. No inventar `10:00–11:00` ni asumir que cada bloque dura una hora: usar hora de inicio como anclaje; altura visual mínima independiente de duración. Si se añade `horaFin` opcional, solo mostrarla cuando exista y probar el contrato. No convertir el alto de la franja (guía visual: 56 px) en duración de clase; evitar superposiciones inaccesibles con agrupación `+N` operable cuando haga falta. No duplicar alumno/modo en eventos: derivarlos de ficha y relación activa.
+5. **Alcance conservado:** solo Agenda, sus rutas/componentes de edición y fixtures/tests necesarios. Cinco destinos intactos. Agendar/editar/retirar no cobra, no modifica mensualidad, no crea asistencia, ni borra ficha. Persistencia real/Auth/Supabase, cobros y publicación fuera de I1. No trasladar trabajo a master ni reescribir otras pantallas.
+
+## Conciliación explícita de diseño
+
+- UX ENC-13 gobierna el flujo: mes compacto es entrada y tocar día **abre día expandido**; reemplaza entrada Semana/selección con resumen ENC-12. En móvil, una columna horaria; el ejemplo de Google Calendar es escritorio.
+- La visual ENC-13 aporta anchos, superficies y tipografía, pero donde difiere prevalece UX: Hoy círculo sólido, selección suave; punto + rombo por modalidad, no un solo punto; texto accesible y horas reales. No poner badge de modalidad en bloques tan angostos que oculte nombre/hora: reorganizar contenido.
+- Movimiento conforme `diseno/visual/movimiento.md`: preferir 160 ms / desplazamiento ≤4 px, máximo 240 ms para feedback, sin animación en reduced-motion. No copiar sugerencias de shadow CSS literal en RN: equivalencia nativa mínima solo si necesaria.
+
+## Evidencia y cierre
+
+- Tests focales de marcadores/fecha/duplicados/edición-retirada/no mutación financiera; regresión mobile + dominio; typecheck y lint conforme app AGENTS; export web si aplica.
+- En ejecución: 320/360/390, claro/oscuro, texto 200 %, reduced-motion, Mes vacío/ocupado, Día vacío/ocupado/solapado, creación/edición/retiro con retorno y consola. Guardar capturas del **candidato nuevo** en evidencia ENC-13 con SHA, no reutilizar capturas I1 como resultado.
+- Reportar qué se vio corriendo, cómo abrirlo para Nico (URL local o preview real, no un path ficticio), SHA, pruebas, riesgos y NO VERIFICADO (teléfono/lector si no se probó). QA independiente de Gino sobre ese candidato. **No declarar aprobación estética por Nico.**
