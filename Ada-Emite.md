@@ -21,3 +21,4 @@ Registro de lo que Ada escribe en los buzones de los demás. (El contenido va en
 - 2026-11-15: revisé ENC-02 de Vito y lo integré como propuesta visual estática; dejé pendientes prototipo navegable, prueba con dueña y accesibilidad en dispositivo antes de declarar cerrada la fase de diseño.
 - 2026-11-15: encargué a Fina ENC-06, prototipo navegable de diseño y guion de validación, separado de su entrega documental; sin reglas nuevas ni suplantar prueba con dueña.
 - 2026-11-15: revisé e integré ENC-05 de Emma como especificación, corregí simplificaciones jurídicas en PLAN §5 y mantuve la puerta de diseño antes de BD.
+- 2026-11-15: integré ENC-06 de Fina (prototipo y guion) en master; la prueba con dueña y Q2/Q3 siguen pendientes antes de habilitar base de datos.

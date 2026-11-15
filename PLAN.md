@@ -138,7 +138,7 @@ Orden de Nico: diseño visual primero, base de datos después. Se lanzan en para
 
 | Responsable | Encargo | Carpeta propia | Depende de |
 |---|---|---|---|
-| Fina | **ENTREGADO (documental).** 9 flujos, 14 wireframes ASCII y estados/copy/accesibilidad; faltan prototipo y validación con dueña | `docs/diseno/ux/` | §3 y §7 |
+| Fina | **ENTREGADO (ENC-01 y ENC-06).** 9 flujos, 14 wireframes ASCII, estados/copy/accesibilidad y prototipo navegable con guion; 28 comprobaciones sintéticas pasaron. Falta prueba con una dueña y aprobación del diseño | `docs/diseno/ux/` | §3 y §7 |
 | Vito | **ENTREGADO (propuesta visual estática).** Identidad «Ritmo sereno», tokens RN/CSS, contratos de componentes y ocho láminas de Hoy, ficha, asistencia y cobro (claro/oscuro). Verificó contraste de pares AA y láminas en Chrome 360×780; faltan prototipo navegable y prueba con dueña | `docs/diseno/visual/` | Fina (wireframes) para alta fidelidad |
 | Reina | **ENTREGADO (15/11, sesión externa).** Núcleo de dominio puro en TypeScript (ciclos, ancla, estados, tarifas); 22/22 tests con `npm test` en `packages/dominio/`. Matriz independiente de Gino aprobó el alcance cubierto; app/BD no verificados | `packages/dominio/` | §3 |
 | Gino | **ENTREGADO.** Matriz independiente y resultados: 22/22 tests del dominio pasan; flujos app/BD aún no verificados | `docs/qa/` | §3, §3.5 |
@@ -158,4 +158,4 @@ Estas precisiones **no sustituyen decisiones de Nico o la clienta**. El recorrid
 | Q4 | Una clase suelta adeudada antes de una mensualidad permanece deuda histórica; la mensualidad no la condona ni convierte automáticamente. Corregirla solo mediante operación auditada explícita, no en el cambio de modalidad (§3.2.3, §3.6). | Interpretación conservadora, sin saldo a favor |
 | Q5 | No cobrar dos renovaciones anticipadas para el mismo ciclo: §3.3 excluye pagar varios meses juntos y exige idempotencia. La UI muestra el pago ya programado y no ofrece otro cobro hasta que corresponda. | Interpretación conservadora; validar unicidad en capa de datos |
 
-**QA:** `docs/qa/RESULTS.md` aprueba solo lo cubierto por `packages/dominio/` (22/22); asistencia, pagos persistidos, anulación, auditoría, cambios de modalidad y aislamiento de institutos siguen sin pruebas. **Diseño:** los documentos de Fina son wireframes, no pantallas ni prototipo validado. Ninguna fase posterior queda habilitada por ese resultado aislado.
+**QA:** `docs/qa/RESULTS.md` aprueba solo lo cubierto por `packages/dominio/` (22/22); asistencia, pagos persistidos, anulación, auditoría, cambios de modalidad y aislamiento de institutos siguen sin pruebas. **Diseño:** Fina entregó prototipo navegable de diseño (`docs/diseno/ux/prototipo/`) y guion, con revisión sintética en Chrome; no hubo sesión con una dueña ni aprobación final. Q2/Q3 muestran política pendiente. Ninguna fase posterior queda habilitada por ese resultado aislado.
