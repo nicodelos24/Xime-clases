@@ -150,6 +150,10 @@ Orden de Nico: diseño visual primero, base de datos después. Se lanzan en para
 
 Después de integrar Agenda e iconografía en la demo: base Expo visual y fase de datos (Reina en sesión externa + Emma + Gino), según `docs/HOJA-DE-RUTA.md`. La prueba con dueña se difiere por disponibilidad y no equivale a aprobación; Nico autorizó avanzar con las reglas conocidas. Q2/Q3 no se implementan hasta definirlas con la clienta. Zaira queda en espera hasta definir entornos (fase base de datos). Reina no recibe nuevas tareas por APX: Nico la usa en una sesión externa de OpenCode.
 
+### ENC-12 rediseño visual de Agenda (15/11/2026, pendiente de inicio de Nico)
+
+Nico evaluó la demo publicada como visualmente pobre. Fina (ENC-12 UX) diagnosticó: Mes muestra contadores de clases en vez de personas; Semana repite siete botones anchos y días vacíos que empujan el contenido; Día tiene la tarjeta de clase como protagonista y sin fichas ricas. Especificó wireframes Semana/Mes/Día/modal agendar, estados, accesibilidad y contrato de implementación. Vito (ENC-12 visual) definió paleta con tokens de modalidad (mensual violeta, individual azul suave) y valores exactos para ambos temas. Ada consolidó `docs/ENCARGO-I1-AGENDA-VISUAL-REINA.md` con la conciliación UX×visual y lo dejó en el buzón de Reina. **Reina inicia cuando Nico dé la orden en OpenCode; sin sesión APX ni cambios en el prototipo HTML.**
+
 ### Agenda e iconografía (ENC-08R/09 integrados y publicados; D3 técnico cerrado)
 
 Conciliación Ada: `docs/diseno/ux/agenda.md` define el calendario solicitado como **destino propio**, no solamente una tarjeta en Hoy. Barra con cinco destinos: Hoy · Alumnos · Agenda · Cobros · Más. Asistencia conserva su pantalla y accesos desde Hoy/ficha/clase, como subruta de Agenda. Semana es lista vertical operativa; Mes permite seleccionar fecha y consultar detalle. Calendario no inicia ciclos, no marca asistencia ni crea cobros por mostrar un horario.

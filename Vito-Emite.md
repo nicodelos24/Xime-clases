@@ -9,3 +9,5 @@ Registro de lo que Vito escribe en los buzones de los demás. El mensaje complet
 2026-11-15 — A Ada: ENC-07B entregado; documento de dirección visual Agenda + seis SVG originales en alcance. XML/Chrome/contraste revisados. La ruta de Agenda nueva queda por resolver en UX; no toqué ENC-06.
 
 2026-11-15 — A Ada: ENC-09 entregado; `docs/diseno/visual/movimiento.md` + iconos originales `filtro.svg` y `orden.svg`. Guía usa tokens de motion y las opciones cerradas de Nico; inspección Chrome de demo parcial encontró 404 `agenda.css`, no evalué versión final. Fina avisada; no toqué prototipo ni PLAN.
+
+2026-11-15 — A Ada: ENC-12 entregado en `docs/diseno/visual/agenda-visual-enc12.md`; incluye revisión de demo pública, paleta exacta claro/oscuro (incluye propuesta individual), mes, semana/lista, detalle, medidas y movimiento para Reina. No toqué prototipo UX, wireframes ni app.
