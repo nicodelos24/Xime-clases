@@ -10,3 +10,5 @@ Registro de lo que Ada escribe en los buzones de los demás. (El contenido va en
 - 2026-11-15: PLAN.md v2 (reglas Uruguay); avisé a Fina que puede empezar flujos/sistema visual.
 
 - 2026-11-15: PLAN.md v2 cerrado (D1, D2, D3 ancla, D5, D6, adultos, §3.6, §3.7). Avisé a Fina (puede empezar diseño), Reina, Gino, Emma y Zaira. Clases-Ada.md actualizado con reglas vigentes y estado.
+
+- 2026-11-15: encargos ENC-01..05 (PLAN §8) a Fina, Vito, Reina, Gino y Emma; Zaira en espera.

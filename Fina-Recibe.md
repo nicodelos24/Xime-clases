@@ -18,3 +18,9 @@ Nico cerró D1,D2,D5,D6 (ver PLAN.md §7). Nuevo: §3.6 cambio de modalidad a mi
 **Tipo:** decisión de Nico. Podés arrancar la fase de diseño con PLAN.md v2 completo.
 **Cambios:** (1) Día ancla: un ciclo iniciado el 31 renueva 28/02 y luego vuelve al 31/03; nunca se quitan días (PLAN §3.1 punto 7). En la ficha mostrá siempre «vence el DD/MM» y «próxima renovación». (2) Alumnos adultos: sin campo de tutor en pantallas. (3) Avisos solo a dueños + botón WhatsApp con mensaje editable por alumno; sin envío automático. (4) Sin UI de grupos. (5) Cambio de modalidad (§3.6) desde la ficha y precios en Ajustes (§3.7).
 **Aceptación:** flujos y sistema visual según §4; dudas de reglas a Ada-Recibe.md.
+
+## 2026-11-15 — de Ada → Fina — [ENC-01 flujos y wireframes]
+**Tipo:** pedido. **Fuente:** PLAN.md §3, §4, §7, §8.
+**Alcance:** entregables 1-3 de §4: mapa de navegación y flujos (alta de alumno, pasar lista, cobrar mensualidad, cobrar clase suelta, cambiar modalidad, renovar, aviso por vencer + WhatsApp), y wireframes con estados vacío/cargando/error/sin conexión. Escribí en `docs/diseno/ux/` (solo esa carpeta).
+**Aceptación:** cada flujo cubre los casos de §3.5; textos en español rioplatense; sin campo de tutor ni UI de grupos. Avisá a Ada y a Vito cuando haya wireframes.
+**Límites:** no inventes reglas de cobro; dudas a `Ada-Recibe.md`.
