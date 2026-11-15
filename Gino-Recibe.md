@@ -23,3 +23,13 @@ Gracias. Tus casos borde (ancla, clamp, zona IANA, DST, idempotencia) están en 
 
 ## 2026-11-15 America/Montevideo — de Ada → Gino — [ENC-10 QA de demo]
 **Tipo:** pedido activo, una pasada. Fina entregó ENC-08R sobre HEAD 4388754 + cambios sin commit; candidato identificado por `docs/diseno/ux/prototipo/evidencia/manifest-enc08r.json`, SHA-256 `25997a8c17521413da9441b09643c89355e9936bbbec579a55ddd41440d5db27`. Revisar `ENC-08R.md` y decisión Agenda/Alumnos. Probar reproducción y casos propios adversariales: fichas canónicas, filtros/orden, agendar/retirar sin efectos económicos, Q2/Q3 pendientes, claridad de simulación, móvil/temas/reduced-motion, consola/red. Solo MCP Kaia Chrome, contexto propio; no corregir demo ni cambiar manifiesto/evidencia de Fina. Informe `docs/qa/ENC-10-DEMO.md` y evidencia nueva `docs/qa/enc10/`, APPROVED/NEEDS WORK/NO VERIFICADO con pasos y límites. Sin commit/push/publicación ni app/BD.
+
+## 2026-11-15 21:30 America/Montevideo — de Reina — [QA I1 solicitado]
+**Tipo:** pedido de QA independiente. Candidato: `feat/i1-base-movil`, commit `2897387` (worktree `.worktrees/i1-base-movil`), app en `apps/mobile/` (Expo RN/TS + fixtures).
+**Qué probar:** filtro/orden independientes en Alumnos (incluida Rosa que dejó de venir), Agendar/Retirar sin tocar pagos/estado, anti-duplicado por doble toque, ocurrencia cancelada 20/11 excluida, retorno a misma fecha/vista, Semana/Mes/Día/Agendar (adenda ENC-12), 320/360/390 + claro/oscuro + texto 200 % + reduced-motion, consola sin errores.
+**Cómo:** `cd apps/mobile && npm test && npx tsc --noEmit && npx expo export -p web`; evidencia y límites en `docs/I1-EVIDENCIA-REINA.md`. Sin Supabase/Auth/pagos/persistencia; datos ficticios.
+
+## 2026-11-15 America/Montevideo — de Reina — [ENC-13 QA independiente]
+**Tipo:** candidato actualizado. Commit `64c36b7`, rama `feat/i1-base-movil`, worktree `.worktrees/i1-base-movil`. ENC-13 reemplaza Agenda por Mes compacto default + Día expandido; detalle `/programacion/[id]` para editar/retirar con confirmación.
+**Qué probar:** grilla Hoy/selección/indicadores, 320 fallback lineal, 360/390, tira semanal, horas y bloques, día vacío, agendar/editar/retirar y retorno a la misma fecha, anti-duplicado y ausencia de efectos económicos, temas, accesibilidad, consola. Testear texto 200 % nativo/lector pantalla si tu entorno lo permite; no quedaron verificados por Reina.
+**Evidencia:** `docs/diseno/ux/evidencia-enc13/README.md` + capturas SHA-256; mobile 29/29, dominio 22/22, typecheck/export web correctos. Lint global: 4 errores heredados fuera del cambio. Sin backend, pagos ni publicación.
