@@ -86,7 +86,7 @@ Se hace desde la ficha del alumno con «Cambiar modalidad», sin tocar pagos vie
 
 ## 4. Flujos y diseño visual (trabajo inmediato, antes de SQL)
 
-**Mapa de navegación:** barra inferior «Hoy · Alumnos · Asistencia · Cobros · Más» y acción destacada «+ Pago». «Hoy»: clases del día, cobrado hoy, **Por vencer (próximos 7/10 días)**, Vencidas y clases adeudadas; cada número abre un listado filtrado. Ficha de alumno: datos y tutor (si es menor), modalidad (mensualidad / clase suelta), estado de mensualidad con inicio y vencimiento explícitos («vence el 17/05»), historial de pagos y asistencia, botón «Avisar por WhatsApp». Alta: datos → modalidad → (si mensualidad) cobrar ahora y mostrar «comienza en su primera clase». Cobro: alumno → concepto (mensualidad o clase suelta) → monto precargado (editable con motivo) → medio → confirmar → comprobante. Asistencia: elegir clase → lista de un toque; al marcar presente a un alumno por clase o con mensualidad vencida, ofrecer cobrar. Reportes: cobrado por período/medio, vencimientos, deudas, CSV. Ajustes: precios, días de aviso, usuarios (dos dueños).
+**Mapa de navegación:** barra inferior «Hoy · Alumnos · Asistencia · Cobros · Más» y acción destacada «+ Pago». «Hoy»: clases del día, cobrado hoy, **Por vencer (próximos 7/10 días)**, Vencidas y clases adeudadas; cada número abre un listado filtrado. Ficha de alumno: datos del alumno (adulto; sin tutor en el MVP), modalidad (mensualidad / clase suelta), estado de mensualidad con inicio y vencimiento explícitos («vence el 17/05»), historial de pagos y asistencia, botón «Avisar por WhatsApp». Alta: datos → modalidad → (si mensualidad) cobrar ahora y mostrar «comienza en su primera clase». Cobro: alumno → concepto (mensualidad o clase suelta) → monto precargado (editable con motivo) → medio → confirmar → comprobante. Asistencia: elegir clase → lista de un toque; al marcar presente a un alumno por clase o con mensualidad vencida, ofrecer cobrar. Reportes: cobrado por período/medio, vencimientos, deudas, CSV. Ajustes: precios, días de aviso, usuarios (dos dueños).
 
 **Entregables de Fina (en este orden):** 1) mapa de tareas y flujos con reglas confirmadas; 2) tokens y componentes del sistema visual; 3) wireframes de Hoy, alta, asistencia, ficha y cobro; 4) alta fidelidad en móvil con temas claro/oscuro, vacíos, carga, offline y error; 5) prototipo navegable validado con al menos una dueña y una persona de recepción; 6) handoff de componentes, interacciones, copy y estados para Reina. Diseño de marca cálido, moderno, austero y profesional; logo/acento configurable por instituto sin perder contraste. Estados con texto e ícono además de color; contraste WCAG AA, objetivos táctiles ≥44–48 px, tipografía escalable, lectores de pantalla, formatos de moneda y fecha localizados. Evitar gestos ocultos como único acceso a acciones críticas. En MVP conexión requerida para pagos y cambios de deuda; si falla la red no mostrar confirmación ni duplicar, se ofrece reintentar con la misma clave. Asistencia offline, si se necesita, se especifica y prueba como fase separada.
 
@@ -131,3 +131,17 @@ Se hace desde la ficha del alumno con «Cambiar modalidad», sin tocar pagos vie
 **Documentación y modularidad (requisito de Nico):** cada módulo (Alumnos, Asistencia, Mensualidades, Pagos, Tarifas, Avisos, Ajustes) tiene su carpeta con un `README` que dice qué hace, qué expone, qué reglas aplica y cómo extenderlo; las reglas de §3 viven en un único lugar de código con tests (§3.5); las decisiones se anotan en `docs/decisiones/`. Se revisa al cerrar cada módulo.
 
 Siguiente: Fina (flujos y diseño visual); luego base de datos con Reina, Emma y Gino.
+
+## 8. Encargos vigentes (15/11/2026)
+
+Orden de Nico: diseño visual primero, base de datos después. Se lanzan en paralelo solo trabajos que no dependen de ninguno de los dos y que no tocan los mismos archivos.
+
+| Responsable | Encargo | Carpeta propia | Depende de |
+|---|---|---|---|
+| Fina | Flujos, mapa de navegación, wireframes y estados (§4, entregables 1-3) | `docs/diseno/ux/` | §3 y §7 |
+| Vito | Identidad visual, tokens y componentes; alta fidelidad desde los wireframes de Fina | `docs/diseno/visual/` | Fina (wireframes) para alta fidelidad |
+| Reina | Núcleo de dominio puro en TypeScript (ciclos, ancla, estados, tarifas) con tests, sin base ni UI | `packages/dominio/` | §3 |
+| Gino | Matriz de casos de prueba independiente de reglas de fechas y cobro | `docs/qa/` | §3, §3.5 |
+| Emma | Modelo de amenazas y especificación de aislamiento/RLS/auditoría (documento, sin SQL aún) | `docs/seguridad/` | §2, §5 |
+
+Después (no empezar antes): base de datos (Reina + Emma + Gino), luego módulos de la app. Zaira queda en espera hasta definir entornos (fase base de datos).
