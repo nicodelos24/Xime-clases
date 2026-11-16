@@ -1,0 +1,41 @@
+{
+  "fecha_utc": "2026-11-15T04:14:17.503247+00:00",
+  "tipo": "Verificación estructural documental local; no tests de app, UX real, contraste ni dominio",
+  "base_head": "41e12607f7d2060dd37241585fc19d4d5f5c2caa",
+  "checks": {
+    "markdown": 4,
+    "flujos": 9,
+    "wireframes_ascii": 14,
+    "casos_PLAN_3_5_en_matriz": 12,
+    "pantallas_con_matriz_de_estados": 14,
+    "estados_mensualidad": 6,
+    "referencias_locales_existentes": true,
+    "bloques_de_codigo_cerrados": true,
+    "bocetos_sin_campo_tutor_ni_grupos": true,
+    "ids_de_dudas_consistentes_Q1_Q5": true
+  },
+  "archivos": {
+    "01-mapa-y-flujos.md": {
+      "bytes": 11623,
+      "sha256": "32011051bee59bce4c779e23d126b814b187864a18046b527b5dbe4a27da4a28"
+    },
+    "02-wireframes.md": {
+      "bytes": 15345,
+      "sha256": "a8fd47c30534b4ef8f6822940ead53102d119bef73de45524a3ccd762a9be2df"
+    },
+    "03-estados-copy-a11y.md": {
+      "bytes": 18988,
+      "sha256": "bac0a88c3f44a5f5f25cd1c4d64328d51c4e434038ba94e7aeef030fb2ea011a"
+    },
+    "README.md": {
+      "bytes": 5217,
+      "sha256": "3b328c113f3af897c33c5c2c7f8078a8bd8e4d777c895653f2e9d1df4e7ed256"
+    }
+  },
+  "limites": [
+    "Sin app ni captura de pantalla",
+    "Sin prueba Android/iPhone, lector o contraste",
+    "Reglas abiertas Q1-Q5 no resueltas",
+    "Sin commit ni push de Fina"
+  ]
+}

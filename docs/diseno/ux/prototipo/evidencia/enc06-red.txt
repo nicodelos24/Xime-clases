@@ -1,0 +1,85 @@
+1. [GET] http://127.0.0.1:8768/ux/prototipo/index.html => [200] OK
+2. [GET] http://127.0.0.1:8768/visual/tokens.css => [200] OK
+3. [GET] http://127.0.0.1:8768/visual/ui.css => [200] OK
+4. [GET] http://127.0.0.1:8768/ux/prototipo/prototipo.css => [200] OK
+5. [GET] http://127.0.0.1:8768/ux/prototipo/prototipo.js => [200] OK
+6. [GET] http://127.0.0.1:8768/ux/prototipo/index.html => [200] OK
+7. [GET] http://127.0.0.1:8768/visual/tokens.css => [200] OK
+8. [GET] http://127.0.0.1:8768/visual/ui.css => [200] OK
+9. [GET] http://127.0.0.1:8768/ux/prototipo/prototipo.css => [200] OK
+10. [GET] http://127.0.0.1:8768/ux/prototipo/prototipo.js => [200] OK
+11. [GET] http://127.0.0.1:8768/ux/prototipo/index.html?v=2 => [200] OK
+12. [GET] http://127.0.0.1:8768/visual/tokens.css => [304] Not Modified
+13. [GET] http://127.0.0.1:8768/visual/ui.css => [304] Not Modified
+14. [GET] http://127.0.0.1:8768/ux/prototipo/prototipo.css => [200] OK
+15. [GET] http://127.0.0.1:8768/ux/prototipo/prototipo.js => [200] OK
+16. [GET] http://127.0.0.1:8768/ux/prototipo/index.html?verificacion=enc06 => [200] OK
+17. [GET] http://127.0.0.1:8768/visual/tokens.css => [200] OK
+18. [GET] http://127.0.0.1:8768/visual/ui.css => [304] Not Modified
+19. [GET] http://127.0.0.1:8768/ux/prototipo/prototipo.css => [200] OK
+20. [GET] http://127.0.0.1:8768/ux/prototipo/prototipo.js => [200] OK
+21. [GET] http://127.0.0.1:8768/ux/prototipo/index.html?verificacion=enc06 => [200] OK
+22. [GET] http://127.0.0.1:8768/visual/tokens.css => [200] OK
+23. [GET] http://127.0.0.1:8768/visual/ui.css => [200] OK
+24. [GET] http://127.0.0.1:8768/ux/prototipo/prototipo.css => [200] OK
+25. [GET] http://127.0.0.1:8768/ux/prototipo/prototipo.js => [200] OK
+26. [GET] http://127.0.0.1:8768/ux/prototipo/index.html?verificacion=enc06 => [200] OK
+27. [GET] http://127.0.0.1:8768/visual/tokens.css => [304] Not Modified
+28. [GET] http://127.0.0.1:8768/visual/ui.css => [200] OK
+29. [GET] http://127.0.0.1:8768/ux/prototipo/prototipo.css => [304] Not Modified
+30. [GET] http://127.0.0.1:8768/ux/prototipo/prototipo.js => [200] OK
+31. [GET] http://127.0.0.1:8768/ux/prototipo/index.html?verificacion=enc06 => [200] OK
+32. [GET] http://127.0.0.1:8768/visual/tokens.css => [200] OK
+33. [GET] http://127.0.0.1:8768/visual/ui.css => [200] OK
+34. [GET] http://127.0.0.1:8768/ux/prototipo/prototipo.css => [304] Not Modified
+35. [GET] http://127.0.0.1:8768/ux/prototipo/prototipo.js => [304] Not Modified
+36. [GET] http://127.0.0.1:8768/ux/prototipo/index.html?verificacion=enc06 => [200] OK
+37. [GET] http://127.0.0.1:8768/visual/tokens.css => [200] OK
+38. [GET] http://127.0.0.1:8768/visual/ui.css => [304] Not Modified
+39. [GET] http://127.0.0.1:8768/ux/prototipo/prototipo.css => [304] Not Modified
+40. [GET] http://127.0.0.1:8768/ux/prototipo/prototipo.js => [200] OK
+41. [GET] http://127.0.0.1:8768/ux/prototipo/index.html?captura=final => [200] OK
+42. [GET] http://127.0.0.1:8768/visual/tokens.css => [304] Not Modified
+43. [GET] http://127.0.0.1:8768/visual/ui.css => [200] OK
+44. [GET] http://127.0.0.1:8768/ux/prototipo/prototipo.css => [304] Not Modified
+45. [GET] http://127.0.0.1:8768/ux/prototipo/prototipo.js => [304] Not Modified
+46. [GET] http://127.0.0.1:8768/ux/prototipo/index.html?captura=final2 => [200] OK
+47. [GET] http://127.0.0.1:8768/visual/tokens.css => [200] OK
+48. [GET] http://127.0.0.1:8768/visual/ui.css => [304] Not Modified
+49. [GET] http://127.0.0.1:8768/ux/prototipo/prototipo.css => [304] Not Modified
+50. [GET] http://127.0.0.1:8768/ux/prototipo/prototipo.js => [200] OK
+51. [GET] http://127.0.0.1:8768/ux/prototipo/index.html?verificacion=enc06 => [200] OK
+52. [GET] http://127.0.0.1:8768/visual/tokens.css => [304] Not Modified
+53. [GET] http://127.0.0.1:8768/visual/ui.css => [304] Not Modified
+54. [GET] http://127.0.0.1:8768/ux/prototipo/prototipo.css => [304] Not Modified
+55. [GET] http://127.0.0.1:8768/ux/prototipo/prototipo.js => [304] Not Modified
+56. [GET] http://127.0.0.1:8768/ux/prototipo/index.html?verificacion=enc06 => [200] OK
+57. [GET] http://127.0.0.1:8768/visual/tokens.css => [200] OK
+58. [GET] http://127.0.0.1:8768/visual/ui.css => [200] OK
+59. [GET] http://127.0.0.1:8768/ux/prototipo/prototipo.css => [200] OK
+60. [GET] http://127.0.0.1:8768/ux/prototipo/prototipo.js => [200] OK
+61. [GET] http://127.0.0.1:8768/ux/prototipo/index.html?extra=final => [200] OK
+62. [GET] http://127.0.0.1:8768/visual/tokens.css => [200] OK
+63. [GET] http://127.0.0.1:8768/visual/ui.css => [200] OK
+64. [GET] http://127.0.0.1:8768/ux/prototipo/prototipo.css => [304] Not Modified
+65. [GET] http://127.0.0.1:8768/ux/prototipo/prototipo.js => [304] Not Modified
+66. [GET] http://127.0.0.1:8768/ux/prototipo/index.html?listo=enc06 => [200] OK
+67. [GET] http://127.0.0.1:8768/visual/tokens.css => [200] OK
+68. [GET] http://127.0.0.1:8768/visual/ui.css => [200] OK
+69. [GET] http://127.0.0.1:8768/ux/prototipo/prototipo.css => [200] OK
+70. [GET] http://127.0.0.1:8768/ux/prototipo/prototipo.js => [200] OK
+71. [GET] http://127.0.0.1:8768/ux/prototipo/index.html?verificacion=enc06 => [200] OK
+72. [GET] http://127.0.0.1:8768/visual/tokens.css => [200] OK
+73. [GET] http://127.0.0.1:8768/visual/ui.css => [304] Not Modified
+74. [GET] http://127.0.0.1:8768/ux/prototipo/prototipo.css => [200] OK
+75. [GET] http://127.0.0.1:8768/ux/prototipo/prototipo.js => [200] OK
+76. [GET] http://127.0.0.1:8768/ux/prototipo/index.html?verificacion=enc06 => [200] OK
+77. [GET] http://127.0.0.1:8768/visual/tokens.css => [200] OK
+78. [GET] http://127.0.0.1:8768/visual/ui.css => [200] OK
+79. [GET] http://127.0.0.1:8768/ux/prototipo/prototipo.css => [200] OK
+80. [GET] http://127.0.0.1:8768/ux/prototipo/prototipo.js => [200] OK
+81. [GET] http://127.0.0.1:8768/ux/prototipo/index.html?listo=enc06 => [200] OK
+82. [GET] http://127.0.0.1:8768/visual/tokens.css => [304] Not Modified
+83. [GET] http://127.0.0.1:8768/visual/ui.css => [200] OK
+84. [GET] http://127.0.0.1:8768/ux/prototipo/prototipo.css => [304] Not Modified
+85. [GET] http://127.0.0.1:8768/ux/prototipo/prototipo.js => [304] Not Modified

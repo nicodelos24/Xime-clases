@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="es-UY" data-tema="claro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<link rel="icon" href="data:,">
+<title>Clases · demo de Agenda y recorridos</title>
+<link rel="stylesheet" href="../../visual/tokens.css">
+<link rel="stylesheet" href="../../visual/ui.css">
+<link rel="stylesheet" href="prototipo.css">
+<script type="module" src="prototipo.js"></script>
+<link rel="stylesheet" href="agenda.css">
+</head>
+<body>
+<div class="app">
+  <aside class="demo" aria-label="Aviso de prototipo"><span>DEMO · DATOS FICTICIOS</span><button id="abrir-pruebas" aria-expanded="false" aria-controls="pruebas">Pruebas</button></aside>
+  <section id="pruebas" class="laboratorio" aria-label="Controles para quien facilita" hidden>
+    <h2>Controles de prueba</h2><p>No cambian datos reales. Al recargar se reinicia todo.</p>
+    <label for="escenario">Estado de pantalla</label><select id="escenario"><option value="normal">Contenido normal</option><option value="vacio">Vacío / faltante</option><option value="cargando">Cargando</option><option value="error">Error recuperable</option><option value="offline">Sin conexión (simulado)</option><option value="error-clases">Agenda: error solo en clases</option><option value="error-vencimientos">Agenda: error solo en vencimientos</option><option value="cancelada">Agenda: clase cancelada de ejemplo</option></select>
+    <div class="acciones"><button id="tema" class="btn s">Usar tema oscuro</button><button id="reiniciar" class="btn s">Reiniciar demo</button><button id="texto-grande" class="btn s" aria-pressed="false">Texto ampliado 200 %</button></div>
+    <p class="ayuda">Fecha fija: 15/11/2026 · Montevideo. Tarifas de ejemplo: mensualidad $ 1.800 UYU, clase $ 250 UYU. No son precios acordados.</p>
+  </section>
+  <header class="marca"><span class="punto" aria-hidden="true"></span><span>Estudio demo <small>Clases · exploración de diseño</small></span><span class="dueno" aria-label="Cuenta ficticia Dueña A">DA</span></header>
+  <p class="aviso-sesion">Sin guardado real. Recargar reinicia la demo.</p>
+  <main id="contenido" tabindex="-1"></main>
+  <nav class="navegacion" aria-label="Principal"></nav>
+  <p id="anuncio" class="sr-only" role="status" aria-live="polite"></p>
+</div>
+<dialog id="dialogo" aria-labelledby="titulo-dialogo"><div id="dialogo-contenido"></div></dialog>
+</body>
+</html>
