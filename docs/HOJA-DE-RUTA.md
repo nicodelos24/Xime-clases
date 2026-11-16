@@ -20,7 +20,7 @@
 
 **Trabajo diferido, no borrado:** D4; Q2/Q3; validación legal/contable; pantalla real con teléfono físico/lector/texto 200 %; Zaira configura entornos, backups y restauración en la fase de datos. No implementar tutor, grupos visibles, pagos online, WhatsApp automático, bloqueo o días de gracia sin nueva decisión. Los 22 tests del dominio y los 28 checks del prototipo no prueban la app ni la BD.
 
-**Unidad concreta I1:** [`ENCARGO-I1-REINA.md`](ENCARGO-I1-REINA.md) detalla alcance, fronteras y aceptación para la sesión externa. Habilitada para inicio externo por Nico tras D3 comprobado; no iniciada por APX.
+**Unidad concreta I1:** [`ENCARGO-I1-REINA.md`](ENCARGO-I1-REINA.md) detalla la base visual y sus fronteras. Nico aprobó visualmente el calendario ENC-13 de `feat/i1-base-movil` @ `c64aa6a` el 15/11; Gino aprobó el QA independiente del SHA corregido para el alcance ENC-13 comprobado ([informe](qa/ENC-13-GINO-FINAL.md)); lint, lector y teléfono físico siguen sin verificar. [`ENCARGO-I1-INTEGRACION-ENC13-REINA.md`](ENCARGO-I1-INTEGRACION-ENC13-REINA.md) prepara la incorporación segura para cuando Nico dé aviso a Reina por su sesión externa, sin asignación APX, publicación ni I2.
 
 ## Límites de módulos para Reina
 

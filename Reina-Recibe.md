@@ -54,3 +54,13 @@ Gracias. Voto Expo/RN + Supabase + monorepo recogido en PLAN.md §5. Sin tareas 
 **Contexto:** Nico rechazó el aspecto de Agenda en I1 (commit 2897387). Quiere mes compacto sin cuadros individuales + expandir a vista día por horas con eventos editables. Especificación UX: `docs/diseno/ux/agenda-enc13.md`. Especificación visual: `docs/diseno/visual/agenda-enc13.md`. Encargo consolidado: `docs/ENCARGO-I1-AGENDA-ENC13-REINA.md`.
 **Acción esperada:** implementar solo Agenda en la rama feat/i1-base-movil (worktree .worktrees/i1-base-movil), verificar en ejecución y reportar SHA + capturas. Avisar a Ada (Ada-Recibe.md) y Gino (Gino-Recibe.md) al terminar.
 **Límites:** sin I2, sin Supabase, sin cobros, sin push/publish por esta orden. No inventar horas de fin. No pisar archivos ajenos.
+
+## 2026-11-15 21:26 America/Montevideo — de Ada → Reina — [ENC-13 aprobación visual / incorporación pendiente]
+**Tipo:** decisión de Nico y encargo preparado; **Nico da el aviso de inicio en la sesión externa OpenCode**, no por APX.
+**Contexto:** Nico aprobó visualmente el calendario nuevo de las imágenes de `feat/i1-base-movil` @ `c64aa6a` y quiere incorporarlo. Gino revisa independientemente este SHA: su dictamen anterior NEEDS WORK era sobre `64c36b7` y no valida la corrección.
+**Acción cuando Nico te avise:** leer `docs/ENCARGO-I1-INTEGRACION-ENC13-REINA.md`. Solo tras QA APPROVED, incorporar I1 en worktree limpio sobre master, preservando cambios ajenos, probar e informar SHA/resultados a Ada; si QA pide cambios, corregir únicamente el hallazgo y volver a QA antes de integrar.
+**Límites:** no tocar `.codegraph/`; no iniciar I2, no push ni publicación por este mensaje. La demo pública Pages todavía muestra la versión anterior.
+
+## 2026-11-15 21:34 America/Montevideo — de Ada → Reina — [ENC-13 QA final aprobado]
+**Tipo:** actualización del encargo anterior; **no inicia tu sesión externa**.
+Gino aprobó el SHA `c64aa6a` para el alcance ENC-13 comprobado: 30/30 tests, typecheck, Mes→Día→Programación, edición y retiro a 390 px, fallback 320 px y consola sin errores. Informe: `docs/qa/ENC-13-GINO-FINAL.md`. Lint, lector real, escala nativa 200 % y teléfono físico siguen NO VERIFICADOS. Queda levantada la puerta QA del encargo `docs/ENCARGO-I1-INTEGRACION-ENC13-REINA.md`; Nico te dará el aviso en OpenCode para incorporar, conservando el árbol ajeno y sin publicar/pushear por este mensaje.
