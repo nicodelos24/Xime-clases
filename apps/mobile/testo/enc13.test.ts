@@ -13,7 +13,16 @@ import {
 } from '../src/datos/fixtures.ts';
 import { RepositorioFixtures } from '../src/datos/repositorios.ts';
 import { actividadPorDia, programacionesPorOcurrencia } from '../src/datos/logica.ts';
-import { sumarDias, lunesDe, diaSemanaIndex } from '../src/datos/fechas.ts';
+import { sumarDias, lunesDe, diaSemanaIndex, etiquetaDiaMes } from '../src/datos/fechas.ts';
+
+test('ENC-13 Mes anuncia fecha completa, conteo, selección y marcadores', () => {
+  assert.equal(etiquetaDiaMes('2026-11-16', 3, true, true, false, true),
+    'Día lunes 16 de noviembre de 2026, seleccionado, 3 alumnos programados, mensual e individual');
+  assert.equal(etiquetaDiaMes('2026-11-15', 0, false, false, true, true),
+    'Día domingo 15 de noviembre de 2026, Hoy, sin alumnos agendados');
+  assert.equal(etiquetaDiaMes('2027-01-01', 1, false, true, false, false),
+    'Día viernes 1 de enero de 2027, 1 alumno programado, individual');
+});
 
 const nuevos = () =>
   new RepositorioFixtures(

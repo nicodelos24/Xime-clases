@@ -10,9 +10,10 @@ export default function Raiz() {
         <StatusBar style="auto" />
         <Stack>
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          <Stack.Screen name="dia/[fecha]" options={{ title: 'Día' }} />
+          <Stack.Screen name="dia/[fecha]" options={{ title: 'Día', headerShown: false }} />
           <Stack.Screen name="agendar/[fecha]" options={{ title: 'Agendar' }} />
           <Stack.Screen name="ficha/[id]" options={{ title: 'Ficha' }} />
+          <Stack.Screen name="programacion/[id]" options={{ title: 'Programación' }} />
         </Stack>
       </ProveedorSesion>
     </ProveedorTema>

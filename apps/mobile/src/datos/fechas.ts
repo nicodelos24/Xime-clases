@@ -55,6 +55,16 @@ export function etiquetaFechaLarga(f: string): string {
   return `${DIAS_LUNES[diaSemanaIndex(f)]} ${dia} de ${MESES[mes - 1]} de ${anio}`;
 }
 
+export function etiquetaDiaMes(f: string, personas: number, mensual: boolean, individual: boolean, hoy: boolean, seleccionada: boolean): string {
+  const modalidades = mensual && individual ? ', mensual e individual' : mensual ? ', mensual' : individual ? ', individual' : '';
+  return `Día ${etiquetaFechaLarga(f)}` +
+    (hoy ? ', Hoy' : '') +
+    (seleccionada && !hoy ? ', seleccionado' : '') +
+    (personas > 0
+      ? `, ${personas} alumno${personas === 1 ? '' : 's'} programado${personas === 1 ? '' : 's'}${modalidades}`
+      : ', sin alumnos agendados');
+}
+
 export function etiquetaMes(anio: number, mes: number): string {
   return `${MESES[mes - 1]} ${anio}`;
 }

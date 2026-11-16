@@ -2,6 +2,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { usarTema } from '../tema/tema';
 import type { ActividadDia } from '../datos/logica';
 import { MODALIDAD_COLOR } from '../tema/tokens';
+import { etiquetaDiaMes } from '../datos/fechas';
 
 /**
  * Celda del Mes ENC-13:
@@ -34,23 +35,8 @@ export function MonthDayCell({
   const tieneIndividual = actividad?.tieneIndividual ?? false;
   const personas = actividad?.personas ?? 0;
 
-  // Etiqueta accesible completa
   const dia = Number(fecha.slice(8));
-  const modalLabel =
-    tieneMensual && tieneIndividual
-      ? ', mensual e individual'
-      : tieneMensual
-        ? ', mensual'
-        : tieneIndividual
-          ? ', individual'
-          : '';
-  const accLabel =
-    `Día ${dia}` +
-    (esHoy ? ', Hoy' : '') +
-    (seleccionada && !esHoy ? ', seleccionado' : '') +
-    (personas > 0
-      ? `, ${personas} alumno${personas === 1 ? '' : 's'} programado${personas === 1 ? '' : 's'}${modalLabel}`
-      : ', sin alumnos agendados');
+  const accLabel = etiquetaDiaMes(fecha, personas, tieneMensual, tieneIndividual, esHoy, seleccionada);
 
   const alto = Math.max(48, Math.min(60, ancho));
 

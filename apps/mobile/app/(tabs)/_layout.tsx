@@ -48,6 +48,7 @@ export default function Pestañas() {
         name="agenda"
         options={{
           title: 'Agenda',
+          headerShown: false,
           tabBarLabel: etiqueta('Agenda'),
           tabBarIcon: ({ color }) => <Icono g="▦" nombre="Agenda" />,
         }}
