@@ -1,5 +1,8 @@
 # I1 / ENC-13 — incorporación del calendario aprobado
 
+
+**Cierre técnico (15/11):** Reina incorporó `c64aa6a` en rama de integración limpia, merge `4c23ac8` + evidencia `9ed2d35`; Ada volvió a ejecutar 30/30 mobile, 22/22 dominio, typecheck, export web y recorrió Mes → Día → Programación → retorno en Chrome 390 px, sin errores de consola. El resto del documento conserva el encargo histórico; no autoriza I2 ni despliegue de Expo. Lint, lector de pantalla, 200 % nativo, teléfono físico y validación con dueña siguen pendientes.
+
 **15/11/2026 · Preparado por Ada para que Nico lo inicie con Reina en su sesión externa OpenCode.** Esta nota no inicia ninguna sesión ni autoriza I2.
 
 ## Decisión y base
