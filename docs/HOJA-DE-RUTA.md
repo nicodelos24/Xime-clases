@@ -20,7 +20,7 @@
 
 **Trabajo diferido, no borrado:** D4; Q2/Q3; validación legal/contable; pantalla real con teléfono físico/lector/texto 200 %; Zaira configura entornos, backups y restauración en la fase de datos. No implementar tutor, grupos visibles, pagos online, WhatsApp automático, bloqueo o días de gracia sin nueva decisión. Los 22 tests del dominio y los 28 checks del prototipo no prueban la app ni la BD.
 
-**Unidad concreta I1:** [`ENCARGO-I1-REINA.md`](ENCARGO-I1-REINA.md) detalla alcance, fronteras y aceptación para la sesión externa. Habilitada para inicio externo por Nico tras D3 comprobado; no iniciada por APX.
+**Unidad concreta I1:** [`ENCARGO-I1-REINA.md`](ENCARGO-I1-REINA.md) detalla la base visual y sus fronteras. Nico aprobó visualmente ENC-13 de `c64aa6a`; Gino aprobó el QA independiente para el alcance comprobado ([informe](qa/ENC-13-GINO-FINAL.md)). Reina lo integró en rama aislada sobre master: `4c23ac8`, evidencia `9ed2d35`. Ada comprobó mobile 30/30, dominio 22/22, typecheck, export web y recorrido Mes → Día → Programación → retorno; lint, lector, texto 200 % nativo y teléfono físico siguen sin verificar. [`ENCARGO-I1-INTEGRACION-ENC13-REINA.md`](ENCARGO-I1-INTEGRACION-ENC13-REINA.md) conserva el encargo histórico. Push del código no despliega la app Expo ni cambia la demo Pages; I2 requiere encargo propio.
 
 ## Límites de módulos para Reina
 

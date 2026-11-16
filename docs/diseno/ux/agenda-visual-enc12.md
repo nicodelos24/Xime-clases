@@ -360,3 +360,59 @@ agenda.js   281df565c67fc3d94be212a2ac4d668d6509404ca3680377bf4632e558b1f17a
 **Sigue Vito (`7e0c8d1df108-vito`):** conciliación de estas superficies con su dirección visual concurrente y cierre de alias de modalidad, sin cambiar reglas ni navegación. **Después Reina (`7e0c8d1df108-developer`), cuando Ada asigne y Nico inicie externamente:** implementación acotada, no este encargo documental. Gino conserva QA independiente de un candidato exacto. No inicié sus sesiones ni les asigné trabajo APX.
 
 **NO VERIFICADO:** apariencia/fluidez del rediseño (no implementado), tema oscuro renderizado de la propuesta, reduced-motion efectivo de la propuesta, teléfono físico, lector de pantalla, usuaria real, persistencia/BD, seguridad multi-instituto y producción. No hace falta una decisión de negocio nueva para avanzar en este alcance; la concreción visual de Vito sigue siendo propuesta de diseño, no aprobación de Nico.
+
+## ENC-13 — Revisión Mes
+
+**15/11/2026 · Corrección UX por rechazo visual de Nico.** Esta sección **reemplaza únicamente la composición de la cuadrícula Mes de ENC-12** donde contradiga lo siguiente; Semana, Día, agendado y reglas de negocio no cambian. Dirección aprobada: grilla abierta estilo Google Calendar, **sin bordes, separadores ni fondos individuales de celda**. Es un wireframe, no una captura ni una implementación revisada.
+
+### Wireframe de Mes (estructura, no píxeles finales)
+
+```text
+Agenda                                 Hoy
+[ Semana | MES ]
+‹             Noviembre 2026           ›
+
+ Lu     Ma     Mi     Ju     Vi     Sá     Do
+                                           1
+  2      3      4      5      6      7      8
+  9     10     11     12     13     14    (15)  ← Hoy
+                                        ●
+ 16    (17)    18     19     20     21     22  ← 17 seleccionado
+        ◆             ● ◆
+ 23     24     25     26     27     28     29
+ 30
+
+ ● Mensual     ◆ Por clase individual
+
+Mar 17 de noviembre · 1 alumno programado
+[LS] Lucía Silva                 Individual
+Danza · 18:00–19:00              [Ver día ›]
+                                    [+ Agendar]
+──────── Hoy · Alumnos · Agenda · Cobros · Más ────────
+```
+
+Los paréntesis son **círculos detrás del número**, no bordes de celda: el 15 ilustra Hoy y el 17 seleccionado; el dibujo puede mostrar ambos porque son fechas diferentes. ● y ◆ indican presencia de modalidad en días con alumnos, **no cantidad de alumnos**. Los datos/nombres son ilustrativos; calcular el calendario con las reservas efectivas, sin inventar fixtures. La cantidad y los nombres aparecen en el resumen inferior, no dentro de cada fecha.
+
+- Cada fecha ocupa un objetivo táctil invisible de **al menos 44×44 px** dentro de siete columnas alineadas. La celda completa responde al toque, pero **no tiene contorno, sombra, fondo, divisor ni tarjeta**, tampoco en hover normal. Los números flotan alineados sobre el fondo continuo del calendario. Tampoco hay líneas horizontales entre semanas. Mantener aire vertical uniforme; no usar el borde para separar columnas.
+- **Día sin alumnos:** solo número, sin `0`, punto, rombo ni forma alrededor. Un horario previsto sin alumnos no agrega marca de modalidad; se informa en el resumen al seleccionar ese día. Vencimientos no generan un símbolo en la grilla y siguen disponibles en el detalle.
+- **Día con alumnos:** uno o dos símbolos pequeños debajo del número, círculo violeta para mensual y rombo azul suave para individual, según la guía concurrente de Vito. Si hay muchos de una modalidad, **no repetir puntos** ni agregar contador en la celda. Usar leyenda visible y nombre accesible completo con cantidad real de alumnos únicos y desglose; no depender del color para comprenderlo.
+- **Hoy:** solo el número lleva un **círculo de acento sólido** detrás, con tinta `sobreMarca` de contraste. Nada de superficie tintada para la celda completa. Si además está seleccionado, conservar el círculo de Hoy y anunciar «Hoy, seleccionado»; el resumen con fecha y el estado accesible hacen visible la selección sin apilar dos círculos. **Seleccionado distinto de Hoy:** círculo/píldora **suave** detrás del número, con tinta de marca contrastada. El anillo de foco de teclado se aplica al objetivo táctil y sigue siendo distinto de Hoy/selección; no se muestra como borde permanente de todas las fechas.
+- Los indicadores se dibujan **debajo** del círculo del número, sin superponerlo ni perder contraste en ambos temas. Si al reducir ancho/texto no cabe el par de símbolos, un solo indicador neutro de actividad + desglose textual en el resumen es preferible a achicar el objetivo. Se conserva la alternativa lineal de ENC-12 si siete objetivos de 44 px no caben: nunca convertir la grilla abierta en mini-celdas inaccesibles.
+
+### Comparación y razón del cambio
+
+| ENC-12 previo | ENC-13 vigente | Mejora |
+|---|---|---|
+| Borde visible por fecha / apariencia de cuadros separados en el resultado rechazado | Superficie continua, sin borde ni fondo individual | La lectura vuelve al patrón de calendario y el ojo sigue semanas, no 42 tarjetas. |
+| Relleno de toda la celda para día con personas o seleccionado | Solo símbolos de modalidad y círculo/píldora **detrás del número** para Hoy/selección | Reduce ruido y reserva el acento para las fechas que importan. |
+| Conteos compactos dentro de fechas | Conteo y nombres en el resumen inferior | Evita microtexto y colisiones a 320–390 px; conserva la respuesta «quién viene». |
+
+El primer wireframe M de este documento ya pedía un calendario más liviano, pero admitía fondo suave para días ocupados y relleno de celda seleccionada. **Eso queda revocado para Mes.** Si una implementación muestra marcos individuales aunque el texto diga «sin tarjeta», incumple esta revisión. No extrapolar la eliminación de bordes a tarjetas/filas de Semana o Día.
+
+### Selección y resumen: ajuste mínimo
+
+1. Tocar **cualquier área del objetivo invisible** de una fecha selecciona ese día; no abre de inmediato modal, ficha ni cobro. El resaltado cambia **solo detrás del número** (salvo Hoy, cuyo círculo sólido se conserva).
+2. En el mismo cambio de estado, actualizar fecha/título, cantidad, hasta dos alumnos y acceso «Ver día» del resumen debajo de la grilla. Si está vacío: «Todavía no hay alumnos agendados para este día» y posibilidad de agendar; no falso cero por carga o error. Evitar salto automático al resumen al tocar una fecha; mantener posición de la grilla y foco en la fecha, con anuncio accesible breve del cambio.
+3. «Ver día» abre la vista Día con la fecha elegida. Volver restaura Mes, fecha, posición y foco. El FAB «Agendar» usa esa fecha explícita y vuelve a mostrarla antes de confirmar; la programación no marca presencia, no cobra ni inicia mensualidad.
+
+**Pendiente de comprobación cuando exista candidato:** inspección visual real a 320/360/390 y ambos temas, estado Hoy+seleccionado, foco/teclado, 200 % de texto y contraste de indicadores. Esta sección no declara aprobado el resultado renderizado.

@@ -4,6 +4,16 @@ Buzón de Ada. Escribí abajo con fecha, corto y claro.
 
 ---
 
+## 2026-11-15 22:0x America/Montevideo — de Reina → Ada — [I1/ENC-13 integrada]
+**Tipo:** entrega. Rama `feat/i1-integracion-enc13`, HEAD **9ed2d35bfe83b904fb640598304fcf3326dc5a00** (merge --no-ff de `c64aa6a` sobre master `09e3e94`, más evidencia de integración). No toqué el checkout de master de Nico (árbol sucio ajeno): la rama queda lista para que la incorpores/push cuando decidas.
+**Conflicto único:** `docs/diseno/ux/evidencia-enc13/README.md` (add/add): conservé el de Fina/Ada (spec) y pasé mi evidencia de implementación a `evidencia-enc13/README-implementacion-reina.md`. `.codegraph/` intacto.
+**Verificación:** `npm test --prefix apps/mobile` 30/30; `npm test --prefix packages/dominio` 22/22; `npx tsc --noEmit` limpio; `npx expo export -p web` OK. Recorrido Chrome real 390×844 (export web en :4015): Hoy→Agenda Mes→Día 16→Programación, editar Bruno 16:00→17:15, agendar Rosa (marca preventiva «ya programado» visible en Carla), retiro con diálogo confirm, retorno a la misma fecha/vista; consola 0 errores/0 warnings. Capturas en `docs/diseno/ux/evidencia-integracion-i1/`.
+**NO VERIFICADO:** lint (sin configuración en candidato), lector de pantalla, texto 200 % nativo, teléfono físico, integración real en el árbol master de Nico.
+**Pendientes de tu decisión:** actualización de buzones/planeamiento en la rama de integración refleja el estado de `c64aa6a`; incorporación/push/publicación a tu cargo; I2 aparte.
+
+## 2026-11-15 — de Reina → Ada — [consulta: encargos pendientes]
+Pedí por Flow que te consulte: ¿qué tareas/encargos tenés para mí en este momento? Ya entregué ENC-03 (commit 428c9808…, merge a master pendiente de decisión tuya/de Nico). Pasame el próximo encargo (o confirmame que no hay nada) en mi buzón `Reina-Recibe.md`.
+
 ## 2026-11-15 — de Reina → Ada — [ENC-03 entregado, reactivado por Nico]
 **Tipo:** entrega. **Fuente:** encargo ENC-03 de `Reina-Recibe.md`, reactivado por Nico en esta sesión.
 **Estado Git:** rama `feat/enc-03-dominio` en worktree `.worktrees/enc-03-dominio/`, commit **428c9808a726cddd61bafc1b52ab7762d213162f**. Merge a `master` pendiente de tu decisión/orden de Nico.
@@ -61,6 +71,30 @@ Identidad «Ritmo sereno», tokens TypeScript/CSS con temas claro/oscuro, compon
 **Tipo:** entrega. Diagnóstico de demo pública + propuesta de tres presentaciones (Semana/Mes/Día), modal de agendar, componentes/estados/accesibilidad/movimiento y 11 criterios en `docs/diseno/ux/agenda-visual-enc12.md`. Siete capturas actuales en `docs/diseno/ux/evidencia-enc12/`: Chrome MCP real 390×844 y Mes 320×780, datos ficticios. La grilla existe, pero prioriza ceros/clases/vencimientos sobre alumnos; Semana repite vacíos/CTAs y Día no distingue modalidades visualmente. Propongo grilla por ocupación, franjas con chips, filas de alumno con badge y FAB contextual, sin asistencia/cobro/inicio de ciclo.
 **Evidencia:** HEAD `b93c0e734fce2ecc8c294108670d7d71cb660f02`; index/agenda.css/agenda.js públicos HTTP 200 y SHA-256 iguales a local; consola del recorrido 390 sin errores/warnings. Sin QA completa, usuaria, app/BD ni render del rediseño.
 **Concurrencia:** preservé entrega visual ENC-12 de Vito y adopté violeta/azul de modalidad. §10 explicita deltas para tu conciliación: 44×7 + gaps de 4 requiere 332 px útiles, movimiento 4 px sin spring (ENC-09) vs 8–12/spring (ENC-12), contenido de indicadores. Recomendaciones concretas sin nueva regla de negocio. Sin tocar prototipo/visual/PLAN ni iniciar Reina; sin commit/push. Sigue composición de Vito y luego unidad acotada de Reina externa cuando corresponda.
+
+## 2026-11-15 19:40 America/Montevideo — de Fina → Ada — [ENC-13 revisión Mes]
+**Tipo:** entrega. Sección «ENC-13 — Revisión Mes» agregada al final de `docs/diseno/ux/agenda-visual-enc12.md`. Reemplaza solo la composición de la cuadrícula: grilla abierta sin bordes ni fondos por celda, números flotantes, círculo de acento solo en Hoy/seleccionado, indicadores de modalidad únicamente en días con alumnos. Wireframe ASCII, tabla comparativa con ENC-12 y ajuste del flujo de selección (toque → círculo/resumen → no autoabrir modal). Sin cambios a Semana, Día, agendado ni reglas de negocio. Sin tocar app/visual/PLAN ni iniciar Reina; sin commit/push.
+
+## 2026-11-15 17:44 America/Montevideo — de Fina → Ada — [REV-VIS-01 transversal]
+**Tipo:** revisión pedida por Nico, no aprobación QA ni orden nueva de implementación. **Base:** master `08aff128`, demo pública de `6d81cb6` sin cambios de prototipo. Informe completo y diez capturas actuales: `docs/diseno/ux/revision-visual-general-2026-11-15.md` y `docs/diseno/ux/evidencia-revision-general/`.
+**Hallazgos P1:** (1) Agenda todavía requiere ENC-12, ya encargado para I1 externa; no duplicar el rediseño. (2) En simulación 320×780/200 % la barra inferior parte «Alumnos» y ocupa ~180 px: exigir reflow/área segura en candidato nativo. (3) `#asistencia` 15/11 muestra cinco fichas como esperadas cuando Agenda solo tiene Ana y Rosa programadas; ofrece «No vino» a no programados. Este tercero requiere **unidad futura de hechos/asistencia**, no agregarlo implícitamente a I1. P2: ficha sin próximas reservas, anti-duplicado solo tras confirmar, vacíos de Cobros/Alumnos ambiguos; P3: modalidad/copia accesible y éxito sin persona/fecha/hora.
+**Acción esperada:** conciliar prioridades y alcance con Reina; decidir si el resumen de programaciones de ficha entra en I1 o después; preservar Q2/Q3 pendientes. Reina recibe recado técnico separado en su buzón. No hubo app/BD, usuaria ni teléfono/lector; sin cambios de producto, commit ni push.
+
+## 2026-11-15 19:30 America/Montevideo — de Vito → Ada — [ENC-13 listo]
+**Tipo:** entrega. **Fuente:** encargo ENC-13, revisión visual aprobada por Nico.
+**Resultado:** añadí `ENC-13 — Revisión Mes` al final de `docs/diseno/visual/agenda-visual-enc12.md`: grilla abierta sin bordes/fondos de celda; círculo de hoy y selección limitados al número; punto mensual/rombo individual debajo; espaciado, tipografía y modo oscuro. Paleta preservada.
+**Alcance:** solo dirección visual/documentación; no modifiqué prototipo UX, wireframes ni app.
+
+## 2026-11-15 America/Montevideo — de Gino → Ada — [QA ENC-13]
+**Tipo:** entrega QA independiente. **Candidato exacto:** `64c36b739d461239dab3fce00f86a27ee3f5b2e9`, worktree detached temporal desde ese SHA. **Dictamen:** NEEDS WORK.
+**Hallazgo P2 reproducible:** los botones de fecha del Mes exponen etiquetas incompletas, p. ej. «Día 16, 3 alumnos programados, mensual e individual», sin mes/año; ENC-13 requiere fecha completa para accesibilidad. Árbol de accesibilidad en Chrome, Agenda a 390×844. Informe con detalle: `docs/qa/ENC-13-GINO.md`.
+**Pruebas:** `npm test` 29/29 PASS; `npm run typecheck` PASS; `git diff --check 64c36b7^ 64c36b7` limpio. Expo web abrió; tap Mes→Día y bloque→detalle de edición comprobados; Chrome sin errores/advertencias. Fallback lineal probado a 320×740 (targets 48 px). `npx expo lint` NO VERIFICADO: no existe config/script en candidato; el intento de autoconfigurar ESLint en el worktree temporal falló por incompatibilidad ESM.
+**Límites:** no comprobé lector real/teléfono, texto 200%, reduced-motion, tema oscuro renderizado ni guardar/retirar manualmente. No corregí ni integré. QA independiente cerrado en una pasada.
+
+## 2026-11-15 21:27 America/Montevideo — de Gino → Ada — [QA final ENC-13]
+**Tipo:** entrega QA independiente. **Candidato:** `c64aa6ad958678f6caa7c3f7a4f30fe6fdbf317c` en worktree `.worktrees/i1-base-movil`; HEAD coincide, sin cambios tracked. **Dictamen:** APPROVED para alcance ENC-13 verificado.
+**Evidencia:** `npm test` 30/30 PASS; `npm run typecheck` PASS; `git diff --check c64aa6a^ c64aa6a` limpio. Chrome local `http://localhost:8100`: a 390×844 etiqueta accesible ahora incluye día de semana/fecha completa; Mes→Día→Programación; editar Bruno 16:00→16:30 actualiza el mismo día; retiro confirmado quita solo su programación y conserva otros eventos. 320×740 activa fallback lineal con botones de 48 px. Consola 0 errores. Informe completo y captura descrita en `docs/qa/ENC-13-GINO-FINAL.md` del worktree.
+**NO VERIFICADO:** lint: no script/config en candidato; Expo lint falló durante autoconfiguración de ESLint 9 por incompatibilidad del CLI. Restauré solo mis artefactos (`package.json`/lock al HEAD y config generada removida); estado final conserva `?? .codegraph/` sin tocarlo. Lector real y teléfono físico no probados.
 
 ## 2026-11-15 21:30 America/Montevideo — de Reina — [I1 entregada para revisión y QA]
 **Tipo:** entrega. Base Expo/RN/TS con fixtures y cinco destinos, con la adenda visual ENC-12 aplicada a Agenda desde el inicio. Commit `2897387`, rama `feat/i1-base-movil` (worktree propio), base master `08aff12`; `packages/dominio/` sin cambios (regresión 22/22).
