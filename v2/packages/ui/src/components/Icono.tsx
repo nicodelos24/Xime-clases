@@ -19,7 +19,10 @@ export type NombreIcono =
   | 'porCobrar'
   | 'check'
   | 'chevronIzq'
-  | 'chevronDer';
+  | 'chevronDer'
+  | 'lupa'
+  | 'cruz'
+  | 'masAlumno';
 
 export function Icono({
   nombre,
@@ -107,6 +110,26 @@ export function Icono({
       {nombre === 'check' && <Polyline points="4.5,12.5 9.5,17.5 19.5,6.5" {...comun} />}
       {nombre === 'chevronIzq' && <Polyline points="15,4.5 8,12 15,19.5" {...comun} />}
       {nombre === 'chevronDer' && <Polyline points="9,4.5 16,12 9,19.5" {...comun} />}
+      {nombre === 'lupa' && (
+        <>
+          <Circle cx="10.5" cy="10.5" r="6.2" {...comun} />
+          <Line x1="15" y1="15" x2="20" y2="20" {...comun} />
+        </>
+      )}
+      {nombre === 'cruz' && (
+        <>
+          <Line x1="6" y1="6" x2="18" y2="18" {...comun} />
+          <Line x1="18" y1="6" x2="6" y2="18" {...comun} />
+        </>
+      )}
+      {nombre === 'masAlumno' && (
+        <>
+          <Circle cx="9" cy="8.5" r="3.2" {...comun} />
+          <Path d="M3.5 20c0-3.3 2.5-5.6 5.5-5.6s5.5 2.3 5.5 5.6" {...comun} />
+          <Line x1="17.5" y1="9.5" x2="17.5" y2="15.5" {...comun} />
+          <Line x1="14.5" y1="12.5" x2="20.5" y2="12.5" {...comun} />
+        </>
+      )}
     </Svg>
   );
 }

@@ -9,7 +9,7 @@
     "packages/*"
   ],
   "scripts": {
-    "test": "node --test packages/dominio/test/*.test.ts packages/datos/test/*.test.ts packages/ui/test/*.test.ts modules/agenda/test/*.test.ts test/*.test.ts",
+    "test": "node --test packages/dominio/test/*.test.ts packages/datos/test/*.test.ts packages/ui/test/*.test.ts modules/agenda/test/*.test.ts modules/alumnos/test/*.test.ts test/*.test.ts",
     "typecheck": "tsc --noEmit -p apps/mobile/tsconfig.json && npm run typecheck:modules && npm run typecheck:packages",
     "typecheck:modules": "tsc --noEmit -p modules/agenda/tsconfig.json && tsc --noEmit -p modules/alumnos/tsconfig.json && tsc --noEmit -p modules/hoy/tsconfig.json && tsc --noEmit -p modules/cobros/tsconfig.json && tsc --noEmit -p modules/mas/tsconfig.json && tsc --noEmit -p modules/auth/tsconfig.json",
     "typecheck:packages": "tsc --noEmit -p packages/dominio/tsconfig.json && tsc --noEmit -p packages/datos/tsconfig.json && tsc --noEmit -p packages/ui/tsconfig.json",
