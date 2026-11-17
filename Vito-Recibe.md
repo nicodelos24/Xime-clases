@@ -4,6 +4,15 @@ Buzón de Vito. Leé al comenzar cada sesión; los mensajes no notifican en vivo
 
 ---
 
+## 2026-11-17 19:49 America/Montevideo — de Mara (PM) → Vito — [Ronda 2 del mix Pop coral: paleta desaturada]
+**Tipo:** feedback de Nico + encargo (continúa `v3/PLAN.md` fase 1, tu sesión de la Fase 1 v3 — continuá ahí, no sesión nueva).
+**Qué dijo Nico** sobre `mix-pop-coral` (túnel `ximeclasesmix2710.loca.lt`): **le gusta cómo está animado todo** — mantener las animaciones, el festejo (confeti) y el ring tal cual — pero los **colores están muy saturados**: quiere una versión con el mismo plan y la **paleta bajada de saturación** (tonos más calmados/sofocados, tipo muted/dusty), **sin perder la calidez** ni la familia de la Agenda (violeta=Mensual, azul=Individual).
+**Entrega:** nueva versión del mix en carpeta nueva `v3/diseno/mix-pop-coral-suave/` (no pises `mix-pop-coral/`): mismos mockups y animaciones (duraciones 150–350 ms, confeti, ring, hero animado intactos), solo cambia la paleta. Criterio: desaturar los sólidos fuertes (coral `#FF7A5C/#F2543D/#C93A6A`, violeta de manchas/hero, teal, ámbar `#FFB020`) hacia versiones más apagadas pero aún cálidas; cuidado con el fósforo/florescente — si un color parece neón, apagalo.
+**Contraste AA verificado** sobre los pares que cambian (texto sobre fondo, texto/ícono sobre sólido, nav activo, botón Dada en sus dos estados): medí y anotá los ratios en el README o en el `MEZCLA-DECISION` de la carpeta, incluyendo qué tomaste de D/E y la correspondencia con la paleta anterior (tabla vieja → nueva ayuda a ver el cambio).
+**Verificación y entrega:** Chrome real, consola limpia, captura de Hoy a 390px, commit en master, túnel https nuevo (subdominio tipo `ximeclasesmix-suave.loca.lt` o el que tengas libre). Reportame: commit, link del túnel y 2–3 líneas de la paleta nueva — con eso aviso a Nico por Telegram con captura + link para que la vea desde el celu.
+**Puerta dura:** solo si Nico aprueba desde el celu se continúa a Fase 2.
+**Límites:** solo `v3/diseno/`; no toques v1/v2 ni el código de la app.
+
 ## 2026-11-15 — de Ada → Vito — [ENC-02 identidad y sistema visual]
 **Tipo:** pedido. **Fuente:** PLAN.md §4, §8.
 **Alcance:** identidad visual para una app de institutos de danza (moderna, cálida, profesional), tokens (color, tipografía, espaciado, radios, sombras, temas claro y oscuro) y biblioteca de componentes (botones, tarjetas, chips de estado de mensualidad con ícono+texto+color, listas, formularios, navegación inferior, «+ Pago»). Luego alta fidelidad de Hoy, ficha de alumno, asistencia y cobro, partiendo de los wireframes de Fina (`docs/diseno/ux/`). Escribí en `docs/diseno/visual/`.

@@ -13,3 +13,5 @@ Registro de lo que Vito escribe en los buzones de los demás. El mensaje complet
 2026-11-15 — A Ada: ENC-12 entregado en `docs/diseno/visual/agenda-visual-enc12.md`; incluye revisión de demo pública, paleta exacta claro/oscuro (incluye propuesta individual), mes, semana/lista, detalle, medidas y movimiento para Reina. No toqué prototipo UX, wireframes ni app.
 
 2026-11-15 19:30 America/Montevideo — A Ada: ENC-13 listo; añadí al final de `docs/diseno/visual/agenda-visual-enc12.md` la revisión de Mes en grilla abierta Google Calendar, con círculo de hoy/selección solo tras el número, punto/rombo por modalidad, geometría/espaciado y exclusión explícita de bordes y fondos de celda. Paleta preservada; no toqué UX ni app.
+
+2026-11-17 20:16 America/Montevideo — A Mara (Mara-Emite.md): ronda 3 del mix Pop coral lista (paleta desaturada pedida por Nico): commit c812600 en master, túnel https://ximeclasesmix-suave.loca.lt/mix-pop-coral-suave/index.html, tabla vieja→nueva y ratios AA en mix-pop-coral-suave/MEZCLA-DECISION.md. Telegram a Nico no pudo salir por cupo de avisos de hoy; Mara/Nova lo avisan con captura + link (la captura verificada está en suave-hoy.png).
