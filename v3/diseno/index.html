@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Clases v3 · Propuestas visuales</title>
+<style>
+:root{--violeta:#5B2E91;--texto:#241A2B;--suave:#6B6075}
+*{box-sizing:border-box;margin:0}
+body{font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:#1B1230;color:#F2ECF5;min-height:100vh;padding:28px 18px 60px}
+h1{font-size:22px;font-weight:800;letter-spacing:-.3px}
+.sub{color:#B3A6BD;font-size:14px;margin:6px 0 22px;font-weight:500}
+.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;max-width:1100px}
+@media (max-width:760px){.grid{grid-template-columns:1fr}}
+.tarjeta{display:block;text-decoration:none;color:inherit;border-radius:18px;overflow:hidden;background:rgba(255,255,255,.05);
+  border:1px solid rgba(255,255,255,.1);transition:transform 240ms cubic-bezier(.22,1,.36,1),border-color 240ms ease}
+.tarjeta:hover{transform:translateY(-3px);border-color:rgba(167,139,250,.5)}
+.cel{height:560px;border:0;width:100%;background:#fff;pointer-events:none}
+.info{padding:14px 16px 18px}
+.nombre{font-size:16px;font-weight:800;display:flex;align-items:center;gap:8px}
+.nombre small{font-size:10px;font-weight:800;letter-spacing:.1em;padding:3px 8px;border-radius:99px;background:var(--violeta);color:#fff}
+.desc{font-size:13px;color:#B3A6BD;margin-top:6px;line-height:1.45}
+.ver{display:inline-block;margin-top:10px;font-size:13px;font-weight:700;color:#C6AEEB}
+</style>
+</head>
+<body>
+<h1>Clases v3 · tres direcciones visuales</h1>
+<p class="sub">Nueva etapa v3 · famila de la Agenda conservada (violeta = Mensual, azul = Individual) · pantalla Hoy de ejemplo · Nico elige una</p>
+<div class="grid">
+  <a class="tarjeta" href="propuesta-c-neon/index.html" target="_blank" rel="noopener">
+    <iframe class="cel" src="propuesta-c-neon/index.html" title="Vista previa Neón"></iframe>
+    <div class="info">
+      <p class="nombre">C · Neón <small>OSCURA</small></p>
+      <p class="desc">Fondo violeta profundo con acentos neón de la familia. El ring brilla, los KPIs son de vidrio con luz de estado y las filas entran con gradiente de modalidad. Máxima vida visual, pensada para mirarla de noche y que «brille» sola.</p>
+      <span class="ver">Abrir en el celu →</span>
+    </div>
+  </a>
+  <a class="tarjeta" href="propuesta-d-coral/index.html" target="_blank" rel="noopener">
+    <iframe class="cel" src="propuesta-d-coral/index.html" title="Vista previa Coral"></iframe>
+    <div class="info">
+      <p class="nombre">D · Coral <small>CLARA</small></p>
+      <p class="desc">Cálida y festiva: fondo arena, hero coral con burbujas y KPIs de color sólido. La más «alegre de día», conexión directa con la Agenda (botón «+ Agendar» coral). Aleja cualquier sensación gris sin gritar.</p>
+      <span class="ver">Abrir en el celu →</span>
+    </div>
+  </a>
+  <a class="tarjeta" href="propuesta-e-tulipan/index.html" target="_blank" rel="noopener">
+    <iframe class="cel" src="propuesta-e-tulipan/index.html" title="Vista previa Pop tulipán"></iframe>
+    <div class="info">
+      <p class="nombre">E · Pop tulipán <small>CLARA</small></p>
+      <p class="desc">Blanca con manchas orgánicas de color, hero violeta con formas vivas, ring de avance ámbar y filas de gradiente fuerte por modalidad. Equilibrio entre energía y legibilidad para uso diario.</p>
+      <span class="ver">Abrir en el celu →</span>
+    </div>
+  </a>
+</div>
+<p class="sub" style="margin-top:26px">Tocar «Dada» en cada una marca la clase, mueve el ring y lanza el festejo (700 ms). Movimiento reducido respetado. La v2 (Aurora) queda como referencia descartada.</p>
+</body>
+</html>

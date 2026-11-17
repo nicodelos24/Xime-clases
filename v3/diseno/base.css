@@ -1,0 +1,21 @@
+/* Clases v3 · base compartida por las tres propuestas. Solo resets y helpers; cada propuesta trae su estilo.css. */
+:root{
+  --mensual:#5B2E91; --indiv:#2B4A78;
+  --d-fast:150ms; --d-base:240ms; --d-slow:350ms;
+  --ease-out:cubic-bezier(.22,1,.36,1);
+  --ease-spring:cubic-bezier(.34,1.56,.64,1);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;margin:0}
+body{font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
+.ico{width:22px;height:22px;flex:none}
+svg use{pointer-events:none}
+/* telón */
+body:not(.listo) .tlon{opacity:0}
+.tlon{transition:opacity 240ms var(--ease-out)}
+@keyframes tpv{0%{transform:translateY(14px);opacity:0}100%{transform:translateY(0);opacity:1}}
+@keyframes dibujo{to{stroke-dashoffset:0}}
+@keyframes relleno{from{fill-opacity:0;stroke-opacity:0;opacity:0}to{fill-opacity:1;stroke-opacity:1;opacity:1}}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;animation-delay:0ms!important;transition-duration:.01ms!important}
+}
