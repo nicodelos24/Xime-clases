@@ -1,0 +1,5 @@
+{
+  "name": "Xime-clases",
+  "kind": "app",
+  "description": "Una aplicación para ver administrar un instituto de danza y agendar cuándo pagan sus alumnos, existiendo alumnos que pagan por clase y también otros por mensualidad, la mensualidad comienza el día que ese alumno se inscribe en dicha mensualidad"
+}

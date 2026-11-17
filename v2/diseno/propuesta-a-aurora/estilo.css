@@ -1,0 +1,43 @@
+/* PROPUESTA A — «Aurora»: la Agenda, pero con vida. Fondo lila, tarjetas con borde de acento a la izquierda
+   (igual que las tarjetas de la Agenda semanal), color en tintes suaves y un solo bloque fuerte por pantalla. */
+.telefono{background:linear-gradient(180deg,#F6EDFA 0,#FAF7FB 220px)}
+.campana{background:#fff;color:var(--mensual-solid);box-shadow:0 2px 10px rgba(122,47,140,.12)}
+.heroi{background:linear-gradient(135deg,#7A2F8C 0%,#9B3FB0 55%,#B65AC4 100%);color:#fff;box-shadow:0 14px 30px -12px rgba(122,47,140,.55);
+  position:relative;overflow:hidden;--acento:#fff;--anillo-fondo:rgba(255,255,255,.25)}
+.heroi::after{content:"";position:absolute;right:-30px;top:-40px;width:140px;height:140px;border-radius:50%;background:rgba(255,255,255,.12);
+  animation:flota 6s ease-in-out infinite alternate}
+@keyframes flota{to{transform:translate(-10px,12px) scale(1.08)}}
+.heroi>*{position:relative;z-index:1}
+.heroi h2{font-size:18px}
+.stat{background:#fff;box-shadow:0 2px 12px rgba(36,26,43,.06);border-left:4px solid var(--c)}
+.stat-ico{background:var(--t);color:var(--c)}
+.stat-lab{color:var(--muted)}
+.stat-cobrado{--c:var(--aldia-solid);--t:var(--aldia-tint)}
+.stat-cobrado .stat-delta{color:var(--aldia-ink)}
+.stat-por{--c:var(--indiv-solid);--t:var(--indiv-tint)}
+.stat-vencen{--c:var(--pronto-strong);--t:var(--pronto-tint)}
+.stat-vencen .stat-ico{color:var(--pronto-ink)}
+.fila{background:#fff;box-shadow:0 2px 10px rgba(36,26,43,.05);border-left:4px solid var(--c,var(--line))}
+.clase:has(.tipo-mensual){--c:var(--mensual-solid);background:var(--mensual-tint)}
+.clase:has(.tipo-individual){--c:var(--indiv-solid);background:var(--indiv-tint)}
+.alumno:has(.estado-aldia){--c:var(--aldia-solid)}
+.alumno:has(.estado-pronto){--c:var(--pronto-strong)}
+.alumno:has(.estado-debe){--c:var(--debe-solid)}
+.alumno:has(.estado-vencida){--c:var(--vencida-solid)}
+.av-a{background:#EFDCF5;color:#6A2279}.av-b{background:#DCE6F8;color:#2E4378}.av-c{background:#D6F0E4;color:#0B6444}
+.av-d{background:#FFE9B8;color:#7D4A00}.av-e{background:#FADAEC;color:#9C226C}
+.clase .avatar{background:#fff}
+.btn-hecho{background:#fff}
+.aviso{background:var(--pronto-tint);color:var(--pronto-ink);border-left:4px solid var(--pronto-strong)}
+.buscador{background:#fff;box-shadow:0 2px 10px rgba(36,26,43,.06)}
+.buscador:focus-within{box-shadow:0 0 0 2px var(--mensual-solid)}
+.fchip{background:#fff;color:var(--muted);box-shadow:inset 0 0 0 1.5px var(--line)}
+.fchip.activa{background:var(--mensual-solid);color:#fff;box-shadow:none}
+.mini-pago{background:var(--mensual-solid);color:#fff}
+.vacio .ico{color:var(--mensual-solid);opacity:.5}
+.nav{background:#fff;box-shadow:0 -6px 24px rgba(36,26,43,.07)}
+.nav-btn{--navc:var(--mensual-solid)!important}
+.nav-btn::before{content:"";position:absolute;top:6px;width:52px;height:30px;border-radius:15px;background:var(--mensual-tint);transform:scale(.4);opacity:0;
+  transition:all var(--d-base) var(--ease-spring)}
+.nav-btn.activa::before{transform:scale(1);opacity:1}
+.nav-btn .ico,.nav-btn span{position:relative}

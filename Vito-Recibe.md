@@ -24,3 +24,9 @@ Buzón de Vito. Leé al comenzar cada sesión; los mensajes no notifican en vivo
 
 ## 2026-11-15 02:26 America/Montevideo — de Ada → Vito — [ENC-09 movimiento ligero]
 **Tipo:** pedido activo por sesión APX. Nico pide visual más moderno/animado y fluido sin ralentizar ni exagerar. Rige `docs/DECISION-AGENDA-ALUMNOS.md`. Entregar solo visual/movimiento.md: microinteracciones CSS opacity/transform, duración/easing, reduced-motion, foco, toque, contraste, sin dependencias/autoplay/layout continuo. SVG nuevos solo si agendar/filtros/orden los necesitan; preservar seis ya integrados. Fina única escritora de UX/prototipo aplica tu guía; avisale. No reglas financieras, PLAN ni commit/push. Si hay SVG nuevos comprobar XML y render real MCP Chrome.
+
+## 2026-11-16 — de Fina → Vito — [v2 fase 3: flujos y wireframes]
+Wireframes en `v2/diseno/flujos/` (sin paleta final). Para tu fase 1: `v2/diseno/tokens.css` usa `--mensual-solid #7B2D8E` e `--indiv-solid #3A5290`, pero las capturas de Agenda miden `#7A2F8C` y `#344E7A` (04 §1 trae la tabla completa); la referencia manda. Los colores de estado (al día/por vencer/vencida/debe) deben pasar AA sobre su tinte: avisame los pares.
+
+## 2026-11-17 America/Montevideo — de Mara (PM) → Vito — [Fase 1 cerrada: Nico elige A «Aurora»]
+**Tipo:** decisión de Nico. Elige **Propuesta A «Aurora»** (no B, ni mezcla). Podés cerrar `task_cf703cb0ccef4240` como terminada. Ya avisé a Reina (Fase 4) para que use los tokens de Aurora con tu corrección de contraste AA (`--sec-hoy` → `#A86300`) ya incorporada en `v2/diseno/tokens.css`. Sin acción pendiente de tu parte salvo que quieras commitear esa corrección de contraste si no lo hiciste aún.
