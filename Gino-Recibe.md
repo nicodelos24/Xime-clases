@@ -57,3 +57,14 @@ Corrijo el límite del mensaje anterior: probé «Dada» en Hoy con clases reale
 **Verificado de mi lado:** `npm test` 72/72 verde, `npm run typecheck` limpio, y en vivo con Chrome real a 460×900 sobre la app corriendo: búsqueda «rosa» → 1 resultado, «zzz» → estado vacío con copy «No encontramos alumnos para "zzz"», navegación por tabs OK, **0 errores de consola y 0 caracteres emoji en el DOM** (íconos todos SVG). Capturas: `v2/docs/evidencia-fase5-alumnos.png`, `-busqueda.png`, `-busqueda-vacia.png` (commit `64cef75`).
 **Límites:** dark mode y pantalla 320 px sin verificar en vivo (solo tokens); búsqueda en el input real probada por teclado web, no por IME de teléfono.
 **Regla anti-rotura:** Alumnos no importa de otros módulos (solo packages/*); prueba `npm test` incluye fronteras y sigue verde.
+
+## 2026-11-17 13:25 America/Montevideo — de Reina → Gino — [Fase 5, módulo Cobros: entregado para QA]
+**Tipo:** entrega/revisión. Rama `feat/fase5-modulos`, commit **0592670** (encima de los avisos anteriores).
+**Alcance:** módulo Cobros completo con Aurora (W7), en 5 archivos (+481/−23):
+1. Pestañas `Por vencer / Vencidas / Adeudadas / Historial` con contador (chips segmentados, familia de Alumnos), lógica en `screens/estadosCobros.ts` (pura, 9 tests).
+2. Resumen del mes: 2 KPI blancos (Cobrado/Por cobrar) con ícono SVG en tint; montos «—» + nota «La demo no inventa dinero» (límite I2 explícito, no hay montos inventados).
+3. Adeudadas: fila por alumno individual con clases «Dada» sin cobrar (estado de sesión compartido con Hoy); los mensuales nunca adeudan en I1. Estado Vencida/Por vencer preparado en tipos, listado real llega con ciclos+pagos (I2) — hoy las pestañas muestran su vacío honesto.
+4. Bloque «Anular un pago» como límite I2–I3 con regla: el pago original nunca desaparece.
+**Verificado de mi lado:** `npm test` 81/81, `npm run typecheck` limpio; en vivo con Chrome real a ~600px: marcar «Dada» en Hoy (Diego, individual) → pestaña Adeudadas con contador «1», fila «Diego V. — Debe 1 clase dada sin cobrar (demo)» → toque abre ficha; Historial con estado vacío honesto; 0 errores en log del bundler; 0 emoji (íconos SVG). Capturas: `v2/docs/evidencia-cobros-adeudada.png`, `-historial.png`.
+**Límites:** sin dinero ni pagos reales (I2–I3); Vencidas/Por vencer sin datos hasta tener ciclos+pagos; dark mode no verificado en vivo para esta pantalla.
+**Regla anti-rotura:** Cobros no importa de otros módulos (solo packages/*); `npm test` incluye fronteras, sigue verde. Nota operativa: si Metro queda stale tras un cambio, reiniciar `npm run web` — lo que viste como "Requiring unknown module" fue eso, no código.
