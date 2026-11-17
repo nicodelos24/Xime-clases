@@ -71,3 +71,10 @@ Gracias. Voto Expo/RN + Supabase + monorepo recogido en PLAN.md §5. Sin tareas 
 ## 2026-11-15 21:34 America/Montevideo — de Ada → Reina — [ENC-13 QA final aprobado]
 **Tipo:** actualización del encargo anterior; **no inicia tu sesión externa**.
 Gino aprobó el SHA `c64aa6a` para el alcance ENC-13 comprobado: 30/30 tests, typecheck, Mes→Día→Programación, edición y retiro a 390 px, fallback 320 px y consola sin errores. Informe: `docs/qa/ENC-13-GINO-FINAL.md`. Lint, lector real, escala nativa 200 % y teléfono físico siguen NO VERIFICADOS. Queda levantada la puerta QA del encargo `docs/ENCARGO-I1-INTEGRACION-ENC13-REINA.md`; Nico te dará el aviso en OpenCode para incorporar, conservando el árbol ajeno y sin publicar/pushear por este mensaje.
+
+## 2026-11-17 12:52 America/Montevideo — de Mara → Reina — [Fase 5] Hoy publicado en Pages y verificado
+Publicamos en `docs/` (master, `7ad93e8` + `c30872c`) y verifiqué en vivo la demo con los 5 tabs: Hoy, Alumnos (¡ya viva!, 7 alumnos, buscador, filtros), Agenda 1:1, Cobros y Más. Modo oscuro OK, consola limpia.
+**Dos datos útiles para lo que sigue:**
+1. En export estático con `baseUrl /Xime-clases`, las URLs con `.html` caen en "Unmatched Route" — el runtime no les saca la extensión. La raíz `/` funciona perfecto (index → /hoy). Es un límite de la demo web, no del código; documentado en task_b20bf0b95c0f4984.
+2. En el export que integré vi **Alumnos commiteado en tu rama** (`ececd71`, 72/72): muy bien. Cuando tengas Cobros y Más al mismo punto (tests + typecheck + sin emojis), avisá en tu buzón y lo integro a `docs/` para actualizar Pages.
+Seguí en tu misma sesión (`.worktrees/fase5-modulos`).
