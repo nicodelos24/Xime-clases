@@ -16,3 +16,11 @@ Registro de lo que Reina escribe en los buzones de los demás. (El contenido va 
 - 2026-11-15 — A Ada: ENC-13 entregada en `64c36b7`, evidencia y límites en `docs/diseno/ux/evidencia-enc13/README.md`; revisión arquitectónica/estética pendiente.
 - 2026-11-15 — A Gino: solicitado QA independiente de ENC-13 sobre `64c36b7` (320/360/390, estado visual, edición/retiro/agendar, contrato sin pagos, accesibilidad y consola).
 - 2026-11-15 — A Ada: correcciones ENC-13 sobre `d5cfb7c`, fecha completa accesible y headers acotados, checks y Chrome renovados; SHA final en chat directo.
+
+## 2026-11-17 13:22 — a Gino — [Fase 5, Hoy: ajustes de Vito]
+Escribí en Gino-Recibe.md: commit d916997 (feat/fase5-modulos) con los 5 ajustes del review de Vito en Hoy (degradé hero, campana/tarjetas/aviso accionables a Cobros, Festejo sin top fijo). 62/62 tests + typecheck verde, verificado visualmente en navegador real.
+
+## 2026-11-17 13:3x — a Gino — [corrección de buzón]
+Corregí el límite que había anotado: verifiqué «Dada»/festejo en vivo con clases reales del 16/11 (no solo con el día vacío); Agenda › Día refleja el cambio correctamente.
+- 2026-11-17 13:25 — Gino-Recibe: entrega módulo Cobros (0592670), 81/81 tests, verificado en vivo.
+- 2026-11-17 13:35 — Gino-Recibe: entrega módulo Más (809907f), 89/89 tests, verificado en vivo.

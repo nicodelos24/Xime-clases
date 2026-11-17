@@ -1,5 +1,6 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { usarTemaAgenda } from '../tema';
+import { Icono } from '../../../packages/ui/src/components/Icono';
 import type { ActividadDia } from '../../../packages/datos/src/logica';
 import { etiquetaFechaLarga } from '../../../packages/datos/src/fechas';
 
@@ -47,13 +48,13 @@ export function DayStrip({
       <Text style={[s.rango, { color: color.texto }]}>{rango}</Text>
       <View style={s.nav}>
         <Pressable onPress={enAnterior} accessibilityLabel="Período anterior" style={s.boton}>
-          <Text style={[s.flecha, { color: color.texto }]}>‹</Text>
+          <Icono nombre="chevronIzq" color={color.texto} tamaño={18} />
         </Pressable>
         <Pressable onPress={enHoy} accessibilityLabel="Ir a hoy" style={s.boton}>
           <Text style={[s.hoyTexto, { color: color.acento }]}>Hoy</Text>
         </Pressable>
         <Pressable onPress={enSiguiente} accessibilityLabel="Período siguiente" style={s.boton}>
-          <Text style={[s.flecha, { color: color.texto }]}>›</Text>
+          <Icono nombre="chevronDer" color={color.texto} tamaño={18} />
         </Pressable>
       </View>
     </View>
@@ -147,7 +148,6 @@ const s = StyleSheet.create({
   rango: { flex: 1, fontSize: 14, fontWeight: '600', textAlign: 'center' },
   nav: { flexDirection: 'row' },
   boton: { minWidth: 44, minHeight: 44, alignItems: 'center', justifyContent: 'center' },
-  flecha: { fontSize: 22 },
   hoyTexto: { fontSize: 14, fontWeight: '700' },
   franja: {
     flexDirection: 'row',

@@ -14,6 +14,7 @@ import { usarTemaAgenda } from '../tema';
 import { usarSesion } from '../../../packages/datos/src/sesion';
 import { etiquetaFechaLarga } from '../../../packages/datos/src/fechas';
 import { AvatarInitials } from '../../../packages/ui/src/components/AvatarInitials';
+import { Icono } from '../../../packages/ui/src/components/Icono';
 import type { Modalidad } from '../../../packages/datos/src/tipos';
 
 /** Agendar: buscar ficha canónica, filtro modalidad, selección única, confirmación. */
@@ -168,7 +169,7 @@ export default function Agendar() {
                 </Text>
               </View>
               {yaEsta && (
-                <Text style={[s.yaEsta, { color: color.textoSuave }]}>✓</Text>
+                <Icono nombre="check" color={color.textoSuave} tamaño={16} />
               )}
             </Pressable>
           );
@@ -224,7 +225,6 @@ const s = StyleSheet.create({
   info: { flex: 1 },
   nombre: { fontSize: 15, fontWeight: '600' },
   metaTexto: { fontSize: 13 },
-  yaEsta: { fontSize: 16 },
   cta: { minHeight: 48, borderRadius: 12, alignItems: 'center', justifyContent: 'center', padding: 12 },
   legal: { fontSize: 12 },
 });

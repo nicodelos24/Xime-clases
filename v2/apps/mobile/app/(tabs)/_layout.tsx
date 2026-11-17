@@ -1,14 +1,7 @@
 import { Tabs } from 'expo-router';
 import { StyleSheet, Text } from 'react-native';
 import { usarTema } from '../../../../packages/ui/src/tema';
-
-function Icono({ g, nombre, color }: { g: string; nombre: string; color: string }) {
-  return (
-    <Text style={{ fontSize: 20, color }} accessibilityLabel={nombre}>
-      {g}
-    </Text>
-  );
-}
+import { Icono, type NombreIcono } from '../../../../packages/ui/src/components/Icono';
 
 /** Etiqueta de barra: completa incluso a texto 200 % (REV-VIS-01), sin truncar. */
 function Etiqueta({ texto, color }: { texto: string; color: string }) {
@@ -19,11 +12,14 @@ const s = StyleSheet.create({
   etiqueta: { fontSize: 12, fontWeight: '600', textAlign: 'center' },
 });
 
-/** Cinco destinos: Hoy · Alumnos · Agenda · Cobros · Más (I1). */
+/** Cinco destinos: Hoy · Alumnos · Agenda · Cobros · Más (I1). SVG propio, sin emoji. */
 export default function Pestañas() {
   const { color } = usarTema();
   const etiqueta = (texto: string) => ({ color: tinta }: { color: unknown }) => (
     <Etiqueta texto={texto} color={String(tinta ?? color.textoSuave)} />
+  );
+  const icono = (nombre: NombreIcono) => ({ color: tinta }: { color: unknown }) => (
+    <Icono nombre={nombre} color={String(tinta ?? color.textoSuave)} tamaño={22} />
   );
   return (
     <Tabs screenOptions={{
@@ -38,7 +34,7 @@ export default function Pestañas() {
         options={{
           title: 'Hoy',
           tabBarLabel: etiqueta('Hoy'),
-          tabBarIcon: ({ color: tinta }) => <Icono color={String(tinta ?? color.textoSuave)} g="☀" nombre="Hoy" />,
+          tabBarIcon: icono('sol'),
         }}
       />
       <Tabs.Screen
@@ -46,7 +42,7 @@ export default function Pestañas() {
         options={{
           title: 'Alumnos',
           tabBarLabel: etiqueta('Alumnos'),
-          tabBarIcon: ({ color: tinta }) => <Icono color={String(tinta ?? color.textoSuave)} g="☰" nombre="Alumnos" />,
+          tabBarIcon: icono('alumnos'),
         }}
       />
       <Tabs.Screen
@@ -55,7 +51,7 @@ export default function Pestañas() {
           title: 'Agenda',
           headerShown: false,
           tabBarLabel: etiqueta('Agenda'),
-          tabBarIcon: ({ color: tinta }) => <Icono color={String(tinta ?? color.textoSuave)} g="▦" nombre="Agenda" />,
+          tabBarIcon: icono('agenda'),
         }}
       />
       <Tabs.Screen
@@ -63,7 +59,7 @@ export default function Pestañas() {
         options={{
           title: 'Cobros',
           tabBarLabel: etiqueta('Cobros'),
-          tabBarIcon: ({ color: tinta }) => <Icono color={String(tinta ?? color.textoSuave)} g="◈" nombre="Cobros" />,
+          tabBarIcon: icono('cobros'),
         }}
       />
       <Tabs.Screen
@@ -71,7 +67,7 @@ export default function Pestañas() {
         options={{
           title: 'Más',
           tabBarLabel: etiqueta('Más'),
-          tabBarIcon: ({ color: tinta }) => <Icono color={String(tinta ?? color.textoSuave)} g="⋯" nombre="Más" />,
+          tabBarIcon: icono('mas'),
         }}
       />
     </Tabs>
