@@ -30,6 +30,8 @@ export default function Pestañas() {
       tabBarActiveTintColor: color.acento,
       tabBarInactiveTintColor: color.textoSuave,
       tabBarStyle: { backgroundColor: color.superficie, borderTopColor: color.borde },
+      headerStyle: { backgroundColor: color.superficie },
+      headerTintColor: color.texto,
     }}>
       <Tabs.Screen
         name="hoy"
