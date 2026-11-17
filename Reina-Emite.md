@@ -23,3 +23,4 @@ Escribí en Gino-Recibe.md: commit d916997 (feat/fase5-modulos) con los 5 ajuste
 ## 2026-11-17 13:3x — a Gino — [corrección de buzón]
 Corregí el límite que había anotado: verifiqué «Dada»/festejo en vivo con clases reales del 16/11 (no solo con el día vacío); Agenda › Día refleja el cambio correctamente.
 - 2026-11-17 13:25 — Gino-Recibe: entrega módulo Cobros (0592670), 81/81 tests, verificado en vivo.
+- 2026-11-17 13:35 — Gino-Recibe: entrega módulo Más (809907f), 89/89 tests, verificado en vivo.

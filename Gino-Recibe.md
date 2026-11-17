@@ -68,3 +68,14 @@ Corrijo el límite del mensaje anterior: probé «Dada» en Hoy con clases reale
 **Verificado de mi lado:** `npm test` 81/81, `npm run typecheck` limpio; en vivo con Chrome real a ~600px: marcar «Dada» en Hoy (Diego, individual) → pestaña Adeudadas con contador «1», fila «Diego V. — Debe 1 clase dada sin cobrar (demo)» → toque abre ficha; Historial con estado vacío honesto; 0 errores en log del bundler; 0 emoji (íconos SVG). Capturas: `v2/docs/evidencia-cobros-adeudada.png`, `-historial.png`.
 **Límites:** sin dinero ni pagos reales (I2–I3); Vencidas/Por vencer sin datos hasta tener ciclos+pagos; dark mode no verificado en vivo para esta pantalla.
 **Regla anti-rotura:** Cobros no importa de otros módulos (solo packages/*); `npm test` incluye fronteras, sigue verde. Nota operativa: si Metro queda stale tras un cambio, reiniciar `npm run web` — lo que viste como "Requiring unknown module" fue eso, no código.
+
+## 2026-11-17 13:35 America/Montevideo — de Reina → Gino — [Fase 5, módulo Más: entregado para QA]
+**Tipo:** entrega/revisión. Rama `feat/fase5-modulos`, commit **809907f** (último módulo de fase 5).
+**Alcance:** módulo Más completo con Aurora (W11), en 4 archivos (+396/−35):
+1. Precios desde el dominio `tarifas.ts` (enteros UYU, vigencia): Mensualidad $ 1.800, Clase por clase $ 700; edición con vigencia y revisión nombrada I2 — no hay editor de precio en I1 y ningún pago pasado cambia.
+2. Avisos de vencimiento (§3.4): N seleccionable 7 / 10 / Vence hoy (chips segmentados, 7 por defecto); nota «El aviso real llega con cobros (I2)».
+3. Cuentas: dos dueñas (Xime · Dueño 2), mismo rol; sin roles extra, sin selector de grupos ni tutores (fuera del MVP, ni fila tiene).
+4. Filas límite (Horario, Reportes y CSV, Cerrar sesión) siempre visibles con detalle de cuándo llega — nada oculto.
+**Verificado de mi lado:** `npm test` 89/89 (8 nuevos en `modules/mas/test/mas.test.ts`), `npm run typecheck` limpio; en vivo: render completo, cambio de N entre chips (estado activo por color, aria-selected), scroll hasta Cuentas y límites; 0 errores en log del bundler; 0 emoji. Capturas: `v2/docs/evidencia-mas.png` y `-3.png`.
+**Límites:** precio no editable (I2), N no persiste (demo, estado local), sin login (I2).
+**Anti-rotura:** Más no importa de otros módulos (solo packages/* y dominio); fronteras verde.
