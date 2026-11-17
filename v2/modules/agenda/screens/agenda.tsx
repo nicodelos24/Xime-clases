@@ -22,6 +22,7 @@ import {
 import { MonthDayCell } from '../components/MonthDayCell';
 import { MODALIDAD_AGENDA } from '../tema';
 import { ScheduleFAB } from '../components/ScheduleFAB';
+import { Icono } from '../../../packages/ui/src/components/Icono';
 
 const HOY = '2026-11-15';
 
@@ -85,7 +86,7 @@ export default function Agenda() {
           accessibilityLabel="Mes anterior"
           style={s.navBtn}
         >
-          <Text style={[s.flecha, { color: color.texto }]}>‹</Text>
+          <Icono nombre="chevronIzq" color={color.texto} tamaño={18} />
         </Pressable>
         <Text style={[s.mesTexto, { color: color.texto }]}>
           {etiquetaMes(anio, mes)}
@@ -96,7 +97,7 @@ export default function Agenda() {
           accessibilityLabel="Mes siguiente"
           style={s.navBtn}
         >
-          <Text style={[s.flecha, { color: color.texto }]}>›</Text>
+          <Icono nombre="chevronDer" color={color.texto} tamaño={18} />
         </Pressable>
       </View>
 
@@ -206,7 +207,6 @@ const s = StyleSheet.create({
     marginBottom: 8,
   },
   navBtn: { minWidth: 48, minHeight: 48, alignItems: 'center', justifyContent: 'center' },
-  flecha: { fontSize: 28, fontWeight: '300' },
   mesTexto: { fontSize: 17, fontWeight: '700', textTransform: 'capitalize' },
   cont: { paddingHorizontal: 16, paddingBottom: 96 },
   grilla: { flexDirection: 'row', flexWrap: 'wrap' },

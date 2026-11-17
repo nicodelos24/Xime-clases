@@ -7,6 +7,7 @@ import { programacionesPorOcurrencia } from '../../../packages/datos/src/logica'
 import { DIAS_LUNES, etiquetaFechaLarga, lunesDe, sumarDias } from '../../../packages/datos/src/fechas';
 import { HourBlock } from '../components/HourBlock';
 import { ScheduleFAB } from '../components/ScheduleFAB';
+import { Icono } from '../../../packages/ui/src/components/Icono';
 
 const HOY = '2026-11-15';
 const INICIO = 8;
@@ -19,6 +20,12 @@ export default function Dia() {
   const { repo, agenda, refrescar } = usarSesion();
   const router = useRouter();
   const { fecha } = useLocalSearchParams<{ fecha: string }>();
+  // El día abierto (URL directa o desde Hoy) queda como día de la Agenda:
+  // Hoy y Día comparten ese estado (un solo origen de verdad).
+  useEffect(() => {
+    if (fecha && fecha !== agenda.fecha) agenda.setFecha(fecha);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fecha]);
   const f = fecha ?? agenda.fecha;
   const scrollRef = useRef<{ scrollTo: (opts: { y: number; animated: boolean }) => void } | null>(null);
   const grupos = programacionesPorOcurrencia(repo.programaciones, repo.ocurrenciasDe(f), f);
@@ -53,7 +60,8 @@ export default function Dia() {
     <View style={{ flex: 1, backgroundColor: color.fondo }}>
       <View style={s.cabecera}>
         <Pressable onPress={volverMes} accessibilityRole="button" accessibilityLabel="Volver al mes" style={s.mesBtn}>
-          <Text style={[s.mesTexto, { color: color.acento }]}>‹ Mes</Text>
+          <Icono nombre="chevronIzq" color={color.acento} tamaño={15} />
+          <Text style={[s.mesTexto, { color: color.acento }]}>Mes</Text>
         </Pressable>
         <Pressable onPress={() => cambiarDia(HOY)} accessibilityRole="button" accessibilityLabel="Ir a hoy" style={s.hoyBtn}>
           <Text style={[s.hoyTexto, { color: color.acento }]}>Hoy</Text>
@@ -61,7 +69,7 @@ export default function Dia() {
         <Text accessibilityLabel={etiquetaFechaLarga(f)} style={[s.titulo, { color: color.texto }]}>{etiquetaFechaLarga(f)}</Text>
       </View>
       <View style={s.tira}>
-        <Pressable onPress={() => cambiarDia(sumarDias(lunes, -7))} accessibilityRole="button" accessibilityLabel="Semana anterior" style={s.tiraNav}><Text style={[s.nav, { color: color.texto }]}>‹</Text></Pressable>
+        <Pressable onPress={() => cambiarDia(sumarDias(lunes, -7))} accessibilityRole="button" accessibilityLabel="Semana anterior" style={s.tiraNav}><Icono nombre="chevronIzq" color={color.texto} tamaño={18} /></Pressable>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.tiraScroll}>
         {dias.map((d, i) => (
           <Pressable key={d} onPress={() => cambiarDia(d)} accessibilityRole="button"
@@ -73,7 +81,7 @@ export default function Dia() {
           </Pressable>
         ))}
         </ScrollView>
-        <Pressable onPress={() => cambiarDia(sumarDias(lunes, 7))} accessibilityRole="button" accessibilityLabel="Semana siguiente" style={s.tiraNav}><Text style={[s.nav, { color: color.texto }]}>›</Text></Pressable>
+        <Pressable onPress={() => cambiarDia(sumarDias(lunes, 7))} accessibilityRole="button" accessibilityLabel="Semana siguiente" style={s.tiraNav}><Icono nombre="chevronDer" color={color.texto} tamaño={18} /></Pressable>
       </View>
       <ScrollView ref={scrollRef as any} onContentSizeChange={() => scrollRef.current?.scrollTo({ y: (primeraHora - INICIO) * ALTO_HORA, animated: false })} contentContainerStyle={s.horasCont}>
         {Array.from({ length: FIN - INICIO + 1 }, (_, i) => INICIO + i).map(h => {
@@ -105,7 +113,7 @@ export default function Dia() {
 
 const s = StyleSheet.create({
   cabecera: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 12, paddingVertical: 8, gap: 4 },
-  mesBtn: { minWidth: 52, minHeight: 44, justifyContent: 'center' },
+  mesBtn: { minWidth: 52, minHeight: 44, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 2 },
   mesTexto: { fontSize: 15, fontWeight: '700' },
   titulo: { width: '100%', fontSize: 15, fontWeight: '700', textTransform: 'capitalize', textAlign: 'center' },
   hoyBtn: { minWidth: 44, minHeight: 44, alignItems: 'center', justifyContent: 'center' },
@@ -113,7 +121,6 @@ const s = StyleSheet.create({
   tira: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 4, paddingBottom: 8 },
   tiraNav: { width: 32, minHeight: 48, alignItems: 'center', justifyContent: 'center' },
   tiraScroll: { alignItems: 'center' },
-  nav: { fontSize: 24 },
   diaTira: { width: 44, minHeight: 48, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
   diaNombre: { fontSize: 10, fontWeight: '600' },
   diaNum: { fontSize: 14, fontWeight: '700' },

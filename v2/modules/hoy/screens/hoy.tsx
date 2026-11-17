@@ -1,58 +1,201 @@
-import { StyleSheet, Text, View, ScrollView } from 'react-native';
+/**
+ * Hoy — pantalla de inicio Aurora (referencia exacta: v2/diseno/capturas/a-hoy.png).
+ * Hero con anillo de progreso «Clases de hoy», tres tarjetas de resumen,
+ * lista de agenda del día con botón «Dada» y aviso de vencimientos.
+ * I1: fixtures sin pagos reales; los límites se nombran, nunca se inventan datos.
+ * «Dada» marca en el estado de sesión compartido: Hoy y Agenda ven lo mismo.
+ */
+
+import { useMemo, useState } from 'react';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useRouter } from 'expo-router';
 import { usarTema } from '../../../packages/ui/src/tema';
 import { usarSesion } from '../../../packages/datos/src/sesion';
-import { personasUnicasDelDia } from '../../../packages/datos/src/logica';import { etiquetaFechaLarga } from '../../../packages/datos/src/fechas';
+import { FECHA_BASE_FIXTURES } from '../../../packages/datos/src/fixtures';
+import {
+  clasesDelDia,
+  saludoPorHora,
+  type ResumenHoy,
+} from '../../../packages/datos/src/resumenHoy';
+import { etiquetaFechaLarga } from '../../../packages/datos/src/fechas';
+import { AnilloProgreso } from '../components/AnilloProgreso';
+import { TarjetaResumen, type DatoResumen } from '../components/TarjetaResumen';
+import { FilaClase } from '../components/FilaClase';
+import { Festejo } from '../components/Festejo';
+import { Icono } from '../../../packages/ui/src/components/Icono';
 
-/** Hoy: estados derivados de fixtures, con límites explícitos (I1, sin cobros reales). */
 export default function Hoy() {
-  const { color } = usarTema();
-  const { repo, agenda } = usarSesion();
-  const fecha = agenda.fecha; // datos ficticios fijados a la fecha base de fixtures
-  const ocurrencias = repo.ocurrenciasDe(fecha);
-  const programaciones = repo.programacionesActivas(fecha);
-  const personas = personasUnicasDelDia(programaciones, ocurrencias, fecha).size;
+  const { color, oscuro, reducirMovimiento } = usarTema();
+  const { repo, agenda, dadas } = usarSesion();
+  const router = useRouter();
+  const [festejo, setFestejo] = useState(false);
+  // Muestra el día seleccionado de la Agenda (mismo estado que Agenda); sin
+  // reloj global en I1. La lista depende solo de «dadas».
+  const FECHA = agenda.fecha;
+  const clases = useMemo(
+    () =>
+      clasesDelDia(
+        repo.alumnos,
+        repo.ocurrencias,
+        repo.programaciones,
+        FECHA,
+        dadas.ids,
+      ),
+    [repo, FECHA, dadas.ids],
+  );
+  const resumen: ResumenHoy = useMemo(
+    () => ({
+      dadas: clases.filter((c) => c.dada).length,
+      total: clases.length,
+      clases,
+    }),
+    [clases],
+  );
+
+  const marcar = (programacionId: string) => {
+    const clase = clases.find((c) => c.programacionId === programacionId);
+    if (!clase) return;
+    if (clase.dada) dadas.desmarcar(programacionId);
+    else {
+      dadas.marcar(programacionId);
+      if (!reducirMovimiento) setFestejo(true);
+    }
+  };
+
+  const proxima = resumen.clases.find((c) => !c.dada);
+  const tarjetas: DatoResumen[] = [
+    { tipo: 'cobrado', titulo: 'Cobrado hoy', valor: '—', nota: 'pagos reales en I2' },
+    { tipo: 'porCobrar', titulo: 'Por cobrar', valor: '—', nota: 'mensualidades en I2' },
+    { tipo: 'vencen', titulo: 'Vencen', valor: '—', nota: 'avisos en I2' },
+  ];
 
   return (
-    <ScrollView contentContainerStyle={[s.cont, { backgroundColor: color.fondo }]} style={{ backgroundColor: color.fondo }}>
-      <Text style={[s.titulo, { color: color.texto }]}>{etiquetaFechaLarga(fecha)}</Text>
-      <Text style={[s.nota, { color: color.textoSuave }]}>
-        Datos ficticios de la demo. Cobros y vencimientos reales llegan en I2–I3.
-      </Text>
-      <View style={[s.tarjeta, { backgroundColor: color.superficie, borderColor: color.borde }]}>
-        <Text style={[s.seccion, { color: color.texto }]}>Clases del día</Text>
-        <Text style={[s.dato, { color: color.texto }]}>
-          {personas} persona{personas === 1 ? '' : 's'} programada{personas === 1 ? '' : 's'} en{' '}
-          {ocurrencias.filter((o) => o.estado === 'programada').length} clase
-          {ocurrencias.length === 1 ? '' : 's'}
-        </Text>
-      </View>
-      <View style={[s.tarjeta, { backgroundColor: color.superficie, borderColor: color.borde }]}>
-        <Text style={[s.seccion, { color: color.texto }]}>Cobrado hoy</Text>
-        <Text style={[s.vacio, { color: color.textoSuave }]}>
-          Sin registro de cobros (I1 no registra pagos)
-        </Text>
-      </View>
-      <View style={[s.tarjeta, { backgroundColor: color.superficie, borderColor: color.borde }]}>
-        <Text style={[s.seccion, { color: color.texto }]}>Por vencer / Vencidos</Text>
-        <Text style={[s.vacio, { color: color.textoSuave }]}>
-          Se muestra con mensualidades reales (I2–I3)
-        </Text>
-      </View>
-    </ScrollView>
+    <View style={[s.raiz, { backgroundColor: color.fondo }]}>
+      <ScrollView contentContainerStyle={s.cont}>
+        {/* Saludo + campana */}
+        <View style={s.cabecera}>
+          <View>
+            <Text style={[s.saludo, { color: color.textoSuave }]}>
+              {saludoPorHora(16)}, Xime
+            </Text>
+            <Text style={[s.titulo, { color: color.texto }]}>Hoy</Text>
+          </View>
+          <View style={[s.campana, { backgroundColor: color.superficie, borderColor: color.borde }]}>
+            <Icono nombre="campana" color={color.texto} tamaño={20} />
+            <View style={s.campanaBadge}>
+              <Text style={s.campanaBadgeT}>3</Text>
+            </View>
+          </View>
+        </View>
+
+        {/* Hero: anillo + próxima clase */}
+        <View style={[s.hero, { backgroundColor: oscuro ? color.superficie : '#7A2F8C' }]}>
+          <AnilloProgreso
+            dadas={resumen.dadas}
+            total={resumen.total}
+            acento={color.acento}
+            acentoSuave={oscuro ? color.borde : '#9A54AC'}
+            texto={oscuro ? color.texto : '#FFFFFF'}
+            reducirMovimiento={reducirMovimiento}
+          />
+          <View style={s.heroInfo}>
+            <Text style={[s.heroTitulo, { color: oscuro ? color.texto : '#FFFFFF' }]}>Clases de hoy</Text>
+            <Text style={[s.heroLinea, { color: oscuro ? color.textoSuave : '#F1E4F6' }]}>
+              {proxima
+                ? `Próxima: ${proxima.hora} · ${proxima.nombre}`
+                : resumen.total > 0
+                  ? 'Todas las clases dadas'
+                  : 'Sin clases programadas'}
+            </Text>
+            <Text style={[s.heroLinea, { color: oscuro ? color.textoSuave : '#F1E4F6' }]}>
+              {etiquetaFechaLarga(FECHA)}
+            </Text>
+          </View>
+        </View>
+
+        {/* Resumen: 3 tarjetas */}
+        <View style={s.filaResumen}>
+          {tarjetas.map((d) => (
+            <TarjetaResumen key={d.tipo} dato={d} />
+          ))}
+        </View>
+
+        {/* Agenda del día */}
+        <Text style={[s.seccion, { color: color.texto }]}>Agenda de hoy</Text>
+        <View style={s.lista}>
+          {resumen.clases.length === 0 && (
+            <Text style={[s.vacio, { color: color.textoSuave }]}>
+              Hoy no hay alumnos agendados
+            </Text>
+          )}
+          {resumen.clases.map((c) => (
+            <FilaClase
+              key={c.programacionId}
+              clase={c}
+              enMarcar={marcar}
+              enAbrir={() => {
+                agenda.setOrigen({ vista: 'mes', fecha: FECHA });
+                agenda.setFecha(FECHA);
+                router.push(`/dia/${FECHA}`);
+              }}
+            />
+          ))}
+        </View>
+
+        {/* Límite I1: los vencimientos reales llegan con pagos (I2). */}
+        <View
+          style={[s.aviso, { backgroundColor: oscuro ? color.superficie : '#FFF0CC', borderColor: oscuro ? color.borde : '#F2A20C' }]}
+        >
+          <Icono nombre="alerta" color="#A86300" tamaño={20} />
+          <View style={s.avisoInfo}>
+            <Text style={[s.avisoTitulo, { color: oscuro ? color.texto : '#7D4A00' }]}>
+              Vencimientos de la semana
+            </Text>
+            <Text style={[s.avisoNota, { color: '#A86300' }]}>
+              Se listan al activar cobros (I2)
+            </Text>
+          </View>
+        </View>
+      </ScrollView>
+      <Festejo visible={festejo} animar={!reducirMovimiento} />
+    </View>
   );
 }
 
 const s = StyleSheet.create({
-  cont: { padding: 16, gap: 12 },
-  titulo: { fontSize: 22, fontWeight: '800' },
-  nota: { fontSize: 13 },
-  tarjeta: {
-    borderWidth: 1,
-    borderRadius: 12,
-    padding: 14,
-    gap: 6,
+  raiz: { flex: 1 },
+  cont: { padding: 16, paddingBottom: 96, gap: 12 },
+  cabecera: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  saludo: { fontSize: 14, fontWeight: '600' },
+  titulo: { fontSize: 28, fontWeight: '800', marginTop: 2 },
+  campana: {
+    width: 48, height: 48, borderRadius: 24,
+    borderWidth: 1, alignItems: 'center', justifyContent: 'center',
   },
-  seccion: { fontSize: 15, fontWeight: '700' },
-  dato: { fontSize: 14 },
-  vacio: { fontSize: 14 },
+  campanaBadge: {
+    position: 'absolute', top: -4, right: -4,
+    minWidth: 20, height: 20, borderRadius: 10,
+    backgroundColor: '#C62F36', alignItems: 'center', justifyContent: 'center',
+    paddingHorizontal: 5,
+  },
+  campanaBadgeT: { color: '#FFFFFF', fontSize: 11, fontWeight: '700' },
+  hero: {
+    flexDirection: 'row', alignItems: 'center', gap: 14,
+    borderRadius: 16, padding: 16,
+    shadowOpacity: 0.15, shadowRadius: 8, shadowOffset: { width: 0, height: 2 }, elevation: 3,
+  },
+  heroInfo: { flex: 1, gap: 2 },
+  heroTitulo: { fontSize: 17, fontWeight: '800' },
+  heroLinea: { fontSize: 13, fontWeight: '500' },
+  filaResumen: { flexDirection: 'row', gap: 10 },
+  seccion: { fontSize: 17, fontWeight: '800', marginTop: 4 },
+  lista: { gap: 8 },
+  vacio: { fontSize: 14, paddingVertical: 8 },
+  aviso: {
+    flexDirection: 'row', alignItems: 'center', gap: 10,
+    borderWidth: 1, borderRadius: 10, padding: 12, minHeight: 52,
+  },
+  avisoInfo: { flex: 1 },
+  avisoTitulo: { fontSize: 14, fontWeight: '700' },
+  avisoNota: { fontSize: 12 },
 });

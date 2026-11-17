@@ -4,10 +4,13 @@
  * Muestra: avatar de iniciales, nombre semibold, hora de inicio (sin fin si no existe),
  * badge de modalidad textual. Tap = editar programación (accesible). Alto mínimo 64 px.
  * Acento lateral de 3 px por modalidad. No inventar horas de fin.
+ * La marca «Dada» la pone el estado de sesión compartido (Hoy la marca): solo lectura.
  */
 import { Alert, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import { usarTemaAgenda } from '../tema';
+import { usarSesion } from '../../../packages/datos/src/sesion';
 import { AvatarInitials } from '../../../packages/ui/src/components/AvatarInitials';
+import { Icono } from '../../../packages/ui/src/components/Icono';
 import { MODALIDAD_AGENDA } from '../tema';
 import type { Alumno, Programacion } from '../../../packages/datos/src/tipos';
 
@@ -29,9 +32,11 @@ export function HourBlock({
   enRetirar: (programacionId: string) => void;
 }) {
   const { color, oscuro } = usarTemaAgenda();
+  const { dadas } = usarSesion();
   const pal = MODALIDAD_AGENDA[oscuro ? 'oscuro' : 'claro'];
   const par =
     alumno.modalidad === 'mensual' ? pal.mensual : pal.individual;
+  const dada = dadas.ids.has(programacion.id);
 
   const horarioLabel = horaFin ? `${hora}–${horaFin}` : hora;
   const modalidadLabel =
@@ -81,6 +86,16 @@ export function HourBlock({
               {alumno.modalidad === 'mensual' ? 'Mensual' : 'Individual'}
             </Text>
           </View>
+          {/* Marca «Dada» compartida con Hoy: texto + forma, no solo color. */}
+          {dada && (
+            <View
+              style={[s.dada, { backgroundColor: color.acento + '26', borderColor: color.acento }]}
+              accessibilityLabel={`La clase de ${alumno.nombre} ya fue dada`}
+            >
+              <Icono nombre="check" color={color.acento} tamaño={13} grosor={2.4} />
+              <Text style={[s.dadaTexto, { color: color.acento }]}>Dada</Text>
+            </View>
+          )}
         </View>
       </View>
     </Pressable>
@@ -114,4 +129,14 @@ const s = StyleSheet.create({
     paddingVertical: 2,
   },
   badgeTexto: { fontSize: 11, fontWeight: '600' },
+  dada: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    borderRadius: 4,
+    borderWidth: 1,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+  },
+  dadaTexto: { fontSize: 11, fontWeight: '700' },
 });

@@ -29,9 +29,22 @@ interface AgendaEstado {
   version: number;
 }
 
+/**
+ * Clases marcadas «dada» en esta sesión, por id de programación.
+ * Estado visual I1 compartido (Hoy marca, Agenda lo muestra): no es
+ * asistencia ni dinero; al pasar a I2 se reemplaza por clases efectivas.
+ */
+export interface DadasEstado {
+  ids: ReadonlySet<string>;
+  marcar: (programacionId: string) => void;
+  desmarcar: (programacionId: string) => void;
+  limpiar: () => void;
+}
+
 interface Sesion {
   repo: RepositorioFixtures;
   agenda: AgendaEstado;
+  dadas: DadasEstado;
   refrescar: () => void;
 }
 
@@ -53,6 +66,7 @@ export function ProveedorSesion({ children }: { children: React.ReactNode }) {
     { vista: 'semana' | 'mes'; fecha: string } | undefined
   >(undefined);
   const [version, setVersion] = useState(0);
+  const [dadasIds, setDadasIds] = useState<Set<string>>(new Set());
 
   const agenda: AgendaEstado = {
     fecha,
@@ -72,10 +86,21 @@ export function ProveedorSesion({ children }: { children: React.ReactNode }) {
         ...agenda,
         version,
       },
+      dadas: {
+        ids: dadasIds,
+        marcar: (id) => setDadasIds((prev) => new Set(prev).add(id)),
+        desmarcar: (id) =>
+          setDadasIds((prev) => {
+            const n = new Set(prev);
+            n.delete(id);
+            return n;
+          }),
+        limpiar: () => setDadasIds(new Set()),
+      },
       refrescar: () => setVersion((v) => v + 1),
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [repo, fecha, modo, origen, version],
+    [repo, fecha, modo, origen, version, dadasIds],
   );
 
   return <Ctx.Provider value={valor}>{children}</Ctx.Provider>;
