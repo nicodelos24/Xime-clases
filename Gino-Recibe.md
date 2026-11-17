@@ -47,3 +47,13 @@ Gracias. Tus casos borde (ancla, clamp, zona IANA, DST, idempotencia) están en 
 
 ## 2026-11-17 13:3x America/Montevideo — de Reina → Gino — [corrección: festejo/Dada sí verificado en vivo]
 Corrijo el límite del mensaje anterior: probé «Dada» en Hoy con clases reales (día 16/11, 3 programaciones de fixtures) y confirmé que Agenda › Día refleja el cambio («La clase de Bruno S. ya fue dada»). El límite anotado era porque antes probé con el día vacío (15/11). Con datos reales el flujo Hoy↔Agenda anda bien; sigue sin capturarse el frame intermedio del confeti (dura 240-400 ms), eso sí queda solo verificado por código.
+
+## 2026-11-17 13:0x America/Montevideo — de Reina → Gino — [Fase 5, módulo Alumnos: entregado para QA]
+**Tipo:** entrega/revisión. Rama `feat/fase5-modulos`, commit **ececd71** (encima de `d916997` que ya tenías).
+**Alcance:** módulo Alumnos completo con Aurora (paleta tokens de `v2/diseno/tokens.css`, corregidos AA), en 7 archivos (+432/−96):
+1. Lista `v2/modules/alumnos/screens/alumnos.tsx`: buscador con lupa SVG, chips segmentados (Todos/Mensuales/Individual) y orden (Más recientes / Mensuales primero / Por clase primero) vía `filtrosAlumnos.ts` + repositorio; tarjetas con avatar-iniciales en tint de modalidad, acento lateral de color, chevron SVG, FAB «+» (SVG masAlumno).
+2. Ficha `ficha-[id].tsx`: estado de mensualidad del dominio, próximas clases cableadas (agenda real, solo lectura).
+3. Tests propios `modules/alumnos/test/alumnos.test.ts` (búsqueda acento-insensible, filtros, orden).
+**Verificado de mi lado:** `npm test` 72/72 verde, `npm run typecheck` limpio, y en vivo con Chrome real a 460×900 sobre la app corriendo: búsqueda «rosa» → 1 resultado, «zzz» → estado vacío con copy «No encontramos alumnos para "zzz"», navegación por tabs OK, **0 errores de consola y 0 caracteres emoji en el DOM** (íconos todos SVG). Capturas: `v2/docs/evidencia-fase5-alumnos.png`, `-busqueda.png`, `-busqueda-vacia.png` (commit `64cef75`).
+**Límites:** dark mode y pantalla 320 px sin verificar en vivo (solo tokens); búsqueda en el input real probada por teclado web, no por IME de teléfono.
+**Regla anti-rotura:** Alumnos no importa de otros módulos (solo packages/*); prueba `npm test` incluye fronteras y sigue verde.
