@@ -1,129 +1,155 @@
 <!doctype html>
+<!-- Clases v3 · «Pop coral» · mezcla D (Coral claro) + E (Pop tulipán) · aplicada a Hoy · 390px -->
 <html lang="es">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Clases v3 · Hoy</title>
-<link rel="stylesheet" href="../base.css">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Clases v3 · Pop coral · Hoy</title>
+<link rel="stylesheet" href="../base.css?v=2">
 <link rel="stylesheet" href="estilo.css">
+<style>
+html,body{margin:0}
+body{-webkit-font-smoothing:antialiased;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.cel{width:390px;max-width:100%;margin:0 auto;min-height:100vh;position:relative;padding-bottom:86px}
+</style>
 </head>
-<body class="mix-pop-coral">
-<span class="mancha mancha-1" aria-hidden="true"></span>
-<span class="mancha mancha-2" aria-hidden="true"></span>
-<span class="mancha mancha-3" aria-hidden="true"></span>
+<body>
+<div class="cel">
+  <span class="mancha mancha-1"></span><span class="mancha mancha-2"></span><span class="mancha mancha-3"></span>
 
-<header class="barra">
-  <div>
-    <p class="saludo">Buenas tardes, Xime</p>
-    <h1 class="titulo">Hoy</h1>
-  </div>
-  <button class="campana" aria-label="Notificaciones, 3 sin leer">
-    <svg class="ico"><use href="#i-campana"/></svg>
-    <span class="campana-badge">3</span>
-  </button>
-</header>
-
-<section class="hero" aria-label="Clases de hoy">
-  <span class="hero-mancha" aria-hidden="true"></span>
-  <div class="hero-top">
-    <div class="ring" role="img" aria-label="3 de 3 clases dadas hoy">
-      <svg viewBox="0 0 84 84" width="84" height="84">
-        <circle class="ring-fondo" cx="42" cy="42" r="35.5"/>
-        <circle class="ring-valor" cx="42" cy="42" r="35.5" style="stroke-dashoffset:29.7"/>
-      </svg>
-      <div class="ring-nro"><b>3</b><small>/3</small></div>
-    </div>
-    <div class="hero-info">
-      <p class="hero-kicker"><svg class="ico" style="width:14px;height:14px"><use href="#i-chispa"/></svg> Clases de hoy</p>
-      <h2 class="hero-titulo">Todas las clases dadas</h2>
-      <p class="hero-linea">Lunes 16 de noviembre</p>
-    </div>
-  </div>
-  <div class="hero-prox">
-    <span class="hero-prox-ico"><svg class="ico"><use href="#i-reloj"/></svg></span>
+  <header class="barra">
     <div>
-      <b>18:30 · Diego V.</b>
-      <small>Próxima clase</small>
+      <p class="saludo">Buenas tardes, Xime</p>
+      <h1 class="titulo">Hoy</h1>
     </div>
-  </div>
-</section>
+    <button class="campana" aria-label="Notificaciones">
+      <svg class="ico" width="21" height="21" aria-hidden="true"><use href="#i-campana"/></svg>
+      <span class="campana-badge">3</span>
+    </button>
+  </header>
 
-<section class="resumen" aria-label="Resumen del día">
-  <button class="kpi kpi-cobrado" aria-label="Cobrado hoy: 14.400 pesos. Ver cobros">
-    <span class="kpi-ico"><svg class="ico" style="width:17px;height:17px"><use href="#i-cobros"/></svg></span>
-    <span class="kpi-valor">$ 14.400 <span class="delta">▲ 320</span></span>
-    <span class="kpi-titulo">Cobrado hoy</span>
-    <span class="kpi-punto"><i></i></span>
-  </button>
-  <button class="kpi kpi-por" aria-label="Por cobrar: 5.400 pesos. Ver cobros">
-    <span class="kpi-ico"><svg class="ico" style="width:17px;height:17px"><use href="#i-doc"/></svg></span>
-    <span class="kpi-valor">$ 5.400</span>
-    <span class="kpi-titulo">Por cobrar</span>
-    <span class="kpi-punto"><i></i></span>
-  </button>
-  <button class="kpi kpi-vencen" aria-label="Vencen esta semana: 2 mensualidades. Ver avisos">
-    <span class="kpi-ico"><svg class="ico" style="width:17px;height:17px"><use href="#i-alerta"/></svg></span>
-    <span class="kpi-valor">2</span>
-    <span class="kpi-titulo">Vencen</span>
-    <span class="kpi-punto"><i></i></span>
-  </button>
-</section>
+  <section class="hero">
+    <div class="hero-top">
+      <div class="hero-info">
+        <p class="hero-kicker">Martes 17 de noviembre</p>
+        <h2 class="hero-titulo">3 clases en el día</h2>
+        <p class="hero-linea">Próxima: Martina 17:30 · Mensual</p>
+      </div>
+      <div class="ring">
+        <svg width="84" height="84" viewBox="0 0 84 84" aria-hidden="true">
+          <circle class="ring-fondo" cx="42" cy="42" r="35.5"/>
+          <circle class="ring-valor" cx="42" cy="42" r="35.5" style="stroke-dashoffset:74.9"/>
+        </svg>
+        <div class="ring-nro"><b>2/3</b><small>dadas</small></div>
+      </div>
+    </div>
+    <div class="hero-prox">
+      <span class="hero-prox-ico">
+        <svg class="ico" width="17" height="17" aria-hidden="true"><use href="#i-reloj"/></svg>
+      </span>
+      <div>
+        <b>17:30</b>
+        <small>Martina · Mensual · Oficina</small>
+      </div>
+    </div>
+    <span class="hero-mancha"></span>
+  </section>
 
-<section class="agenda" aria-label="Agenda de hoy">
-  <div class="agenda-titulo">
-    <h2>Agenda de hoy</h2>
-    <a href="#">Ver semana</a>
-  </div>
-  <div class="agenda-lista">
-    <article class="fila fila-mensual">
-      <span class="hora">16:00</span>
-      <span class="avatar" aria-hidden="true">B</span>
-      <div class="fila-info">
-        <p class="fila-nombre">Bruno S.</p>
-        <p class="fila-meta"><span class="mod"><svg><use href="#i-mensual"/></svg>Mensual</span></p>
-      </div>
-      <button class="dada marcada" aria-pressed="true" aria-label="Clase de Bruno S. marcada como dada. Tocá para desmarcar">Dada</button>
+  <section class="resumen">
+    <article class="kpi kpi-cobrado">
+      <span class="kpi-ico"><svg class="ico" width="16" height="16" aria-hidden="true"><use href="#i-cobros"/></svg></span>
+      <p class="kpi-valor">$36.400</p>
+      <p class="kpi-titulo">Cobrado hoy</p>
+      <span class="kpi-punto"><i></i></span>
     </article>
-    <article class="fila fila-mensual">
-      <span class="hora">16:00</span>
-      <span class="avatar" aria-hidden="true">C</span>
-      <div class="fila-info">
-        <p class="fila-nombre">Carla T.</p>
-        <p class="fila-meta"><span class="mod"><svg><use href="#i-mensual"/></svg>Mensual</span></p>
-      </div>
-      <button class="dada marcada" aria-pressed="true" aria-label="Clase de Carla T. marcada como dada. Tocá para desmarcar">Dada</button>
+    <article class="kpi kpi-por">
+      <span class="kpi-ico"><svg class="ico" width="16" height="16" aria-hidden="true"><use href="#i-reloj"/></svg></span>
+      <p class="kpi-valor">$18.000</p>
+      <p class="kpi-titulo">Por cobrar</p>
+      <span class="kpi-punto"><i></i></span>
     </article>
-    <article class="fila fila-individual">
-      <span class="hora">18:30</span>
-      <span class="avatar" aria-hidden="true">D</span>
-      <div class="fila-info">
-        <p class="fila-nombre">Diego V.</p>
-        <p class="fila-meta"><span class="mod"><svg><use href="#i-individual"/></svg>Individual</span></p>
-      </div>
-      <button class="dada marcada" aria-pressed="true" aria-label="Clase de Diego V. marcada como dada. Tocá para desmarcar">Dada</button>
+    <article class="kpi kpi-vencen">
+      <span class="kpi-ico"><svg class="ico" width="16" height="16" aria-hidden="true"><use href="#i-alerta"/></svg></span>
+      <p class="kpi-valor">2</p>
+      <p class="kpi-titulo">Vencen hoy</p>
+      <span class="kpi-punto"><i></i></span>
     </article>
-  </div>
-</section>
+  </section>
 
-<div class="aviso" role="status">
-  <svg class="ico"><use href="#i-alerta"/></svg>
-  <div>
-    <b>2 mensualidades vencen esta semana</b>
-    <small>Elena M. y Facundo R.</small>
-  </div>
-  <svg class="ico flecha" style="width:16px;height:16px"><use href="#i-flecha"/></svg>
+  <section class="agenda">
+    <div class="agenda-titulo">
+      <h2>Agenda del día</h2>
+      <a href="#">Ver semana</a>
+    </div>
+    <div class="agenda-lista">
+      <article class="fila fila-mensual">
+        <span class="hora">15:00</span>
+        <span class="avatar">MB</span>
+        <div class="fila-info">
+          <p class="fila-nombre">Martina B.</p>
+          <p class="fila-meta">
+            <span class="mod"><svg class="ico" width="9" height="9" aria-hidden="true"><use href="#i-mensual"/></svg>Mensual</span>
+            <small>60 min</small>
+          </p>
+        </div>
+        <button class="dada" type="button">
+          <svg class="ico" width="15" height="15" aria-hidden="true"><use href="#i-check"/></svg>
+          <span>Dada</span>
+        </button>
+      </article>
+      <article class="fila fila-individual">
+        <span class="hora">16:15</span>
+        <span class="avatar">JS</span>
+        <div class="fila-info">
+          <p class="fila-nombre">Juan S.</p>
+          <p class="fila-meta">
+            <span class="mod"><svg class="ico" width="9" height="9" aria-hidden="true"><use href="#i-individual"/></svg>Individual</span>
+            <small>90 min</small>
+          </p>
+        </div>
+        <button class="dada" type="button">
+          <svg class="ico" width="15" height="15" aria-hidden="true"><use href="#i-check"/></svg>
+          <span>Dada</span>
+        </button>
+      </article>
+      <article class="fila fila-mensual">
+        <span class="hora">17:30</span>
+        <span class="avatar">MP</span>
+        <div class="fila-info">
+          <p class="fila-nombre">María P.</p>
+          <p class="fila-meta">
+            <span class="mod"><svg class="ico" width="9" height="9" aria-hidden="true"><use href="#i-mensual"/></svg>Mensual</span>
+            <small>45 min</small>
+          </p>
+        </div>
+        <button class="dada" type="button">
+          <svg class="ico" width="15" height="15" aria-hidden="true"><use href="#i-check"/></svg>
+          <span>Dada</span>
+        </button>
+      </article>
+    </div>
+  </section>
+
+  <section class="aviso">
+    <svg class="ico" width="18" height="18" aria-hidden="true"><use href="#i-alerta"/></svg>
+    <div>
+      <b>2 pagos vencen hoy</b>
+      <small>Tocá para ver el detalle</small>
+    </div>
+    <svg class="ico flecha" width="16" height="16" aria-hidden="true"><use href="#i-flecha"/></svg>
+  </section>
+
+  <nav class="nav">
+    <button class="activo"><svg class="ico" width="20" height="20" aria-hidden="true"><use href="#i-sol"/></svg>Hoy</button>
+    <button class="nav-hoy"><svg class="ico" width="20" height="20" aria-hidden="true"><use href="#i-agenda"/></svg>Agenda</button>
+    <button><svg class="ico" width="20" height="20" aria-hidden="true"><use href="#i-alumnos"/></svg>Alumnos</button>
+    <button><svg class="ico" width="20" height="20" aria-hidden="true"><use href="#i-cobros"/></svg>Pagos</button>
+  </nav>
 </div>
 
-<nav class="nav" aria-label="Secciones">
-  <button class="activo nav-hoy" aria-current="page"><svg class="ico"><use href="#i-sol"/></svg>Hoy</button>
-  <button><svg class="ico"><use href="#i-alumnos"/></svg>Alumnos</button>
-  <button><svg class="ico"><use href="#i-agenda"/></svg>Agenda</button>
-  <button><svg class="ico"><use href="#i-cobros"/></svg>Cobros</button>
-  <button><svg class="ico"><use href="#i-mas"/></svg>Más</button>
-</nav>
-
 <div class="tlon"><div class="tlon-ring"></div></div>
-<script src="../icons.js"></script>
+
+<script src="../icons.js?v=4"></script>
 <script src="../hoy.js"></script>
 </body>
 </html>

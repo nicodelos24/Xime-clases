@@ -15,9 +15,11 @@
   --tinta:#2E1F3D;            /* de E */
   --suave:#8B7FA0;            /* de E */
   --coral:#F2543D;            /* de D */
+  --coral-oscuro:#D63C25;
   --coral-tint:#FFE1DA;
-  --violeta:#5B2E91;
-  --azul:#2B4A78;
+  --arena:#FFE9DC;            /* de D */
+  --violeta:#5B2E91;          /* familia Agenda */
+  --azul:#2B4A78;             /* familia Agenda */
   --magenta:#D6336C;
   --teal:#0E8F7E;
   --ambar:#F0A202;
@@ -43,119 +45,6 @@ body{background:var(--fondo);color:var(--tinta)}
 .campana-badge{position:absolute;top:-4px;right:-4px;min-width:18px;height:18px;border-radius:9px;padding:0 5px;
   background:var(--coral);color:#fff;font-size:11px;font-weight:800;display:grid;place-items:center;border:2px solid var(--fondo)}
 
-/* hero coral con burbujas de D */
-.hero{margin:6px 18px 14px;border-radius:26px;padding:16px 18px 18px;color:#fff;position:relative;overflow:hidden;
-  background:linear-gradient(140deg,#FF7A5C 0%,#F2543D 48%,#C93A6A 100%);
-  box-shadow:var(--soft-shadow)}
-.hero::before{content:"";position:absolute;width:120px;height:120px;border-radius:50%;background:rgba(255,255,255,.14);left:-40px;bottom:-52px}
-.hero::after{content:"";position:absolute;width:74px;height:74px;border-radius:50%;background:rgba(255,255,255,.1);right:-20px;top:-26px}
-.hero-top{display:flex;align-items:center;gap:13px;position:relative}
-.hero-info{flex:1;min-width:0}
-.hero-kicker{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#FFD9CF}
-.hero-titulo{font-size:19px;font-weight:800;margin-top:3px}
-.hero-linea{font-size:12.5px;color:#FFE3DB;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.hero-prox{margin-top:12px;display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.25);
-  border-radius:18px;padding:10px 12px;position:relative}
-.hero-prox-ico{width:34px;height:34px;border-radius:12px;display:grid;place-items:center;background:rgba(255,255,255,.22);color:#fff}
-.hero-prox b{font-size:14px;font-weight:800}
-.hero-prox small{display:block;font-size:11.5px;color:#FFDCD3;font-weight:600}
-
-/* ring blanco de D */
-.ring{position:relative;width:84px;height:84px;flex:none}
-.ring svg{transform:rotate(-90deg)}
-.ring-fondo{fill:none;stroke:rgba(255,255,255,.25);stroke-width:8}
-.ring-valor{fill:none;stroke:url(#gradRing);stroke-width:8;stroke-linecap:round;stroke-dasharray:224.6;stroke-dashoffset:224.6;
-  animation:dibujo 900ms var(--ease-out) forwards}
-.ring-nro{position:absolute;inset:0;display:grid;place-items:center}
-.ring-nro b{font-size:23px;font-weight:800}
-.ring-nro small{font-size:11px;color:#FFDCD3;font-weight:700;margin-top:-3px}
-
-/* KPIs sólidos festivos de D */
-.resumen{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:0 18px}
-.kpi{border-radius:20px;padding:12px 10px 11px;position:relative;overflow:hidden;
-  transition:transform var(--d-fast) var(--ease-out),box-shadow var(--d-fast) var(--ease-out)}
-.kpi:active{transform:scale(.96)}
-.kpi-cab{display:flex;align-items:center;justify-content:space-between;margin-bottom:9px}
-.kpi-ico{width:30px;height:30px;border-radius:10px;display:grid;place-items:center;margin-bottom:0;background:rgba(255,255,255,.2)}
-.kpi-vencen .kpi-ico{background:rgba(77,46,0,.14)}
-.kpi-cobrado{background:var(--teal);color:#fff;box-shadow:0 8px 18px rgba(14,143,126,.24)}
-.kpi-por{background:var(--violeta);color:#fff;box-shadow:0 8px 18px rgba(91,46,145,.22)}
-.kpi-vencen{background:#FFB020;color:#4D2E00;box-shadow:0 8px 18px rgba(255,176,32,.28)}
-.kpi-punto{width:100%;border-radius:99px;height:4px;background:rgba(0,0,0,.14);overflow:hidden;display:block;margin-top:8px}
-.kpi-punto i{display:block;height:4px;border-radius:99px;width:0;animation:barra var(--d-slow) var(--ease-out) forwards}
-.kpi-cobrado .kpi-punto i{background:rgba(255,255,255,.9);width:78%}
-.kpi-por .kpi-punto i{background:rgba(255,255,255,.9);width:42%;animation-delay:80ms}
-.kpi-vencen .kpi-punto i{background:#4D2E00;width:24%;animation-delay:160ms}
-@keyframes barra{from{width:0}}
-.kpi-valor{font-size:16.5px;font-weight:800;letter-spacing:-.2px}
-.kpi-valor .delta{font-size:10.5px;font-weight:700;opacity:.9;vertical-align:2px;margin-left:2px}
-.kpi-titulo{font-size:11px;font-weight:700;opacity:.9;margin-top:2px}
-
-/* agenda de E: tarjetas de gradiente fuerte por modalidad (violeta / azul) */
-.agenda{margin:18px 18px 0}
-.agenda-titulo{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px}
-.agenda-titulo h2{font-size:17px;font-weight:800}
-.agenda-titulo a{font-size:12.5px;font-weight:800;color:var(--coral);text-decoration:none}
-.agenda-lista{display:flex;flex-direction:column;gap:10px}
-.fila{position:relative;display:flex;align-items:center;gap:11px;padding:12px;border-radius:22px;color:#fff;overflow:hidden;
-  transition:transform var(--d-fast) var(--ease-out),box-shadow var(--d-fast) var(--ease-out)}
-.fila:active{transform:scale(.975)}
-.fila-mensual{background:linear-gradient(135deg,#8A3FBF,#5B2E91);box-shadow:0 10px 22px rgba(91,46,145,.28)}
-.fila-individual{background:linear-gradient(135deg,#3A6BB5,#2B4A78);box-shadow:0 10px 22px rgba(43,74,120,.28)}
-.fila-mensual::after,.fila-individual::after{content:"";position:absolute;width:110px;height:110px;border-radius:50%;
-  background:rgba(255,255,255,.09);right:-34px;top:-40px;pointer-events:none}
-.hora{font-size:13px;font-weight:800;color:rgba(255,255,255,.85);width:44px;text-align:center;flex:none}
-.avatar{width:40px;height:40px;border-radius:50%;flex:none;display:grid;place-items:center;font-size:14px;font-weight:800;
-  background:rgba(255,255,255,.18);color:#fff;border:1.5px solid rgba(255,255,255,.4)}
-.fila-info{flex:1;min-width:0;position:relative}
-.fila-nombre{font-size:14.5px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.fila-meta{display:flex;align-items:center;gap:5px;margin-top:3px}
-.mod{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;border-radius:999px;padding:3px 9px;
-  background:rgba(255,255,255,.16);color:#fff}
-.mod svg{width:9px;height:9px}
-/* «Dada» de D: blanca coral → verde sólido al marcar */
-.dada{display:inline-flex;align-items:center;gap:5px;min-width:70px;height:42px;border-radius:14px;padding:0 15px;
-  justify-content:center;font-size:13.5px;font-weight:800;flex:none;
-  background:var(--superficie);color:var(--coral);box-shadow:inset 0 0 0 1.5px rgba(242,84,61,.35),0 2px 8px rgba(242,84,61,.1);
-  transition:transform var(--d-fast) var(--ease-out),background var(--d-base) var(--ease-out),box-shadow var(--d-base) var(--ease-out)}
-.dada:active{transform:scale(.93)}
-.dada.marcada{background:var(--teal);color:#fff;box-shadow:0 6px 14px rgba(14,143,126,.3)}
-.dada svg{width:15px;height:15px;stroke-dasharray:26;stroke-dashoffset:26;animation:dibujo 240ms var(--ease-out) forwards;pointer-events:none}
-
-/* aviso ámbar */
-.aviso{margin:14px 18px 0;display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:18px;
-  background:linear-gradient(135deg,#FFF6E3,#FFEED2);border:1px solid #FFE1AE;color:#8A5A00}
-.aviso svg{color:#C77800}
-.aviso b{font-size:13.5px;font-weight:800;color:#7A4200}
-.aviso small{display:block;font-size:11.5px;color:#9A6E1E;font-weight:600}
-.aviso .flecha{margin-left:auto;color:#C77800}
-
-/* nav de D (arena) */
-.nav{position:absolute;left:0;right:0;bottom:0;display:flex;justify-content:space-around;align-items:stretch;padding:8px 10px 12px;
-  background:rgba(253,242,236,.92);backdrop-filter:blur(8px);border-top:1px solid #F3DCD2}
-.nav button{display:flex;flex-direction:column;align-items:center;gap:3px;padding:5px 12px;color:#B99C90;
-  font-size:10.5px;font-weight:700;border-radius:14px;transition:color var(--d-base) var(--ease-out),transform var(--d-base) var(--ease-spring)}
-.nav button.activo{color:var(--coral)}
-.nav button.activo .ico{animation:rebote var(--d-base) var(--ease-spring)}
-@keyframes rebote{0%{transform:translateY(0)}45%{transform:translateY(-3px)}100%{transform:translateY(0)}}
-.nav button:active{transform:scale(.92)}
-.nav-hoy{position:relative}
-.nav-hoy::after{content:"+";position:absolute;top:-26px;right:2px;width:34px;height:34px;border-radius:50%;
-  background:var(--coral);color:#fff;font-size:20px;font-weight:600;line-height:32px;text-align:center;
-  box-shadow:0 6px 16px rgba(242,84,61,.4)}
-
-/* telón */
-.tlon{position:fixed;inset:0;background:var(--fondo);z-index:99;display:grid;place-items:center}
-.tlon-ring{width:44px;height:44px;border-radius:50%;border:3px solid rgba(242,84,61,.25);border-top-color:var(--coral);
-  animation:girar 900ms linear infinite}
-@keyframes girar{to{transform:rotate(360deg)}}
-
-@media (prefers-reduced-motion:reduce){
-  .mancha,.kpi-punto i,.fila-mensual::after,.fila-individual::after{animation:none}
-  .ring-valor{animation:none;stroke-dashoffset:31.8!important}
-}eight:18px;border-radius:9px;padding:0 5px;
-  background:var(--coral);color:#fff;font-size:11px;font-weight:800;display:grid;place-items:center;border:2px solid var(--fondo)}
-
 /* hero: base coral de D (burbujas) + formas orgánicas animadas de E */
 .hero{margin:6px 18px 14px;border-radius:26px;padding:16px 18px 18px;color:#fff;position:relative;overflow:hidden;
   background:linear-gradient(140deg,#FF7A5C 0%,#F2543D 48%,#C93A6A 100%);
@@ -168,7 +57,7 @@ body{background:var(--fondo);color:var(--tinta)}
 @keyframes onda{from{transform:rotate(0) scale(1)}to{transform:rotate(22deg) scale(1.1)}}
 .hero-top{display:flex;align-items:center;gap:13px;position:relative}
 .hero-info{flex:1;min-width:0}
-.hero-kicker{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#FFD9CF}
+.hero-kicker{display:inline-flex;align-items:center;gap:6px;align-self:flex-start;font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#FFF3F0;background:rgba(110,20,6,.38);border-radius:999px;padding:3px 9px}
 .hero-titulo{font-size:19px;font-weight:800;margin-top:3px}
 .hero-linea{font-size:12.5px;color:#FFE3DB;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .hero-prox{margin-top:12px;display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.25);
@@ -218,7 +107,7 @@ body{background:var(--fondo);color:var(--tinta)}
 .fila:active{transform:scale(.975)}
 .fila-mensual{background:linear-gradient(135deg,#8A3FBF,#5B2E91);box-shadow:0 10px 22px rgba(91,46,145,.28)}
 .fila-individual{background:linear-gradient(135deg,#3A6BB5,#2B4A78);box-shadow:0 10px 22px rgba(43,74,120,.28)}
-.fila::before{content:"";position:absolute;left:0;top:14px;bottom:14px;width:4px;border-radius:4px;background:rgba(255,255,255,.5)}
+.fila::before{content:"";position:absolute;left:0;top:14px;bottom:14px;width:4px;border-radius:4px;background:var(--coral)}
 .fila-mensual::after,.fila-individual::after{content:"";position:absolute;width:110px;height:110px;border-radius:50%;
   background:rgba(255,255,255,.09);right:-34px;top:-40px;pointer-events:none}
 .hora{font-size:13px;font-weight:800;color:rgba(255,255,255,.8);width:44px;text-align:center;flex:none}
@@ -233,7 +122,7 @@ body{background:var(--fondo);color:var(--tinta)}
 /* el mejor momento de D: tocar marca, y el botón pasa de coral a verde */
 .dada{display:inline-flex;align-items:center;gap:5px;min-width:70px;height:42px;border-radius:14px;padding:0 15px;
   justify-content:center;font-size:13.5px;font-weight:800;flex:none;position:relative;
-  background:var(--superficie);color:var(--coral);box-shadow:inset 0 0 0 1.5px rgba(242,84,61,.35),0 2px 8px rgba(242,84,61,.1);
+  background:var(--superficie);color:var(--coral-oscuro);box-shadow:inset 0 0 0 1.5px rgba(214,60,37,.45),0 2px 8px rgba(242,84,61,.1);
   transition:transform var(--d-fast) var(--ease-out),background var(--d-base) var(--ease-out),box-shadow var(--d-base) var(--ease-out)}
 .dada:active{transform:scale(.93)}
 .dada.marcada{background:var(--teal);color:#fff;box-shadow:0 6px 14px rgba(14,143,126,.3)}
@@ -262,12 +151,14 @@ body{background:var(--fondo);color:var(--tinta)}
   box-shadow:0 6px 16px rgba(242,84,61,.4)}
 
 /* telón */
-.tlon{position:fixed;inset:0;background:#FDF5F1;z-index:99;display:grid;place-items:center}
+.tlon{position:fixed;inset:0;background:var(--fondo);z-index:99;display:grid;place-items:center}
 .tlon-ring{width:44px;height:44px;border-radius:50%;border:3px solid rgba(242,84,61,.25);border-top-color:var(--coral);
   animation:girar 900ms linear infinite}
 @keyframes girar{to{transform:rotate(360deg)}}
 
+@keyframes dibujo{to{stroke-dashoffset:0}}
+
 @media (prefers-reduced-motion:reduce){
-  .hero::after,.hero-mancha,.ring-valor{animation:none}
+  .hero::after,.hero-mancha,.kpi-punto i,.ring-valor{animation:none}
   .ring-valor{stroke-dashoffset:31.8!important}
 }
