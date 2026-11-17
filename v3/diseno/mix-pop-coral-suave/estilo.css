@@ -1,0 +1,166 @@
+/* ═════════════════════════════════════════════════════════════════
+   Clases v3 · Dirección única · «Pop coral»
+   Mezcla E «Pop tulipán» + D «Coral claro» (Nico eligió mezclarlas).
+   De E: fondo blanco vivo con manchas orgánicas, hero violeta con
+   formas onduladas animadas, KPIs blancos con micro-barra de progreso,
+   agenda con gradiente fuerte por modalidad, confeti al marcar.
+   De D: calidez de arena en la base (nada gris), hero coral con
+   burbujas, KPIs de color sólido festivo, acento lateral en las filas,
+   botón «Dada» coral → verde al marcar.
+   Familia Agenda: violeta=Mensual, azul=Individual. AA. 150–350 ms.
+   ═════════════════════════════════════════════════════════════════ */
+:root{
+  --fondo:#FDF5F1;            /* arena clarísima de D, con blanco de fondo */
+  --superficie:#FFFFFF;
+  --tinta:#2E1F3D;            /* de E */
+  --suave:#786A8C;            /* de E, oscurecido para AA sobre arena (antes #8B7FA0) */
+  --coral:#C96B57;            /* de D, desaturado (antes #F2543D) */
+  --coral-oscuro:#A34B38;     /* tinta del boton Dada (antes #D63C25) */
+  --coral-tint:#F6E3DD;
+  --arena:#F7E7DC;            /* de D */
+  --violeta:#7E5D96;          /* familia Agenda, pastel (antes #5B2E91) */
+  --azul:#5F7195;             /* familia Agenda, pastel (antes #2B4A78) */
+  --magenta:#C17293;          /* antes #D6336C */
+  --teal:#6BA193;             /* antes #0E8F7E */
+  --ambar:#E0A75E;            /* antes #F0A202 */
+  --soft-shadow:0 10px 24px rgba(132,99,158,.10);
+}
+body{background:var(--fondo);color:var(--tinta)}
+
+/* manchas decorativas de E, reposadas para no pelear con el hero coral */
+.mancha{position:fixed;pointer-events:none;z-index:0}
+.mancha-1{width:210px;height:210px;left:-70px;top:-80px;background:radial-gradient(circle at 35% 35%,rgba(193,114,147,.12),transparent 68%);border-radius:50%}
+.mancha-2{width:170px;height:170px;right:-60px;top:150px;background:radial-gradient(circle at 60% 30%,rgba(107,161,147,.12),transparent 68%);border-radius:50%}
+.mancha-3{width:230px;height:230px;left:-80px;bottom:-90px;background:radial-gradient(circle at 40% 40%,rgba(132,99,158,.11),transparent 68%);border-radius:50%}
+
+/* barra */
+.barra{position:sticky;top:0;display:flex;justify-content:space-between;align-items:center;padding:14px 18px 10px;z-index:30;
+  background:linear-gradient(180deg,var(--fondo) 60%,transparent)}
+.saludo{font-size:14px;font-weight:600;color:var(--suave)}
+.titulo{font-size:27px;font-weight:800;letter-spacing:-.4px;margin-top:2px}
+.campana{position:relative;width:44px;height:44px;border-radius:16px;display:grid;place-items:center;
+  background:var(--superficie);border:1px solid #EAD6CC;color:var(--coral);box-shadow:0 2px 8px rgba(201,107,87,.08);
+  transition:transform var(--d-fast) var(--ease-out),background var(--d-fast) var(--ease-out)}
+.campana:active{transform:scale(.94);background:var(--coral-tint)}
+.campana-badge{position:absolute;top:-4px;right:-4px;min-width:18px;height:18px;border-radius:9px;padding:0 5px;
+  background:var(--coral);color:#2E140F;font-size:11px;font-weight:800;display:grid;place-items:center;border:2px solid var(--fondo)}
+
+/* hero: base coral de D (burbujas) + formas orgánicas animadas de E */
+.hero{margin:6px 18px 14px;border-radius:26px;padding:16px 18px 18px;color:#fff;position:relative;overflow:hidden;
+  background:linear-gradient(140deg,#B15F4E 0%,#B06049 52%,#A45642 100%);
+  box-shadow:0 16px 36px rgba(201,107,87,.26)}
+.hero::before{content:"";position:absolute;width:120px;height:120px;border-radius:50%;background:rgba(255,255,255,.14);left:-40px;bottom:-52px}
+.hero::after{content:"";position:absolute;width:150px;height:150px;background:#fff;border-radius:38% 62% 55% 45%/48% 40% 60% 52%;
+  opacity:.09;right:-46px;bottom:-70px;animation:onda 9s ease-in-out infinite alternate}
+.hero-mancha{position:absolute;width:90px;height:90px;background:#fff;border-radius:58% 42% 45% 55%/50% 58% 42% 50%;
+  opacity:.07;left:-30px;top:-30px;animation:onda 7s ease-in-out infinite alternate-reverse;pointer-events:none}
+@keyframes onda{from{transform:rotate(0) scale(1)}to{transform:rotate(22deg) scale(1.1)}}
+.hero-top{display:flex;align-items:center;gap:13px;position:relative}
+.hero-info{flex:1;min-width:0}
+.hero-kicker{display:inline-flex;align-items:center;gap:6px;align-self:flex-start;font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#FFF3F0;background:rgba(88,38,28,.42);border-radius:999px;padding:3px 9px}
+.hero-titulo{font-size:19px;font-weight:800;margin-top:3px}
+.hero-linea{font-size:12.5px;color:#FDF4F1;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hero-prox{margin-top:12px;display:flex;align-items:center;gap:10px;background:rgba(58,26,19,.20);border:1px solid rgba(255,255,255,.22);
+  border-radius:18px;padding:10px 12px;position:relative}
+.hero-prox-ico{width:34px;height:34px;border-radius:12px;display:grid;place-items:center;background:rgba(255,255,255,.22);color:#fff}
+.hero-prox b{font-size:14px;font-weight:800}
+.hero-prox small{display:block;font-size:11.5px;color:#F9E7E1;font-weight:600}
+
+/* ring: ámbar de E (progreso cálido que pide «completame») sobre hero coral */
+.ring{position:relative;width:84px;height:84px;flex:none}
+.ring svg{transform:rotate(-90deg)}
+.ring-fondo{fill:none;stroke:rgba(255,255,255,.25);stroke-width:8}
+.ring-valor{fill:none;stroke:#FFD59E;stroke-width:8;stroke-linecap:round;stroke-dasharray:224.6;stroke-dashoffset:224.6;
+  filter:drop-shadow(0 0 1px rgba(74,26,18,.65));animation:dibujo 900ms var(--ease-out) forwards}
+.ring-nro{position:absolute;inset:0;display:grid;place-items:center}
+.ring-nro b{font-size:23px;font-weight:800}
+.ring-nro small{font-size:11px;color:#FFFFFF;font-weight:700;margin-top:-3px;text-shadow:0 1px 6px rgba(74,26,18,.55)}
+
+/* resumen: KPIs de color sólido de D + micro-barras de progreso de E */
+.resumen{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:0 18px}
+.kpi{border-radius:20px;padding:12px 10px 11px;position:relative;overflow:hidden;
+  transition:transform var(--d-fast) var(--ease-out),box-shadow var(--d-fast) var(--ease-out)}
+.kpi:active{transform:scale(.96)}
+.kpi-cobrado{background:var(--teal);color:#20302B;box-shadow:0 8px 18px rgba(107,161,147,.26)}
+.kpi-por{background:var(--violeta);color:#FFFFFF;box-shadow:0 8px 18px rgba(132,99,158,.24)}
+.kpi-vencen{background:#EBBE7B;color:#4D2E00;box-shadow:0 8px 18px rgba(235,190,123,.28)}
+.kpi-ico{width:30px;height:30px;border-radius:10px;display:grid;place-items:center;margin-bottom:8px;background:rgba(255,255,255,.2)}
+.kpi-vencen .kpi-ico{background:rgba(77,46,0,.12)}
+.kpi-punto{display:block;width:100%;border-radius:99px;height:4px;background:rgba(255,255,255,.28);overflow:hidden;margin-top:6px}
+.kpi-punto i{display:block;height:4px;border-radius:99px;width:0;animation:barra var(--d-slow) var(--ease-out) forwards}
+.kpi-cobrado .kpi-punto i{background:#fff;width:78%}
+.kpi-por .kpi-punto i{background:rgba(255,255,255,.9);width:42%;animation-delay:80ms}
+.kpi-vencen .kpi-punto i{background:#4D2E00;width:24%;animation-delay:160ms}
+@keyframes barra{from{width:0}}
+.kpi-valor{font-size:16.5px;font-weight:800;letter-spacing:-.2px}
+.kpi-valor .delta{font-size:10.5px;font-weight:700;opacity:.85;vertical-align:2px;margin-left:2px}
+.kpi-titulo{font-size:11px;font-weight:700;opacity:.85;margin-top:2px}
+
+/* agenda: gradiente de E por modalidad + acento lateral de D + botón Dada de D */
+.agenda{margin:18px 18px 0}
+.agenda-titulo{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px}
+.agenda-titulo h2{font-size:17px;font-weight:800}
+.agenda-titulo a{font-size:12.5px;font-weight:800;color:var(--coral-oscuro);text-decoration:none}
+.agenda-lista{display:flex;flex-direction:column;gap:10px}
+.fila{position:relative;display:flex;align-items:center;gap:11px;padding:12px;border-radius:20px;color:#fff;overflow:hidden;
+  transition:transform var(--d-fast) var(--ease-out),box-shadow var(--d-fast) var(--ease-out)}
+.fila:active{transform:scale(.975)}
+.fila-mensual{background:linear-gradient(135deg,#7E5D96 0%,#70508A 60%);box-shadow:0 10px 22px rgba(132,99,158,.26)}
+.fila-individual{background:linear-gradient(135deg,#667697 0%,#5F7195 60%);box-shadow:0 10px 22px rgba(103,121,155,.26)}
+.fila::before{content:"";position:absolute;left:0;top:14px;bottom:14px;width:4px;border-radius:4px;background:var(--coral)}
+.fila-mensual::after,.fila-individual::after{content:"";position:absolute;width:110px;height:110px;border-radius:50%;
+  background:rgba(255,255,255,.09);right:-34px;top:-40px;pointer-events:none}
+.hora{font-size:13px;font-weight:800;color:#FFFFFF;width:44px;text-align:center;flex:none}
+.avatar{width:40px;height:40px;border-radius:50%;flex:none;display:grid;place-items:center;font-size:14px;font-weight:800;
+  background:rgba(255,255,255,.18);color:#fff;border:1.5px solid rgba(255,255,255,.4)}
+.fila-info{flex:1;min-width:0;position:relative}
+.fila-nombre{font-size:14.5px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fila-meta{display:flex;align-items:center;gap:5px;margin-top:3px}
+.mod{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;border-radius:999px;padding:3px 9px;
+  background:rgba(255,255,255,.20);color:#FFFFFF}
+.mod svg{width:9px;height:9px}
+.fila-meta small{white-space:nowrap}
+/* el mejor momento de D: tocar marca, y el botón pasa de coral a verde */
+.dada{display:inline-flex;align-items:center;gap:5px;min-width:70px;height:42px;border-radius:14px;padding:0 15px;
+  justify-content:center;font-size:13.5px;font-weight:800;flex:none;position:relative;
+  background:var(--superficie);color:var(--coral-oscuro);box-shadow:inset 0 0 0 1.5px rgba(163,75,56,.45),0 2px 8px rgba(201,107,87,.1);
+  transition:transform var(--d-fast) var(--ease-out),background var(--d-base) var(--ease-out),box-shadow var(--d-base) var(--ease-out)}
+.dada:active{transform:scale(.93)}
+.dada.marcada{background:var(--teal);color:#1F302A;box-shadow:0 6px 14px rgba(107,161,147,.3)}
+.dada.marcada::before{content:"";position:absolute;left:0;top:10px;bottom:10px;width:4px;border-radius:4px;background:var(--coral-oscuro)}
+.dada svg{width:15px;height:15px;stroke-dasharray:26;stroke-dashoffset:26;animation:dibujo 240ms var(--ease-out) forwards}
+
+/* aviso */
+.aviso{margin:14px 18px 0;display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:18px;
+  background:#F9EEDD;border:1px solid #EDD6AC;color:#6E4512}
+.aviso svg{color:#8A560F}
+.aviso b{font-size:13.5px;font-weight:800;color:#5F3A0E}
+.aviso small{display:block;font-size:11.5px;color:#7C551A;font-weight:600}
+.aviso .flecha{margin-left:auto;color:#8A560F}
+
+/* nav */
+.nav{position:absolute;left:0;right:0;bottom:0;display:flex;justify-content:space-around;align-items:stretch;padding:8px 10px 12px;
+  background:rgba(253,245,241,.92);backdrop-filter:blur(8px);border-top:1px solid #EAD6CC}
+.nav button{display:flex;flex-direction:column;align-items:center;gap:3px;padding:5px 12px;color:#7E685B;
+  font-size:10.5px;font-weight:700;border-radius:14px;transition:color var(--d-base) var(--ease-out),transform var(--d-base) var(--ease-spring)}
+.nav button.activo{color:var(--coral-oscuro)}
+.nav button.activo .ico{animation:rebote var(--d-base) var(--ease-spring)}
+@keyframes rebote{0%{transform:translateY(0)}45%{transform:translateY(-3px)}100%{transform:translateY(0)}}
+.nav button:active{transform:scale(.92)}
+.nav-hoy{position:relative}
+.nav-hoy::after{content:"+";position:absolute;top:-26px;right:2px;width:34px;height:34px;border-radius:50%;
+  background:var(--coral);color:#fff;font-size:20px;font-weight:600;line-height:32px;text-align:center;
+  box-shadow:0 6px 16px rgba(201,107,87,.38)}
+
+/* telón */
+.tlon{position:fixed;inset:0;background:var(--fondo);z-index:99;display:grid;place-items:center}
+.tlon-ring{width:44px;height:44px;border-radius:50%;border:3px solid rgba(201,107,87,.25);border-top-color:var(--coral);
+  animation:girar 900ms linear infinite}
+@keyframes girar{to{transform:rotate(360deg)}}
+
+@keyframes dibujo{to{stroke-dashoffset:0}}
+
+@media (prefers-reduced-motion:reduce){
+  .hero::after,.hero-mancha,.kpi-punto i,.ring-valor{animation:none}
+  .ring-valor{stroke-dashoffset:31.8!important}
+}

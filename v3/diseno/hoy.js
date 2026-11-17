@@ -28,7 +28,9 @@ function actualizarHero(){
 
 function festejo(fila){
   var r = fila.getBoundingClientRect();
-  var colores = ['#7C3AED','#F2543D','#0E8F7E','#F0A202','#D6336C','#2B4A78'];
+  var esSuave = !!document.querySelector('script[src*="hoy.js"]') && (window.__CONFETI_SUAVE || document.body.classList.contains('confeti-suave'));
+  var colores = esSuave ? ['#8B7BB8','#C96B57','#6BA193','#E0A75E','#C17293','#67799B']
+                        : ['#7C3AED','#F2543D','#0E8F7E','#F0A202','#D6336C','#2B4A78'];
   var st = document.createElement('style');
   st.textContent = '@keyframes confetiCae{0%{transform:translate(0,0) rotate(0);opacity:1}100%{transform:translate(var(--dx),calc(var(--dy) + 20px)) rotate(var(--r));opacity:0}}';
   document.head.appendChild(st);

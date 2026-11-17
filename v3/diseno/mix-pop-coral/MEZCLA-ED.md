@@ -38,3 +38,9 @@ La calidez y el coral de D cargan los colores y las acciones; el pop y el movimi
 ## Nota técnica compartida
 
 Aproveché y arreglé el sprite `icons.js` (compartido con D/E): 14 símbolos que perdían el `<` inicial del primer elemento interior (la campana salía sin su campana, la flecha y el check no se pintaban). También `fill="none"` en los íconos de solo trazo y el duotono fijo blanco translúcido. D y E heredan la mejora.
+
+---
+
+## Ronda 2 — feedback de Nico y versión «suave»
+
+Mara pasó el feedback (19:49): **las animaciones quedan**, pero la **paleta está muy saturada**. La versión desaturada está en `v3/diseno/mix-pop-coral-suave/` (carpeta nueva, no pisa esta), con la tabla de correspondencia vieja→nueva y los ratios AA medidos en su `MEZCLA-DECISION.md`.
