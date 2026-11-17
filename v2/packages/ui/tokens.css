@@ -1,0 +1,31 @@
+/* Clases v2 · tokens de color compartidos por las dos propuestas (exportables a TS).
+   Familia: la Agenda conservada (violeta = Mensual, azul = Individual, fondo lila muy claro).
+   Cada color tiene solid (relleno fuerte, texto blanco), tint (fondo suave) e ink (texto sobre tint, AA). */
+:root{
+  --bg:#FAF7FB; --surface:#FFFFFF; --line:#EADFF0; --text:#241A2B; --muted:#6B6075;
+  /* modalidad (viene de la Agenda) */
+  --mensual-solid:#7A2F8C; --mensual-tint:#F1E4F6; --mensual-ink:#6A2279;
+  --indiv-solid:#344E7A;   --indiv-tint:#E5EDF9;   --indiv-ink:#2E4378;
+  /* estados de pago */
+  --aldia-solid:#12805A;   --aldia-tint:#DDF4E9;   --aldia-ink:#0B6444;
+  --pronto-solid:#F2A20C;  --pronto-tint:#FFF0CC;  --pronto-ink:#7D4A00;  --pronto-strong:#A86300; /* ámbar oscuro: bordes, iconos y texto blanco (el solid #F2A20C es solo relleno con texto oscuro) */
+  --debe-solid:#C2358A;    --debe-tint:#FBE2F1;    --debe-ink:#9C226C;
+  --vencida-solid:#C62F36; --vencida-tint:#FDE3E3; --vencida-ink:#A8242A;
+  /* secciones (la propuesta B las usa en la navegación) */
+  --sec-hoy:#A86300; --sec-alumnos:#C62F36; --sec-agenda:#7A2F8C; --sec-cobros:#12805A; --sec-mas:#344E7A;
+  /* movimiento */
+  --d-fast:150ms; --d-base:240ms; --d-slow:350ms;
+  --ease-out:cubic-bezier(.22,1,.36,1); --ease-spring:cubic-bezier(.34,1.56,.64,1);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:var(--text);background:#2a2230}
+.ico{width:22px;height:22px;flex:none}
+.ico .d{fill:currentColor;fill-opacity:.16;stroke:none}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
+.confeti{position:absolute;width:7px;height:10px;border-radius:2px;pointer-events:none;z-index:50;
+  animation:confeti 700ms var(--ease-out) forwards}
+@keyframes confeti{0%{transform:translate(0,0) rotate(0);opacity:1}
+  100%{transform:translate(var(--dx),calc(var(--dy) + 40px)) rotate(var(--r));opacity:0}}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;animation-delay:0ms!important;transition-duration:.01ms!important}
+}
