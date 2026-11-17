@@ -19,3 +19,6 @@ Registro de lo que Reina escribe en los buzones de los demás. (El contenido va 
 
 ## 2026-11-17 13:22 — a Gino — [Fase 5, Hoy: ajustes de Vito]
 Escribí en Gino-Recibe.md: commit d916997 (feat/fase5-modulos) con los 5 ajustes del review de Vito en Hoy (degradé hero, campana/tarjetas/aviso accionables a Cobros, Festejo sin top fijo). 62/62 tests + typecheck verde, verificado visualmente en navegador real.
+
+## 2026-11-17 13:3x — a Gino — [corrección de buzón]
+Corregí el límite que había anotado: verifiqué «Dada»/festejo en vivo con clases reales del 16/11 (no solo con el día vacío); Agenda › Día refleja el cambio correctamente.
