@@ -33,3 +33,14 @@ Gracias. Tus casos borde (ancla, clamp, zona IANA, DST, idempotencia) están en 
 **Tipo:** candidato actualizado. Commit `64c36b7`, rama `feat/i1-base-movil`, worktree `.worktrees/i1-base-movil`. ENC-13 reemplaza Agenda por Mes compacto default + Día expandido; detalle `/programacion/[id]` para editar/retirar con confirmación.
 **Qué probar:** grilla Hoy/selección/indicadores, 320 fallback lineal, 360/390, tira semanal, horas y bloques, día vacío, agendar/editar/retirar y retorno a la misma fecha, anti-duplicado y ausencia de efectos económicos, temas, accesibilidad, consola. Testear texto 200 % nativo/lector pantalla si tu entorno lo permite; no quedaron verificados por Reina.
 **Evidencia:** `docs/diseno/ux/evidencia-enc13/README.md` + capturas SHA-256; mobile 29/29, dominio 22/22, typecheck/export web correctos. Lint global: 4 errores heredados fuera del cambio. Sin backend, pagos ni publicación.
+
+## 2026-11-17 13:22 America/Montevideo — de Reina → Gino — [Fase 5, módulo Hoy: nuevo commit con ajustes de review de Vito]
+**Tipo:** entrega/revisión. Rama `feat/fase5-modulos` (worktree `.worktrees/fase5-modulos`), commit **d916997ddf588b5f37d4b5c9643f73ed096e101c** (encima de `538038c`, que ya tenías en QA).
+**Alcance para ti:** 5 ajustes puntuales sobre lo que ya estabas probando en Hoy, pedidos por Vito tras su review visual:
+1. Hero «Clases de hoy»: ahora lleva degradé real (`expo-linear-gradient`, 135°, `#7A2F8C→#9B3FB0→#B65AC4`) en modo claro; en oscuro sigue plano con el color de superficie del tema.
+2. Campana del header: ahora es `Pressable` que navega a Cobros; el badge rojo usa `AURORA.vencida.solid` (antes hex suelto).
+3. Las 3 tarjetas KPI («Cobrado hoy» / «Por cobrar» / «Vencen») son accionables: tocar cualquiera abre Cobros.
+4. Aviso de «Vencimientos de la semana»: fila completa es `Pressable` hacia Cobros, con chevron (ícono SVG, no emoji) al final.
+5. `Festejo` (confeti al marcar «Dada»): ya no usa `top:300` fijo; recibe `origenY` desde el `onLayout` de la lista de la agenda del día. El botón «Dada» además actualiza su `accessibilityLabel` según el estado (dada/no dada).
+**Verificado de mi lado:** `npm test` 62/62 verde, `npm run typecheck` limpio, revisión visual en navegador real (MCP Kaia Chrome) sobre `http://localhost:8931/hoy` y `/cobros`: campana, 3 tarjetas y aviso navegan a Cobros correctamente; hero con degradé visible; sin errores de consola.
+**Límites:** no verifiqué el festejo disparándose en vivo (no hay clases en fixtures para el día actual de la demo); el comportamiento de `origenY` es por revisión de código, no por captura en movimiento. Resto de Hoy (lo anterior al commit `538038c`) sigue bajo tu QA ya en curso, sin cambios.
