@@ -29,7 +29,17 @@ function generar(): Particula[] {
   }));
 }
 
-export function Festejo({ visible, animar }: { visible: boolean; animar: boolean }) {
+export function Festejo({
+  visible,
+  animar,
+  origenY,
+}: {
+  visible: boolean;
+  animar: boolean;
+  /** Y de origen (px, relativo al contenedor) donde se disparó; por defecto, cerca del tope de la lista. */
+  origenY?: number;
+}) {
+  const top = origenY ?? 220;
   const [particulas, setParticulas] = useState<Particula[] | null>(null);
   const [nativo, setNativo] = useState(false);
 
@@ -56,6 +66,7 @@ export function Festejo({ visible, animar }: { visible: boolean; animar: boolean
             nativo ? s.confetiNativo : s.confeti,
             {
               left: `${p.izq}%`,
+              top,
               backgroundColor: p.color,
               animationDelay: `${p.delay}ms`,
               animationDuration: '240ms',
@@ -77,7 +88,6 @@ const s = StyleSheet.create({
   capa: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, overflow: 'hidden' },
   confeti: {
     position: 'absolute',
-    top: 300,
     width: 7,
     height: 10,
     borderRadius: 2,
@@ -88,7 +98,6 @@ const s = StyleSheet.create({
   /** En nativo no hay keyframes CSS: dada → desplazamiento y desvanecer. */
   confetiNativo: {
     position: 'absolute',
-    top: 300,
     width: 7,
     height: 10,
     borderRadius: 2,

@@ -56,7 +56,11 @@ export function FilaClase({
       <Pressable
         onPress={() => enMarcar(clase.programacionId)}
         accessibilityRole="button"
-        accessibilityLabel={`Marcar la clase de ${clase.nombre} como dada`}
+        accessibilityLabel={
+          dada
+            ? `Clase de ${clase.nombre} marcada como dada, tocar para deshacer`
+            : `Marcar la clase de ${clase.nombre} como dada`
+        }
         accessibilityState={{ checked: dada }}
         style={[
           s.dadaBtn,

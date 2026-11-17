@@ -9,9 +9,10 @@
 import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
+import { LinearGradient } from 'expo-linear-gradient';
 import { usarTema } from '../../../packages/ui/src/tema';
+import { AURORA } from '../../../packages/ui/src/tokens';
 import { usarSesion } from '../../../packages/datos/src/sesion';
-import { FECHA_BASE_FIXTURES } from '../../../packages/datos/src/fixtures';
 import {
   clasesDelDia,
   saludoPorHora,
@@ -29,6 +30,7 @@ export default function Hoy() {
   const { repo, agenda, dadas } = usarSesion();
   const router = useRouter();
   const [festejo, setFestejo] = useState(false);
+  const [listaY, setListaY] = useState(220);
   // Muestra el día seleccionado de la Agenda (mismo estado que Agenda); sin
   // reloj global en I1. La lista depende solo de «dadas».
   const FECHA = agenda.fecha;
@@ -80,49 +82,68 @@ export default function Hoy() {
             </Text>
             <Text style={[s.titulo, { color: color.texto }]}>Hoy</Text>
           </View>
-          <View style={[s.campana, { backgroundColor: color.superficie, borderColor: color.borde }]}>
+          <Pressable
+            onPress={() => router.push('/cobros')}
+            accessibilityRole="button"
+            accessibilityLabel="Avisos: 3 vencimientos esta semana, ver en Cobros"
+            style={({ pressed }) => [
+              s.campana,
+              { backgroundColor: color.superficie, borderColor: color.borde },
+              pressed && s.presionado,
+            ]}
+          >
             <Icono nombre="campana" color={color.texto} tamaño={20} />
-            <View style={s.campanaBadge}>
+            <View style={[s.campanaBadge, { backgroundColor: AURORA.vencida.solid }]}>
               <Text style={s.campanaBadgeT}>3</Text>
+            </View>
+          </Pressable>
+        </View>
+
+        {/* Hero: anillo + próxima clase. Sombra en el wrapper, degradé recortado adentro. */}
+        <View style={s.heroSombra}>
+          <View style={[s.hero, oscuro && { backgroundColor: color.superficie }]}>
+            {!oscuro && (
+              <LinearGradient
+                colors={[AURORA.mensual.solid, '#9B3FB0', '#B65AC4']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={StyleSheet.absoluteFill}
+              />
+            )}
+            <AnilloProgreso
+              dadas={resumen.dadas}
+              total={resumen.total}
+              acento={color.acento}
+              acentoSuave={oscuro ? color.borde : '#9A54AC'}
+              texto={oscuro ? color.texto : '#FFFFFF'}
+              reducirMovimiento={reducirMovimiento}
+            />
+            <View style={s.heroInfo}>
+              <Text style={[s.heroTitulo, { color: oscuro ? color.texto : '#FFFFFF' }]}>Clases de hoy</Text>
+              <Text style={[s.heroLinea, { color: oscuro ? color.textoSuave : '#F1E4F6' }]}>
+                {proxima
+                  ? `Próxima: ${proxima.hora} · ${proxima.nombre}`
+                  : resumen.total > 0
+                    ? 'Todas las clases dadas'
+                    : 'Sin clases programadas'}
+              </Text>
+              <Text style={[s.heroLinea, { color: oscuro ? color.textoSuave : '#F1E4F6' }]}>
+                {etiquetaFechaLarga(FECHA)}
+              </Text>
             </View>
           </View>
         </View>
 
-        {/* Hero: anillo + próxima clase */}
-        <View style={[s.hero, { backgroundColor: oscuro ? color.superficie : '#7A2F8C' }]}>
-          <AnilloProgreso
-            dadas={resumen.dadas}
-            total={resumen.total}
-            acento={color.acento}
-            acentoSuave={oscuro ? color.borde : '#9A54AC'}
-            texto={oscuro ? color.texto : '#FFFFFF'}
-            reducirMovimiento={reducirMovimiento}
-          />
-          <View style={s.heroInfo}>
-            <Text style={[s.heroTitulo, { color: oscuro ? color.texto : '#FFFFFF' }]}>Clases de hoy</Text>
-            <Text style={[s.heroLinea, { color: oscuro ? color.textoSuave : '#F1E4F6' }]}>
-              {proxima
-                ? `Próxima: ${proxima.hora} · ${proxima.nombre}`
-                : resumen.total > 0
-                  ? 'Todas las clases dadas'
-                  : 'Sin clases programadas'}
-            </Text>
-            <Text style={[s.heroLinea, { color: oscuro ? color.textoSuave : '#F1E4F6' }]}>
-              {etiquetaFechaLarga(FECHA)}
-            </Text>
-          </View>
-        </View>
-
-        {/* Resumen: 3 tarjetas */}
+        {/* Resumen: 3 tarjetas, accionables → Cobros (I1 placeholder, toque ya cableado) */}
         <View style={s.filaResumen}>
           {tarjetas.map((d) => (
-            <TarjetaResumen key={d.tipo} dato={d} />
+            <TarjetaResumen key={d.tipo} dato={d} enAbrir={() => router.push('/cobros')} />
           ))}
         </View>
 
         {/* Agenda del día */}
         <Text style={[s.seccion, { color: color.texto }]}>Agenda de hoy</Text>
-        <View style={s.lista}>
+        <View style={s.lista} onLayout={(e) => setListaY(e.nativeEvent.layout.y)}>
           {resumen.clases.length === 0 && (
             <Text style={[s.vacio, { color: color.textoSuave }]}>
               Hoy no hay alumnos agendados
@@ -142,22 +163,30 @@ export default function Hoy() {
           ))}
         </View>
 
-        {/* Límite I1: los vencimientos reales llegan con pagos (I2). */}
-        <View
-          style={[s.aviso, { backgroundColor: oscuro ? color.superficie : '#FFF0CC', borderColor: oscuro ? color.borde : '#F2A20C' }]}
+        {/* Límite I1: los vencimientos reales llegan con pagos (I2). Fila táctil, destino real en I2. */}
+        <Pressable
+          onPress={() => router.push('/cobros')}
+          accessibilityRole="button"
+          accessibilityLabel="Vencimientos de la semana, se listan al activar cobros, ver en Cobros"
+          style={({ pressed }) => [
+            s.aviso,
+            { backgroundColor: oscuro ? color.superficie : AURORA.pronto.tint, borderColor: oscuro ? color.borde : AURORA.pronto.solid },
+            pressed && s.presionado,
+          ]}
         >
-          <Icono nombre="alerta" color="#A86300" tamaño={20} />
+          <Icono nombre="alerta" color={AURORA.pronto.strong} tamaño={20} />
           <View style={s.avisoInfo}>
-            <Text style={[s.avisoTitulo, { color: oscuro ? color.texto : '#7D4A00' }]}>
+            <Text style={[s.avisoTitulo, { color: oscuro ? color.texto : AURORA.pronto.ink }]}>
               Vencimientos de la semana
             </Text>
-            <Text style={[s.avisoNota, { color: '#A86300' }]}>
+            <Text style={[s.avisoNota, { color: AURORA.pronto.strong }]}>
               Se listan al activar cobros (I2)
             </Text>
           </View>
-        </View>
+          <Icono nombre="chevronDer" color={oscuro ? color.textoSuave : AURORA.pronto.strong} tamaño={18} />
+        </Pressable>
       </ScrollView>
-      <Festejo visible={festejo} animar={!reducirMovimiento} />
+      <Festejo visible={festejo} animar={!reducirMovimiento} origenY={listaY} />
     </View>
   );
 }
@@ -175,14 +204,18 @@ const s = StyleSheet.create({
   campanaBadge: {
     position: 'absolute', top: -4, right: -4,
     minWidth: 20, height: 20, borderRadius: 10,
-    backgroundColor: '#C62F36', alignItems: 'center', justifyContent: 'center',
+    alignItems: 'center', justifyContent: 'center',
     paddingHorizontal: 5,
   },
   campanaBadgeT: { color: '#FFFFFF', fontSize: 11, fontWeight: '700' },
+  presionado: { transform: [{ scale: 0.97 }], opacity: 0.92 },
+  heroSombra: {
+    borderRadius: 16,
+    shadowOpacity: 0.15, shadowRadius: 8, shadowOffset: { width: 0, height: 2 }, elevation: 3,
+  },
   hero: {
     flexDirection: 'row', alignItems: 'center', gap: 14,
-    borderRadius: 16, padding: 16,
-    shadowOpacity: 0.15, shadowRadius: 8, shadowOffset: { width: 0, height: 2 }, elevation: 3,
+    borderRadius: 16, padding: 16, overflow: 'hidden',
   },
   heroInfo: { flex: 1, gap: 2 },
   heroTitulo: { fontSize: 17, fontWeight: '800' },

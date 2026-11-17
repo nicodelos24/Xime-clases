@@ -4,7 +4,7 @@
  * Acento lateral por tipo de dato + ícono de forma (no emoji, nunca solo color).
  */
 
-import { StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { usarTema } from '../../../packages/ui/src/tema';
 import { AURORA } from '../../../packages/ui/src/tokens';
 import { Icono, type NombreIcono } from '../../../packages/ui/src/components/Icono';
@@ -28,22 +28,28 @@ const ICONO: Record<DatoResumen['tipo'], NombreIcono> = {
   vencen: 'alerta',
 };
 
-export function TarjetaResumen({ dato }: { dato: DatoResumen }) {
+export function TarjetaResumen({ dato, enAbrir }: { dato: DatoResumen; enAbrir?: () => void }) {
   const { oscuro } = usarTema();
   const acento = ACENTO[dato.tipo];
   const borde = oscuro ? acento.tint : acento.solid;
 
   return (
-    <View
-      style={[s.tarjeta, { borderLeftColor: borde, backgroundColor: '#FFFFFF' }]}
+    <Pressable
+      onPress={enAbrir}
+      accessibilityRole={enAbrir ? 'button' : undefined}
       accessibilityLabel={`${dato.titulo}: ${dato.valor}${dato.nota ? `, ${dato.nota}` : ''}`}
+      style={({ pressed }) => [
+        s.tarjeta,
+        { borderLeftColor: borde },
+        pressed && enAbrir ? s.presionada : null,
+      ]}
     >
       <View style={[s.icono, { backgroundColor: acento.tint }]}>
         <Icono nombre={ICONO[dato.tipo]} color={acento.ink} tamaño={16} grosor={2} />
       </View>
       <Text style={[s.valor, { color: AURORA.text }]}>{dato.valor}</Text>
       <Text style={[s.titulo, { color: AURORA.muted }]}>{dato.titulo}</Text>
-    </View>
+    </Pressable>
   );
 }
 
@@ -61,6 +67,7 @@ const s = StyleSheet.create({
     shadowOffset: { width: 0, height: 1 },
     elevation: 1,
   },
+  presionada: { transform: [{ scale: 0.97 }], opacity: 0.92 },
   icono: {
     width: 26, height: 26, borderRadius: 8,
     alignItems: 'center', justifyContent: 'center',
