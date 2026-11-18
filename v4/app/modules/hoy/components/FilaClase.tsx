@@ -6,7 +6,7 @@
  * así que el meta muestra solo la modalidad — sin minutos inventados.
  */
 
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { type LayoutChangeEvent, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useEffect, useState } from 'react';
 import { AvatarInitials } from '../../../packages/ui/src/components/AvatarInitials';
 import { ModalityBadge } from '../../../packages/ui/src/components/ModalityBadge';
@@ -21,6 +21,7 @@ export function FilaClase({
   enAbrir,
   retraso,
   animarEntrada,
+  onDadaLayout,
 }: {
   clase: ClaseDelDia;
   enMarcar: (programacionId: string) => void;
@@ -28,6 +29,8 @@ export function FilaClase({
   /** ms de retraso de la entrada escalonada (demo: 240 + i*90). */
   retraso?: number;
   animarEntrada?: boolean;
+  /** Callback con {x,y,ancho,alto} del botón «Dada» para posicionar el festejo. */
+  onDadaLayout?: (id: string, layout: { x: number; y: number; ancho: number; alto: number }) => void;
 }) {
   const { color, oscuro, modalidad, reducirMovimiento } = usarTema();
   const par = modalidad[clase.modalidad];
@@ -43,7 +46,7 @@ export function FilaClase({
   }, [visible, retraso]);
   const dadaC = oscuro
     ? {
-        reposo: { fondo: color.superficie, borde: color.acento, texto: color.acento },
+        reposo: { fondo: color.superficie, borde: color.acentoFuerte, texto: color.acentoFuerte },
         tocada: { fondo: color.acento, texto: color.sobreAcento },
       }
     : {
@@ -55,11 +58,21 @@ export function FilaClase({
     ? { backgroundColor: dadaC.tocada.fondo }
     : { backgroundColor: dadaC.reposo.fondo, borderWidth: 1.5, borderColor: dadaC.reposo.borde };
 
+  const handleDadaLayout = (e: LayoutChangeEvent) => {
+    if (!onDadaLayout) return;
+    onDadaLayout(clase.programacionId, {
+      x: e.nativeEvent.layout.x,
+      y: e.nativeEvent.layout.y,
+      ancho: e.nativeEvent.layout.width,
+      alto: e.nativeEvent.layout.height,
+    });
+  };
+
   return (
     <View
       style={[
         s.fila,
-        { opacity: visible ? 1 : 0.001, transform: [{ translateY: visible ? 0 : 12 }] },
+        { backgroundColor: oscuro ? color.superficie : '#FFFFFF', opacity: visible ? 1 : 0.001, transform: [{ translateY: visible ? 0 : 12 }] },
       ]}
     >
       <Pressable
@@ -81,6 +94,7 @@ export function FilaClase({
       </Pressable>
       <Pressable
         onPress={() => enMarcar(clase.programacionId)}
+        onLayout={handleDadaLayout}
         accessibilityRole="button"
         accessibilityState={{ checked: dada }}
         accessibilityLabel={
@@ -101,7 +115,6 @@ const s = StyleSheet.create({
   fila: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
     borderRadius: 16,
     padding: 10,
     paddingLeft: 12,

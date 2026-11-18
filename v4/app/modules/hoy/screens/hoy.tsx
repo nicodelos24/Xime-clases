@@ -10,8 +10,8 @@
  * con la Agenda (Hoy y Agenda ven lo mismo).
  */
 
-import { useMemo, useState } from 'react';
-import { AccessibilityInfo, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useMemo, useRef, useState } from 'react';
+import { AccessibilityInfo, type LayoutChangeEvent, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { usarTema } from '../../../packages/ui/src/tema';
@@ -42,7 +42,12 @@ export default function Hoy() {
   const { repo, agenda, dadas } = usarSesion();
   const router = useRouter();
   const [festejo, setFestejo] = useState<{ x: number; y: number } | null>(null);
-  const [posiciones, setPosiciones] = useState<Record<string, { x: number; y: number; ancho: number; alto: number }>>({});
+  // posicionesDada: layout del botón Dada relativo a su fila (x,ancho,alto)
+  // filaYs: y de cada fila relativa al View lista
+  // listaY: y del View lista relativo al View raiz
+  const posicionesDada = useRef<Record<string, { x: number; y: number; ancho: number; alto: number }>>({});
+  const filaYs = useRef<Record<string, number>>({});
+  const listaY = useRef(0);
   // Muestra el día seleccionado de la Agenda (mismo estado); sin reloj global en I1.
   const FECHA = agenda.fecha;
   const clases = useMemo(
@@ -76,11 +81,17 @@ export default function Hoy() {
       return;
     }
     dadas.marcar(programacionId);
+    void AccessibilityInfo.announceForAccessibility(`Clase de ${clase.nombre} marcada como dada`);
     // Micro-festejo centrado en el botón «Dada» tocado (si el sistema lo permite).
     if (reducirMovimiento) return;
-    const p = posiciones[programacionId];
-    if (p) setFestejo({ x: p.x + p.ancho - 46, y: p.y + p.alto / 2 });
-    void AccessibilityInfo.announceForAccessibility(`Clase de ${clase.nombre} marcada como dada`);
+    const dada = posicionesDada.current[programacionId];
+    const filaY = filaYs.current[programacionId] ?? 0;
+    if (dada) {
+      setFestejo({
+        x: dada.x + dada.ancho - 46,
+        y: listaY.current + filaY + dada.alto / 2,
+      });
+    }
   };
 
   const tarjetas: DatoResumen[] = [
@@ -117,15 +128,22 @@ export default function Hoy() {
           </Pressable>
         </View>
 
-        {/* Hero turquesa: kicker, título, línea, anillo, tarjeta próxima */}
-        <View style={s.hero} accessibilityElementsHidden={false}>
+        {/* Hero turquesa: kicker, título, línea, anillo, tarjeta próxima.
+            LinearGradient del demo aprobado: texto blanco (#FFFFFF) → AA 5.01:1 ≥ 4.5. */}
+        <LinearGradient
+          colors={['#0D7C7B', '#0A6E6D', '#086261']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={s.hero}
+          accessibilityElementsHidden={false}
+        >
           <View style={s.heroTop}>
             <View style={s.heroIzq}>
-              <Text style={[s.heroKicker, { color: HOY_COLORES.kickerClaro }]}>{kickerFecha(FECHA)}</Text>
+              <Text style={[s.heroKicker, { color: '#FFFFFF' }]}>{kickerFecha(FECHA)}</Text>
               <Text style={[s.heroTitulo, { color: '#FFFFFF' }]} accessibilityLiveRegion="polite">
                 {tituloProgreso(resumen.dadas, resumen.total)}
               </Text>
-              <Text style={[s.heroLinea, { color: HOY_COLORES.kickerClaro }]}>
+              <Text style={[s.heroLinea, { color: '#FFFFFF' }]}>
                 {lineaProgreso(resumen.clases)}
               </Text>
             </View>
@@ -147,18 +165,18 @@ export default function Hoy() {
               </View>
               <View>
                 <Text style={[s.proxHora, { color: '#FFFFFF' }]}>{proxima.hora}</Text>
-                <Text style={[s.proxDet, { color: HOY_COLORES.kickerClaro }]}>
+                <Text style={[s.proxDet, { color: '#FFFFFF' }]}>
                   {proxima.nombre} · {capitalizar(proxima.modalidad)}
                 </Text>
               </View>
             </View>
           )}
           {diaCompleto && (
-            <Text style={[s.completo, { color: HOY_COLORES.kickerClaro }]}>
+            <Text style={[s.completo, { color: '#FFFFFF' }]}>
               Todas las clases del día están dadas
             </Text>
           )}
-        </View>
+        </LinearGradient>
 
         {/* Resumen: 3 KPI, accionables → Cobros (sin entrada dinámica: RN-web
             deja el style de función con opacity 0 si no dispara re-render) */}
@@ -172,28 +190,36 @@ export default function Hoy() {
         <View style={s.seccion}>
           <Text style={[s.seccionTitulo, { color: color.texto }]}>Agenda del día</Text>
           <Pressable onPress={() => router.push('/agenda')} accessibilityRole="link" accessibilityLabel="Ver la semana completa en Agenda">
-            <Text style={[s.seccionLink, { color: '#0B6B6A' }]}>Ver semana</Text>
+            <Text style={[s.seccionLink, { color: oscuro ? color.acentoFuerte : '#0B6B6A' }]}>Ver semana</Text>
           </Pressable>
         </View>
-        <View style={s.lista}>
+        <View
+          style={s.lista}
+          onLayout={(e: LayoutChangeEvent) => { listaY.current = e.nativeEvent.layout.y; }}
+        >
           {resumen.clases.length === 0 && (
             <Text style={[s.vacio, { color: color.textoSuave }]}>
               Hoy no hay alumnos agendados
             </Text>
           )}
           {resumen.clases.map((c, i) => (
-            <FilaClase
+            <View
               key={c.programacionId}
-              clase={c}
-              enMarcar={marcar}
-              enAbrir={() => {
-                agenda.setOrigen({ vista: 'mes', fecha: FECHA });
-                agenda.setFecha(FECHA);
-                router.push(`/dia/${FECHA}`);
-              }}
-              retraso={RETRASO_ENTRADA.filaBase + i * RETRASO_ENTRADA.filaPaso}
-              animarEntrada={!reducirMovimiento}
-            />
+              onLayout={(e: LayoutChangeEvent) => { filaYs.current[c.programacionId] = e.nativeEvent.layout.y; }}
+            >
+              <FilaClase
+                clase={c}
+                enMarcar={marcar}
+                enAbrir={() => {
+                  agenda.setOrigen({ vista: 'mes', fecha: FECHA });
+                  agenda.setFecha(FECHA);
+                  router.push(`/dia/${FECHA}`);
+                }}
+                retraso={RETRASO_ENTRADA.filaBase + i * RETRASO_ENTRADA.filaPaso}
+                animarEntrada={!reducirMovimiento}
+                onDadaLayout={(id, layout) => { posicionesDada.current[id] = layout; }}
+              />
+            </View>
           ))}
         </View>
 
@@ -262,7 +288,6 @@ const s = StyleSheet.create({
     padding: 18,
     paddingTop: 20,
     overflow: 'hidden',
-    backgroundColor: '#0E7C7B',
     shadowOpacity: 0.16,
     shadowRadius: 30,
     shadowOffset: { width: 0, height: 10 },
