@@ -234,10 +234,13 @@ export default function Hoy() {
             pressed && !reducirMovimiento ? { transform: [{ scale: 0.99 }], opacity: 0.92 } : null,
           ]}
         >
-          <Icono nombre="alerta" color={HOY_COLORES.avisoTinta} tamaño={18} />
+          {/* AA: en oscuro la superficie sube a color.superficie y la tinta
+              ámbar #7A5A00 queda en 2.37:1; se usa el acento fuerte del tema
+              (mismo criterio que saludo/sección), en claro se conserva el ámbar. */}
+          <Icono nombre="alerta" color={oscuro ? color.acentoFuerte : HOY_COLORES.avisoTinta} tamaño={18} />
           <View style={s.avisoInfo}>
-            <Text style={[s.avisoTitulo, { color: HOY_COLORES.avisoTinta }]}>{AVISO_VENCIMIENTOS.titulo}</Text>
-            <Text style={[s.avisoDetalle, { color: HOY_COLORES.avisoTinta }]}>{AVISO_VENCIMIENTOS.detalle}</Text>
+            <Text style={[s.avisoTitulo, { color: oscuro ? color.acentoFuerte : HOY_COLORES.avisoTinta }]}>{AVISO_VENCIMIENTOS.titulo}</Text>
+            <Text style={[s.avisoDetalle, { color: oscuro ? color.acentoFuerte : HOY_COLORES.avisoTinta }]}>{AVISO_VENCIMIENTOS.detalle}</Text>
           </View>
         </Pressable>
       </ScrollView>

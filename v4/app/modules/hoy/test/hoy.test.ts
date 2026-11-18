@@ -95,6 +95,30 @@ test('Hoy · micro-festejo: 6 colores pastel y 320 ms', () => {
   assert.equal(FESTEJO.colores.length, 6);
 });
 
+// AA oscuro (re-QA de Gino, 18/11): el aviso pinta sobre color.superficie en
+// oscuro (#17292B); el ámbar de claro #7A5A00 queda en 2.37:1 y rompe AA.
+// La tinta del aviso en oscuro debe ser el acento fuerte del tema, no un valor
+// fijo. El helper concentra la regla para que el test la ejercite.
+const lum = (hex: string): number => {
+  const [r, g, b] = hex.slice(1).match(/.{2}/g)!.map((h) => {
+    const c = parseInt(h, 16) / 255;
+    return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+  });
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+};
+const contraste = (a: string, b: string): number => {
+  const [x, y] = [lum(a), lum(b)].sort((p, q) => q - p);
+  return (x + 0.05) / (y + 0.05);
+};
+
+test('Hoy · aviso: tinta según tema, AA ≥ 4.5 en oscuro y claro', () => {
+  const tintaOscuro = '#15A5A2'; // MARCA_OSCURO.acentoFuerte
+  const tintaClaro = HOY_COLORES.avisoTinta; // #7A5A00
+  assert.ok(contraste(tintaOscuro, '#17292B') >= 4.5, `AA oscuro: ${contraste(tintaOscuro, '#17292B').toFixed(2)}`);
+  assert.ok(contraste(tintaClaro, HOY_COLORES.avisoFondo) >= 4.5, `AA claro: ${contraste(tintaClaro, HOY_COLORES.avisoFondo).toFixed(2)}`);
+  assert.ok(contraste(HOY_COLORES.avisoTinta, '#17292B') < 4.5, 'el ámbar sobre superficie oscura no debe usarse');
+});
+
 test('Hoy · anillo 84/8 con latido al completar y botón Dada turquesa', () => {
   assert.equal(ANILLO.tamaño, 84);
   assert.equal(ANILLO.grosor, 8);
