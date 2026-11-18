@@ -31,7 +31,7 @@ Lo que dijo Nico el 17/11/2026 de los rediseños de la v3 (Pop coral suave y su 
 
 ## 3. Tecnología
 
-Se mantiene **Expo + React Native + TypeScript + Supabase** (exporta a Android y iPhone por EAS; en su fase 5 van los datos de clientes). Animaciones: Reanimated (+ Moti si hace falta). Estructura modular igual a la v2: `apps/mobile`, `modules/*`, `packages/ui|dominio|datos`.
+Se mantiene **Expo + React Native + TypeScript** (exporta a Android y iPhone por EAS; en su fase 4 van los datos de clientes). Animaciones: Reanimated (+ Moti si hace falta). Estructura modular igual a la v2: `apps/mobile`, `modules/*`, `packages/ui|dominio|datos`.
 
 ## 4. Fases
 
@@ -40,7 +40,7 @@ Se mantiene **Expo + React Native + TypeScript + Supabase** (exporta a Android y
 | 1 | **Dirección visual desde cero** | Vito (+Fina) | Paleta turquesa+pastel definida con tokens; pantalla Hoy y Agenda de referencia en un demo con animaciones sobrias; AA medido; mostrado a Nico en el celu (túnel + Telegram con captura) | **Nico aprueba** — puerta dura, no se escribe la app antes |
 | 2 | **Cimiento modular** | Reina | `v4/` con estructura modular; dominio+datos portados con sus tests; **Agenda migrada sin un cambio visual** | Gino: tests verdes + Agenda igual a la referencia |
 | 3 | **Módulo a módulo** | Reina + Vito | Hoy → Alumnos → Cobros → Más, uno por vez, cada uno aprobado por Nico en el celu antes del siguiente | Por cada módulo: visto de Nico + QA de Gino |
-| 4 | **Datos y seguridad** | Ada + Emma + Reina | Supabase: tablas de clientes, login de 2 dueños, aislamiento, auditoría de pagos | Gino prueba aislamiento, fechas y anulaciones |
+| 4 | **Datos y seguridad** | Ada + Emma + Reina | **Firebase, candidata que Nico anticipó (17/11 22:21)**; se compara con Supabase al llegar acá: tablas de clientes, login de 2 dueños, aislamiento, auditoría de pagos | Gino prueba aislamiento, fechas y anulaciones |
 | 5 | **Piloto** | Zaira + Gino | Builds de prueba (TestFlight / Play interno), backups | 1–2 ciclos mensuales sin diferencias |
 
 ## 5. Riesgos
@@ -48,6 +48,7 @@ Se mantiene **Expo + React Native + TypeScript + Supabase** (exporta a Android y
 - **Cuarta iteración visual:** mitigado con una única propuesta fuerte (no menú de alternativas) anclada a la paleta turquesa+pastel que Nico fijó, y aprobación en el celu antes de escribir la app.
 - **Que la Agenda conservada cambie:** capturas de `v4/referencias/` como criterio de aceptación.
 - **Costo de repetir versión:** dominio, datos y reglas probados se portan con tests; lo que se rehace es solo la capa visual.
+- **Base de datos aún sin decidir:** Firebase es la candidata que Nico anticipó (17/11); al llegar a la Fase 4 se la compara con Supabase (consultas, reglas de seguridad, auditoría de pagos) y se le presenta la recomendación a Nico antes de implementar.
 
 ## 6. Estado de partida
 
