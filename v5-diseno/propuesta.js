@@ -5,6 +5,13 @@
   var toast = document.getElementById('toast');
   var tm;
 
+  // el encabezado cambia con la vista, como en la app que reemplazamos
+  var titulos = { 'v-hoy': 'Hoy', 'v-semana': 'Clases', 'v-mes': 'Agenda', 'v-alumnos': 'Alumnos', 'v-cobros': 'Cobros' };
+  function pintarTitulo(id) {
+    var h1 = document.querySelector('.barra-titulo');
+    if (h1) h1.textContent = titulos[id] || 'Hoy';
+  }
+
   function avisar(txt) {
     toast.textContent = txt;
     toast.classList.add('ver');
@@ -15,16 +22,20 @@
   function irA(id) {
     var destino = document.getElementById(id);
     if (!destino) return;
-    vistas.forEach(function (v) { v.classList.remove('activa'); });
+    // una sola vista a la vez: la vista que se va deja de ser la activa
+    vistas.forEach(function (v) { if (v !== destino) v.classList.remove('activa'); });
     // reinicia la animación de entrada de la vista
     void destino.offsetWidth;
     destino.classList.add('activa');
+    // la pestaña refleja la vista; en Agenda (mes) sigue iluminada Clases
+    var pestaña = id === 'v-mes' ? 'v-semana' : id;
     tabs.forEach(function (t) {
-      var on = t.getAttribute('href') === '#' + id;
+      var on = t.getAttribute('href') === '#' + pestaña;
       t.classList.toggle('activo', on);
       if (on) t.setAttribute('aria-current', 'page');
       else t.removeAttribute('aria-current');
     });
+    pintarTitulo(id);
     if (history.replaceState) history.replaceState(null, '', '#' + id);
   }
 
@@ -71,4 +82,5 @@
 
   var inicial = location.hash.slice(1);
   if (inicial && document.getElementById(inicial)) irA(inicial);
+  else pintarTitulo('v-hoy');
 })();
