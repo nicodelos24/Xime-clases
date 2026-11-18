@@ -32,6 +32,13 @@ actual (Hoy, Agenda calendario y Agenda día, chips Mensual/Individual, botón
 - Respaldo de lo anterior: rama `backup/v4-antes-rediseño-20261118` + tag `backup-v4-20261118` (master `5326ac23`), pusheados.
 - Verificado en Chrome: las 5 vistas abren, la navegación cambia de vista, "Marcar dada" alterna el estado con su animación, animaciones y transiciones corriendo (9 animaciones activas en el primer paint), contraste AA de los pares de texto medido (mínimo 4.75; el aviso quedó en 5.77 tras quitarle la opacidad).
 
+## Verificado en Chrome (18/11)
+
+- Las 5 vistas abren y la navegación cambia de una a la vez: Hoy · Clases (semana) · Agenda (mes, con «Ver semana») · Alumnos · Cobros. El título de la barra superior sigue a la vista.
+- «Marcar dada» alterna el estado por clase (aria-pressed + animación «pop»); el toast y el FAB responden.
+- Contraste AA medido con la fórmula WCAG sobre los colores resueltos: mínimo 4.75 (texto secundario sobre fondo) y 5.77 en el aviso ámbar; blanco sobre el extremo claro del hero 4.58; blanco sobre turquesa 5.01; verde 5.3; turquesa 5.75. Todos ≥ 4.5.
+- Animaciones y transiciones activas en el primer paint (9 animaciones en cola: entrada escalonada, anillo, aparecer); `prefers-reduced-motion` desactiva todo.
+
 ## Pendiente de Nico
 
 - **Aprobar (o pedir cambios) este diseño.** Recién con su OK empieza la reescritura de la app sobre este modelo: dónde vive cada grupo, cómo se agenda, qué ve en cada pestaña.
