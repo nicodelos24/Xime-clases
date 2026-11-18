@@ -1,78 +1,82 @@
 /**
- * Festejo — micro-festejo al marcar una clase dada (a-hoy-festejo.png).
- * Partículas de color que salen y caen, 240 ms, solo transform/opacity
- * (keyframes locales: el RNW inline no ejecuta reglas globales de tokens.css).
- * Con movimiento reducido no se muestra (la guía lo apaga).
+ * Festejo — micro-festejo al marcar «Dada» (demo v4, tokens.css .festejo):
+ * 6 puntos pastel que brotan del botón, 320 ms, solo transform/opacity.
+ * Web: keyframes inline (como v2). Nativo: puntos estáticos que se desvanecen
+ * (sin keyframes CSS); siempre dentro de la guía 150–350 ms.
+ * Con movimiento reducido no se muestra (la pantalla ni lo dispara).
  */
 
 import { useEffect, useState } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
-import { AURORA } from '../../../packages/ui/src/tokens';
+import { FESTEJO } from '../screens/textoHoy';
 
-const COLORES = [
-  AURORA.mensual.solid, AURORA.individual.solid, AURORA.aldia.solid,
-  AURORA.pronto.solid, AURORA.debe.solid, AURORA.vencida.solid,
-];
-
-interface Particula {
-  dx: number; dy: number; rot: number; delay: number; color: string; izq: number;
+interface Punto {
+  x: number;
+  y: number;
+  delay: number;
+  color: string;
 }
 
-function generar(): Particula[] {
-  return Array.from({ length: 16 }, (_, i) => ({
-    dx: (Math.random() - 0.5) * 160,
-    dy: -(60 + Math.random() * 60),
-    rot: (Math.random() - 0.5) * 360,
-    delay: (i % 4) * 40,
-    color: COLORES[i % COLORES.length],
-    izq: 10 + ((i * 37) % 80),
-  }));
+function generar(): Punto[] {
+  // 6 puntitos alrededor del punto de origen, como el demo (±14..48 px).
+  const angulos = [-100, -60, -25, 25, 60, 100];
+  return angulos.map((a, i) => {
+    const rad = (a * Math.PI) / 180;
+    const dist = 26 + (i % 3) * 12;
+    return {
+      x: Math.cos(rad) * dist,
+      y: Math.sin(rad) * dist - 18,
+      delay: (i % 3) * 40,
+      color: FESTEJO.colores[i],
+    };
+  });
 }
 
 export function Festejo({
   visible,
   animar,
+  origenX,
   origenY,
 }: {
   visible: boolean;
   animar: boolean;
-  /** Y de origen (px, relativo al contenedor) donde se disparó; por defecto, cerca del tope de la lista. */
-  origenY?: number;
+  /** Centro del festejo, en px relativos al contenedor raíz. */
+  origenX: number;
+  origenY: number;
 }) {
-  const top = origenY ?? 220;
-  const [particulas, setParticulas] = useState<Particula[] | null>(null);
-  const [nativo, setNativo] = useState(false);
+  const [puntos, setPuntos] = useState<Punto[] | null>(null);
+  const [nativo] = useState(Platform.OS !== 'web');
 
   useEffect(() => {
     if (!visible || !animar) return;
-    // En nativo (no web) no hay keyframes CSS: versión estática instantánea.
-    setNativo(Platform.OS !== 'web');
-    setParticulas(generar());
-    const t = setTimeout(() => {
-      setParticulas(null);
-    }, 400);
+    setPuntos(generar());
+    const t = setTimeout(() => setPuntos(null), FESTEJO.duracion + 60);
     return () => clearTimeout(t);
   }, [visible, animar]);
 
-  if (!animar || !visible || !particulas) return null;
+  if (!animar || !visible || !puntos) return null;
 
   return (
-    <View style={s.capa} pointerEvents="none" accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-      <style>{KEYFRAMES}</style>
-      {particulas.map((p, i) => (
+    <View
+      style={s.capa}
+      pointerEvents="none"
+      accessibilityElementsHidden
+      importantForAccessibility="no-hide-descendants"
+    >
+      {!nativo && <style>{KEYFRAMES}</style>}
+      {puntos.map((p, i) => (
         <View
           key={i}
           style={[
-            nativo ? s.confetiNativo : s.confeti,
+            nativo ? s.puntoNativo : s.punto,
             {
-              left: `${p.izq}%`,
-              top,
+              left: origenX,
+              top: origenY,
               backgroundColor: p.color,
               animationDelay: `${p.delay}ms`,
-              animationDuration: '240ms',
-              '--dx': `${p.dx}px`,
-              '--dy': `${p.dy}px`,
-              '--r': `${p.rot}deg`,
+              animationDuration: `${FESTEJO.duracion}ms`,
+              '--x': `${p.x}px`,
+              '--y': `${p.y}px`,
             } as object,
           ]}
         />
@@ -81,27 +85,30 @@ export function Festejo({
   );
 }
 
-/** Copia local de @keyframes confeti (packages/ui/tokens.css), 700→240 ms. */
-const KEYFRAMES = '@keyframes caerConfeti{0%{transform:translate(0,0) rotate(0);opacity:1}100%{transform:translate(var(--dx),calc(var(--dy) + 20px)) rotate(var(--r));opacity:0}}';
+/** Copia local de @keyframes brotar (tokens.css del demo), 320 ms. */
+const KEYFRAMES = '@keyframes brotarFestejo{from{opacity:1;transform:translate(0,0) scale(1)}to{opacity:0;transform:translate(var(--x),var(--y)) scale(.4)}}';
 
 const s = StyleSheet.create({
   capa: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, overflow: 'hidden' },
-  confeti: {
+  punto: {
     position: 'absolute',
-    width: 7,
-    height: 10,
-    borderRadius: 2,
-    animationKeyframes: 'caerConfeti',
-    animationTimingFunction: 'cubic-bezier(.22,1,.36,1)',
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    animationKeyframes: 'brotarFestejo',
+    animationTimingFunction: 'cubic-bezier(.22,.9,.36,1.02)',
     animationFillMode: 'forwards',
+    marginLeft: -3,
+    marginTop: -3,
   } as object,
-  /** En nativo no hay keyframes CSS: dada → desplazamiento y desvanecer. */
-  confetiNativo: {
+  puntoNativo: {
     position: 'absolute',
-    width: 7,
-    height: 10,
-    borderRadius: 2,
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    marginLeft: -3,
+    marginTop: -3,
     opacity: 0,
-    transform: [{ translateX: 40 }, { translateY: -80 }],
+    transform: [{ translateX: 20 }, { translateY: -16 }],
   } as object,
 });

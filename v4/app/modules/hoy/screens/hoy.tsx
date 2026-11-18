@@ -1,13 +1,17 @@
 /**
- * Hoy — pantalla de inicio Aurora (referencia exacta: v2/diseno/capturas/a-hoy.png).
- * Hero con anillo de progreso «Clases de hoy», tres tarjetas de resumen,
- * lista de agenda del día con botón «Dada» y aviso de vencimientos.
- * I1: fixtures sin pagos reales; los límites se nombran, nunca se inventan datos.
- * «Dada» marca en el estado de sesión compartido: Hoy y Agenda ven lo mismo.
+ * Hoy — pantalla v4 (Fase 3a), réplica del demo aprobado por Nico
+ * (v4/diseno/index.html#hoy, captura capturas/hoy.png):
+ * cabecera con campana, hero turquesa (kicker, «N clases por dar», línea,
+ * anillo animado, tarjeta «Próxima»), 3 KPI blancos con punto, «Agenda del
+ * día» con filas blancas + «Dada» con micro-festejo, aviso crema de
+ * vencimientos, entrada escalonada, latido al completar el día.
+ * I1: sin pagos ni asistencia real; los límites se nombran, nunca datos
+ * inventados. La fecha y «dadas» vienen del estado de sesión compartido
+ * con la Agenda (Hoy y Agenda ven lo mismo).
  */
 
-import { useMemo, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useMemo, useRef, useState } from 'react';
+import { AccessibilityInfo, type LayoutChangeEvent, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { usarTema } from '../../../packages/ui/src/tema';
@@ -18,7 +22,15 @@ import {
   saludoPorHora,
   type ResumenHoy,
 } from '../../../packages/datos/src/resumenHoy';
-import { etiquetaFechaLarga } from '../../../packages/datos/src/fechas';
+import {
+  tituloProgreso,
+  lineaProgreso,
+  kickerFecha,
+  capitalizar,
+  AVISO_VENCIMIENTOS,
+  RETRASO_ENTRADA,
+  HOY_COLORES,
+} from './textoHoy';
 import { AnilloProgreso } from '../components/AnilloProgreso';
 import { TarjetaResumen, type DatoResumen } from '../components/TarjetaResumen';
 import { FilaClase } from '../components/FilaClase';
@@ -29,10 +41,14 @@ export default function Hoy() {
   const { color, oscuro, reducirMovimiento } = usarTema();
   const { repo, agenda, dadas } = usarSesion();
   const router = useRouter();
-  const [festejo, setFestejo] = useState(false);
-  const [listaY, setListaY] = useState(220);
-  // Muestra el día seleccionado de la Agenda (mismo estado que Agenda); sin
-  // reloj global en I1. La lista depende solo de «dadas».
+  const [festejo, setFestejo] = useState<{ x: number; y: number } | null>(null);
+  // posicionesDada: layout del botón Dada relativo a su fila (x,ancho,alto)
+  // filaYs: y de cada fila relativa al View lista
+  // listaY: y del View lista relativo al View raiz
+  const posicionesDada = useRef<Record<string, { x: number; y: number; ancho: number; alto: number }>>({});
+  const filaYs = useRef<Record<string, number>>({});
+  const listaY = useRef(0);
+  // Muestra el día seleccionado de la Agenda (mismo estado); sin reloj global en I1.
   const FECHA = agenda.fecha;
   const clases = useMemo(
     () =>
@@ -54,30 +70,43 @@ export default function Hoy() {
     [clases],
   );
 
+  const proxima = resumen.clases.find((c) => !c.dada);
+  const diaCompleto = resumen.total > 0 && resumen.dadas === resumen.total;
+
   const marcar = (programacionId: string) => {
     const clase = clases.find((c) => c.programacionId === programacionId);
     if (!clase) return;
-    if (clase.dada) dadas.desmarcar(programacionId);
-    else {
-      dadas.marcar(programacionId);
-      if (!reducirMovimiento) setFestejo(true);
+    if (clase.dada) {
+      dadas.desmarcar(programacionId);
+      return;
+    }
+    dadas.marcar(programacionId);
+    void AccessibilityInfo.announceForAccessibility(`Clase de ${clase.nombre} marcada como dada`);
+    // Micro-festejo centrado en el botón «Dada» tocado (si el sistema lo permite).
+    if (reducirMovimiento) return;
+    const dada = posicionesDada.current[programacionId];
+    const filaY = filaYs.current[programacionId] ?? 0;
+    if (dada) {
+      setFestejo({
+        x: dada.x + dada.ancho - 46,
+        y: listaY.current + filaY + dada.alto / 2,
+      });
     }
   };
 
-  const proxima = resumen.clases.find((c) => !c.dada);
   const tarjetas: DatoResumen[] = [
     { tipo: 'cobrado', titulo: 'Cobrado hoy', valor: '—', nota: 'pagos reales en I2' },
     { tipo: 'porCobrar', titulo: 'Por cobrar', valor: '—', nota: 'mensualidades en I2' },
-    { tipo: 'vencen', titulo: 'Vencen', valor: '—', nota: 'avisos en I2' },
+    { tipo: 'vencen', titulo: 'Vencen hoy', valor: '—', nota: 'vencimientos en I2' },
   ];
 
   return (
-    <View style={[s.raiz, { backgroundColor: color.fondo }]}>
+    <View style={[s.raiz, { backgroundColor: oscuro ? color.fondo : AURORA.bg }]}>
       <ScrollView contentContainerStyle={s.cont}>
-        {/* Saludo + campana */}
+        {/* Cabecera: saludo + título + campana (40 px como el demo) */}
         <View style={s.cabecera}>
           <View>
-            <Text style={[s.saludo, { color: color.textoSuave }]}>
+            <Text style={[s.saludo, { color: oscuro ? color.acentoFuerte : '#0B6B6A' }]}>
               {saludoPorHora(16)}, Xime
             </Text>
             <Text style={[s.titulo, { color: color.texto }]}>Hoy</Text>
@@ -85,108 +114,144 @@ export default function Hoy() {
           <Pressable
             onPress={() => router.push('/cobros')}
             accessibilityRole="button"
-            accessibilityLabel="Avisos: 3 vencimientos esta semana, ver en Cobros"
+            accessibilityLabel="Notificaciones: 3 avisos esta semana, ver en Cobros"
             style={({ pressed }) => [
               s.campana,
-              { backgroundColor: color.superficie, borderColor: color.borde },
-              pressed && s.presionado,
+              { backgroundColor: color.superficie },
+              pressed && !reducirMovimiento ? { transform: [{ translateY: -2 }] } : null,
             ]}
           >
-            <Icono nombre="campana" color={color.texto} tamaño={20} />
-            <View style={[s.campanaBadge, { backgroundColor: AURORA.vencida.solid }]}>
+            <Icono nombre="campana" color={color.textoSuave} tamaño={21} />
+            <View style={[s.campanaBadge, { backgroundColor: AURORA.secciones.hoy, borderColor: color.superficie }]}>
               <Text style={s.campanaBadgeT}>3</Text>
             </View>
           </Pressable>
         </View>
 
-        {/* Hero: anillo + próxima clase. Sombra en el wrapper, degradé recortado adentro. */}
-        <View style={s.heroSombra}>
-          <View style={[s.hero, oscuro && { backgroundColor: color.superficie }]}>
-            {!oscuro && (
-              <LinearGradient
-                colors={['#08454A', '#0E7C7B', '#15A5A2']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={StyleSheet.absoluteFill}
-              />
-            )}
+        {/* Hero turquesa: kicker, título, línea, anillo, tarjeta próxima.
+            LinearGradient del demo aprobado: texto blanco (#FFFFFF) → AA 5.01:1 ≥ 4.5. */}
+        <LinearGradient
+          colors={['#0D7C7B', '#0A6E6D', '#086261']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={s.hero}
+          accessibilityElementsHidden={false}
+        >
+          <View style={s.heroTop}>
+            <View style={s.heroIzq}>
+              <Text style={[s.heroKicker, { color: '#FFFFFF' }]}>{kickerFecha(FECHA)}</Text>
+              <Text style={[s.heroTitulo, { color: '#FFFFFF' }]} accessibilityLiveRegion="polite">
+                {tituloProgreso(resumen.dadas, resumen.total)}
+              </Text>
+              <Text style={[s.heroLinea, { color: '#FFFFFF' }]}>
+                {lineaProgreso(resumen.clases)}
+              </Text>
+            </View>
             <AnilloProgreso
               dadas={resumen.dadas}
               total={resumen.total}
-              acento={color.acento}
-              acentoSuave={oscuro ? color.borde : '#15A5A2'}
-              texto={oscuro ? color.texto : '#FFFFFF'}
               reducirMovimiento={reducirMovimiento}
             />
-            <View style={s.heroInfo}>
-              <Text style={[s.heroTitulo, { color: oscuro ? color.texto : '#FFFFFF' }]}>Clases de hoy</Text>
-              <Text style={[s.heroLinea, { color: oscuro ? color.textoSuave : '#CDEFEA' }]}>
-                {proxima
-                  ? `Próxima: ${proxima.hora} · ${proxima.nombre}`
-                  : resumen.total > 0
-                    ? 'Todas las clases dadas'
-                    : 'Sin clases programadas'}
-              </Text>
-              <Text style={[s.heroLinea, { color: oscuro ? color.textoSuave : '#CDEFEA' }]}>
-                {etiquetaFechaLarga(FECHA)}
-              </Text>
-            </View>
           </View>
-        </View>
 
-        {/* Resumen: 3 tarjetas, accionables → Cobros (I1 placeholder, toque ya cableado) */}
-        <View style={s.filaResumen}>
+          {/* Tarjeta «Próxima»: solo si queda una por dar (el demo la oculta al completar) */}
+          {proxima && (
+            <View
+              style={[s.prox, { backgroundColor: oscuro ? color.superficie : HOY_COLORES.proxCard, borderColor: oscuro ? color.borde : HOY_COLORES.proxBorde }]}
+              accessibilityLabel={`Próxima clase: ${proxima.hora}, ${proxima.nombre}, ${proxima.modalidad === 'mensual' ? 'Mensual' : 'Individual'}`}
+            >
+              <View style={[s.proxIcono, { backgroundColor: oscuro ? color.superficie : HOY_COLORES.proxIconoFondo }]}>
+                <Icono nombre="reloj" color={oscuro ? color.acento : HOY_COLORES.proxIconoTinta} tamaño={17} />
+              </View>
+              <View>
+                <Text style={[s.proxHora, { color: '#FFFFFF' }]}>{proxima.hora}</Text>
+                <Text style={[s.proxDet, { color: '#FFFFFF' }]}>
+                  {proxima.nombre} · {capitalizar(proxima.modalidad)}
+                </Text>
+              </View>
+            </View>
+          )}
+          {diaCompleto && (
+            <Text style={[s.completo, { color: '#FFFFFF' }]}>
+              Todas las clases del día están dadas
+            </Text>
+          )}
+        </LinearGradient>
+
+        {/* Resumen: 3 KPI, accionables → Cobros (sin entrada dinámica: RN-web
+            deja el style de función con opacity 0 si no dispara re-render) */}
+        <View style={s.resumen}>
           {tarjetas.map((d) => (
             <TarjetaResumen key={d.tipo} dato={d} enAbrir={() => router.push('/cobros')} />
           ))}
         </View>
 
         {/* Agenda del día */}
-        <Text style={[s.seccion, { color: color.texto }]}>Agenda de hoy</Text>
-        <View style={s.lista} onLayout={(e) => setListaY(e.nativeEvent.layout.y)}>
+        <View style={s.seccion}>
+          <Text style={[s.seccionTitulo, { color: color.texto }]}>Agenda del día</Text>
+          <Pressable onPress={() => router.push('/agenda')} accessibilityRole="link" accessibilityLabel="Ver la semana completa en Agenda">
+            <Text style={[s.seccionLink, { color: oscuro ? color.acentoFuerte : '#0B6B6A' }]}>Ver semana</Text>
+          </Pressable>
+        </View>
+        <View
+          style={s.lista}
+          onLayout={(e: LayoutChangeEvent) => { listaY.current = e.nativeEvent.layout.y; }}
+        >
           {resumen.clases.length === 0 && (
             <Text style={[s.vacio, { color: color.textoSuave }]}>
               Hoy no hay alumnos agendados
             </Text>
           )}
-          {resumen.clases.map((c) => (
-            <FilaClase
+          {resumen.clases.map((c, i) => (
+            <View
               key={c.programacionId}
-              clase={c}
-              enMarcar={marcar}
-              enAbrir={() => {
-                agenda.setOrigen({ vista: 'mes', fecha: FECHA });
-                agenda.setFecha(FECHA);
-                router.push(`/dia/${FECHA}`);
-              }}
-            />
+              onLayout={(e: LayoutChangeEvent) => { filaYs.current[c.programacionId] = e.nativeEvent.layout.y; }}
+            >
+              <FilaClase
+                clase={c}
+                enMarcar={marcar}
+                enAbrir={() => {
+                  agenda.setOrigen({ vista: 'mes', fecha: FECHA });
+                  agenda.setFecha(FECHA);
+                  router.push(`/dia/${FECHA}`);
+                }}
+                retraso={RETRASO_ENTRADA.filaBase + i * RETRASO_ENTRADA.filaPaso}
+                animarEntrada={!reducirMovimiento}
+                onDadaLayout={(id, layout) => { posicionesDada.current[id] = layout; }}
+              />
+            </View>
           ))}
         </View>
 
-        {/* Límite I1: los vencimientos reales llegan con pagos (I2). Fila táctil, destino real en I2. */}
+        {/* Aviso de vencimientos: límite I1 explícito, destino real (Cobros) */}
         <Pressable
           onPress={() => router.push('/cobros')}
           accessibilityRole="button"
-          accessibilityLabel="Vencimientos de la semana, se listan al activar cobros, ver en Cobros"
+          accessibilityLabel={`${AVISO_VENCIMIENTOS.titulo}: ${AVISO_VENCIMIENTOS.detalle}, ver en Cobros`}
           style={({ pressed }) => [
             s.aviso,
-            { backgroundColor: oscuro ? color.superficie : AURORA.pronto.tint, borderColor: oscuro ? color.borde : AURORA.pronto.solid },
-            pressed && s.presionado,
+            { backgroundColor: oscuro ? color.superficie : HOY_COLORES.avisoFondo },
+            pressed && !reducirMovimiento ? { transform: [{ scale: 0.99 }], opacity: 0.92 } : null,
           ]}
         >
-          <Icono nombre="alerta" color={AURORA.pronto.strong} tamaño={20} />
+          {/* AA: en oscuro la superficie sube a color.superficie y la tinta
+              ámbar #7A5A00 queda en 2.37:1; se usa el acento fuerte del tema
+              (mismo criterio que saludo/sección), en claro se conserva el ámbar. */}
+          <Icono nombre="alerta" color={oscuro ? color.acentoFuerte : HOY_COLORES.avisoTinta} tamaño={18} />
           <View style={s.avisoInfo}>
-            <Text style={[s.avisoTitulo, { color: oscuro ? color.texto : AURORA.pronto.ink }]}>
-              Vencimientos de la semana
-            </Text>
-            <Text style={[s.avisoNota, { color: AURORA.pronto.strong }]}>
-              Se listan al activar cobros (I2)
-            </Text>
+            <Text style={[s.avisoTitulo, { color: oscuro ? color.acentoFuerte : HOY_COLORES.avisoTinta }]}>{AVISO_VENCIMIENTOS.titulo}</Text>
+            <Text style={[s.avisoDetalle, { color: oscuro ? color.acentoFuerte : HOY_COLORES.avisoTinta }]}>{AVISO_VENCIMIENTOS.detalle}</Text>
           </View>
-          <Icono nombre="chevronDer" color={oscuro ? color.textoSuave : AURORA.pronto.strong} tamaño={18} />
         </Pressable>
       </ScrollView>
-      <Festejo visible={festejo} animar={!reducirMovimiento} origenY={listaY} />
+
+      {/* Entrada escalonada + micro-festejo, con las medidas del demo */}
+      <Festejo
+        visible={festejo !== null}
+        animar={festejo !== null}
+        origenX={festejo?.x ?? 0}
+        origenY={festejo?.y ?? 0}
+      />
     </View>
   );
 }
@@ -194,41 +259,79 @@ export default function Hoy() {
 const s = StyleSheet.create({
   raiz: { flex: 1 },
   cont: { padding: 16, paddingBottom: 96, gap: 12 },
-  cabecera: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  saludo: { fontSize: 14, fontWeight: '600' },
-  titulo: { fontSize: 28, fontWeight: '800', marginTop: 2 },
+  cabecera: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingTop: 4 },
+  saludo: { fontSize: 12.5, fontWeight: '600', letterSpacing: 0.4 },
+  titulo: { fontSize: 26, fontWeight: '800', letterSpacing: -0.4 },
   campana: {
-    width: 48, height: 48, borderRadius: 24,
-    borderWidth: 1, alignItems: 'center', justifyContent: 'center',
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 2,
   },
   campanaBadge: {
-    position: 'absolute', top: -4, right: -4,
-    minWidth: 20, height: 20, borderRadius: 10,
-    alignItems: 'center', justifyContent: 'center',
-    paddingHorizontal: 5,
+    position: 'absolute',
+    top: -3,
+    right: -3,
+    minWidth: 17,
+    height: 17,
+    borderRadius: 9,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    paddingHorizontal: 3,
   },
-  campanaBadgeT: { color: '#FFFFFF', fontSize: 11, fontWeight: '700' },
-  presionado: { transform: [{ scale: 0.97 }], opacity: 0.92 },
-  heroSombra: {
-    borderRadius: 16,
-    shadowOpacity: 0.15, shadowRadius: 8, shadowOffset: { width: 0, height: 2 }, elevation: 3,
-  },
+  campanaBadgeT: { color: '#FFFFFF', fontSize: 10.5, fontWeight: '700' },
   hero: {
-    flexDirection: 'row', alignItems: 'center', gap: 14,
-    borderRadius: 16, padding: 16, overflow: 'hidden',
+    borderRadius: 24,
+    padding: 18,
+    paddingTop: 20,
+    overflow: 'hidden',
+    shadowOpacity: 0.16,
+    shadowRadius: 30,
+    shadowOffset: { width: 0, height: 10 },
+    shadowColor: '#08454A',
+    elevation: 4,
   },
-  heroInfo: { flex: 1, gap: 2 },
-  heroTitulo: { fontSize: 17, fontWeight: '800' },
-  heroLinea: { fontSize: 13, fontWeight: '500' },
-  filaResumen: { flexDirection: 'row', gap: 10 },
-  seccion: { fontSize: 17, fontWeight: '800', marginTop: 4 },
+  heroTop: { flexDirection: 'row', alignItems: 'flex-start', gap: 12 },
+  heroIzq: { flex: 1 },
+  heroKicker: { fontSize: 12, fontWeight: '600', letterSpacing: 0.3 },
+  heroTitulo: { fontSize: 21, fontWeight: '800', letterSpacing: -0.2, marginTop: 2 },
+  heroLinea: { fontSize: 12.5, marginTop: 3 },
+  prox: {
+    marginTop: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    borderWidth: 1,
+    borderRadius: 16,
+    padding: 10,
+    paddingLeft: 12,
+  },
+  proxIcono: { width: 32, height: 32, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
+  proxHora: { fontSize: 14, fontWeight: '700' },
+  proxDet: { fontSize: 11.5, marginTop: 1 },
+  completo: { fontSize: 12.5, fontWeight: '600', marginTop: 10 },
+  resumen: { flexDirection: 'row', gap: 8, alignItems: 'stretch', flexWrap: 'nowrap' },
+  seccion: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', marginTop: 4 },
+  seccionTitulo: { fontSize: 16, fontWeight: '800' },
+  seccionLink: { fontSize: 12.5, fontWeight: '700' },
   lista: { gap: 8 },
   vacio: { fontSize: 14, paddingVertical: 8 },
   aviso: {
-    flexDirection: 'row', alignItems: 'center', gap: 10,
-    borderWidth: 1, borderRadius: 10, padding: 12, minHeight: 52,
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 10,
+    borderRadius: 16,
+    padding: 12,
+    paddingLeft: 14,
+    marginTop: 2,
   },
   avisoInfo: { flex: 1 },
-  avisoTitulo: { fontSize: 14, fontWeight: '700' },
-  avisoNota: { fontSize: 12 },
+  avisoTitulo: { fontSize: 13, fontWeight: '700' },
+  avisoDetalle: { fontSize: 12 },
 });

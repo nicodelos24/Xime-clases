@@ -18,6 +18,7 @@ export type NombreIcono =
   | 'cobrado'
   | 'porCobrar'
   | 'check'
+  | 'reloj'
   | 'chevronIzq'
   | 'chevronDer'
   | 'lupa'
@@ -108,6 +109,12 @@ export function Icono({
         </>
       )}
       {nombre === 'check' && <Polyline points="4.5,12.5 9.5,17.5 19.5,6.5" {...comun} />}
+      {nombre === 'reloj' && (
+        <>
+          <Circle cx="12" cy="12" r="8.6" {...comun} />
+          <Path d="M12 7.5V12l3 2" {...comun} />
+        </>
+      )}
       {nombre === 'chevronIzq' && <Polyline points="15,4.5 8,12 15,19.5" {...comun} />}
       {nombre === 'chevronDer' && <Polyline points="9,4.5 16,12 9,19.5" {...comun} />}
       {nombre === 'lupa' && (

@@ -1,33 +1,28 @@
 /**
- * AnilloProgreso — anillo «Clases de hoy» de Aurora (referencia a-hoy.png).
- * SVG puro: el avance va por stroke-dashoffset; con movimiento reducido se
- * dibuja directo sin animación. Nunca divide por cero (0 clases → vacío).
+ * AnilloProgreso — anillo «1/3 dadas» del hero de Hoy (demo v4: captura hoy.png
+ * y .ring de tokens.css). SVG puro: stroke-dashoffset animado 320 ms ease-out;
+ * al completar el día pasa a blanco y late. Con movimiento reducido se dibuja
+ * directo. Nunca divide por cero.
  */
 
 import { useEffect, useRef, useState } from 'react';
-import { AccessibilityInfo, StyleSheet, Text, View } from 'react-native';
+import { Platform, StyleSheet, Text, View } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
+import { ANILLO, HOY_COLORES } from '../screens/textoHoy';
 
 export function AnilloProgreso({
   dadas,
   total,
-  acento,
-  acentoSuave,
-  texto,
   reducirMovimiento,
 }: {
   dadas: number;
   total: number;
-  acento: string;
-  acentoSuave: string;
-  texto: string;
   reducirMovimiento: boolean;
 }) {
-  const TAMAÑO = 76;
-  const GROSOR = 7;
-  const r = (TAMAÑO - GROSOR) / 2;
-  const c = 2 * Math.PI * r;
+  const { tamaño, grosor, radio, duracion } = ANILLO;
+  const c = 2 * Math.PI * radio;
   const fraccion = total > 0 ? Math.min(1, Math.max(0, dadas / total)) : 0;
+  const completo = total > 0 && dadas === total;
   const [avance, setAvance] = useState(reducirMovimiento ? fraccion : 0);
   const animado = useRef<number | null>(null);
 
@@ -38,7 +33,6 @@ export function AnilloProgreso({
     }
     let cancelado = false;
     const inicio = performance.now();
-    const duracion = 240; // MOVIMIENTO.feedback (guía: 150–350 ms)
     const paso = (t: number) => {
       if (cancelado) return;
       const k = Math.min(1, (t - inicio) / duracion);
@@ -51,7 +45,7 @@ export function AnilloProgreso({
       cancelado = true;
       if (animado.current) cancelAnimationFrame(animado.current);
     };
-  }, [fraccion, reducirMovimiento]);
+  }, [fraccion, reducirMovimiento, duracion]);
 
   const etiqueta =
     total > 0 ? `${dadas} de ${total} clases dadas` : 'Sin clases programadas hoy';
@@ -62,41 +56,46 @@ export function AnilloProgreso({
       accessibilityRole="image"
       accessibilityLabel={etiqueta}
     >
-      <Svg width={TAMAÑO} height={TAMAÑO}>
+      {Platform.OS === 'web' && completo && !reducirMovimiento ? <style>{KEYFRAMES_LATIDO}</style> : null}
+      <Svg width={tamaño} height={tamaño} style={completo && !reducirMovimiento ? s.latido : null}>
+        <Circle cx={tamaño / 2} cy={tamaño / 2} r={radio} stroke={HOY_COLORES.anilloPista} strokeWidth={grosor} fill="none" />
         <Circle
-          cx={TAMAÑO / 2}
-          cy={TAMAÑO / 2}
-          r={r}
-          stroke={acentoSuave}
-          strokeWidth={GROSOR}
-          fill="none"
-        />
-        <Circle
-          cx={TAMAÑO / 2}
-          cy={TAMAÑO / 2}
-          r={r}
-          stroke={texto}
-          strokeWidth={GROSOR}
+          cx={tamaño / 2}
+          cy={tamaño / 2}
+          r={radio}
+          stroke={completo ? HOY_COLORES.anilloValorCompleto : HOY_COLORES.anilloValor}
+          strokeWidth={grosor}
           strokeLinecap="round"
           fill="none"
           strokeDasharray={`${c}`}
           strokeDashoffset={c * (1 - avance)}
-          transform={`rotate(-90 ${TAMAÑO / 2} ${TAMAÑO / 2})`}
         />
       </Svg>
       <View style={s.centro} pointerEvents="none">
-        <Text style={[s.numero, { color: texto }]} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+        <Text style={s.numero}>
           {total > 0 ? dadas : 0}
-          <Text style={[s.fraccion, { color: texto }]}>/{total > 0 ? total : 0}</Text>
+          <Text style={s.sobre}>{`/${total > 0 ? total : 0}`}</Text>
         </Text>
+        <Text style={s.pie}>dadas</Text>
       </View>
     </View>
   );
 }
 
 const s = StyleSheet.create({
-  cont: { width: 76, height: 76, alignItems: 'center', justifyContent: 'center' },
+  cont: { width: ANILLO.tamaño, height: ANILLO.tamaño, alignItems: 'center', justifyContent: 'center' },
   centro: { position: 'absolute', inset: 0, alignItems: 'center', justifyContent: 'center' },
-  numero: { fontSize: 24, fontWeight: '800', textAlign: 'center' },
-  fraccion: { fontSize: 14, fontWeight: '600' },
+  numero: { color: '#FFFFFF', fontSize: 17, fontWeight: '800', textAlign: 'center' },
+  sobre: { color: '#FFFFFF', fontSize: 17, fontWeight: '800' },
+  pie: { color: '#FFFFFF', fontSize: 10, fontWeight: '600', marginTop: -1 },
+  latido: {
+    transform: [{ scale: 1.06 }],
+    animationKeyframes: 'latir',
+    animationDuration: '1.4s',
+    animationIterationCount: 'infinite',
+    animationTimingFunction: 'ease-in-out',
+  } as object,
 });
+
+const KEYFRAMES_LATIDO =
+  '@keyframes latir{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}';
