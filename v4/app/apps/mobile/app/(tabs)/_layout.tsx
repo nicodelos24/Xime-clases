@@ -14,16 +14,20 @@ const s = StyleSheet.create({
 
 /** Cinco destinos: Hoy · Alumnos · Agenda · Cobros · Más (I1). SVG propio, sin emoji. */
 export default function Pestañas() {
-  const { color } = usarTema();
+  const { color, oscuro } = usarTema();
   const etiqueta = (texto: string) => ({ color: tinta }: { color: unknown }) => (
     <Etiqueta texto={texto} color={String(tinta ?? color.textoSuave)} />
   );
   const icono = (nombre: NombreIcono) => ({ color: tinta }: { color: unknown }) => (
     <Icono nombre={nombre} color={String(tinta ?? color.textoSuave)} tamaño={22} />
   );
+  // AA: en oscuro la etiqueta activa pinta sobre color.superficie (#17292B);
+  // el acento #0E7C7B da 3.02:1. Se usa el acento fuerte del tema (mismo
+  // criterio que el aviso de Hoy); en claro se conserva el acento.
+  const tintaActiva = oscuro ? color.acentoFuerte : color.acento;
   return (
     <Tabs screenOptions={{
-      tabBarActiveTintColor: color.acento,
+      tabBarActiveTintColor: tintaActiva,
       tabBarInactiveTintColor: color.textoSuave,
       tabBarStyle: { backgroundColor: color.superficie, borderTopColor: color.borde },
       headerStyle: { backgroundColor: color.superficie },
