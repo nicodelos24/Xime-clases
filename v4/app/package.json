@@ -1,0 +1,27 @@
+{
+  "name": "xime-clases-v4",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "workspaces": [
+    "apps/mobile",
+    "modules/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "test": "node --test packages/dominio/test/*.test.ts packages/datos/test/*.test.ts packages/ui/test/*.test.ts modules/agenda/test/*.test.ts modules/alumnos/test/*.test.ts modules/cobros/test/*.test.ts modules/mas/test/*.test.ts test/*.test.ts",
+    "typecheck": "tsc --noEmit -p apps/mobile/tsconfig.json && npm run typecheck:modules && npm run typecheck:packages",
+    "typecheck:modules": "tsc --noEmit -p modules/agenda/tsconfig.json && tsc --noEmit -p modules/alumnos/tsconfig.json && tsc --noEmit -p modules/hoy/tsconfig.json && tsc --noEmit -p modules/cobros/tsconfig.json && tsc --noEmit -p modules/mas/tsconfig.json && tsc --noEmit -p modules/auth/tsconfig.json",
+    "typecheck:packages": "tsc --noEmit -p packages/dominio/tsconfig.json && tsc --noEmit -p packages/datos/tsconfig.json && tsc --noEmit -p packages/ui/tsconfig.json",
+    "start": "npm run start -w apps/mobile",
+    "web": "npm run web -w apps/mobile"
+  },
+  "devDependencies": {
+    "typescript": "~6.0.3",
+    "@types/node": "^26.6.6",
+    "@types/react": "~19.3.0"
+  },
+  "dependencies": {
+    "expo-linear-gradient": "~58.0.4"
+  }
+}
