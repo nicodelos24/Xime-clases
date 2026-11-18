@@ -1,0 +1,35 @@
+/* Clases v4 · tokens de color compartidos (exportables a TS).
+   Paleta turquesa + pastel aprobada por Nico (Fase 1, v4/diseno, commit af82516):
+   la Agenda conserva su referencia (lila = Mensual, azul = Individual);
+   el acento general pasa a turquesa #0E7C7B.
+   Cada color tiene solid (relleno fuerte), tint (fondo suave) e ink (texto sobre tint, AA). */
+:root{
+  --bg:#F2F9F8; --surface:#FFFFFF; --line:#DCE8E7; --text:#1B2B30; --muted:#5A6A70;
+  /* modalidad (Agenda, referencia conservada) */
+  --mensual-solid:#5E4285; --mensual-tint:#E8E0F6; --mensual-ink:#5E4285;
+  --indiv-solid:#34607F;   --indiv-tint:#DCEBF6;   --indiv-ink:#34607F;
+  /* estados de pago (pastel v4) */
+  --aldia-solid:#2E6B4F;   --aldia-tint:#D9F1E4;   --aldia-ink:#2E6B4F;
+  --pronto-solid:#FCE5D2;  --pronto-tint:#FCE5D2;  --pronto-ink:#8A5A12;  --pronto-strong:#8A5A12; /* durazno: relleno con texto ámbar oscuro (AA 4.9) */
+  --debe-solid:#FADCE3;    --debe-tint:#FADCE3;    --debe-ink:#8E3552;
+  --vencida-solid:#8E3552; --vencida-tint:#FADCE3; --vencida-ink:#8E3552;
+  /* secciones: el activo toma turquesa en v4 (una sola marca) */
+  --sec-hoy:#0B6B6A; --sec-alumnos:#0B6B6A; --sec-agenda:#0B6B6A; --sec-cobros:#0B6B6A; --sec-mas:#0B6B6A;
+  /* acento general (antes violeta Aurora; v4 = turquesa) */
+  --acento:#0E7C7B; --acento-fuerte:#0B6B6A;
+  /* movimiento (sobrio, 150–350 ms) */
+  --d-fast:150ms; --d-base:220ms; --d-slow:320ms;
+  --ease-out:cubic-bezier(.22,.9,.36,1.02); --ease-spring:cubic-bezier(.34,1.56,.64,1);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:var(--text);background:var(--bg)}
+.ico{width:22px;height:22px;flex:none}
+.ico .d{fill:currentColor;fill-opacity:.16;stroke:none}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
+.confeti{position:absolute;width:7px;height:10px;border-radius:2px;pointer-events:none;z-index:50;
+  animation:confeti var(--d-base) var(--ease-out) forwards}
+@keyframes confeti{0%{transform:translate(0,0) rotate(0);opacity:1}
+  100%{transform:translate(var(--dx),calc(var(--dy) + 40px)) rotate(var(--r));opacity:0}}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;animation-delay:0ms!important;transition-duration:.01ms!important}
+}
