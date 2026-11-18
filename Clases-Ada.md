@@ -6,13 +6,12 @@ Alinear alcance, decisiones, dependencias y arquitectura; dar encargos concretos
 
 ## Antes de actuar
 
-Leer `AGENTS.md`, `PROTOCOLO-AGENTES.md`, `Ada-Recibe.md`, este archivo y `PLAN.md`; revisar cambios actuales de Git, informes y mensajes recientes. El plan está en fase de definición/diseño, no asumir que ya hay aplicación o base de datos. Nico definió que reglas de negocio y diseño visual van antes de modelo de datos e implementación.
+Leer `AGENTS.md`, `PROTOCOLO-AGENTES.md`, este archivo y `PLAN.md`; revisar cambios actuales de Git, informes y avisos recientes (chats APX y tareas). El plan está en fase de definición/diseño, no asumir que ya hay aplicación o base de datos. Nico definió que reglas de negocio y diseño visual van antes de modelo de datos e implementación.
 
 ## Documentación de la que sos responsable
 
 - `PLAN.md`: alcance, decisiones, etapas y estado; preservar historial y registrar fuente/fecha de cambios de producto.
-- `Ada-Recibe.md`: leer pedidos dirigidos a vos; escribir encargos en los buzones de cada responsable.
-- `Ada-Emite.md`: registrar a quién avisaste y sobre qué, brevemente.
+- Encargos a cada responsable: por **chat directo APX** a ese agente o comentario en la tarea APX de la unidad (los buzones quedaron archivados el 17-11-2026 en `historial/buzones/`).
 - `PROTOCOLO-AGENTES.md`: proponer cambios de proceso solo ante una necesidad comprobada; no cambiar reglas por implicación.
 
 ## Encargos
@@ -44,7 +43,7 @@ Bordes Q1–Q5 registrados en `PLAN.md` §8.1: Q2 (ajuste de asistencia/clase ya
 
 ## ENC-12 · Rediseño visual de Agenda (15/11/2026)
 
-Nico pidió un calendario hermoso y muy visual; la demo actual fue aprobada funcionalmente pero no estéticamente. Fina diagnosticó la demo publicada (Chrome 390×844 y 320×780) y especificó el rediseño en `docs/diseno/ux/agenda-visual-enc12.md` (wireframes Semana/Mes/Día/modal, estados, accesibilidad, contrato de implementación). Vito especificó paleta/medidas en `docs/diseno/visual/agenda-visual-enc12.md` (tokens de modalidad mensual violeta/individual azul, estados por tema claro/oscuro, movimiento). Ada consolidó la adenda de implementación en `docs/ENCARGO-I1-AGENDA-VISUAL-REINA.md` y la dejó en el buzón de Reina. **Reina inicia cuando Nico dé la orden en OpenCode; sin sesión APX.** El prototipo HTML existente no se toca.
+Nico pidió un calendario hermoso y muy visual; la demo actual fue aprobada funcionalmente pero no estéticamente. Fina diagnosticó la demo publicada (Chrome 390×844 y 320×780) y especificó el rediseño en `docs/diseno/ux/agenda-visual-enc12.md` (wireframes Semana/Mes/Día/modal, estados, accesibilidad, contrato de implementación). Vito especificó paleta/medidas en `docs/diseno/visual/agenda-visual-enc12.md` (tokens de modalidad mensual violeta/individual azul, estados por tema claro/oscuro, movimiento). Ada consolidó la adenda de implementación en `docs/ENCARGO-I1-AGENDA-VISUAL-REINA.md` y se la pasó a Reina (hoy: hubiese ido por chat APX; el aviso quedó registrado en `historial/buzones/Reina-Recibe.md`). **Reina inicia cuando Nico dé la orden en OpenCode; sin sesión APX.** El prototipo HTML existente no se toca.
 
 ## Recuperación ENC-08R e I1 preparada
 

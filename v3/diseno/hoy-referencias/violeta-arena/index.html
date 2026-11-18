@@ -1,0 +1,299 @@
+<!doctype html>
+<!-- Clases v3 · Fase 1 · propuesta A «Violeta arena» — pantalla Hoy fiel a la captura de inicio de la v2 (a-hoy.png) + animaciones sobrias -->
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Clases v3 · A · Violeta arena · Hoy</title>
+<style>
+:root{
+  --fondo:#FBF4F7; --superficie:#FFFFFF;
+  --tinta:#241A2B; --suave:#6F6478;
+  --violeta:#8B4FC7; --violeta-fuerte:#7C3FD0;
+  --morado:#5B2E91;
+  --teal:#0E8F7E; --azul:#2B4A78; --ambar:#E8A317; --coral:#D6336C;
+  --d-fast:150ms; --d-base:240ms; --d-slow:350ms;
+  --ease-out:cubic-bezier(.22,1,.36,1);
+  --ease-spring:cubic-bezier(.34,1.56,.64,1);
+  --sombra:0 10px 26px rgba(91,46,145,.12);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased;background:var(--fondo);color:var(--tinta)}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
+.ico{flex:none;fill:currentColor}
+svg use{pointer-events:none}
+.cel{width:390px;max-width:100%;margin:0 auto;min-height:100vh;position:relative;padding-bottom:92px}
+
+/* manchas de arena cálida, mueven muy despacio (decorativo) */
+.mancha{position:fixed;pointer-events:none;z-index:0}
+.mancha-1{width:220px;height:220px;left:-70px;top:-80px;background:radial-gradient(circle at 35% 35%,rgba(139,79,199,.10),transparent 68%);border-radius:50%;animation:flotar 11s ease-in-out infinite alternate}
+.mancha-2{width:180px;height:180px;right:-60px;top:180px;background:radial-gradient(circle at 60% 30%,rgba(214,51,108,.08),transparent 68%);border-radius:50%;animation:flotar 13s ease-in-out infinite alternate-reverse}
+.mancha-3{width:240px;height:240px;left:-80px;bottom:-90px;background:radial-gradient(circle at 40% 40%,rgba(14,143,126,.07),transparent 68%);border-radius:50%;animation:flotar 12s ease-in-out infinite alternate}
+@keyframes flotar{from{transform:translate(0,0)}to{transform:translate(10px,-12px)}}
+
+/* barra */
+.barra{position:sticky;top:0;z-index:30;display:flex;justify-content:space-between;align-items:center;padding:14px 18px 10px;
+  background:linear-gradient(180deg,var(--fondo) 62%,rgba(251,244,247,0))}
+.saludo{font-size:14px;font-weight:600;color:var(--suave)}
+.titulo{font-size:27px;font-weight:800;letter-spacing:-.4px;margin-top:2px}
+.campana{position:relative;width:44px;height:44px;border-radius:15px;display:grid;place-items:center;color:var(--violeta);
+  background:var(--superficie);box-shadow:0 4px 14px rgba(91,46,145,.16);
+  transition:transform var(--d-fast) var(--ease-out)}
+.campana:active{transform:scale(.93)}
+.campana-badge{position:absolute;top:-4px;right:-4px;min-width:18px;height:18px;border-radius:9px;padding:0 5px;
+  background:var(--coral);color:#fff;font-size:11px;font-weight:800;display:grid;place-items:center;border:2px solid var(--fondo)}
+
+/* hero violeta con formas onduladas animadas (de la referencia: bloque violeta con ring) */
+.hero{margin:6px 18px 14px;border-radius:24px;padding:16px 18px 18px;color:#fff;position:relative;overflow:hidden;
+  background:linear-gradient(140deg,#8B4FC7 0%,#6C3AA8 58%,#5B2E91 100%);box-shadow:var(--sombra)}
+.hero::after{content:"";position:absolute;width:150px;height:150px;background:#fff;border-radius:38% 62% 55% 45%/48% 40% 60% 52%;
+  opacity:.10;right:-46px;bottom:-70px;animation:onda 9s ease-in-out infinite alternate}
+.hero-mancha{position:absolute;width:90px;height:90px;background:#fff;border-radius:58% 42% 45% 55%/50% 58% 42% 50%;
+  opacity:.07;left:-30px;top:-30px;animation:onda 7s ease-in-out infinite alternate-reverse;pointer-events:none}
+@keyframes onda{from{transform:rotate(0) scale(1)}to{transform:rotate(22deg) scale(1.1)}}
+.hero-top{display:flex;align-items:center;gap:14px;position:relative}
+.hero-info{flex:1;min-width:0}
+.hero-kicker{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.78)}
+.hero-titulo{font-size:20px;font-weight:800;margin-top:3px}
+.hero-linea{font-size:12.5px;color:rgba(255,255,255,.85);margin-top:3px;font-weight:600}
+.hero-linea b{color:#fff}
+
+/* ring: entra dibujado (900 ms una vez), luego responde al toque */
+.ring{position:relative;width:84px;height:84px;flex:none}
+.ring svg{transform:rotate(-90deg)}
+.ring-fondo{fill:none;stroke:rgba(255,255,255,.25);stroke-width:8}
+.ring-valor{fill:none;stroke:#fff;stroke-width:8;stroke-linecap:round;stroke-dasharray:224.6;stroke-dashoffset:224.6;
+  animation:dibujo 900ms var(--ease-out) forwards}
+.ring-nro{position:absolute;inset:0;display:grid;place-items:center;text-align:center}
+.ring-nro b{font-size:23px;font-weight:800}
+.ring-nro small{font-size:11px;font-weight:700;opacity:.9}
+
+/* KPIs blancos con borde de color (fiel a la captura: cobrado verde con borde, por cobrar violeta, vencen ámbar) */
+.resumen{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:0 18px}
+.kpi{background:var(--superficie);border-radius:18px;padding:12px 10px 12px;position:relative;overflow:hidden;
+  box-shadow:0 6px 16px rgba(91,46,145,.08);border:2px solid transparent;
+  transition:transform var(--d-fast) var(--ease-out)}
+.kpi:active{transform:scale(.96)}
+.kpi-cobrado{border-color:var(--teal)}
+.kpi-por{border-color:var(--morado)}
+.kpi-vencen{border-color:var(--ambar)}
+.kpi-ico{width:30px;height:30px;border-radius:10px;display:grid;place-items:center;margin-bottom:8px;color:#fff}
+.kpi-cobrado .kpi-ico{background:var(--teal)}
+.kpi-por .kpi-ico{background:var(--morado)}
+.kpi-vencen .kpi-ico{background:var(--ambar)}
+.kpi-valor{font-size:15.5px;font-weight:800;letter-spacing:-.2px}
+.kpi-titulo{font-size:11px;font-weight:700;color:var(--suave);margin-top:2px}
+
+/* agenda: filas pastel con barra lateral (fiel a la captura y a la familia agenda) */
+.agenda{margin:18px 18px 0}
+.agenda-titulo{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px}
+.agenda-titulo h2{font-size:17px;font-weight:800}
+.agenda-titulo a{font-size:12.5px;font-weight:800;color:var(--morado);text-decoration:none}
+.agenda-lista{display:flex;flex-direction:column;gap:10px}
+.fila{position:relative;display:flex;align-items:center;gap:11px;padding:12px 12px 12px 14px;border-radius:16px;
+  background:var(--superficie);box-shadow:0 4px 12px rgba(91,46,145,.07);
+  transition:transform var(--d-fast) var(--ease-out)}
+.fila:active{transform:scale(.98)}
+.fila::before{content:"";position:absolute;left:0;top:12px;bottom:12px;width:4px;border-radius:4px}
+.fila-mensual::before{background:var(--morado)}
+.fila-individual::before{background:var(--azul)}
+.fila-mensual{background:linear-gradient(180deg,#F3EAFB 0%,#FBF6FD 100%)}
+.fila-individual{background:linear-gradient(180deg,#E9F0FA 0%,#F7FAFD 100%)}
+.hora{font-size:12.5px;font-weight:800;color:var(--suave);width:40px;flex:none}
+.avatar{width:40px;height:40px;border-radius:50%;flex:none;display:grid;place-items:center;font-size:13.5px;font-weight:800;color:#fff}
+.fila-mensual .avatar{background:var(--morado)}
+.fila-individual .avatar{background:var(--azul)}
+.fila-info{flex:1;min-width:0}
+.fila-nombre{font-size:14.5px;font-weight:800}
+.fila-meta{display:flex;align-items:center;gap:5px;margin-top:3px}
+.mod{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:700;border-radius:999px;padding:2px 8px;
+  color:#fff;background:var(--morado)}
+.fila-individual .mod{background:var(--azul)}
+.mod svg{width:8px;height:8px}
+.fila-meta small{font-size:11px;color:var(--suave);font-weight:600;white-space:nowrap}
+
+/* botón Dada: verde en reposo marcado / entra como pill; al marcar, micro rebote + confeti breve */
+.dada{display:inline-flex;align-items:center;gap:5px;min-width:66px;height:38px;border-radius:999px;padding:0 13px;justify-content:center;
+  font-size:13px;font-weight:800;flex:none;color:var(--suave);
+  box-shadow:inset 0 0 0 1.5px #D9D2DE;background:var(--superficie);
+  transition:transform var(--d-fast) var(--ease-spring),background var(--d-base) var(--ease-out),box-shadow var(--d-base) var(--ease-out),color var(--d-base) var(--ease-out)}
+.dada:active{transform:scale(.93)}
+.dada.marcada{background:var(--teal);color:#fff;box-shadow:0 6px 14px rgba(14,143,126,.30);transform:none}
+.dada.marcada svg{stroke-dasharray:26;stroke-dashoffset:26;animation:dibujo 240ms var(--ease-out) forwards}
+.dada.pop{animation:pop 240ms var(--ease-spring)}
+@keyframes pop{0%{transform:scale(.86)}60%{transform:scale(1.06)}100%{transform:scale(1)}}
+
+/* aviso ámbar (fiel: «2 mensualidades vencen esta semana») */
+.aviso{margin:14px 18px 0;display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:16px;
+  background:#FFF6E3;border:1px solid #F3DFAE;color:#6E4512}
+.aviso svg{color:#B07514}
+.aviso b{font-size:13.5px;font-weight:800;color:#5F3A0E}
+.aviso small{display:block;font-size:11.5px;color:#7C551A;font-weight:600}
+.aviso .flecha{margin-left:auto;color:#B07514}
+
+/* nav de 5 ítems (fiel a la captura) */
+.nav{position:absolute;left:0;right:0;bottom:0;display:flex;justify-content:space-around;align-items:stretch;padding:8px 10px 14px;
+  background:rgba(251,244,247,.94);backdrop-filter:blur(10px);border-top:1px solid #EBDFE6}
+.nav button{display:flex;flex-direction:column;align-items:center;gap:3px;padding:5px 12px;color:#8A7F92;
+  font-size:10.5px;font-weight:700;border-radius:14px;
+  transition:color var(--d-base) var(--ease-out)}
+.nav button.activo{color:var(--morado)}
+.nav button.activo .ico{animation:rebote var(--d-base) var(--ease-spring)}
+@keyframes rebote{0%{transform:translateY(0)}45%{transform:translateY(-3px)}100%{transform:translateY(0)}}
+.nav button:active{transform:scale(.92)}
+.nav .mas{position:relative}
+.nav .mas::after{content:"";position:absolute;top:-2px;right:6px;width:8px;height:8px;border-radius:50%;background:var(--coral)}
+
+/* telón de entrada + escalonado de tarjetas (una vez al cargar) */
+.tlon{position:fixed;inset:0;background:var(--fondo);z-index:99;display:grid;place-items:center;opacity:1;transition:opacity 240ms var(--ease-out)}
+.tlon-ring{width:44px;height:44px;border-radius:50%;border:3px solid rgba(139,79,199,.25);border-top-color:var(--violeta);animation:girar 900ms linear infinite}
+@keyframes girar{to{transform:rotate(360deg)}}
+body:not(.listo) .tlon{opacity:1}
+body.listo .tlon{opacity:0;pointer-events:none}
+body:not(.listo) .hero,body:not(.listo) .resumen .kpi,body:not(.listo) .agenda .fila,body:not(.listo) .aviso{opacity:0;transform:translateY(12px)}
+body.listo .hero{animation:tpv 240ms var(--ease-out) forwards}
+body.listo .resumen .kpi{animation:tpv 240ms var(--ease-out) forwards}
+body.listo .resumen .kpi:nth-child(2){animation-delay:70ms}
+body.listo .resumen .kpi:nth-child(3){animation-delay:140ms}
+body.listo .agenda .fila{animation:tpv 240ms var(--ease-out) forwards}
+body.listo .agenda .fila:nth-child(2){animation-delay:70ms}
+body.listo .agenda .fila:nth-child(3){animation-delay:140ms}
+body.listo .aviso{animation:tpv 240ms var(--ease-out) 210ms forwards}
+@keyframes tpv{0%{transform:translateY(12px);opacity:0}100%{transform:translateY(0);opacity:1}}
+@keyframes dibujo{to{stroke-dashoffset:0}}
+
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;animation-delay:0ms!important;transition-duration:.01ms!important}
+  .ring-valor{stroke-dashoffset:74.9!important}
+  .tlon{display:none}
+  .hero,.resumen .kpi,.agenda .fila,.aviso{opacity:1!important;transform:none!important}
+}
+</style>
+</head>
+<body>
+<div class="cel">
+  <span class="mancha mancha-1"></span><span class="mancha mancha-2"></span><span class="mancha mancha-3"></span>
+
+  <header class="barra">
+    <div>
+      <p class="saludo">Buenas tardes, Xime</p>
+      <h1 class="titulo">Hoy</h1>
+    </div>
+    <button class="campana" aria-label="Notificaciones, 3 sin leer">
+      <svg class="ico" width="21" height="21" aria-hidden="true"><use href="#i-campana"/></svg>
+      <span class="campana-badge">3</span>
+    </button>
+  </header>
+
+  <section class="hero">
+    <div class="hero-top">
+      <div class="hero-info">
+        <p class="hero-kicker">Lunes 16 de noviembre</p>
+        <h2 class="hero-titulo">Clases de hoy</h2>
+        <p class="hero-linea">Próxima: <b>18:30 · Diego V.</b></p>
+      </div>
+      <div class="ring" role="img" aria-label="2 de 3 clases dadas hoy">
+        <svg width="84" height="84" viewBox="0 0 84 84" aria-hidden="true">
+          <circle class="ring-fondo" cx="42" cy="42" r="35.5"/>
+          <circle class="ring-valor" cx="42" cy="42" r="35.5" style="stroke-dashoffset:74.9"/>
+        </svg>
+        <div class="ring-nro"><b>2</b><small>/3 dadas</small></div>
+      </div>
+    </div>
+    <span class="hero-mancha"></span>
+  </section>
+
+  <section class="resumen" aria-label="Resumen del día">
+    <article class="kpi kpi-cobrado">
+      <span class="kpi-ico"><svg class="ico" width="16" height="16" aria-hidden="true"><use href="#i-cobros"/></svg></span>
+      <p class="kpi-valor">$14.400</p>
+      <p class="kpi-titulo">Cobrado hoy</p>
+    </article>
+    <article class="kpi kpi-por">
+      <span class="kpi-ico"><svg class="ico" width="16" height="16" aria-hidden="true"><use href="#i-doc"/></svg></span>
+      <p class="kpi-valor">$5.400</p>
+      <p class="kpi-titulo">Por cobrar</p>
+    </article>
+    <article class="kpi kpi-vencen">
+      <span class="kpi-ico"><svg class="ico" width="16" height="16" aria-hidden="true"><use href="#i-alerta"/></svg></span>
+      <p class="kpi-valor">2</p>
+      <p class="kpi-titulo">Vencen</p>
+    </article>
+  </section>
+
+  <section class="agenda">
+    <div class="agenda-titulo">
+      <h2>Agenda de hoy</h2>
+      <a href="#">Ver semana</a>
+    </div>
+    <div class="agenda-lista">
+      <article class="fila fila-mensual">
+        <span class="hora">16:00</span>
+        <span class="avatar">BS</span>
+        <div class="fila-info">
+          <p class="fila-nombre">Bruno S.</p>
+          <p class="fila-meta">
+            <span class="mod"><svg class="ico" width="9" height="9" aria-hidden="true"><use href="#i-mensual"/></svg>Mensual</span>
+          </p>
+        </div>
+        <button class="dada marcada" type="button" aria-pressed="true" aria-label="Clase marcada como dada. Tocá para desmarcar">
+          <svg class="ico" width="15" height="15" aria-hidden="true"><use href="#i-check"/></svg>
+          <span>Dada</span>
+        </button>
+      </article>
+      <article class="fila fila-mensual">
+        <span class="hora">16:00</span>
+        <span class="avatar">CT</span>
+        <div class="fila-info">
+          <p class="fila-nombre">Carla T.</p>
+          <p class="fila-meta">
+            <span class="mod"><svg class="ico" width="9" height="9" aria-hidden="true"><use href="#i-mensual"/></svg>Mensual</span>
+          </p>
+        </div>
+        <button class="dada marcada" type="button" aria-pressed="true" aria-label="Clase marcada como dada. Tocá para desmarcar">
+          <svg class="ico" width="15" height="15" aria-hidden="true"><use href="#i-check"/></svg>
+          <span>Dada</span>
+        </button>
+      </article>
+      <article class="fila fila-individual">
+        <span class="hora">18:30</span>
+        <span class="avatar">DV</span>
+        <div class="fila-info">
+          <p class="fila-nombre">Diego V.</p>
+          <p class="fila-meta">
+            <span class="mod"><svg class="ico" width="9" height="9" aria-hidden="true"><use href="#i-individual"/></svg>Individual</span>
+          </p>
+        </div>
+        <button class="dada" type="button" aria-pressed="false" aria-label="Marcar la clase como dada">
+          <svg class="ico" width="15" height="15" aria-hidden="true"><use href="#i-check"/></svg>
+          <span>Dada</span>
+        </button>
+      </article>
+    </div>
+  </section>
+
+  <section class="aviso">
+    <svg class="ico" width="18" height="18" aria-hidden="true"><use href="#i-alerta"/></svg>
+    <div>
+      <b>2 mensualidades vencen esta semana</b>
+      <small>Elena M. y Facundo R.</small>
+    </div>
+    <svg class="ico flecha" width="16" height="16" aria-hidden="true"><use href="#i-flecha"/></svg>
+  </section>
+
+  <nav class="nav" aria-label="Secciones">
+    <button class="activo"><svg class="ico" width="20" height="20" aria-hidden="true"><use href="#i-sol"/></svg>Hoy</button>
+    <button><svg class="ico" width="20" height="20" aria-hidden="true"><use href="#i-alumnos"/></svg>Alumnos</button>
+    <button><svg class="ico" width="20" height="20" aria-hidden="true"><use href="#i-agenda"/></svg>Agenda</button>
+    <button><svg class="ico" width="20" height="20" aria-hidden="true"><use href="#i-cobros"/></svg>Cobros</button>
+    <button class="mas"><svg class="ico" width="20" height="20" aria-hidden="true"><use href="#i-mas"/></svg>Más</button>
+  </nav>
+</div>
+
+<div class="tlon"><div class="tlon-ring"></div></div>
+
+<script src="../base/icons.js"></script>
+<script src="../base/hoy.js"></script>
+<script>inyectarIconos(); listoInteraccion(['#8B4FC7','#0E8F7E','#D6336C','#E8A317','#5B2E91','#2B4A78']);</script>
+</body>
+</html>

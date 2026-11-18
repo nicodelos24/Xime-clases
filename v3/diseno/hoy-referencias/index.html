@@ -1,0 +1,69 @@
+<!doctype html>
+<!-- Clases v3 · Fase 1 · pantalla Hoy desde las referencias de Nico (v2 a-hoy + agenda mes/semana) · animaciones sobrias 150–350 ms -->
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Clases v3 · Hoy · direcciones de referencia</title>
+<style>
+*{box-sizing:border-box;margin:0}
+body{font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased;background:#1B1230;color:#F2ECF5;min-height:100vh;padding:26px 18px 60px}
+h1{font-size:22px;font-weight:800;letter-spacing:-.3px}
+.sub{color:#B3A6BD;font-size:14px;margin:6px 0 22px;font-weight:500;max-width:640px;line-height:1.5}
+.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;max-width:1140px}
+@media (max-width:860px){.grid{grid-template-columns:1fr;max-width:430px;margin:0 auto}}
+.tarjeta{display:block;text-decoration:none;color:inherit;border-radius:18px;overflow:hidden;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);transition:transform 240ms cubic-bezier(.22,1,.36,1),border-color 240ms ease,box-shadow 240ms ease}
+.tarjeta:hover{transform:translateY(-3px);border-color:rgba(167,139,250,.55);box-shadow:0 14px 34px rgba(91,46,145,.28)}
+iframe{height:600px;border:0;width:100%;background:#fff;pointer-events:none;display:block}
+.info{padding:14px 16px 18px}
+.nombre{font-size:16px;font-weight:800;display:flex;align-items:center;gap:8px}
+.nombre small{font-size:10px;font-weight:800;letter-spacing:.1em;padding:3px 8px;border-radius:99px;background:#5B2E91;color:#fff}
+.desc{font-size:13px;color:#B3A6BD;margin-top:6px;line-height:1.45}
+.ver{display:inline-block;margin-top:10px;font-size:13px;font-weight:700;color:#C6AEEB}
+.ref{margin:26px auto 0;max-width:1140px;border-radius:18px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);padding:16px}
+.ref h2{font-size:15px;font-weight:800}
+.ref p{font-size:13px;color:#B3A6BD;margin-top:4px}
+.ref .fotos{display:flex;gap:12px;margin-top:12px;flex-wrap:wrap}
+.ref .fotos img{height:200px;border-radius:10px;border:1px solid rgba(255,255,255,.15)}
+</style>
+</head>
+<body>
+<h1>Clases v3 · Hoy, desde tus referencias</h1>
+<p class="sub">Las tres direcciones salen de las capturas que marcaste (inicio de la v2, agenda mensual compacta y agenda semanal), con animaciones sobrias encima. Tocá una para verla a 390 px, con interacción real.</p>
+<div class="grid">
+  <a class="tarjeta" href="violeta-arena/index.html" target="_blank" rel="noopener">
+    <iframe src="violeta-arena/index.html" tabindex="-1" title="Propuesta A"></iframe>
+    <div class="info">
+      <div class="nombre">A · Violeta arena <small>FIEL A TU CAPTURA</small></div>
+      <p class="desc">La captura de inicio tal cual: hero violeta con ring, tarjetas blancas con borde de color, filas pastel con barra lateral, botón Dada verde. Manchas de arena cálida de fondo.</p>
+      <span class="ver">Ver y tocar →</span>
+    </div>
+  </a>
+  <a class="tarjeta" href="tulipan-vivo/index.html" target="_blank" rel="noopener">
+    <iframe src="tulipan-vivo/index.html" tabindex="-1" title="Propuesta B"></iframe>
+    <div class="info">
+      <div class="nombre">B · Tulipán vivo <small>MISMO MAPA, MÁS COLOR</small></div>
+      <p class="desc">El mismo mapa de tu captura pero con KPIs en bloque de color y acentos más festivos (tulipán). Sigue siendo claro y AA; sube el nivel de dopamina un punto sin pasar de rosca.</p>
+      <span class="ver">Ver y tocar →</span>
+    </div>
+  </a>
+  <a class="tarjeta" href="litio-suave/index.html" target="_blank" rel="noopener">
+    <iframe src="litio-suave/index.html" tabindex="-1" title="Propuesta C"></iframe>
+    <div class="info">
+      <div class="nombre">C · Litio suave <small>BASE BLANCA, VIVO EN EL HISTORIAL</small></div>
+      <p class="desc">Base blanca limpia, tarjetas de color (teal/violeta/ámbar) como en tu captura más saturada, y la vida concentrada en el botón Dada y las transiciones.</p>
+      <span class="ver">Ver y tocar →</span>
+    </div>
+  </a>
+</div>
+<div class="ref">
+  <h2>Tus referencias (v3/diseno/referencias/)</h2>
+  <p>hoy-inicio.png · agenda-mes.png · agenda-semana.png — criterio de aceptación visual del resto del app.</p>
+  <div class="fotos">
+    <img src="referencias/hoy-inicio.png" alt="Referencia de inicio que marcó Nico">
+    <img src="referencias/agenda-mes.png" alt="Agenda mensual compacta">
+    <img src="referencias/agenda-semana.png" alt="Agenda semanal con horario">
+  </div>
+</div>
+</body>
+</html>

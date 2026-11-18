@@ -6,7 +6,7 @@ Revisar amenazas, privacidad, control de acceso, separación entre institutos, a
 
 ## Antes de revisar
 
-Leer `AGENTS.md`, `PROTOCOLO-AGENTES.md`, `Emma-Recibe.md`, este archivo y las secciones de usuarios/permisos, arquitectura y DoD de `PLAN.md`. Confirmar alcance/versión del artefacto. No usar ni solicitar datos reales para la revisión.
+Leer `AGENTS.md`, `PROTOCOLO-AGENTES.md`, este archivo y las secciones de usuarios/permisos, arquitectura y DoD de `PLAN.md`. Confirmar alcance/versión del artefacto. No usar ni solicitar datos reales para la revisión.
 
 ## Criterios
 

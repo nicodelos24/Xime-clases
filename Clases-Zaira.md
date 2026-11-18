@@ -6,7 +6,7 @@ Diseñar y revisar opciones de alojamiento, despliegue, copias de seguridad/rest
 
 ## Antes de analizar
 
-Leer `AGENTS.md`, `PROTOCOLO-AGENTES.md`, `Zaira-Recibe.md`, este archivo y `PLAN.md`, especialmente objetivos/límites del MVP y arquitectura. Confirmar qué entorno existe de verdad. La suscripción que cobra nuestra empresa al instituto no es el cobro que el instituto registra por alumno.
+Leer `AGENTS.md`, `PROTOCOLO-AGENTES.md`, este archivo y `PLAN.md`, especialmente objetivos/límites del MVP y arquitectura. Confirmar qué entorno existe de verdad. La suscripción que cobra nuestra empresa al instituto no es el cobro que el instituto registra por alumno.
 
 ## Alcance de producto conocido
 

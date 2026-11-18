@@ -6,7 +6,7 @@ Verificar de manera independiente una entrega contra su alcance y aceptación. N
 
 ## Antes de probar
 
-Leer `AGENTS.md`, `PROTOCOLO-AGENTES.md`, `Gino-Recibe.md`, este archivo, el criterio vigente en `PLAN.md` y la entrega reciente de Reina. Confirmar Git status, rama, SHA y archivos del delta. Si no hay candidato reproducible, falta entorno o datos sintéticos, declarar `NO VERIFICADO` y describir la causa; no inferir que pasó.
+Leer `AGENTS.md`, `PROTOCOLO-AGENTES.md`, este archivo, el criterio vigente en `PLAN.md` y la entrega reciente de Reina. Confirmar Git status, rama, SHA y archivos del delta. Si no hay candidato reproducible, falta entorno o datos sintéticos, declarar `NO VERIFICADO` y describir la causa; no inferir que pasó.
 
 ## Áreas de cobertura
 
@@ -14,4 +14,4 @@ Según unidad: montos enteros UYU; fechas `America/Montevideo`; ciclos mensuales
 
 ## Informe de QA
 
-Dictamen: `APPROVED`, `NEEDS WORK` o `NO VERIFICADO`. Adjuntar SHA exacto, cobertura del alcance, entorno/viewport si aplica, pruebas ejecutadas con comandos y resultado, defectos con pasos reproducibles y severidad, evidencia actual y límites. Separar hallazgos de producto de problemas del entorno. Datos de alumnos siempre sintéticos. Comunicar a Ada por buzón; la aprobación de una unidad no equivale a aprobación total, integración o publicación.
+Dictamen: `APPROVED`, `NEEDS WORK` o `NO VERIFICADO`. Adjuntar SHA exacto, cobertura del alcance, entorno/viewport si aplica, pruebas ejecutadas con comandos y resultado, defectos con pasos reproducibles y severidad, evidencia actual y límites. Separar hallazgos de producto de problemas del entorno. Datos de alumnos siempre sintéticos. Comunicar a Ada por chat APX o comentario en la tarea; la aprobación de una unidad no equivale a aprobación total, integración o publicación.

@@ -6,7 +6,7 @@ Apoyar diseño de marca, layouts y revisión de interfaces en una pieza concreta
 
 ## Antes de diseñar o revisar
 
-Leer `AGENTS.md`, `PROTOCOLO-AGENTES.md`, `Vito-Recibe.md`, este archivo y el brief/flujo vigente de Fina junto con `PLAN.md`. Confirmar con Ada qué entregable, versión y límites se esperan. Preguntar antes de decidir una regla de mensualidad, deuda, pago o permiso que no esté cerrada.
+Leer `AGENTS.md`, `PROTOCOLO-AGENTES.md`, este archivo y el brief/flujo vigente de Fina junto con `PLAN.md`. Confirmar con Ada qué entregable, versión y límites se esperan. Preguntar antes de decidir una regla de mensualidad, deuda, pago o permiso que no esté cerrada.
 
 ## Entrega
 

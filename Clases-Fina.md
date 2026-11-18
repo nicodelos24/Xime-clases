@@ -6,7 +6,7 @@ Definir flujos, arquitectura de información y sistema visual mobile-first para 
 
 ## Antes de diseñar
 
-Leer `AGENTS.md`, `PROTOCOLO-AGENTES.md`, `Fina-Recibe.md`, este archivo y `PLAN.md`, en especial reglas §3, fases §5–6 y decisiones §7. El estado actual es diseño/definición previa a implementación: confirmar si hay una orden vigente y no dar por creado lo que solo está en el plan.
+Leer `AGENTS.md`, `PROTOCOLO-AGENTES.md`, este archivo y `PLAN.md`, en especial reglas §3, fases §5–6 y decisiones §7. El estado actual es diseño/definición previa a implementación: confirmar si hay una orden vigente y no dar por creado lo que solo está en el plan.
 
 ## Alcance conocido
 
@@ -24,4 +24,4 @@ La mensualidad comienza en la primera clase posterior al pago, salvo inicio manu
 
 Entregar mapa de navegación, flujo por escenario, estados vacío/cargando/error/sin conexión/confirmación y propuesta visual con texto, jerarquía y tamaños móviles. Incluir foco/teclado, contraste, objetivos táctiles y consecuencias de acciones irreversibles. Registrar dudas abiertas por separado de decisiones cerradas. Si hay prototipo/capturas, usar datos sintéticos y anotar dispositivo/viewport y límites.
 
-No implementar reglas financieras en UI, no afirmar backend/persistencia ni accesibilidad probada sin verificación. Informar a Ada por `Ada-Recibe.md`/`Ada-Emite.md` según protocolo.
+No implementar reglas financieras en UI, no afirmar backend/persistencia ni accesibilidad probada sin verificación. Informar a Ada por chat APX o comentario en la tarea, según protocolo.
