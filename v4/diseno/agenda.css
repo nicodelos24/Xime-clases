@@ -1,0 +1,114 @@
+/* Agenda — layout de las capturas de referencia (v4/referencias), sin cambios de estructura.
+   Solo cambian los colores: violeta→lila pastel #5E4285, azul→#34607F, acento→turquesa. */
+
+.ag-cab { display: flex; justify-content: space-between; align-items: center; padding: 20px 16px 6px; }
+.ag-cab h1 { font-size: 24px; font-weight: 800; letter-spacing: -.3px; }
+.btn-hoy {
+  border: 1px solid var(--linea); background: var(--bg-alt);
+  color: var(--tq-700); font: inherit; font-size: 14px; font-weight: 800;
+  padding: 11px 13px; border-radius: 12px; cursor: pointer;
+  transition: transform var(--t-rapida) var(--ease), background var(--t-rapida) var(--ease);
+}
+.btn-hoy:hover { background: var(--tq-50); transform: translateY(-1px); }
+
+.vista { flex: 1; padding: 0 16px 100px; position: relative; }
+.vista[hidden] { display: none; }
+.vista-anim { animation: aparecerVista var(--t-media) var(--ease); }
+@keyframes aparecerVista { from { opacity: 0; transform: translateY(8px); } }
+
+/* ---- Mes ---- */
+.mes-flechas { display: flex; justify-content: space-between; align-items: center; margin: 14px 8px 10px; }
+.mes-nombre { font-size: 16px; font-weight: 800; }
+.flecha {
+  width: 36px; height: 36px; border: none; border-radius: 50%;
+  background: transparent; color: var(--tinta); cursor: pointer;
+  display: grid; place-content: center;
+  transition: background var(--t-rapida) var(--ease), color var(--t-rapida) var(--ease);
+}
+.flecha:hover { background: var(--tq-100); color: var(--tq-700); }
+
+.mes-rejilla { display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; }
+.mes-dow { font-size: 11px; font-weight: 700; color: var(--tinta-2); padding: 10px 0 12px; }
+.mes-dia {
+  position: relative; border: none; background: none; font: inherit; color: var(--tinta);
+  height: 51px; display: flex; flex-direction: column; align-items: center; padding-top: 4px; cursor: pointer;
+}
+.mes-dia b {
+  display: grid; place-content: center;
+  width: 38px; height: 38px; margin-top: -2px;
+  font-size: 15px; font-weight: 700; border-radius: 50%;
+  transition: background var(--t-media) var(--ease), color var(--t-media) var(--ease);
+}
+.mes-dia:hover b { background: var(--tq-50); }
+.mes-dia.sel b { background: var(--tq-600); color: #fff; font-weight: 800; animation: pop var(--t-media) var(--ease); }
+@keyframes pop { 0% { transform: scale(.7); } 100% { transform: scale(1); } }
+.mes-dia.hoy:not(.sel) b { box-shadow: inset 0 0 0 2px var(--tq-600); color: var(--tq-700); }
+.mes-marca { position: absolute; left: 0; right: 0; bottom: 3px; display: flex; justify-content: center; gap: 4px; height: 8px; align-items: center; }
+.mes-leyenda {
+  margin: 14px 10px 0; display: flex; gap: 18px; align-items: center;
+  font-size: 12px; font-weight: 500; color: var(--tinta-2);
+}
+.mes-leyenda span { display: inline-flex; align-items: center; gap: 6px; }
+
+/* ---- Semana ---- */
+.sem-cab { display: flex; justify-content: space-between; align-items: center; padding: 22px 16px 0; }
+.sem-cab button {
+  border: none; background: none; font: inherit; font-size: 14px; font-weight: 800;
+  color: var(--tq-700); cursor: pointer; padding: 6px 2px;
+}
+.sem-cab button:hover { text-decoration: underline; }
+.sem-titulo { text-align: center; font-size: 15px; font-weight: 800; margin-top: 12px; }
+.sem-tira { display: grid; grid-template-columns: 24px repeat(7, 1fr) 24px; align-items: center; gap: 2px; margin: 10px 8px 12px; }
+.sem-dia {
+  border: none; background: none; font: inherit; cursor: pointer; color: var(--tinta);
+  display: grid; gap: 1px; justify-items: center; padding: 7px 0 6px; border-radius: 12px;
+  transition: background var(--t-rapida) var(--ease);
+}
+.sem-dia:hover { background: var(--tq-50); }
+.sem-dia small { font-size: 10px; font-weight: 700; color: var(--tinta-2); letter-spacing: .4px; }
+.sem-dia b { font-size: 15px; font-weight: 800; }
+.sem-dia.sel { background: var(--tq-100); animation: pop var(--t-media) var(--ease); }
+.sem-dia.sel small, .sem-dia.sel b { color: var(--tq-700); }
+.sem-flecha { border: none; background: none; cursor: pointer; color: var(--tinta); display: grid; place-content: center; height: 36px; }
+.sem-flecha:hover { color: var(--tq-700); }
+
+.sem-lista { border-top: 1px solid var(--linea); }
+.sem-fila { display: grid; grid-template-columns: 58px minmax(0, 1fr); border-bottom: 1px solid var(--linea); min-height: 80px; }
+.sem-hora-lbl { font-size: 12px; font-weight: 600; color: var(--tinta-2); padding: 12px 0 0 20px; }
+.sem-cards { display: flex; flex-direction: column; gap: 8px; padding: 4px 14px 4px 0; }
+.sem-card {
+  position: relative; display: flex; gap: 12px; align-items: center;
+  border-radius: 8px; padding: 10px 12px; border-left: 3px solid;
+  box-shadow: 0 1px 3px rgba(8, 69, 74, .08);
+  opacity: 0; animation: entrar var(--t-larga) var(--ease) forwards; animation-delay: var(--d, 0ms);
+  transition: transform var(--t-rapida) var(--ease);
+}
+.sem-card:hover { transform: translateX(2px); }
+.sem-mensual { background: var(--lila-tinte); border-color: var(--lila); }
+.sem-individual { background: var(--azul-tinte); border-color: var(--azul); }
+.sem-avatar {
+  width: 38px; height: 38px; flex: none; display: grid; place-content: center;
+  background: rgba(255,255,255,.55); border-radius: 50%; font-size: 14px; font-weight: 800;
+}
+.sem-mensual .sem-avatar { color: var(--lila); }
+.sem-individual .sem-avatar { color: var(--azul); }
+.sem-nombre { font-size: 14.5px; font-weight: 800; }
+.sem-meta { display: flex; align-items: center; gap: 8px; margin-top: 4px; }
+.sem-hora { font-size: 12px; font-weight: 600; color: #4F6066; }
+.sem-vacio { color: var(--tinta-2); font-size: 12px; padding: 14px 0; }
+.sem-mensual .mod { background: #DDD2EF; color: var(--lila); font-weight: 800; }
+.sem-individual .mod { background: #D2E3F0; color: var(--azul); font-weight: 800; }
+
+.fab {
+  position: absolute; right: 16px; bottom: 82px; z-index: 5;
+  display: inline-flex; align-items: center; gap: 6px;
+  background: var(--tq-600); color: #fff;
+  border: none; border-radius: 999px;
+  font: inherit; font-size: 16px; font-weight: 800;
+  padding: 16px 20px;
+  box-shadow: 0 8px 20px rgba(14, 124, 123, .40);
+  cursor: pointer;
+  transition: transform var(--t-rapida) var(--ease), box-shadow var(--t-rapida) var(--ease);
+}
+.fab:hover { transform: translateY(-2px); box-shadow: 0 10px 24px rgba(14, 124, 123, .45); }
+.fab:active { transform: scale(.97); }

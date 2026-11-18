@@ -1,0 +1,105 @@
+<!doctype html>
+<!-- Clases v4 · Fase 1 · demo visual desde cero: turquesa + pastel · Hoy + Agenda (mes/semana) · 390px -->
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 24 24%27%3E%3Ccircle cx=%2712%27 cy=%2712%27 r=%2711%27 fill=%27%230E7C7B%27/%3E%3C/svg%3E">
+<title>Clases v4 · Demo visual</title>
+<link rel="stylesheet" href="tokens.css">
+<link rel="stylesheet" href="agenda.css">
+</head>
+<body>
+<div class="cel">
+
+  <!-- ===== HOY ===== -->
+  <div data-pant="hoy">
+    <header class="barra">
+      <div><p class="saludo">Buenas tardes, Xime</p><h1 class="titulo">Hoy</h1></div>
+      <button class="campana" type="button" aria-label="Notificaciones: 3">
+        <svg class="ico" width="21" height="21" aria-hidden="true"><use href="#i-campana"/></svg>
+        <span class="campana-badge">3</span>
+      </button>
+    </header>
+
+    <section class="hero aparece">
+      <div class="hero-top">
+        <div>
+          <p class="hero-kicker">Martes 17 de noviembre</p>
+          <h2 class="hero-titulo" id="hero-titulo">2 clases por dar</h2>
+          <p class="hero-linea" id="hero-linea"></p>
+        </div>
+        <div class="ring">
+          <svg width="84" height="84" viewBox="0 0 84 84" aria-hidden="true">
+            <circle class="ring-fondo" cx="42" cy="42" r="35.5"/>
+            <circle class="ring-valor" id="ring-valor" cx="42" cy="42" r="35.5"/>
+          </svg>
+          <div class="ring-nro"><b id="ring-nro">1/3</b><small>dadas</small></div>
+        </div>
+      </div>
+      <div class="hero-prox" id="hero-prox">
+        <span class="hero-prox-ico"><svg class="ico" width="17" height="17" aria-hidden="true"><use href="#i-reloj"/></svg></span>
+        <div><b id="prox-hora">16:15</b><small id="prox-det"></small></div>
+      </div>
+    </section>
+
+    <section class="resumen">
+      <article class="kpi kpi-cobrado aparece" style="--d:90ms"><span class="kpi-ico"><svg class="ico" width="16" height="16" aria-hidden="true"><use href="#i-cobros"/></svg></span><p class="kpi-valor">$36.400</p><p class="kpi-titulo">Cobrado hoy</p><span class="kpi-punto"><i></i></span></article>
+      <article class="kpi kpi-por aparece" style="--d:150ms"><span class="kpi-ico"><svg class="ico" width="16" height="16" aria-hidden="true"><use href="#i-reloj"/></svg></span><p class="kpi-valor">$18.000</p><p class="kpi-titulo">Por cobrar</p><span class="kpi-punto"><i></i></span></article>
+      <article class="kpi kpi-vencen aparece" style="--d:210ms"><span class="kpi-ico"><svg class="ico" width="16" height="16" aria-hidden="true"><use href="#i-alerta"/></svg></span><p class="kpi-valor">2</p><p class="kpi-titulo">Vencen hoy</p><span class="kpi-punto"><i></i></span></article>
+    </section>
+
+    <section class="agenda">
+      <div class="agenda-titulo"><h2>Agenda del día</h2><a href="#agenda-semana" id="link-semana">Ver semana</a></div>
+      <div class="agenda-lista" id="hoy-lista"></div>
+    </section>
+
+    <section class="aviso aparece" style="--d:520ms">
+      <svg class="ico" width="18" height="18" aria-hidden="true"><use href="#i-alerta"/></svg>
+      <div><b>2 mensualidades vencen hoy</b><small>Carla T. y Bruno S. · revisalas en Cobros</small></div>
+    </section>
+  </div>
+
+  <!-- ===== AGENDA (2 vistas; layout de las capturas de referencia) ===== -->
+  <div data-pant="agenda" hidden>
+    <section id="vista-mes">
+      <div class="ag-cab"><h1>Agenda</h1><button class="btn-hoy" type="button" data-hoy="1">Hoy</button></div>
+      <div class="vista">
+        <div class="mes-flechas">
+          <button class="flecha" type="button" data-m="-1" aria-label="Mes anterior"><svg class="ico" width="20" height="20" aria-hidden="true"><use href="#i-izq"/></svg></button>
+          <span class="mes-nombre" id="mes-nombre"></span>
+          <button class="flecha" type="button" data-m="1" aria-label="Mes siguiente"><svg class="ico" width="20" height="20" aria-hidden="true"><use href="#i-der"/></svg></button>
+        </div>
+        <div class="mes-rejilla" id="mes-rejilla"></div>
+        <div class="mes-leyenda">
+          <span><svg width="7" height="7" aria-hidden="true"><circle cx="3.5" cy="3.5" r="3.5" fill="var(--lila)"/></svg>Mensual</span>
+          <span><svg width="8" height="8" viewBox="0 0 8 8" aria-hidden="true"><path d="M4 0 8 4 4 8 0 4Z" fill="var(--azul)"/></svg>Por clase individual</span>
+        </div>
+      </div>
+    </section>
+
+    <section id="vista-semana" hidden>
+      <div class="sem-cab"><button type="button" id="volver-mes">‹ Mes</button><button type="button" data-hoy="1">Hoy</button></div>
+      <p class="sem-titulo" id="sem-titulo"></p>
+      <div class="sem-tira" id="sem-tira"></div>
+      <div class="sem-lista" id="sem-lista"></div>
+      <div style="height:90px"></div>
+    </section>
+
+    <button class="fab" type="button"><svg class="ico" width="18" height="18" aria-hidden="true"><use href="#i-mas2"/></svg>Agendar</button>
+  </div>
+
+  <div class="toast" id="toast" role="status"></div>
+
+  <nav class="nav" aria-label="Principal">
+    <a href="#hoy" data-go="hoy" class="activo"><span class="nav-ico"><svg class="ico" width="20" height="20" aria-hidden="true"><use href="#i-sol"/></svg></span>Hoy</a>
+    <a href="#alumnos" data-go="alumnos"><span class="nav-ico"><svg class="ico" width="20" height="20" aria-hidden="true"><use href="#i-alumnos"/></svg></span>Alumnos</a>
+    <a href="#agenda" data-go="agenda"><span class="nav-ico"><svg class="ico" width="20" height="20" aria-hidden="true"><use href="#i-agenda"/></svg></span>Agenda</a>
+    <a href="#cobros" data-go="cobros"><span class="nav-ico"><svg class="ico" width="20" height="20" aria-hidden="true"><use href="#i-cobros"/></svg></span>Cobros</a>
+    <a href="#mas" data-go="mas"><span class="nav-ico"><svg class="ico" width="20" height="20" aria-hidden="true"><use href="#i-mas"/></svg></span>Más</a>
+  </nav>
+</div>
+<script src="icons.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
