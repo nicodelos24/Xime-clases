@@ -56,8 +56,8 @@ export function AnilloProgreso({
       accessibilityRole="image"
       accessibilityLabel={etiqueta}
     >
-      {Platform.OS === 'web' && completo ? <style>{KEYFRAMES_LATIDO}</style> : null}
-      <Svg width={tamaño} height={tamaño} style={completo ? s.latido : null}>
+      {Platform.OS === 'web' && completo && !reducirMovimiento ? <style>{KEYFRAMES_LATIDO}</style> : null}
+      <Svg width={tamaño} height={tamaño} style={completo && !reducirMovimiento ? s.latido : null}>
         <Circle cx={tamaño / 2} cy={tamaño / 2} r={radio} stroke={HOY_COLORES.anilloPista} strokeWidth={grosor} fill="none" />
         <Circle
           cx={tamaño / 2}
