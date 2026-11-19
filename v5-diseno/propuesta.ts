@@ -85,10 +85,16 @@ function chipEstado(c: Clase): string {
   return '<span class="chip chip-por">Por dar</span>';
 }
 
-/** Acción de una fila de clase: Cancelar clase (reemplaza a "Marcar dada"). */
+/** Acción de una fila de clase: Cancelar clase (reemplaza a "Marcar dada").
+ *  Ronda 2 (b): en clases DADAS no se muestra "Cancelar clase" en la tarjeta —
+ *  el chip "Dada" abre el sheet que ya incluye Cancelar / Cambiar de día —
+ *  para que el botón no tape el nombre de la clase. */
 function accionClase(c: Clase): string {
   if (c.estado === 'cancelada') {
     return `<button class="marcar marcar-reversa" type="button" data-reversa="${c.id}">Revertir</button>`;
+  }
+  if (c.estado === 'dada') {
+    return '';
   }
   return `<button class="marcar marcar-cancelar" type="button" data-cancelar="${c.id}">Cancelar clase</button>`;
 }
@@ -195,7 +201,7 @@ function pintarSemana() {
   pintarLinea(hoy);
   const h2 = $('#v-semana .agenda-titulo h2');
   if (h2) h2.textContent = 'Esta semana';
-  const link = $('#v-semana .link-suave');
+  const link = $('#v-semana .link-suave .link-txt');
   if (link) link.textContent = 'Ver mes';
 }
 
