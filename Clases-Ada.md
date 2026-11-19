@@ -49,6 +49,15 @@ Nico pidió un calendario hermoso y muy visual; la demo actual fue aprobada func
 
 Fina cerró ENC-08R tras retomar solo el remanente del corte por cuota, sin reimplementar. Entregó manifiesto SHA-256 `25997a8c17521413da9441b09643c89355e9936bbbec579a55ddd41440d5db27` y 132 comprobaciones propias PASS, con fallas del arnés documentadas y reintentos exitosos. Ada revisó estructura y recorrió Agenda/agendar localmente en Chrome 390×844, sin overflow ni errores observados. Gino entregó ENC-10 APPROVED para el mismo manifiesto; sin defectos funcionales reproducibles. Ada integró/publicó el candidato en `6d81cb6bd2b9993f27e20230de12c0c1b1258265`: Pages built del mismo SHA, recorrido público en Chrome, 43/43 hashes coincidentes, sin errores observados ni 404 de agenda.css (ENC-11). D3 cerrado técnicamente, no validación estética/de usuaria. `docs/ENCARGO-I1-REINA.md` concreta base Expo/TS con fixtures, navegación, Agenda y filtros/orden, con límites y aceptación. **I1 habilitada para que Nico la inicie en OpenCode externo**, no ejecución automática ni permiso para I2–I5. No se inicia Reina por APX.
 
+## Próxima ronda v5 — DIFERIDA, NO ejecutar aún (Nico 19/11/2026, vía Nova)
+
+Tras publicar los 6 ajustes en master `791bc2ef` (Pages built del mismo SHA, verificado en Chrome), Nico pidió registrar para DESPUÉS —sin tocar código ahora— dos mejoras visuales en la sección Clases:
+
+1. Botones "Ver mes" / "Ver semana" más vistosos: un usuario nuevo quizá no los ve. Evaluar jerarquía con tokens v5, sin cambiar la estética general.
+2. El chip "Dada" tapa el texto del nombre de la clase agendada en Clases. Evaluar incluso sacar "Cancelar clase" de la tarjeta y dejarlo solo en el sheet emergente que abre al tocar "Dada" (que ya incluye esa opción).
+
+NO mover el calendario mensual: a Nico le gustó el acceso vía "Ver mes" en Clases y se mantiene ahí. Registrado también como tarea APX `task_a58c7c6f546e4083` (backlog, sin asignar). Solo se ejecuta cuando Nico lo autorice en ronda nueva.
+
 ## Informes
 
 Comunicar a Nico de forma simple, explicitar si pide decisión y recomendar una opción con consecuencias. Distinguir propuesta/decisión, pedido/entrega, revisión/aceptación e integración/publicación. Nunca declarar una fase aprobada sin evidencia.
