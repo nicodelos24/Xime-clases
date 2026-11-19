@@ -271,7 +271,12 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; width: 0; }
   transition: transform var(--t-rapida) var(--ease), box-shadow var(--t-rapida) var(--ease), border-color var(--t-rapida) var(--ease);
 }
 .clase:hover { transform: translateY(-2px); box-shadow: var(--sombra-crema); }
-.clase.hecha { border-color: #BFE4CF; background: linear-gradient(180deg, #FFFFFF, var(--verde-tinte)); }
+/* Nico 19/11: "Por dar" conserva el verde cálido que antes tenía la clase Dada.
+   La clase Dada pasa a un verde Success más profundo y claramente distinto. */
+.clase.por-dar { border-color: #BFE4CF; background: linear-gradient(180deg, #FFFFFF, var(--verde-tinte)); }
+.clase.hecha   { border-color: #7FC9A2; background: linear-gradient(180deg, #FFFFFF, #B9E3C9); }
+.chip-por-dar  { background: var(--verde-tinte); color: var(--verde); }
+.chip-dada     { background: #C6ECDC; color: #1E5C3F; }
 .clase-hora { display: grid; justify-items: center; min-width: 44px; }
 .clase-hora b { font-size: 16px; letter-spacing: -.02em; }
 .clase-hora span { font-size: 10.5px; color: var(--tinta-2); }
@@ -364,6 +369,25 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; width: 0; }
 }
 .buscador:focus-within { border-color: var(--tq-500); box-shadow: 0 0 0 3px var(--tq-100); }
 .buscador input { border: none; outline: none; background: transparent; font-size: 14px; color: var(--tinta); width: 100%; }
+
+/* Filtros de Alumnos (Nico 19/11): multi-selección, scroll horizontal suave. */
+.filtros { display:flex; gap:7px; overflow-x:auto; padding:2px 2px 6px; margin:2px -2px 0; scrollbar-width:none; -webkit-overflow-scrolling:touch; }
+.filtros::-webkit-scrollbar { display:none; }
+.f-chip {
+  border:1px solid var(--borde-crema); background:var(--bg-alt); color:var(--tinta-2);
+  font-size:12px; font-weight:650; padding:7px 12px; border-radius:999px;
+  white-space:nowrap; cursor:pointer; box-shadow:var(--sombra-crema);
+  transition:background var(--t-rapida) var(--ease), color var(--t-rapida) var(--ease), border-color var(--t-rapida) var(--ease);
+}
+.f-chip:hover { border-color:var(--tq-300); }
+.f-chip.activo { background:var(--tq-600); border-color:var(--tq-600); color:#fff; }
+.f-chip:focus-visible { outline:2px solid var(--tq-600); outline-offset:2px; }
+.al-sub { display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+.etiqueta { font-size:10.5px; font-weight:700; padding:2px 7px; border-radius:999px; }
+.et-mensual { background:var(--lila-tinte); color:var(--lila); }
+.et-individual { background:var(--azul-tinte); color:var(--azul); }
+.pv-vacio { text-align:center; color:var(--tinta-2); font-size:13px; padding:24px 0; }
+.al-fecha { font-size:10.5px; color:var(--tinta-2); }
 
 .lista-alumnos, .lista-cobros { list-style: none; margin-top: 12px; display: grid; gap: 8px; }
 .lista-alumnos li {

@@ -189,16 +189,19 @@
       </div>
       <div class="buscador">
         <svg class="ico" width="17" height="17"><use href="#i-alumnos"/></svg>
-        <input type="search" placeholder="Buscar alumno" aria-label="Buscar alumno">
+        <input type="search" id="buscar-alumno" placeholder="Buscar alumno" aria-label="Buscar alumno">
       </div>
-      <ul class="lista-alumnos">
-        <li><span class="avatar">CT</span><div><p class="al-nombre">Carla T.</p><p class="al-sub">Grupo Martes A · vence hoy</p></div><span class="punto punto-rosa" aria-label="Vence hoy"></span></li>
-        <li><span class="avatar avatar-2">BS</span><div><p class="al-nombre">Bruno S.</p><p class="al-sub">Grupo Martes A · vence hoy</p></div><span class="punto punto-rosa" aria-label="Vence hoy"></span></li>
-        <li><span class="avatar avatar-3">JP</span><div><p class="al-nombre">Julieta P.</p><p class="al-sub">Grupo Martes B · al día</p></div><span class="punto punto-verde" aria-label="Al día"></span></li>
-        <li><span class="avatar avatar-4">MR</span><div><p class="al-nombre">Martín R.</p><p class="al-sub">Grupo Viernes · al día</p></div><span class="punto punto-verde" aria-label="Al día"></span></li>
-        <li><span class="avatar avatar-5">LC</span><div><p class="al-nombre">Lucía C.</p><p class="al-sub">Grupo Martes B · al día</p></div><span class="punto punto-verde" aria-label="Al día"></span></li>
-        <li><span class="avatar avatar-6">DG</span><div><p class="al-nombre">Diego G.</p><p class="al-sub">Grupo Viernes · vence en 3 días</p></div><span class="punto punto-ambar" aria-label="Por vencer"></span></li>
-      </ul>
+      <div class="filtros" id="filtros-alumnos" role="group" aria-label="Ordenar y filtrar alumnos">
+        <button class="f-chip activo" data-todos type="button" aria-pressed="true">Todos</button>
+        <button class="f-chip" data-orden="az" type="button" aria-pressed="false">A → Z</button>
+        <button class="f-chip" data-orden="za" type="button" aria-pressed="false">Z → A</button>
+        <button class="f-chip" data-orden="recientes" type="button" aria-pressed="false">Más recientes</button>
+        <button class="f-chip" data-orden="vence" type="button" aria-pressed="false">Vencimiento</button>
+        <button class="f-chip" data-filtro="mensual" type="button" aria-pressed="false">Mensuales</button>
+        <button class="f-chip" data-filtro="individual" type="button" aria-pressed="false">Individuales</button>
+        <button class="f-chip" data-filtro="aldia" type="button" aria-pressed="false">Al día</button>
+      </div>
+      <ul class="lista-alumnos" id="lista-alumnos"></ul>
     </section>
 
     <!-- ================= COBROS ================= -->

@@ -66,7 +66,7 @@ function chipEstado(c) {
     if (c.estado === 'cancelada') {
         return '<span class="chip chip-cancelada"><svg class="ico" width="13" height="13"><use href="#i-alerta"/></svg>Cancelada</span>';
     }
-    return '<span class="chip chip-por">Por dar</span>';
+    return '<span class="chip chip-por chip-por-dar">Por dar</span>';
 }
 /** Acción de una fila de clase: Cancelar clase (reemplaza a "Marcar dada").
  *  Ronda 2 (b): en clases DADAS no se muestra "Cancelar clase" en la tarjeta —
@@ -210,7 +210,7 @@ function pintarLinea(fecha) {
     cont.innerHTML = `<li class="linea-dia">
     <p class="linea-fecha">${esc(etiquetaDia(dia))}${dia === hoyLocal(reloj.ahora()) ? ' · hoy' : ''}</p>
     ${delDia
-        .map((c) => `<article class="clase${c.estado === 'dada' ? ' hecha' : ''}${c.estado === 'cancelada' ? ' cancelada' : ''}" data-clase="${c.id}">
+        .map((c) => `<article class="clase${c.estado === 'dada' ? ' hecha' : ''}${c.estado === 'cancelada' ? ' cancelada' : ''}${c.estado === 'programada' ? ' por-dar' : ''}" data-clase="${c.id}">
           <div class="clase-hora"><b>${horaClase(c)}</b><span>${c.duracionMin} min</span></div>
           <div class="clase-datos">
             <p class="clase-nombre">${esc(c.nombre)}</p>
@@ -293,7 +293,7 @@ function cerrarSheet() {
 /** Punto 2: sheet con opciones sobre una clase ya Dada. */
 function abrirAcciones(id) {
     const c = clases.find((x) => x.id === id);
-    if (!c || c.estado !== 'dada')
+    if (!c || (c.estado !== 'dada' && c.estado !== 'cancelada'))
         return;
     cerrarSheet();
     const previo = document.createElement('div');
@@ -306,7 +306,7 @@ function abrirAcciones(id) {
     <div class="sheet-head">
       <div>
         <p class="sheet-eyebrow">${esc(etiquetaDia(c.fecha))} · ${horaClase(c)}</p>
-        <h3>Clase dada</h3>
+        <h3>${c.estado === 'cancelada' ? 'Clase cancelada' : 'Clase dada'}</h3>
       </div>
       <button class="sheet-cerrar" type="button" aria-label="Cerrar"><svg class="ico" width="18" height="18"><use href="#i-mas2"/></svg></button>
     </div>
@@ -534,6 +534,95 @@ toast.addEventListener('click', () => {
         avisar(pendientes.length > 0 ? `Quedan ${pendientes.length} mensajes` : 'Último mensaje abierto', 2500);
     }
 });
+/* ------------------------------------------------------- alumnos (filtros) */
+const ALUMNOS_FICHA = [
+    { ini: 'CT', nom: 'Carla T.',    gr: 'Martes A',  vence: 0,   tipo: 'mensual',    alta: 3, color: 'avatar' },
+    { ini: 'BS', nom: 'Bruno S.',    gr: 'Martes A',  vence: 0,   tipo: 'mensual',    alta: 5, color: 'avatar-2' },
+    { ini: 'JP', nom: 'Julieta P.',  gr: 'Martes B',  vence: -1,  tipo: 'individual', alta: 8, color: 'avatar-3' },
+    { ini: 'MR', nom: 'Martín R.',   gr: 'Viernes',   vence: 12,  tipo: 'mensual',    alta: 1, color: 'avatar-4' },
+    { ini: 'LC', nom: 'Lucía C.',    gr: 'Martes B',  vence: 20,  tipo: 'individual', alta: 7, color: 'avatar-5' },
+    { ini: 'DG', nom: 'Diego G.',    gr: 'Viernes',   vence: 3,   tipo: 'mensual',    alta: 2, color: 'avatar-6' },
+    { ini: 'AF', nom: 'Ana F.',      gr: 'Lunes',     vence: -1,  tipo: 'individual', alta: 9, color: 'avatar' },
+    { ini: 'SN', nom: 'Sofía N.',    gr: 'Sábado',    vence: 15,  tipo: 'mensual',    alta: 4, color: 'avatar-3' },
+    { ini: 'EL', nom: 'Ezequiel L.', gr: 'Lunes',     vence: 6,   tipo: 'individual', alta: 6, color: 'avatar-4' },
+];
+let ordenAlumnos = 'ninguno';
+const filtrosAlumnos = new Set();
+let busquedaAlumno = '';
+function alumnoSub(a) {
+    const v = a.vence < 0 ? 'vencido' : a.vence === 0 ? 'vence hoy' : `vence en ${a.vence} días`;
+    const et = a.tipo === 'mensual' ? 'et-mensual' : 'et-individual';
+    return `<p class="al-sub">${esc(a.gr)} · ${v} <span class="etiqueta ${et}">${a.tipo === 'mensual' ? 'Mensual' : 'Individual'}</span></p><span class="al-fecha">Alta hace ${a.alta} días</span>`;
+}
+function pintarChipsAlumnos() {
+    $$('#filtros-alumnos [data-orden]').forEach((b) => {
+        const on = b.dataset.orden === ordenAlumnos;
+        b.classList.toggle('activo', on);
+        b.setAttribute('aria-pressed', String(on));
+    });
+    $$('#filtros-alumnos [data-filtro]').forEach((b) => {
+        const on = filtrosAlumnos.has(b.dataset.filtro);
+        b.classList.toggle('activo', on);
+        b.setAttribute('aria-pressed', String(on));
+    });
+    const todos = ordenAlumnos === 'ninguno' && filtrosAlumnos.size === 0 && !busquedaAlumno.trim();
+    const bTodos = $('#filtros-alumnos [data-todos]');
+    bTodos?.classList.toggle('activo', todos);
+    bTodos?.setAttribute('aria-pressed', String(todos));
+}
+function pintarAlumnos() {
+    const lista = $('#lista-alumnos');
+    const conteo = $('#v-alumnos .conteo');
+    if (!lista) return;
+    const out = ALUMNOS_FICHA.filter((a) => {
+        if (busquedaAlumno && a.nom.toLowerCase().indexOf(busquedaAlumno) < 0) return false;
+        if (filtrosAlumnos.has('mensual') && a.tipo !== 'mensual') return false;
+        if (filtrosAlumnos.has('individual') && a.tipo !== 'individual') return false;
+        if (filtrosAlumnos.has('aldia') && a.vence <= 0) return false;
+        return true;
+    });
+    const cmp = {
+        az: (a, b) => a.nom.localeCompare(b.nom),
+        za: (a, b) => b.nom.localeCompare(a.nom),
+        recientes: (a, b) => a.alta - b.alta,
+        vence: (a, b) => a.vence - b.vence,
+    };
+    if (ordenAlumnos !== 'ninguno') out.sort(cmp[ordenAlumnos]);
+    if (conteo) conteo.textContent = `${out.length} ${out.length === 1 ? 'alumno' : 'alumnos'}`;
+    lista.innerHTML = out.length
+        ? out.map((a) => {
+            const punto = a.vence < 0 || a.vence === 0 ? 'punto-rosa' : a.vence <= 3 ? 'punto-ambar' : 'punto-verde';
+            return `<li><span class="avatar ${a.color}">${a.ini}</span><div><p class="al-nombre">${esc(a.nom)}</p>${alumnoSub(a)}</div><span class="punto ${punto}"></span></li>`;
+        }).join('')
+        : '<p class="pv-vacio">Ningún alumno con estos filtros</p>';
+    pintarChipsAlumnos();
+}
+$('#filtros-alumnos')?.addEventListener('click', (e) => {
+    const b = e.target.closest('.f-chip');
+    if (!b) return;
+    if (b.hasAttribute('data-todos')) {
+        ordenAlumnos = 'ninguno';
+        filtrosAlumnos.clear();
+        busquedaAlumno = '';
+        const input = $('#buscar-alumno');
+        if (input) input.value = '';
+    }
+    else if (b.dataset.orden) {
+        const o = b.dataset.orden;
+        ordenAlumnos = ordenAlumnos === o ? 'ninguno' : o;
+    }
+    else if (b.dataset.filtro) {
+        const f = b.dataset.filtro;
+        if (filtrosAlumnos.has(f)) filtrosAlumnos.delete(f);
+        else filtrosAlumnos.add(f);
+    }
+    pintarAlumnos();
+});
+$('#buscar-alumno')?.addEventListener('input', (e) => {
+    busquedaAlumno = e.target.value.toLowerCase();
+    pintarAlumnos();
+});
+
 /* ------------------------------------------------------------- navegación */
 const tabs = $$('.tab');
 const vistas = $$('.vista');
@@ -581,6 +670,7 @@ function refrescar() {
     pintarSemana();
     pintarHoy();
     pintarMes();
+    pintarAlumnos();
 }
 // Re-alineado al abrir: las clases cuya hora pasó quedan Dadas.
 clases = reconciliar(clases, reloj.ahora());
