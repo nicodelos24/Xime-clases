@@ -18,23 +18,27 @@ body {
 .marca { padding-top: 18px; padding-bottom: 10px; font-weight: 600; }
 .pie { padding-top: 14px; padding-bottom: 26px; letter-spacing: .02em; text-transform: none; font-size: 12.5px; }
 
-/* La hoja y la barra comparten el mismo radius: la curva inferior del mint
-   coincide con la de la barra, así no asoma mint por fuera de la curva. */
+/* Hoja y barra son una sola pieza fija: la hoja no se desplaza con la página,
+   así su borde redondeado siempre coincide con la barra y nunca asoma mint
+   por encima del menú al scrollear. El contenido desborda dentro de la hoja
+   (scroll interno). Sin listeners, sin blur, sin costo de rendimiento. */
 .cel {
-  width: 100%;
-  max-width: 390px;
-  min-height: calc(100vh - 65px);
-  height: calc(100vh - 65px);
-  margin: 0 auto;
+  position: fixed;
+  top: 65px; bottom: 0; left: 10px; right: 10px;
+  width: auto; max-width: none; height: auto; min-height: 0;
+  margin: 0;
+  padding-bottom: 78px;
   background: var(--bg);
   border-radius: 30px;
   box-shadow: var(--sombra-fuerte);
-  position: relative;
   display: flex;
   flex-direction: column;
-  padding-bottom: 0;
-  overflow: visible;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
+
+/* Texto decorativo al final: ya no aplica con el scroll interno de la hoja. */
+.pie { display: none; }
 
 /* ---------- Barra superior ---------- */
 .barra {
@@ -409,8 +413,8 @@ body {
   padding: 10px 12px calc(14px + env(safe-area-inset-bottom));
 }
 
-/* Sin scrollbar visible (en móvil no existe): evita desbordes measure-only. */
-html, body { scrollbar-width: none; overflow-x: hidden; }
+/* El body no scrollea: la hoja contiene el scroll. Sin scrollbar visible. */
+html, body { scrollbar-width: none; overflow: hidden; }
 html::-webkit-scrollbar, body::-webkit-scrollbar, .cel::-webkit-scrollbar {
   width: 0; height: 0; display: none;
 }
