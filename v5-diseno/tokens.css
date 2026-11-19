@@ -18,8 +18,11 @@
   --tq-50:  #EAF7F5;
 
   /* --- Neutros --- */
-  --bg: #F2F9F8;              /* fondo de app */
+  --bg: #F2F9F8;              /* fondo de app (ronda 2) */
   --bg-alt: #FFFFFF;
+  --bg-crema: #F7F4ED;         /* variante A: fondo crema parejo (Nico 19/11) */
+  --borde-crema: #E4DCCB;      /* marco de las tarjetas sobre crema */
+  --sombra-crema: 0 4px 14px rgba(84, 70, 40, .12); /* sombra cálida sobre crema */
   --tinta: #1B2B30;           /* texto principal */
   --tinta-2: #5A6A70;         /* texto secundario */
   --tinta-suave: #7A6A75;     /* texto sobre tinte claro (AA 4.8) */
@@ -52,7 +55,9 @@ html { -webkit-text-size-adjust: 100%; }
 body {
   font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
   color: var(--tinta);
-  background: linear-gradient(160deg, #E7F4F2 0%, #F4EDEF 55%, #EDE9F4 100%);
+  /* Variante A: fondo crema parejo en toda la pantalla, sin degradado mint. */
+  background: var(--bg-crema);
+  background-image: none;
   min-height: 100vh;
   display: grid;
   place-items: start center;

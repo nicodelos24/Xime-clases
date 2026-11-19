@@ -1,8 +1,19 @@
 /* Clases v5 · propuesta visual — sistema de animación "dopamina sobria"
    Mismos tokens que el ejemplo de Nico (tokens.css). 150–320 ms. */
 
-body {
-  background: linear-gradient(160deg, #E7F4F2 0%, #F4EDEF 55%, #EDE9F4 100%);
+/* Variante A: fondo crema parejo en toda la pantalla, sin degradado mint.
+   Se aplica a html y body (el fondo del body se propaga al canvas solo si
+   html no pinta nada; pintando ambos queda crema incluso en el área de scroll). */
+html, body {
+  background: var(--bg-crema) !important;
+  background-image: none !important;
+  scrollbar-width: none; /* scroll normal, sin barra visible */
+}
+html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; width: 0; }
+/* En móvil el contenido llega a los bordes: sin franjas laterales. */
+@media (max-width: 430px) {
+  body { padding: 22px 0 0; }
+  .cel { min-height: calc(100vh - 22px); }
 }
 
 .marca, .pie {
@@ -18,27 +29,25 @@ body {
 .marca { padding-top: 18px; padding-bottom: 10px; font-weight: 600; }
 .pie { padding-top: 14px; padding-bottom: 26px; letter-spacing: .02em; text-transform: none; font-size: 12.5px; }
 
-/* Hoja y barra son una sola pieza fija: la hoja no se desplaza con la página,
-   así su borde redondeado siempre coincide con la barra y nunca asoma mint
-   por encima del menú al scrollear. El contenido desborda dentro de la hoja
-   (scroll interno). Sin listeners, sin blur, sin costo de rendimiento. */
+/* Variante A: no hay hoja única. `.cel` queda como envoltorio invisible:
+   mantiene el ancho máximo y el contexto de posicionamiento que usan la
+   sheet de cancelación y el toast, pero no pinta fondo, borde ni sombra.
+   Cada bloque lleva su propio marco sobre el crema parejo. */
 .cel {
-  position: fixed;
-  top: 65px; bottom: 0; left: 10px; right: 10px;
-  width: auto; max-width: none; height: auto; min-height: 0;
-  margin: 0;
-  padding-bottom: 78px;
-  background: var(--bg);
-  border-radius: 30px;
-  box-shadow: var(--sombra-fuerte);
+  width: 100%;
+  max-width: 390px;
+  margin: 0 auto;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  min-height: 100vh;          /* ancla correcta para sheet y toast (position:absolute) */
+  padding: 0 0 calc(96px + env(safe-area-inset-bottom)); /* última tarjeta libre bajo la cápsula */
+  overflow: visible;
+  position: relative;         /* sin transform/filter/will-change/contain: no rompe el fixed de la nav */
   display: flex;
   flex-direction: column;
-  overflow-y: auto;
-  overflow-x: hidden;
 }
-
-/* Texto decorativo al final: ya no aplica con el scroll interno de la hoja. */
-.pie { display: none; }
 
 /* ---------- Barra superior ---------- */
 .barra {
@@ -52,7 +61,7 @@ body {
 .campana {
   position: relative;
   width: 42px; height: 42px;
-  border: 1px solid var(--linea);
+  border: 1px solid var(--borde-crema);
   border-radius: 50%;
   background: var(--bg-alt);
   color: var(--tinta);
@@ -90,7 +99,8 @@ body {
   padding: 18px 18px 16px;
   color: #fff;
   background: linear-gradient(155deg, var(--tq-600) 0%, var(--tq-900) 100%);
-  box-shadow: var(--sombra-fuerte);
+  border: 1px solid var(--borde-crema);
+  box-shadow: var(--sombra-crema);
   overflow: hidden;
   animation: subir var(--t-larga) var(--ease) 60ms both;
 }
@@ -147,14 +157,14 @@ body {
 .kpi {
   position: relative;
   background: var(--bg-alt);
-  border: 1px solid var(--linea);
+  border: 1px solid var(--borde-crema);
   border-radius: var(--r-med);
   padding: 11px 11px 13px;
-  box-shadow: var(--sombra);
+  box-shadow: var(--sombra-crema);
   animation: subir var(--t-larga) var(--ease) both;
   transition: transform var(--t-rapida) var(--ease), box-shadow var(--t-rapida) var(--ease);
 }
-.kpi:hover { transform: translateY(-3px); box-shadow: var(--sombra-fuerte); }
+.kpi:hover { transform: translateY(-3px); box-shadow: var(--sombra-crema); }
 .kpi:nth-child(1) { animation-delay: 130ms; }
 .kpi:nth-child(2) { animation-delay: 190ms; }
 .kpi:nth-child(3) { animation-delay: 250ms; }
@@ -182,6 +192,7 @@ body {
   border-radius: var(--r-med);
   padding: 12px 13px;
   color: var(--ambar-suave);
+  box-shadow: var(--sombra-crema);
   animation: subir var(--t-larga) var(--ease) 310ms both;
 }
 .aviso-ico { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 9px; background: rgba(138,90,18,.14); flex: none; }
@@ -210,7 +221,8 @@ body {
 /* ---------- Tira de días ---------- */
 .tira { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
 .tira-dia {
-  border: 1px solid var(--linea); background: var(--bg-alt);
+  border: 1px solid var(--borde-crema); background: var(--bg-alt);
+  box-shadow: var(--sombra-crema);
   border-radius: 13px; padding: 7px 0 8px;
   display: grid; gap: 2px; place-items: center;
   cursor: pointer; color: var(--tinta);
@@ -251,14 +263,14 @@ body {
 .clase {
   display: flex; align-items: center; flex-wrap: wrap; gap: 9px 11px;
   background: var(--bg-alt);
-  border: 1px solid var(--linea);
+  border: 1px solid var(--borde-crema);
   border-radius: var(--r-med);
   padding: 12px 12px 12px 13px;
   margin-bottom: 9px;
-  box-shadow: var(--sombra);
+  box-shadow: var(--sombra-crema);
   transition: transform var(--t-rapida) var(--ease), box-shadow var(--t-rapida) var(--ease), border-color var(--t-rapida) var(--ease);
 }
-.clase:hover { transform: translateY(-2px); box-shadow: var(--sombra-fuerte); }
+.clase:hover { transform: translateY(-2px); box-shadow: var(--sombra-crema); }
 .clase.hecha { border-color: #BFE4CF; background: linear-gradient(180deg, #FFFFFF, var(--verde-tinte)); }
 .clase-hora { display: grid; justify-items: center; min-width: 44px; }
 .clase-hora b { font-size: 16px; letter-spacing: -.02em; }
@@ -344,8 +356,9 @@ body {
 /* ---------- Alumnos ---------- */
 .buscador {
   display: flex; align-items: center; gap: 9px;
-  background: var(--bg-alt); border: 1px solid var(--linea);
+  background: var(--bg-alt); border: 1px solid var(--borde-crema);
   border-radius: 999px; padding: 11px 15px;
+  box-shadow: var(--sombra-crema);
   color: var(--tinta-2);
   transition: border-color var(--t-rapida) var(--ease), box-shadow var(--t-rapida) var(--ease);
 }
@@ -355,12 +368,12 @@ body {
 .lista-alumnos, .lista-cobros { list-style: none; margin-top: 12px; display: grid; gap: 8px; }
 .lista-alumnos li {
   display: flex; align-items: center; gap: 11px;
-  background: var(--bg-alt); border: 1px solid var(--linea);
+  background: var(--bg-alt); border: 1px solid var(--borde-crema);
   border-radius: var(--r-med); padding: 11px 13px;
-  box-shadow: var(--sombra);
+  box-shadow: var(--sombra-crema);
   transition: transform var(--t-rapida) var(--ease), box-shadow var(--t-rapida) var(--ease);
 }
-.lista-alumnos li:hover { transform: translateY(-2px); box-shadow: var(--sombra-fuerte); }
+.lista-alumnos li:hover { transform: translateY(-2px); box-shadow: var(--sombra-crema); }
 .avatar {
   width: 38px; height: 38px; border-radius: 50%;
   display: grid; place-items: center;
@@ -384,12 +397,12 @@ body {
 .kpis-cobros { grid-template-columns: repeat(2, 1fr); }
 .lista-cobros li {
   display: flex; align-items: center; gap: 12px;
-  background: var(--bg-alt); border: 1px solid var(--linea);
+  background: var(--bg-alt); border: 1px solid var(--borde-crema);
   border-radius: var(--r-med); padding: 13px 14px;
-  box-shadow: var(--sombra);
+  box-shadow: var(--sombra-crema);
   transition: transform var(--t-rapida) var(--ease), box-shadow var(--t-rapida) var(--ease);
 }
-.lista-cobros li:hover { transform: translateY(-2px); box-shadow: var(--sombra-fuerte); }
+.lista-cobros li:hover { transform: translateY(-2px); box-shadow: var(--sombra-crema); }
 .monto { font-size: 15px; letter-spacing: -.01em; color: var(--rosa); }
 .monto-suave { color: var(--ambar); }
 .monto-ok { color: var(--verde); font-size: 13px; background: var(--verde-tinte); padding: 5px 10px; border-radius: 999px; }
@@ -398,25 +411,17 @@ body {
 /* Ronda 2 (c): barra inferior como tarjeta/cápsula flotante, siempre fija y visible.
    position:fixed se mantiene para que nunca se oculte al scrollear; se recupera
    la estética ovalada con márgenes laterales y sombra suave (ref. Nico 19/11). */
-/* Barra integrada: mismo ancho exacto de la hoja, pegada al borde (bottom:0),
-   fixed y siempre visible. Sin backdrop-filter ni listeners de scroll. */
 .tabbar {
   position: fixed; z-index: 30;
-  left: 10px; right: 10px; bottom: 0;
+  left: 14px; right: 14px; bottom: 14px;
   width: auto; max-width: none;
   display: grid; grid-template-columns: repeat(4, 1fr);
-  background: var(--bg-alt);
-  border: 0;
-  border-top: 1px solid var(--linea);
-  border-radius: 0 0 30px 30px;
-  box-shadow: 0 -6px 22px rgba(8,69,74,.08);
-  padding: 10px 12px calc(14px + env(safe-area-inset-bottom));
-}
+  background: #FFFFFF; /* sólido: backdrop-filter crea contexto y rompería el fixed */
 
-/* El body no scrollea: la hoja contiene el scroll. Sin scrollbar visible. */
-html, body { scrollbar-width: none; overflow: hidden; }
-html::-webkit-scrollbar, body::-webkit-scrollbar, .cel::-webkit-scrollbar {
-  width: 0; height: 0; display: none;
+  border: 1px solid rgba(220,232,231,.7);
+  border-radius: 28px;
+  box-shadow: 0 10px 30px rgba(8,69,74,.16), 0 2px 8px rgba(11,107,106,.08);
+  padding: 9px 6px calc(11px + env(safe-area-inset-bottom));
 }
 .tab {
   display: grid; justify-items: center; gap: 3px;
@@ -466,8 +471,9 @@ html::-webkit-scrollbar, body::-webkit-scrollbar, .cel::-webkit-scrollbar {
 /* Estados vacíos */
 .linea-vacia, .grupo-vacio {
   font-size: 13px; color: var(--tinta-2);
-  background: var(--bg-alt); border: 1px dashed var(--linea);
+  background: var(--bg-alt); border: 1px dashed var(--borde-crema);
   border-radius: var(--r-med); padding: 14px; text-align: center;
+  box-shadow: var(--sombra-crema);
 }
 
 /* ---------- Punto 2: acciones sobre una clase Dada ---------- */
@@ -475,7 +481,7 @@ html::-webkit-scrollbar, body::-webkit-scrollbar, .cel::-webkit-scrollbar {
 .accion-clase {
   display: flex; align-items: center; gap: 11px;
   width: 100%; text-align: left; cursor: pointer;
-  background: var(--bg); border: 1px solid var(--linea);
+  background: var(--bg); border: 1px solid var(--borde-crema);
   border-radius: var(--r-med); padding: 12px 13px;
   color: var(--tinta);
   transition: transform var(--t-rapida) var(--ease), box-shadow var(--t-rapida) var(--ease), border-color var(--t-rapida) var(--ease);
