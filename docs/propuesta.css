@@ -271,12 +271,13 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; width: 0; }
   transition: transform var(--t-rapida) var(--ease), box-shadow var(--t-rapida) var(--ease), border-color var(--t-rapida) var(--ease);
 }
 .clase:hover { transform: translateY(-2px); box-shadow: var(--sombra-crema); }
-/* Nico 19/11: "Por dar" conserva el verde cálido que antes tenía la clase Dada.
-   La clase Dada pasa a un verde Success más profundo y claramente distinto. */
-.clase.por-dar { border-color: transparent; background: linear-gradient(180deg, #FFFFFF, #B4DEBE); }
-.clase.hecha   { border-color: #7FB894; background: linear-gradient(180deg, #FFFFFF, #D9F1E4); }
-.chip-por-dar  { background: #CFEBD6; color: #175534; }
-.chip-dada     { background: #D9F1E4; color: #2E6B4F; }
+/* Nico 19/11 (v2): inversión literal de estilos — "Por dar / Cancelar clase" toma el
+   fondo verde cálido y el borde que tenía Dada; "Dada" queda con el verde común sin borde.
+   Cancelada no se toca. */
+.clase.por-dar { border-color: #7FB894; background: linear-gradient(180deg, #FFFFFF, #D9F1E4); }
+.clase.hecha   { border-color: transparent; background: linear-gradient(180deg, #FFFFFF, #B4DEBE); }
+.chip-por-dar  { background: #D9F1E4; color: #2E6B4F; }
+.chip-dada     { background: #CFEBD6; color: #175534; }
 .clase-hora { display: grid; justify-items: center; min-width: 44px; }
 .clase-hora b { font-size: 16px; letter-spacing: -.02em; }
 .clase-hora span { font-size: 10.5px; color: var(--tinta-2); }
@@ -655,11 +656,14 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; width: 0; }
 
 /* Modo oscuro: adaptar los fondos de estado (manteniendo su identidad)
    y el texto para que las tarjetas sigan siendo legibles (AA). */
+/* Inversión también en oscuro: Por dar toma el fondo/borde de Dada, Dada queda sin borde. */
 [data-tema="oscuro"] .clase.por-dar {
-  background: linear-gradient(180deg, #16272B, #1E4437);
+  border-color: #7FB894;
+  background: linear-gradient(180deg, #16272B, #1C4238);
 }
 [data-tema="oscuro"] .clase.hecha {
-  background: linear-gradient(180deg, #16272B, #1C4238);
+  border-color: transparent;
+  background: linear-gradient(180deg, #16272B, #1E4437);
 }
 [data-tema="oscuro"] .clase.cancelada {
   background: #2A2118;
@@ -671,7 +675,7 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; width: 0; }
 [data-tema="oscuro"] .clase .clase-sub,
 [data-tema="oscuro"] .clase .clase-hora span { color: var(--tinta-2); }
 [data-tema="oscuro"] .clase.cancelada .clase-nombre { text-decoration-color: #E0A060; }
-[data-tema="oscuro"] .chip-por-dar { background: #2A5A42; color: #D6F3E2; }
-[data-tema="oscuro"] .chip-dada { background: #26513E; color: #D6F3E2; }
+[data-tema="oscuro"] .chip-por-dar { background: #26513E; color: #D6F3E2; }
+[data-tema="oscuro"] .chip-dada { background: #2A5A42; color: #D6F3E2; }
 [data-tema="oscuro"] .chip-cancelada { background: #5A3A1C; color: #F6D9B0; }
 [data-tema="oscuro"] .marcar-cancelar { background: #3A2418; color: #F0C9A8; border-color: #6B4E2E; }
