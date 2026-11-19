@@ -39,6 +39,12 @@ actual (Hoy, Agenda calendario y Agenda día, chips Mensual/Individual, botón
 - Contraste AA medido con la fórmula WCAG sobre los colores resueltos: mínimo 4.75 (texto secundario sobre fondo) y 5.77 en el aviso ámbar; blanco sobre el extremo claro del hero 4.58; blanco sobre turquesa 5.01; verde 5.3; turquesa 5.75. Todos ≥ 4.5.
 - Animaciones y transiciones activas en el primer paint (9 animaciones en cola: entrada escalonada, anillo, aparecer); `prefers-reduced-motion` desactiva todo.
 
+- **Cancelación y deshacer (19/11):** la cancelación abre una sheet con
+  motivo obligatorio, tres modos de aviso (masivo / individual / no enviar
+  ahora) y mensaje precargado editable; WhatsApp Opción A abre un `wa.me`
+  por alumno desde el toast, con "Deshacer" que vuelve la clase a
+  Programada. Verificado en Chrome con capturas en `README-funcionamiento.md`.
+
 ## Pendiente de Nico
 
 - **Aprobar (o pedir cambios) este diseño.** Recién con su OK empieza la reescritura de la app sobre este modelo: dónde vive cada grupo, cómo se agenda, qué ve en cada pestaña.

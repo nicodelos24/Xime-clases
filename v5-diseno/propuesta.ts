@@ -70,7 +70,7 @@ function avisar(txt: string, ms = 2200) {
 }
 
 function esc(s: string): string {
-  return s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '<', '>': '>', '"': '&quot;', '\'': '&#39;' })[c] as string);
+  return s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', '\'': '&#39;' })[c] as string);
 }
 
 /** Chip de estado de una clase (SVG, sin emoji). */
@@ -456,13 +456,21 @@ function confirmarCancelacion(c: Clase, motivo: string) {
   toast.dataset.clase = c.id;
 }
 
-function revertirCancelacion(id: string) {
+function revertirCancelacion(id: string): boolean {
   const c = clases.find((x) => x.id === id);
-  if (!c) return;
-  const revertida = deshacerCancelacion(c, { motivo: 'error del dueño', quien: 'dueño', ahora: reloj.ahora() });
-  clases = clases.map((x) => (x.id === id ? revertida : x));
+  if (!c) return false;
+  // El toast es reutilizable: si algo falla, se limpia igual para que no
+  // quede un "Deshacer" que vuelve a lanzar el mismo error.
+  try {
+    const revertida = deshacerCancelacion(c, { motivo: 'error del dueño', quien: 'dueño', ahora: reloj.ahora() });
+    clases = clases.map((x) => (x.id === id ? revertida : x));
+  } catch (e) {
+    avisar(e instanceof Error ? e.message : 'No se pudo deshacer', 3000);
+    return false;
+  }
   refrescar();
   avisar('Clase revertida a Programada');
+  return true;
 }
 
 toast.addEventListener('click', () => {
@@ -470,6 +478,7 @@ toast.addEventListener('click', () => {
     revertirCancelacion(toast.dataset.clase);
     delete toast.dataset.deshacer;
     delete toast.dataset.clase;
+    delete toast.dataset.pendientes;
     toast.classList.remove('ver');
     return;
   }

@@ -54,3 +54,27 @@ servidor.
 3. **Anillo al arrancar**: el llenado del anillo se anima desde el vacío
    hasta el estado real (Web Animations API, `fill: both`), en vez de
    apagar la animación.
+4. **Deshacer sin errores al repetir**: el click del toast seguía al
+   segundo handler cuando `deshacerCancelacion` lanzaba (clase ya
+   revertida), y el `dataset` quedaba pisado con un "Deshacer" que
+   volvía a fallar. Hoy `revertirCancelacion` devuelve `boolean`, se
+   limpia `deshacer`/`clase`/`pendientes` en el mismo handler y un
+   fallo muestra el mensaje en el toast en vez de lanzar.
+
+## Verificado en Chrome (kaia_chrome_xime, 19/11)
+
+- **Auto-marcado**: al abrir, lunes→miércoles en `dada` y jueves en
+  adelante `programada`; la vista Hoy dice "Sin clases por dar" con anillo
+  `1/1`. Captura: `v5-hoy-automarcado.png`.
+- **Cancelar clase**: sheet con motivo obligatorio, 3 modos de aviso
+  (masivo / individual / no enviar ahora) y mensaje precargado editable.
+  Captura: `v5-cancel-sheet.png`.
+- **WhatsApp Opción A**: con "Masivo" y 11 alumnos, el toast avisa
+  "WhatsApp listo para los 11 alumnos… quedan 10 para abrir · Deshacer" y
+  `dataset.pendientes` guarda 10 links `wa.me` con el texto codificado;
+  se abre una pestaña por alumno (una sola, manual, nunca automática).
+  Captura: `v5-toast-whatsapp.png`.
+- **Deshacer**: convierte la clase a `programada`, limpia `cancelacion` y
+  deja `dataset` vacío; **3 clics seguidos sobre el toast → 0 errores de
+  consola** (antes lanzaba "Solo se revierte una clase cancelada").
+- Consola de la sesión final: **0 errores, 0 warnings**.
