@@ -274,7 +274,7 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; width: 0; }
 /* Nico 19/11: "Por dar" conserva el verde cálido que antes tenía la clase Dada.
    La clase Dada pasa a un verde Success más profundo y claramente distinto. */
 .clase.por-dar { border-color: #7FB894; background: linear-gradient(180deg, #FFFFFF, #B4DEBE); }
-.clase.hecha   { border-color: #BFE4CF; background: linear-gradient(180deg, #FFFFFF, #D9F1E4); }
+.clase.hecha   { border-color: #7FB894; background: linear-gradient(180deg, #FFFFFF, #D9F1E4); }
 .chip-por-dar  { background: #CFEBD6; color: #175534; }
 .chip-dada     { background: #D9F1E4; color: #2E6B4F; }
 .clase-hora { display: grid; justify-items: center; min-width: 44px; }
