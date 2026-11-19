@@ -1,11 +1,11 @@
 // Clases v5 · navegación + funcionamiento (auto-marcado, Cancelar clase, WhatsApp)
 // La estética vive en tokens.css/propuesta.css; acá solo se cambian estados,
 // textos y el flujo de cancelación. Sin emoji: solo SVG de icons.js.
-import { crearClase, reconciliar, cancelarClase, deshacerCancelacion, registrarMensajeEnviado, reprogramarClase, horaClase, } from './src/clases.js';
-import { resumenHoy, clasesDelDia, clasesDeLaSemana } from './src/resumen.js';
-import { diaCorto, etiquetaDia, etiquetaMes, sumarDias, parseFecha } from './src/fechas.js';
-import { relojDelDispositivo, hoyLocal } from './src/reloj.js';
-import { textoCancelacion, destinos, resumenEnvio, linkTexto, } from './src/whatsapp.js';
+import { crearClase, reconciliar, cancelarClase, deshacerCancelacion, registrarMensajeEnviado, reprogramarClase, horaClase, } from './src/clases.ts';
+import { resumenHoy, clasesDelDia, clasesDeLaSemana } from './src/resumen.ts';
+import { diaCorto, etiquetaDia, etiquetaMes, sumarDias, parseFecha } from './src/fechas.ts';
+import { relojDelDispositivo, hoyLocal } from './src/reloj.ts';
+import { textoCancelacion, destinos, resumenEnvio, linkTexto, } from './src/whatsapp.ts';
 /* ---------------------------------------------------------------- datos demo */
 const reloj = relojDelDispositivo();
 function alumnos(nombres, prefijo) {
@@ -68,10 +68,16 @@ function chipEstado(c) {
     }
     return '<span class="chip chip-por">Por dar</span>';
 }
-/** Acción de una fila de clase: Cancelar clase (reemplaza a "Marcar dada"). */
+/** Acción de una fila de clase: Cancelar clase (reemplaza a "Marcar dada").
+ *  Ronda 2 (b): en clases DADAS no se muestra "Cancelar clase" en la tarjeta —
+ *  el chip "Dada" abre el sheet que ya incluye Cancelar / Cambiar de día —
+ *  para que el botón no tape el nombre de la clase. */
 function accionClase(c) {
     if (c.estado === 'cancelada') {
         return `<button class="marcar marcar-reversa" type="button" data-reversa="${c.id}">Revertir</button>`;
+    }
+    if (c.estado === 'dada') {
+        return '';
     }
     return `<button class="marcar marcar-cancelar" type="button" data-cancelar="${c.id}">Cancelar clase</button>`;
 }
@@ -173,7 +179,7 @@ function pintarSemana() {
     const h2 = $('#v-semana .agenda-titulo h2');
     if (h2)
         h2.textContent = 'Esta semana';
-    const link = $('#v-semana .link-suave');
+    const link = $('#v-semana .link-suave .link-txt');
     if (link)
         link.textContent = 'Ver mes';
 }
