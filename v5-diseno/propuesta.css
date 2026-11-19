@@ -400,6 +400,121 @@ body {
 }
 .toast.ver { opacity: 1; transform: translate(-50%, 0); }
 
+/* --------------------------- estilos de estados nuevos (tokens sin tocar) */
+/* Chip "Cancelada": mismo molde que chip-por / chip-dada. */
+.chip-cancelada { background: var(--rosa-tinte); color: var(--rosa); }
+
+/* Fila cancelada: tinta apagada, sin sombra de "hecha". */
+.clase.cancelada { background: var(--bg-alt); border-color: var(--linea); opacity: .82; }
+.clase.cancelada .clase-nombre { text-decoration: line-through; text-decoration-color: var(--rosa-pastel); }
+.clase.cancelada .clase-sub { color: var(--tinta-2); }
+
+/* Acción de fila: reemplaza a "Marcar dada". */
+.marcar-cancelar { border-color: var(--rosa); color: var(--rosa); }
+.marcar-cancelar:hover { background: var(--rosa-tinte); }
+.marcar-reversa { border-color: var(--tinta-2); color: var(--tinta-2); }
+.marcar-reversa:hover { background: var(--bg); }
+
+/* Estados vacíos */
+.linea-vacia, .grupo-vacio {
+  font-size: 13px; color: var(--tinta-2);
+  background: var(--bg-alt); border: 1px dashed var(--linea);
+  border-radius: var(--r-med); padding: 14px; text-align: center;
+}
+
+/* ---------- Sheet de cancelación ---------- */
+.sheet {
+  position: absolute; left: 0; right: 0; bottom: 0; z-index: 40;
+  background: var(--bg-alt);
+  border-radius: var(--r-grande) var(--r-grande) 0 0;
+  border-top: 1px solid var(--linea);
+  box-shadow: 0 -12px 34px rgba(8, 69, 74, .18);
+  padding: 16px 16px 20px;
+  max-height: 88%;
+  overflow-y: auto;
+  animation: subirSheet var(--t-larga) var(--ease) both;
+}
+.sheet.cerrando { animation: bajarSheet var(--t-media) var(--ease) both; }
+@keyframes subirSheet { from { transform: translateY(24px); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes bajarSheet { from { transform: none; opacity: 1; } to { transform: translateY(24px); opacity: 0; } }
+
+.sheet-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+.sheet-eyebrow { font-size: 11.5px; letter-spacing: .06em; text-transform: uppercase; color: var(--tinta-2); }
+.sheet-head h3 { font-size: 19px; letter-spacing: -.01em; margin-top: 2px; }
+.sheet-cerrar {
+  width: 34px; height: 34px; border-radius: 50%; flex: none;
+  border: 1px solid var(--linea); background: var(--bg-alt); color: var(--tinta);
+  display: grid; place-items: center; cursor: pointer;
+  transform: rotate(45deg); /* la cruz de "agendar" cerrada */
+  transition: background var(--t-rapida) var(--ease), transform var(--t-rapida) var(--ease);
+}
+.sheet-cerrar:hover { background: var(--tq-50); }
+.sheet-cerrar:active { transform: rotate(45deg) scale(.92); }
+
+.sheet-clase { font-size: 13.5px; color: var(--tinta-2); margin-top: 8px; }
+.sheet-clase strong { color: var(--tinta); }
+
+.sheet-paso { font-size: 12.5px; font-weight: 700; color: var(--tq-700); margin: 14px 0 7px; }
+
+.campo { display: grid; gap: 5px; margin-top: 10px; }
+.campo > span { font-size: 12px; font-weight: 650; color: var(--tinta-2); }
+.campo input, .campo textarea {
+  width: 100%; border: 1px solid var(--linea); border-radius: var(--r-chico);
+  background: var(--bg); color: var(--tinta);
+  font: inherit; font-size: 14px; padding: 10px 12px; resize: vertical;
+  transition: border-color var(--t-rapida) var(--ease), box-shadow var(--t-rapida) var(--ease);
+}
+.campo input:focus, .campo textarea:focus {
+  outline: none; border-color: var(--tq-500); box-shadow: 0 0 0 3px var(--tq-100);
+}
+
+.opciones { display: grid; gap: 8px; }
+.opcion {
+  display: flex; align-items: center; gap: 11px; text-align: left;
+  border: 1.5px solid var(--linea); background: var(--bg-alt);
+  border-radius: var(--r-med); padding: 11px 12px; cursor: pointer;
+  color: var(--tinta); font: inherit;
+  transition: border-color var(--t-media) var(--ease), background var(--t-media) var(--ease), transform var(--t-rapida) var(--ease);
+}
+.opcion:hover { transform: translateY(-1px); background: var(--tq-50); }
+.opcion:active { transform: scale(.985); }
+.opcion .ico { color: var(--tinta-2); flex: none; }
+.opcion b { display: block; font-size: 14px; font-weight: 650; }
+.opcion small { display: block; font-size: 12px; color: var(--tinta-2); margin-top: 1px; }
+.opcion.activa { border-color: var(--tq-600); background: var(--tq-50); }
+.opcion.activa .ico { color: var(--tq-700); }
+
+.lista-elegir { list-style: none; display: grid; gap: 6px; max-height: 190px; overflow-y: auto; padding: 2px; }
+.lista-elegir label {
+  display: flex; align-items: center; gap: 10px;
+  border: 1px solid var(--linea); border-radius: var(--r-med);
+  padding: 8px 10px; cursor: pointer; background: var(--bg-alt);
+  transition: border-color var(--t-rapida) var(--ease), background var(--t-rapida) var(--ease);
+}
+.lista-elegir label:hover { background: var(--tq-50); }
+.lista-elegir input { accent-color: var(--tq-600); width: 17px; height: 17px; flex: none; }
+.lista-elegir .avatar { width: 30px; height: 30px; font-size: 11px; }
+.lista-elegir label:has(input:checked) { border-color: var(--tq-600); background: var(--tq-50); }
+
+.sheet-acciones { display: grid; grid-template-columns: 1fr 1.4fr; gap: 9px; margin-top: 16px; }
+.btn-primario, .btn-secundario {
+  font: inherit; font-size: 14px; font-weight: 700;
+  padding: 12px 14px; border-radius: 999px; cursor: pointer;
+  transition: transform var(--t-rapida) var(--ease), background var(--t-media) var(--ease), box-shadow var(--t-media) var(--ease);
+}
+.btn-primario { border: none; background: var(--rosa); color: #fff; box-shadow: 0 8px 20px rgba(142, 53, 82, .28); }
+.btn-primario:hover { background: #7C2C47; transform: translateY(-1px); }
+.btn-primario:active { transform: scale(.97); }
+.btn-secundario { border: 1.5px solid var(--linea); background: var(--bg-alt); color: var(--tinta); }
+.btn-secundario:hover { background: var(--bg); }
+
+/* El toast del aviso también lleva la acción de deshacer. */
+.toast { cursor: pointer; }
+.toast[data-deshacer="1"]::after {
+  content: "Deshacer"; margin-left: 10px; font-weight: 700;
+  color: var(--tq-300); text-decoration: underline;
+}
+
 /* ---------- Movimiento reducido ---------- */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {

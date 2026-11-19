@@ -1,0 +1,15 @@
+{
+  "name": "xime-clases-v5-diseno",
+  "private": true,
+  "type": "module",
+  "description": "Prototipo v5 (diseño fijo + funcionamiento: auto-marcado, Cancelar clase, WhatsApp Opción A)",
+  "scripts": {
+    "test": "node --test test/*.test.ts",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "serve": "node serve.mjs"
+  },
+  "devDependencies": {
+    "typescript": "~6.0.3",
+    "@types/node": "^26.6.6"
+  }
+}
