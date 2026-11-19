@@ -17,10 +17,16 @@
       <p class="barra-hola">Buenas tardes, Xime</p>
       <h1 class="barra-titulo">Hoy</h1>
     </div>
-    <button class="campana" type="button" aria-label="3 notificaciones">
-      <svg class="ico" width="21" height="21"><use href="#i-campana"/></svg>
-      <span class="campana-punto"></span>
-    </button>
+    <div class="barra-acciones">
+      <button class="campana" type="button" aria-label="3 notificaciones">
+        <svg class="ico" width="21" height="21"><use href="#i-campana"/></svg>
+        <span class="campana-punto"></span>
+      </button>
+      <button class="tema-toggle" id="tema-toggle" type="button" aria-label="Activar modo oscuro" aria-pressed="false" title="Cambiar tema">
+        <svg class="ico ico-luna" width="20" height="20"><use href="#i-luna"/></svg>
+        <svg class="ico ico-sol" width="20" height="20"><use href="#i-sol"/></svg>
+      </button>
+    </div>
   </header>
 
   <main class="vistas">
@@ -255,6 +261,35 @@
 
 
 
+<script>
+  (function () {
+    var root = document.documentElement;
+    var KEY = 'xime-tema';
+    function aplicar(tema) {
+      root.setAttribute('data-tema', tema);
+      var b = document.getElementById('tema-toggle');
+      if (b) {
+        var oscuro = tema === 'oscuro';
+        b.setAttribute('aria-pressed', oscuro ? 'true' : 'false');
+        b.setAttribute('aria-label', oscuro ? 'Activar modo claro' : 'Activar modo oscuro');
+      }
+    }
+    var guardado = null;
+    try { guardado = localStorage.getItem(KEY); } catch (e) {}
+    var inicial = guardado || (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'oscuro' : 'claro');
+    aplicar(inicial);
+    window.__ximeAplicarTema = aplicar;
+    document.addEventListener('DOMContentLoaded', function () {
+      var b = document.getElementById('tema-toggle');
+      if (!b) return;
+      b.addEventListener('click', function () {
+        var sig = root.getAttribute('data-tema') === 'oscuro' ? 'claro' : 'oscuro';
+        aplicar(sig);
+        try { localStorage.setItem(KEY, sig); } catch (e) {}
+      });
+    });
+  })();
+</script>
 <script src="icons.js?v=202611191755"></script>
 <script type="module" src="propuesta.js?v=202611191755"></script>
 </body>

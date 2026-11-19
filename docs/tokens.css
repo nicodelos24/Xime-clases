@@ -339,3 +339,42 @@ body {
     transition-duration: 1ms !important;
   }
 }
+
+
+/* =========================================================
+   Modo oscuro (preview 19/11) — toggle manual + preferencia del sistema.
+   Se activa con [data-tema="oscuro"] en <html>. Paleta turquesa/pastel
+   oscurecida, sin naranjas fuertes. Los fondos de estado de las tarjetas
+   (Por dar / Dada / Cancelada) se conservan intencionalmente.
+   ========================================================= */
+[data-tema="oscuro"] {
+  --bg: #0E1B1E;
+  --bg-alt: #16272B;
+  --bg-crema: #0E1B1E;
+  --borde-crema: #274045;
+  --linea: #274045;
+  --tinta: #E8F2F1;
+  --tinta-2: #A9C0C0;
+  --tinta-suave: #9FB6B4;
+  --sombra-crema: 0 4px 16px rgba(0, 0, 0, .38);
+  --sombra: 0 2px 12px rgba(0, 0, 0, .34);
+  --sombra-fuerte: 0 10px 30px rgba(0, 0, 0, .5);
+  --tq-100: #1C3A3B;
+  --tq-200: #23514F;
+  --tq-300: #2E6E6A;
+  --tq-600: #4FD1C5;
+  --tq-700: #7BE0D6;
+  --lila-tinte: #2E2542;
+  --azul-tinte: #1E3546;
+  --rosa-tinte: #3A2230;
+  --verde-tinte: #1E3A2C;
+  --ambar-suave-tinte: #3A3020;
+}
+[data-tema="oscuro"] body { background: var(--bg-crema) !important; }
+[data-tema="oscuro"] .tabbar {
+  background: #16272B;
+  border-color: #274045;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, .5), 0 2px 8px rgba(0, 0, 0, .3);
+}
+[data-tema="oscuro"] .marca { color: var(--tinta-2); }
+[data-tema="oscuro"] .hero { box-shadow: var(--sombra-fuerte); }

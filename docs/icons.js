@@ -7,6 +7,7 @@
     cobros: '<circle cx="12" cy="12" r="8.6"/><path d="M14.8 9.2c-.5-1-1.6-1.5-2.8-1.5-1.5 0-2.6.8-2.6 2 0 3 5.4 1.3 5.4 4.3 0 1.2-1.2 2-2.8 2-1.3 0-2.4-.6-3-1.6M12 6v1.7M12 16.3V18"/>',
     mas: '<circle fill="currentColor" stroke="none" cx="5.5" cy="12" r="1.7"/><circle fill="currentColor" stroke="none" cx="12" cy="12" r="1.7"/><circle fill="currentColor" stroke="none" cx="18.5" cy="12" r="1.7"/>',
     campana: '<path d="M6 16.5V11a6 6 0 0 1 12 0v5.5l1.6 2H4.4z"/><path d="M10 21a2.2 2.2 0 0 0 4 0"/>',
+    luna: '<path d="M20 14.5A8.6 8.6 0 0 1 9.5 4 8.6 8.6 0 1 0 20 14.5z"/>',
     reloj: '<circle cx="12" cy="12" r="8.6"/><path d="M12 7.5V12l3 2"/>',
     alerta: '<path d="M12 3.8 21 19.5H3z"/><path d="M12 10v4.2"/><circle fill="currentColor" stroke="none" cx="12" cy="16.8" r=".4"/>',
     check: '<path d="m5 12.8 4.4 4.4L19 7.5"/>',

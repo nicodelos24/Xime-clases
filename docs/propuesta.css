@@ -445,18 +445,18 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; width: 0; }
   border: 1px solid rgba(220,232,231,.7);
   border-radius: 28px;
   box-shadow: 0 10px 30px rgba(8,69,74,.16), 0 2px 8px rgba(11,107,106,.08);
-  padding: 9px 6px calc(11px + env(safe-area-inset-bottom));
+  padding: 7px 6px calc(8px + env(safe-area-inset-bottom));
 }
 .tab {
-  display: grid; justify-items: center; gap: 3px;
+  display: grid; justify-items: center; gap: 2px;
   font-size: 10.5px; font-weight: 650; letter-spacing: .02em;
   color: var(--tinta-2); text-decoration: none;
-  padding: 4px 0 2px;
+  padding: 3px 0 2px;
   transition: color var(--t-rapida) var(--ease), transform var(--t-rapida) var(--ease);
 }
 .tab-ico {
   display: grid; place-items: center;
-  width: 44px; height: 30px; border-radius: 999px;
+  width: 44px; height: 26px; border-radius: 999px;
   transition: background var(--t-media) var(--ease), transform var(--t-media) var(--ease);
 }
 .tab:hover { color: var(--tq-700); }
@@ -630,3 +630,48 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; width: 0; }
   }
   .anillo-valor { stroke-dashoffset: 119.38; }
 }
+
+
+/* Toggle de tema (preview 19/11): luna en claro, sol en oscuro. */
+.barra-acciones { display: flex; align-items: flex-start; gap: 8px; }
+.tema-toggle {
+  width: 42px; height: 42px;
+  border: 1px solid var(--borde-crema);
+  border-radius: 50%;
+  background: var(--bg-alt);
+  color: var(--tinta);
+  display: grid; place-items: center;
+  cursor: pointer;
+  transition: transform var(--t-rapida) var(--ease), box-shadow var(--t-rapida) var(--ease), background var(--t-media) var(--ease);
+  animation: aparecer var(--t-media) var(--ease) 160ms both;
+}
+.tema-toggle:hover { transform: translateY(-2px); box-shadow: var(--sombra); }
+.tema-toggle:active { transform: scale(.94); }
+.tema-toggle:focus-visible { outline: 2px solid var(--tq-600); outline-offset: 2px; }
+.tema-toggle .ico-sol { display: none; }
+[data-tema="oscuro"] .tema-toggle .ico-luna { display: none; }
+[data-tema="oscuro"] .tema-toggle .ico-sol { display: block; }
+
+
+/* Modo oscuro: adaptar los fondos de estado (manteniendo su identidad)
+   y el texto para que las tarjetas sigan siendo legibles (AA). */
+[data-tema="oscuro"] .clase.por-dar {
+  background: linear-gradient(180deg, #16272B, #1E4437);
+}
+[data-tema="oscuro"] .clase.hecha {
+  background: linear-gradient(180deg, #16272B, #1C4238);
+}
+[data-tema="oscuro"] .clase.cancelada {
+  background: #2A2118;
+  border-color: #6B4E2E;
+  opacity: 1;
+}
+[data-tema="oscuro"] .clase .clase-nombre,
+[data-tema="oscuro"] .clase .clase-hora b { color: var(--tinta); }
+[data-tema="oscuro"] .clase .clase-sub,
+[data-tema="oscuro"] .clase .clase-hora span { color: var(--tinta-2); }
+[data-tema="oscuro"] .clase.cancelada .clase-nombre { text-decoration-color: #E0A060; }
+[data-tema="oscuro"] .chip-por-dar { background: #2A5A42; color: #D6F3E2; }
+[data-tema="oscuro"] .chip-dada { background: #26513E; color: #D6F3E2; }
+[data-tema="oscuro"] .chip-cancelada { background: #5A3A1C; color: #F6D9B0; }
+[data-tema="oscuro"] .marcar-cancelar { background: #3A2418; color: #F0C9A8; border-color: #6B4E2E; }
