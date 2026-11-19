@@ -76,7 +76,7 @@
 ## 9. Entrega del informe
 
 - [x] Dictamen **APPROVED** con SHA, viewport, comandos y resultados.
-- [x] Sin defectos bloqueantes ni observaciones que11 requieran cambios.
+- [x] Sin defectos bloqueantes ni observaciones que requieran cambios.
 - [x] Capturas adjuntas: `gino-A-crema-hoy-390.png`, `gino-A-crema-hoy-320-scrolled.png`, `gino-A-crema-clases-320.png`, `gino-A-crema-sheet-320.png`.
 - [x] Roma avisado por chat APX; Chrome soltado (pestaña en about:blank).
 
