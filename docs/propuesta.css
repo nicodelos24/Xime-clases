@@ -274,9 +274,9 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; width: 0; }
 /* Nico 19/11: "Por dar" conserva el verde cálido que antes tenía la clase Dada.
    La clase Dada pasa a un verde Success más profundo y claramente distinto. */
 .clase.por-dar { border-color: #BFE4CF; background: linear-gradient(180deg, #FFFFFF, var(--verde-tinte)); }
-.clase.hecha   { border-color: #7FC9A2; background: linear-gradient(180deg, #FFFFFF, #B9E3C9); }
+.clase.hecha   { border-color: #7FB894; background: linear-gradient(180deg, #FFFFFF, #B4DEBE); }
 .chip-por-dar  { background: var(--verde-tinte); color: var(--verde); }
-.chip-dada     { background: #C6ECDC; color: #1E5C3F; }
+.chip-dada     { background: #CFEBD6; color: #175534; }
 .clase-hora { display: grid; justify-items: center; min-width: 44px; }
 .clase-hora b { font-size: 16px; letter-spacing: -.02em; }
 .clase-hora span { font-size: 10.5px; color: var(--tinta-2); }
@@ -482,7 +482,8 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; width: 0; }
 .chip-cancelada { background: var(--rosa-tinte); color: var(--rosa); }
 
 /* Fila cancelada: tinta apagada, sin sombra de "hecha". */
-.clase.cancelada { background: var(--bg-alt); border-color: var(--linea); opacity: .82; }
+.clase.cancelada { background: #FFFAF2; border-color: #F2DCC3; opacity: .88; }
+.clase.cancelada .chip-cancelada { background: #FBE9D2; color: #8F4E12; }
 .clase.cancelada .clase-nombre { text-decoration: line-through; text-decoration-color: var(--rosa-pastel); }
 .clase.cancelada .clase-sub { color: var(--tinta-2); }
 
