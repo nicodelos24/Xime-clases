@@ -4,7 +4,7 @@ import { strict as assert } from 'node:assert';
 
 import {
   crearClase, marcarSiPasada, reconciliar, cancelarClase, deshacerCancelacion,
-  registrarMensajeEnviado, inicioPasado, horaClase, etiquetaEstado, finClase,
+  reprogramarClase, registrarMensajeEnviado, inicioPasado, horaClase, etiquetaEstado, finClase,
   instanteInicio, type Clase,
 } from '../src/clases.ts';
 import { relojFalso } from '../src/reloj.ts';
@@ -112,7 +112,8 @@ test('cancelar clase: queda Cancelada, con motivo y quién, sin deuda ni prórro
   assert.equal(cancelada.cancelacion?.mensajesEnviados, null);
   assert.deepEqual(c.alumnos, alumnos, 'los alumnos no se tocan');
 
-  assert.throws(() => cancelarClase(c, { motivo: '   ', quien: 'Xime', ahora }), /motivo/);
+  // Punto 3: el motivo ya no es obligatorio; un motivo vacío se registra como "sin motivo".
+  assert.equal(cancelarClase(c, { motivo: '   ', quien: 'Xime', ahora }).cancelacion?.motivo, 'sin motivo');
   assert.throws(() => cancelarClase(c, { motivo: 'Lluvia', quien: ' ', ahora }), /quién/);
   assert.equal(cancelarClase(cancelada, { motivo: 'otra', quien: 'Xime', ahora }).estado, 'cancelada');
 });
@@ -152,4 +153,25 @@ test('la cancelada no es borrable: sigue en la lista con su registro', () => {
 
 test('instanteInicio: 15:00 del 18/11 en Uruguay = 18:00 UTC', () => {
   assert.equal(instanteInicio(claseBase()), t('2026-11-18T18:00:00.000Z'));
+});
+
+test('punto 2: cambiar de día reprograma a Programada y limpia el marcado', () => {
+  const dada = marcarSiPasada(claseBase(), t(ISO_1830)); // 15:00 del 18/11 ya pasó
+  assert.equal(dada.estado, 'dada');
+  const movida = reprogramarClase(dada, '2026-11-25', 'dueño');
+  assert.equal(movida.estado, 'programada');
+  assert.equal(movida.fecha, '2026-11-25');
+  assert.equal(movida.minutos, 900, 'conserva la hora');
+  assert.equal(movida.marcadaEn, null);
+  // La reconciliación con el reloj actual NO la marca de nuevo (el día es futuro).
+  assert.equal(reconciliar([movida], t(ISO_1830))[0].estado, 'programada');
+  assert.throws(() => reprogramarClase(dada, '30/11/2026', 'dueño'), /Fecha inválida/);
+  assert.throws(() => reprogramarClase(dada, '2026-11-25', ''), /quién/);
+});
+
+test('punto 3: cancelar sin motivo registra "sin motivo"', () => {
+  const c = claseBase();
+  const cancelada = cancelarClase(c, { motivo: '', quien: 'dueño', ahora: t(ISO_1830) });
+  assert.equal(cancelada.estado, 'cancelada');
+  assert.equal(cancelada.cancelacion?.motivo, 'sin motivo');
 });

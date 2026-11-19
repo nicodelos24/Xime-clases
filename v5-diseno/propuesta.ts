@@ -2,7 +2,7 @@
 // La estética vive en tokens.css/propuesta.css; acá solo se cambian estados,
 // textos y el flujo de cancelación. Sin emoji: solo SVG de icons.js.
 import {
-  crearClase, reconciliar, cancelarClase, deshacerCancelacion, registrarMensajeEnviado,
+  crearClase, reconciliar, cancelarClase, deshacerCancelacion, registrarMensajeEnviado, reprogramarClase,
   horaClase, etiquetaEstado, type Clase, type AlumnoDeClase,
 } from './src/clases.ts';
 import { resumenHoy, clasesDelDia, clasesDeLaSemana } from './src/resumen.ts';
@@ -76,7 +76,8 @@ function esc(s: string): string {
 /** Chip de estado de una clase (SVG, sin emoji). */
 function chipEstado(c: Clase): string {
   if (c.estado === 'dada') {
-    return '<span class="chip chip-dada"><svg class="ico" width="13" height="13"><use href="#i-check"/></svg>Dada</span>';
+    // Punto 2: el chip "Dada" es tocable → abre Cancelar / Cambiar de día.
+    return '<button class="chip chip-dada chip-boton" type="button" data-acciones="' + c.id + '" aria-label="Opciones para la clase ' + c.nombre + ', dada"><svg class="ico" width="13" height="13"><use href="#i-check"/></svg>Dada</button>';
   }
   if (c.estado === 'cancelada') {
     return '<span class="chip chip-cancelada"><svg class="ico" width="13" height="13"><use href="#i-alerta"/></svg>Cancelada</span>';
@@ -148,6 +149,10 @@ function pintarHoy() {
         )
         .join('');
     }
+    // Punto 2: los chips "Dada" del hero también abren las opciones.
+    grupos.querySelectorAll('[data-acciones]').forEach((b) => {
+      b.addEventListener('click', () => abrirAcciones((b as HTMLElement).dataset.acciones as string));
+    });
   }
 
   // KPIs del hero: cobrado hoy y por cobrar (demo) + vencimientos.
@@ -237,6 +242,9 @@ function pintarLinea(fecha: string | null) {
       .join('')}
   </li>`;
 
+  cont.querySelectorAll('[data-acciones]').forEach((b) => {
+    b.addEventListener('click', () => abrirAcciones((b as HTMLElement).dataset.acciones as string));
+  });
   cont.querySelectorAll('[data-cancelar]').forEach((b) => {
     b.addEventListener('click', () => abrirCancelacion((b as HTMLElement).dataset.cancelar as string));
   });
@@ -262,11 +270,22 @@ function pintarMes() {
   for (let i = 0; i < dowLunes; i++) celdas.push('<button class="mes-dia vacio" type="button" disabled></button>');
   for (let d = 1; d <= diasMes; d++) {
     const f = `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-    const tiene = clases.some((c) => c.fecha === f) ? ' tiene' : '';
+    const delDia = clases.filter((c) => c.fecha === f);
+    let claseEstado = '';
+    if (delDia.length > 0) {
+      if (delDia.some((c) => c.estado === 'cancelada')) claseEstado = ' tiene-cancelada';
+      else if (delDia.every((c) => c.estado === 'dada')) claseEstado = ' todas-dadas';
+    }
+    const tiene = delDia.length > 0 ? ' tiene' : '';
     const activo = f === hoy ? ' activo' : '';
-    celdas.push(`<button class="mes-dia${tiene}${activo}" type="button" data-fecha="${f}">${d}</button>`);
+    celdas.push(`<button class="mes-dia${tiene}${claseEstado}${activo}" type="button" data-fecha="${f}" aria-label="${d} de ${etiquetaMes(hoy)}${tiene ? ', con clases' : ''}">${d}</button>`);
   }
   cont.innerHTML = celdas.join('');
+  // Punto 4: referencias coloridas sobrias, acordes a los tokens v5.
+  const leyenda = document.createElement('div');
+  leyenda.className = 'mes-leyenda';
+  leyenda.innerHTML = '<span><i class="ley-dada"></i>Dada</span><span><i class="ley-prog"></i>Por dar</span><span><i class="ley-canc"></i>Cancelada</span>';
+  cont.parentElement?.appendChild(leyenda);
   cont.querySelectorAll('.mes-dia:not(.vacio)').forEach((b) => {
     b.addEventListener('click', () => {
       const f = (b as HTMLElement).dataset.fecha as string;
@@ -290,6 +309,67 @@ function cerrarSheet() {
   sheet = null;
   claseEnSheet = null;
   setTimeout(() => s.remove(), 240);
+}
+
+/** Punto 2: sheet con opciones sobre una clase ya Dada. */
+function abrirAcciones(id: string) {
+  const c = clases.find((x) => x.id === id);
+  if (!c || c.estado !== 'dada') return;
+  cerrarSheet();
+  const previo = document.createElement('div');
+  previo.className = 'sheet';
+  previo.setAttribute('role', 'dialog');
+  previo.setAttribute('aria-modal', 'true');
+  previo.setAttribute('aria-label', `Opciones para ${c.nombre}`);
+  const proximos = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
+  previo.innerHTML = `
+    <div class="sheet-head">
+      <div>
+        <p class="sheet-eyebrow">${esc(etiquetaDia(c.fecha))} · ${horaClase(c)}</p>
+        <h3>Clase dada</h3>
+      </div>
+      <button class="sheet-cerrar" type="button" aria-label="Cerrar"><svg class="ico" width="18" height="18"><use href="#i-mas2"/></svg></button>
+    </div>
+    <p class="sheet-clase"><strong>${esc(c.nombre)}</strong> · ${c.alumnos.length} alumnos</p>
+    <div class="acciones-clase">
+      <button class="accion-clase" type="button" data-acc="cancelar">
+        <svg class="ico" width="19" height="19"><use href="#i-alerta"/></svg>
+        <span><b>Cancelar clase</b><small>Avisar por WhatsApp (opcional)</small></span>
+      </button>
+      <button class="accion-clase" type="button" data-acc="cambiar">
+        <svg class="ico" width="19" height="19"><use href="#i-agenda"/></svg>
+        <span><b>Cambiar de día</b><small>Reprogramar la clase</small></span>
+      </button>
+    </div>
+    <div class="cambiar-dia" hidden>
+      <p class="sheet-paso">Elegí el nuevo día</p>
+      <div class="dias-elegir">
+        ${proximos.map((nombre, i) => `<button class="dia-elegir" type="button" data-dia="${i}">${nombre.slice(0, 3)}</button>`).join('')}
+      </div>
+    </div>
+    <div class="sheet-acciones">
+      <button class="btn-secundario" type="button" data-accion="volver">Volver</button>
+    </div>`;
+  document.querySelector('.cel')?.appendChild(previo);
+  sheet = previo;
+  previo.querySelector('.sheet-cerrar')?.addEventListener('click', cerrarSheet);
+  previo.querySelector('[data-accion="volver"]')?.addEventListener('click', cerrarSheet);
+  previo.querySelector('[data-acc="cancelar"]')?.addEventListener('click', () => abrirCancelacion(id));
+  const caja = previo.querySelector('.cambiar-dia') as HTMLElement;
+  previo.querySelector('[data-acc="cambiar"]')?.addEventListener('click', () => { caja.hidden = false; });
+  caja.querySelectorAll('[data-dia]').forEach((b) => {
+    b.addEventListener('click', () => {
+      const idx = Number((b as HTMLElement).dataset.dia);
+      // Próxima aparición de ese día de semana (lunes=0), estrictamente después de la fecha actual.
+      const base = sumarDias(c.fecha, 1);
+      const delta = ((idx - ((new Date(`${base}T12:00:00Z`).getUTCDay() + 6) % 7) + 7) % 7);
+      const nuevaFecha = sumarDias(base, delta);
+      clases = clases.map((x) => (x.id === id ? reprogramarClase(x, nuevaFecha, 'dueño') : x));
+      cerrarSheet();
+      refrescar();
+      avisar(`Clase movida al ${esc(etiquetaDia(nuevaFecha))} · ${horaClase(c)}`);
+    });
+  });
 }
 
 function abrirCancelacion(id: string) {
@@ -316,8 +396,8 @@ function abrirCancelacion(id: string) {
     <p class="sheet-clase"><strong>${esc(c.nombre)}</strong> · ${c.alumnos.length} alumnos</p>
 
     <label class="campo">
-      <span>Motivo</span>
-      <input type="text" id="canc-motivo" placeholder="Ej.: lluvia, enfermedad" autocomplete="off">
+      <span>Motivo (opcional)</span>
+      <input type="text" id="canc-motivo" placeholder="Ej.: lluvia, enfermedad — podés dejarlo vacío" autocomplete="off">
     </label>
 
     <p class="sheet-paso">Avisar por WhatsApp (opcional)</p>
@@ -385,12 +465,9 @@ function abrirCancelacion(id: string) {
   ta?.addEventListener('input', () => { textoEnviado = ta.value; });
 
   previo.querySelector('[data-accion="confirmar"]')?.addEventListener('click', () => {
+    // Punto 3: el motivo es opcional. Si no se completa, la auditoría registra
+    // "sin motivo" (ver confirmarCancelacion).
     const motivo = (previo.querySelector('#canc-motivo') as HTMLInputElement).value.trim();
-    if (!motivo) {
-      avisar('Poné un motivo para cancelar la clase');
-      (previo.querySelector('#canc-motivo') as HTMLInputElement).focus();
-      return;
-    }
     if (modoEnvio === 'individual' && elegidos.size === 0) {
       avisar('Elegí al menos un alumno o elegí “No enviar ahora”');
       return;
@@ -411,7 +488,7 @@ function abrirCancelacion(id: string) {
 
 function confirmarCancelacion(c: Clase, motivo: string) {
   const ahora = reloj.ahora();
-  const cancelada = cancelarClase(c, { motivo, quien: 'dueño', ahora });
+  const cancelada = cancelarClase(c, { motivo: motivo || 'sin motivo', quien: 'dueño', ahora });
 
   let lista: Destino[] = [];
   let texto = textoEnviado;
@@ -530,7 +607,7 @@ $$('.link-suave').forEach((a) => a.addEventListener('click', (e) => {
   irA((a.getAttribute('href') as string).slice(1));
 }));
 
-$('.fab')?.addEventListener('click', () => avisar('Agendar: flujo a definir en la reescritura'));
+$('.fab')?.addEventListener('click', () => avisar('Agendar: nueva clase (próximamente)'));
 $('.campana')?.addEventListener('click', () => avisar('3 avisos · 2 mensualidades vencen hoy'));
 
 /* --------------------------------------------------------------- arranque */
