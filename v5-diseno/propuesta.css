@@ -18,19 +18,21 @@ body {
 .marca { padding-top: 18px; padding-bottom: 10px; font-weight: 600; }
 .pie { padding-top: 14px; padding-bottom: 26px; letter-spacing: .02em; text-transform: none; font-size: 12.5px; }
 
+/* La hoja y la barra comparten el mismo radius: la curva inferior del mint
+   coincide con la de la barra, así no asoma mint por fuera de la curva. */
 .cel {
   width: 100%;
   max-width: 390px;
-  min-height: 812px;
+  min-height: calc(100vh - 65px);
+  height: calc(100vh - 65px);
   margin: 0 auto;
   background: var(--bg);
   border-radius: 30px;
   box-shadow: var(--sombra-fuerte);
-  overflow: hidden;
   position: relative;
   display: flex;
   flex-direction: column;
-  padding-bottom: 74px;
+  padding-bottom: 0;
   overflow: visible;
 }
 
@@ -392,17 +394,25 @@ body {
 /* Ronda 2 (c): barra inferior como tarjeta/cápsula flotante, siempre fija y visible.
    position:fixed se mantiene para que nunca se oculte al scrollear; se recupera
    la estética ovalada con márgenes laterales y sombra suave (ref. Nico 19/11). */
+/* Barra integrada: mismo ancho exacto de la hoja, pegada al borde (bottom:0),
+   fixed y siempre visible. Sin backdrop-filter ni listeners de scroll. */
 .tabbar {
   position: fixed; z-index: 30;
-  left: 14px; right: 14px; bottom: 14px;
+  left: 10px; right: 10px; bottom: 0;
   width: auto; max-width: none;
   display: grid; grid-template-columns: repeat(4, 1fr);
-  background: rgba(255,255,255,.96);
-  backdrop-filter: blur(12px);
-  border: 1px solid rgba(220,232,231,.7);
-  border-radius: 28px;
-  box-shadow: 0 10px 30px rgba(8,69,74,.16), 0 2px 8px rgba(11,107,106,.08);
-  padding: 9px 6px calc(11px + env(safe-area-inset-bottom));
+  background: var(--bg-alt);
+  border: 0;
+  border-top: 1px solid var(--linea);
+  border-radius: 0 0 30px 30px;
+  box-shadow: 0 -6px 22px rgba(8,69,74,.08);
+  padding: 10px 12px calc(14px + env(safe-area-inset-bottom));
+}
+
+/* Sin scrollbar visible (en móvil no existe): evita desbordes measure-only. */
+html, body { scrollbar-width: none; overflow-x: hidden; }
+html::-webkit-scrollbar, body::-webkit-scrollbar, .cel::-webkit-scrollbar {
+  width: 0; height: 0; display: none;
 }
 .tab {
   display: grid; justify-items: center; gap: 3px;
