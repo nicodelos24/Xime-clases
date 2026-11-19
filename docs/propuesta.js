@@ -1,11 +1,11 @@
 // Clases v5 · navegación + funcionamiento (auto-marcado, Cancelar clase, WhatsApp)
 // La estética vive en tokens.css/propuesta.css; acá solo se cambian estados,
 // textos y el flujo de cancelación. Sin emoji: solo SVG de icons.js.
-import { crearClase, reconciliar, cancelarClase, deshacerCancelacion, registrarMensajeEnviado, reprogramarClase, horaClase, } from './src/clases.ts';
-import { resumenHoy, clasesDelDia, clasesDeLaSemana } from './src/resumen.ts';
-import { diaCorto, etiquetaDia, etiquetaMes, sumarDias, parseFecha } from './src/fechas.ts';
-import { relojDelDispositivo, hoyLocal } from './src/reloj.ts';
-import { textoCancelacion, destinos, resumenEnvio, linkTexto, } from './src/whatsapp.ts';
+import { crearClase, reconciliar, cancelarClase, deshacerCancelacion, registrarMensajeEnviado, reprogramarClase, horaClase, } from './src/clases.js';
+import { resumenHoy, clasesDelDia, clasesDeLaSemana } from './src/resumen.js';
+import { diaCorto, etiquetaDia, etiquetaMes, sumarDias, parseFecha } from './src/fechas.js';
+import { relojDelDispositivo, hoyLocal } from './src/reloj.js';
+import { textoCancelacion, destinos, resumenEnvio, linkTexto, } from './src/whatsapp.js';
 /* ---------------------------------------------------------------- datos demo */
 const reloj = relojDelDispositivo();
 function alumnos(nombres, prefijo) {
