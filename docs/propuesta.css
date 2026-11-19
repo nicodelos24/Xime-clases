@@ -31,6 +31,7 @@ body {
   display: flex;
   flex-direction: column;
   padding-bottom: 74px;
+  overflow: visible;
 }
 
 /* ---------- Barra superior ---------- */
@@ -129,6 +130,10 @@ body {
   padding: 4px 9px; border-radius: 999px;
 }
 .chip-dada { background: var(--verde-tinte); color: var(--verde); }
+/* Punto 2: chip "Dada" tocable → abre Cancelar / Cambiar de día. */
+.chip-boton { cursor: pointer; border: 0; font: inherit; }
+.chip-boton:hover { filter: brightness(.96); box-shadow: var(--sombra); }
+.chip-boton:focus-visible { outline: 2px solid var(--tq-600); outline-offset: 2px; }
 .chip-por  { background: rgba(255,255,255,.9); color: var(--tq-900); }
 
 /* ---------- KPIs ---------- */
@@ -222,10 +227,10 @@ body {
   width: 8px; height: 8px; border-radius: 50%;
   background: var(--tq-500); box-shadow: 0 0 0 3px var(--tq-100);
 }
-.linea-fecha { font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--tq-700); margin: 0 0 8px 14px; }
+.linea-fecha { font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--tq-700); margin: 4px 0 10px 14px; }
 
 .clase {
-  display: flex; align-items: center; gap: 11px;
+  display: flex; align-items: center; flex-wrap: wrap; gap: 9px 11px;
   background: var(--bg-alt);
   border: 1px solid var(--linea);
   border-radius: var(--r-med);
@@ -260,8 +265,9 @@ body {
 
 /* ---------- FAB ---------- */
 .fab {
-  position: absolute; right: 18px; bottom: 88px;
-  display: inline-flex; align-items: center; gap: 7px;
+  position: static;
+  display: flex; align-items: center; justify-content: center; gap: 7px;
+  margin: 14px auto 2px;
   border: none; cursor: pointer;
   background: var(--tq-600); color: #fff;
   font-size: 14px; font-weight: 700;
@@ -305,8 +311,16 @@ body {
   animation: pop var(--t-media) var(--ease);
 }
 .mes-dia.activo::after { background: var(--tq-300); }
+/* Punto 4: referencias de estado en el grid mensual (sobrias, un solo punto). */
+.mes-dia.tiene.todas-dadas::after { background: var(--verde); }
+.mes-dia.tiene.tiene-cancelada::after { background: var(--rosa); }
+.mes-leyenda { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-top: 10px; padding: 0 2px; }
+.mes-leyenda span { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; color: var(--tinta-2); }
+.mes-leyenda i { width: 7px; height: 7px; border-radius: 50%; display: inline-block; }
+.ley-dada { background: var(--verde); }
+.ley-prog { background: var(--tq-500); }
+.ley-canc { background: var(--rosa); }
 .mes-dia.vacio { visibility: hidden; }
-.mes-nota { font-size: 12px; color: var(--tinta-2); line-height: 1.45; margin-top: 14px; padding: 0 2px; }
 
 /* ---------- Alumnos ---------- */
 .buscador {
@@ -363,7 +377,9 @@ body {
 
 /* ---------- Barra de pestañas (nueva: 4 destinos) ---------- */
 .tabbar {
-  position: absolute; left: 0; right: 0; bottom: 0;
+  position: fixed; z-index: 30;
+  left: 50%; bottom: 0; transform: translateX(-50%);
+  width: 100%; max-width: 390px;
   display: grid; grid-template-columns: repeat(4, 1fr);
   background: rgba(255,255,255,.92);
   backdrop-filter: blur(10px);
@@ -421,6 +437,33 @@ body {
   background: var(--bg-alt); border: 1px dashed var(--linea);
   border-radius: var(--r-med); padding: 14px; text-align: center;
 }
+
+/* ---------- Punto 2: acciones sobre una clase Dada ---------- */
+.acciones-clase { display: grid; gap: 9px; margin-top: 14px; }
+.accion-clase {
+  display: flex; align-items: center; gap: 11px;
+  width: 100%; text-align: left; cursor: pointer;
+  background: var(--bg); border: 1px solid var(--linea);
+  border-radius: var(--r-med); padding: 12px 13px;
+  color: var(--tinta);
+  transition: transform var(--t-rapida) var(--ease), box-shadow var(--t-rapida) var(--ease), border-color var(--t-rapida) var(--ease);
+}
+.accion-clase:hover { transform: translateY(-2px); box-shadow: var(--sombra); border-color: var(--tq-300); }
+.accion-clase:active { transform: scale(.98); }
+.accion-clase .ico { color: var(--tq-600); flex: none; }
+.accion-clase[data-acc="cancelar"] .ico { color: var(--rosa); }
+.accion-clase b { display: block; font-size: 14px; }
+.accion-clase small { display: block; font-size: 11.5px; color: var(--tinta-2); margin-top: 1px; }
+.cambiar-dia { margin-top: 12px; }
+.dias-elegir { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; }
+.dia-elegir {
+  border: 1px solid var(--linea); background: var(--bg);
+  color: var(--tinta); font-size: 11px; font-weight: 650;
+  padding: 9px 0; border-radius: var(--r-chico); cursor: pointer;
+  transition: background var(--t-rapida) var(--ease), color var(--t-rapida) var(--ease), transform var(--t-rapida) var(--ease);
+}
+.dia-elegir:hover { background: var(--tq-100); color: var(--tq-700); transform: translateY(-2px); }
+.dia-elegir:active { transform: scale(.92); }
 
 /* ---------- Sheet de cancelación ---------- */
 .sheet {

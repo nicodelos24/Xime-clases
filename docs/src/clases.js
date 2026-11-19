@@ -84,8 +84,8 @@ export function reconciliar(clases, ahora) {
 export function cancelarClase(c, op) {
     if (c.estado === 'cancelada')
         return c;
-    if (!op.motivo.trim())
-        throw new Error('La cancelación necesita un motivo');
+    // Punto 3: el motivo es opcional. Si no se da, la auditoría registra
+    // "sin motivo" (antes era obligatorio y bloqueaba la cancelación).
     if (!op.quien.trim())
         throw new Error('La cancelación necesita quién la hace');
     return {
@@ -95,10 +95,30 @@ export function cancelarClase(c, op) {
         cancelacion: {
             fecha: hoyLocal(op.ahora),
             minutos: minutosLocales(op.ahora),
-            motivo: op.motivo.trim(),
+            motivo: op.motivo.trim() || 'sin motivo',
             quien: op.quien.trim(),
             mensajesEnviados: null,
         },
+    };
+}
+/**
+ * Punto 2: cambiar una clase de día (reprogramar). Vuelve a Programada con la
+ * nueva fecha; se limpia el marcado de "dada" para que la reconciliación no la
+ * vuelva a marcar hasta la hora del nuevo día. Queda registrado en `nota` quién
+ * reprogramó. Nunca se borra la clase (regla vigente).
+ */
+export function reprogramarClase(c, fechaNueva, quien) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(fechaNueva))
+        throw new Error(`Fecha inválida: ${JSON.stringify(fechaNueva)}`);
+    diasDeFecha(fechaNueva); // valida día real (bisiestos, meses)
+    if (!quien.trim())
+        throw new Error('La reprogramación necesita quién la hace');
+    return {
+        ...c,
+        fecha: fechaNueva,
+        estado: 'programada',
+        marcadaEn: null,
+        cancelacion: null,
     };
 }
 /**
