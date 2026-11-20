@@ -140,11 +140,24 @@ export function crearAlumno(
   };
 }
 
-/** Edición: conserva ID, fecha de alta, activo y color; cambia solo lo editable. */
+/**
+ * Edición: conserva ID, fecha de alta, activo y color, y también los campos
+ * opcionales que el formulario no expone. Los defaults (ancla 21, contacto
+ * vacío) se aplican SOLO al crear; si el input no trae `ancla`/`contacto`, se
+ * mantiene el valor vigente de la ficha en vez de inventar uno. Así guardar la
+ * ficha demo a2 sin tocar nada no le cambia el ancla 26 por el default 21.
+ */
 export function editarAlumno(alumno: AlumnoFicha, input: AlumnoFichaInput): AlumnoFicha {
   const errores = validarAlumno(input);
   if (Object.keys(errores).length > 0) throw new Error(Object.values(errores)[0]!);
-  return { ...alumno, ...normalizarAlumno(input) };
+  return {
+    ...alumno,
+    nombre: texto(input.nombre),
+    modalidad: input.modalidad,
+    grupo: texto(input.grupo),
+    ancla: input.ancla ?? alumno.ancla,
+    contacto: input.contacto === undefined ? alumno.contacto : texto(input.contacto),
+  };
 }
 
 /**
@@ -177,9 +190,20 @@ export function esIdAlumno(id: string): boolean {
 
 /* -------------------------------------------------- vista derivada (UI) */
 
+/**
+ * Estado de cobro de una fila, derivado de Cobros (no se edita a mano).
+ * - `aldia`: no tiene deuda pendiente (sin entrada en el mapa de Cobros).
+ * - `hoy`: tiene un vencimiento pendiente que cae justo hoy (días = 0).
+ * - `vencido`: vencimiento pendiente con días < 0.
+ * - `pendiente`: vencimiento pendiente en el futuro (días > 0).
+ */
+export type EstadoVence = 'aldia' | 'hoy' | 'vencido' | 'pendiente';
+
 export type FichaVista = AlumnoFicha & {
   ini: string;
-  vence: number;
+  /** null = sin vencimiento pendiente (al día); número = días hasta vencer. */
+  vence: number | null;
+  estadoVence: EstadoVence;
   tipo: Modalidad; // alias usado por los chips/filtros de la vista actual
   alta: number;    // días desde el alta (para "Más recientes")
 };
@@ -187,6 +211,9 @@ export type FichaVista = AlumnoFicha & {
 /**
  * Proyecta las fichas a la fila que pinta la lista, con el vencimiento
  * derivado del repositorio (no se edita a mano). Días = vencimiento - hoy.
+ * `undefined` en el mapa significa "sin deuda pendiente" (al día), distinto
+ * de `0` ("vence hoy"): el primero se oculta con el chip «Al día», el segundo
+ * debe verse y marcarse como vencimiento de hoy.
  */
 export function construirVista(
   fichas: readonly AlumnoFicha[],
@@ -195,15 +222,40 @@ export function construirVista(
 ): FichaVista[] {
   const dia = Date.parse(`${hoy}T00:00:00Z`);
   return fichas.map((f) => {
-    const vence = pagosPorAlumno.get(f.id) ?? 0;
+    const dias = pagosPorAlumno.get(f.id);
+    const vence = dias ?? null;
+    const estadoVence: EstadoVence = dias === undefined
+      ? 'aldia'
+      : dias < 0 ? 'vencido' : dias === 0 ? 'hoy' : 'pendiente';
     return {
       ...f,
       ini: iniciales(f.nombre),
       vence,
+      estadoVence,
       tipo: f.modalidad,
       alta: Number.isNaN(dia) ? 0 : Math.max(0, Math.round((dia - Date.parse(`${f.fechaAlta}T00:00:00Z`)) / 86400000)),
     };
   });
+}
+
+/** Texto corto del estado de cobro para la fila de Alumnos. */
+export function textoEstadoVence(f: Pick<FichaVista, 'estadoVence' | 'vence'>): string {
+  switch (f.estadoVence) {
+    case 'aldia': return 'al día';
+    case 'hoy': return 'vence hoy';
+    case 'vencido': return 'vencido';
+    case 'pendiente': return `vence en ${f.vence} días`;
+  }
+}
+
+/** Punto de color v5 coherente con el estado (verde al día, ambar pendiente, rosa vencido). */
+export function puntoEstadoVence(f: Pick<FichaVista, 'estadoVence'>): string {
+  switch (f.estadoVence) {
+    case 'aldia': return 'punto-verde';
+    case 'vencido': return 'punto-rosa';
+    case 'hoy':
+    case 'pendiente': return 'punto-ambar';
+  }
 }
 
 export type OrdenAlumnos = 'ninguno' | 'az' | 'za' | 'recientes' | 'vence';
@@ -220,14 +272,14 @@ export function filtrarYOrdenar(
     if (q && !a.nombre.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').includes(q)) return false;
     if (filtros.has('mensual') && a.modalidad !== 'mensual') return false;
     if (filtros.has('individual') && a.modalidad !== 'individual') return false;
-    if (filtros.has('aldia') && a.vence <= 0) return false;
+    if (filtros.has('aldia') && a.estadoVence !== 'aldia') return false;
     return true;
   });
   const cmp: Record<Exclude<OrdenAlumnos, 'ninguno'>, (a: FichaVista, b: FichaVista) => number> = {
     az: (a, b) => a.nombre.localeCompare(b.nombre),
     za: (a, b) => b.nombre.localeCompare(a.nombre),
     recientes: (a, b) => b.alta - a.alta,
-    vence: (a, b) => a.vence - b.vence,
+    vence: (a, b) => (a.vence ?? Infinity) - (b.vence ?? Infinity),
   };
   return orden === 'ninguno' ? out : [...out].sort(cmp[orden]);
 }

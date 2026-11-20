@@ -173,3 +173,14 @@ Al tocar "Cancelar clase" en cualquier vista:
   `git diff --check` limpio, alta/edición/validación/persistencia F5 y
   coherencia Cobros por ID comprobadas en Chrome 390 px, 0 errores de consola.
   Capturas: `v5-diseno/v5-alumnos-c.png`, `v5-diseno/v5-alumnos-ficha.png`.
+- **Corrección post-revisión (Roma, 20/11)**: dos regresiones detectadas en Pages
+  y corregidas antes de republicar. (1) Guardar la ficha sin tocar nada ya no
+  resetea el ancla al default 21: `editarAlumno` conserva `ancla`/`contacto`
+  cuando el input no los trae; los defaults se aplican SOLO al crear y la
+  migración v1→v2 no inventa datos. (2) Se diferencian tres estados de cobro:
+  `aldia` (sin deuda pendiente → texto «al día», punto verde, lo muestra el
+  chip «Al día»), `hoy` (vence hoy → «vence hoy», punto ambar, NO lo oculta el
+  chip), `vencido` («vencido», punto rosa) y `pendiente` («vence en N días»,
+  punto ambar). Sin cambiar chips/diseño ni las reglas de Cobros. Cubierto con
+  edición desde UI + F5 (no solo input de dominio): typecheck 0, 84/84 tests,
+  0 errores de consola. Evidencia: `v5-diseno/v5-alumnos-fix-regresiones.png`.

@@ -505,14 +505,15 @@ toast.addEventListener('click', () => {
     }
 });
 /* ------------------------------------------------------- alumnos (fichas) */
-import { GRUPOS_DEMO, construirVista, filtrarYOrdenar, validarAlumno, } from './src/alumnos.js';
+import { GRUPOS_DEMO, construirVista, filtrarYOrdenar, puntoEstadoVence, textoEstadoVence, validarAlumno, } from './src/alumnos.js';
 let ordenAlumnos = 'ninguno';
 const filtrosAlumnos = new Set();
 let busquedaAlumno = '';
 /**
  * Días hasta el próximo vencimiento de cada alumno, derivados de Cobros
- * (mismo repositorio, mismos pagos). El que no tiene deuda pendiente queda al
- * día (0). Nunca se guarda este valor: es un cálculo de la vista.
+ * (mismo repositorio, mismos pagos). Quien no tiene deuda pendiente NO entra
+ * en el mapa (al día); quien vence hoy entra con días = 0. Nunca se guarda
+ * este valor: es un cálculo de la vista.
  */
 function vencimientosDeCobros() {
     const r = verCobros(repo.listarPagos());
@@ -530,7 +531,7 @@ function filasAlumnos() {
     return construirVista(repo.listarAlumnos(), vencimientosDeCobros(), hoyLocal(reloj.ahora()));
 }
 function alumnoSub(a) {
-    const v = a.vence < 0 ? 'vencido' : a.vence === 0 ? 'al día' : `vence en ${a.vence} días`;
+    const v = textoEstadoVence(a);
     const et = a.modalidad === 'mensual' ? 'et-mensual' : 'et-individual';
     return `<p class="al-sub">${esc(a.grupo)} · ${v} <span class="etiqueta ${et}">${a.modalidad === 'mensual' ? 'Mensual' : 'Individual'}</span></p><span class="al-fecha">Alta ${esc(a.fechaAlta)}</span>`;
 }
@@ -561,7 +562,7 @@ function pintarAlumnos() {
         conteo.textContent = `${out.length} ${out.length === 1 ? 'alumno' : 'alumnos'}`;
     lista.innerHTML = out.length
         ? out.map((a) => {
-            const punto = a.vence < 0 || a.vence === 0 ? 'punto-rosa' : a.vence <= 3 ? 'punto-ambar' : 'punto-verde';
+            const punto = puntoEstadoVence(a);
             return `<li class="fila-alumno"><button type="button" class="alumno-fila-btn" data-ficha="${esc(a.id)}" aria-label="Abrir ficha de ${esc(a.nombre)}">
           <span class="avatar ${a.color}">${esc(a.ini)}</span><div><p class="al-nombre">${esc(a.nombre)}</p>${alumnoSub(a)}</div><span class="punto ${punto}"></span>
         </button></li>`;

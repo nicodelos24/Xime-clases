@@ -14,8 +14,8 @@ import {
 import { datosDemo, fichasDemo } from '../src/demo.ts';
 import { hoyLocal, relojFalso, type InstanteMs } from '../src/reloj.ts';
 import {
-  crearAlumno, editarAlumno, esIdAlumno, filtrarYOrdenar, iniciales,
-  validarAlumno, type AlumnoFichaInput,
+  construirVista, crearAlumno, editarAlumno, esIdAlumno, filtrarYOrdenar, iniciales,
+  puntoEstadoVence, textoEstadoVence, validarAlumno, type AlumnoFichaInput,
 } from '../src/alumnos.ts';
 
 const t = (s: string) => new Date(s).getTime();
@@ -221,9 +221,7 @@ test('no resembrar sobre datos guardados: editar y recargar conserva el cambio',
 
 test('vista: búsqueda acento-insensible, filtros y orden sin mutar la lista', () => {
   const { repo } = abrir(almacenMemoria());
-  const filas = repo.listarAlumnos().map((a) => ({
-    ...a, ini: '', vence: 0, tipo: a.modalidad, alta: 0,
-  }));
+  const filas = construirVista(repo.listarAlumnos(), new Map(), HOY);
   const porNombre = filtrarYOrdenar(filas, 'julieta', new Set(), 'ninguno');
   assert.ok(porNombre.every((f) => f.nombre.toLowerCase().includes('julieta')));
   const mensuales = filtrarYOrdenar(filas, '', new Set(['mensual']), 'ninguno');
@@ -231,4 +229,102 @@ test('vista: búsqueda acento-insensible, filtros y orden sin mutar la lista', (
   const az = filtrarYOrdenar(filas, '', new Set(), 'az').map((f) => f.nombre);
   assert.deepEqual(az, [...az].sort((a, b) => a.localeCompare(b)));
   assert.equal(filas[0]!.nombre, repo.listarAlumnos()[0]!.nombre, 'original intacto');
+});
+
+
+/* ------------------------- regresiones informadas por Roma (20/11/2026) ------------------------- */
+
+test('REGRESIÓN ancla: guardar la ficha a2 sin tocar nada conserva su ancla 26 (no la resetea a 21)', () => {
+  const almacen = almacenMemoria();
+  const { repo } = abrir(almacen);
+  const a2 = repo.listarAlumnos().find((a) => a.id === 'a2')!;
+  assert.equal(a2.ancla, 26, 'fixture a2 arranca con ancla 26');
+
+  // Exactamente lo que envía el formulario al editar: nombre, modalidad, grupo y
+  // contacto (el formulario NO expone campo de ancla, así que no lo incluye).
+  const inputComoLaUI = {
+    nombre: a2.nombre, modalidad: a2.modalidad, grupo: a2.grupo, contacto: a2.contacto,
+  };
+  const editada = repo.editarAlumno('a2', inputComoLaUI);
+  assert.equal(editada.ancla, 26, 'el default 21 solo aplica al crear, no al editar');
+  assert.equal(editada.contacto, a2.contacto, 'contacto no editado se conserva');
+
+  // Persistencia tras recarga (F5): el ancla correcta sobrevive.
+  const { repo: reabierta } = abrir(almacen);
+  assert.equal(reabierta.listarAlumnos().find((a) => a.id === 'a2')!.ancla, 26);
+  assert.equal(reabierta.listarAlumnos().find((a) => a.id === 'a2')!.contacto, a2.contacto);
+});
+
+test('REGRESIÓN ancla: los defaults (21 / contacto vacío) se aplican SOLO al crear', () => {
+  const almacen = almacenMemoria();
+  const { repo } = abrir(almacen);
+  const creada = repo.crearAlumno({ nombre: 'Nueva Ficha', modalidad: 'mensual', grupo: 'Lunes' });
+  assert.equal(creada.ancla, 21, 'alta sin ancla usa el default');
+  assert.equal(creada.contacto, '', 'alta sin contacto usa el default');
+
+  // Una ficha con datos opcionales NO defaults se conservan al editar.
+  const otra = repo.crearAlumno({ nombre: 'Con Datos', modalidad: 'individual', grupo: 'Viernes', ancla: 7, contacto: '099 123' });
+  const editada = repo.editarAlumno(otra.id, { nombre: 'Con Datos Edit', modalidad: 'individual', grupo: 'Viernes' });
+  assert.equal(editada.ancla, 7, 'ancla existente se conserva si el input no la trae');
+  assert.equal(editada.contacto, '099 123', 'contacto existente se conserva si el input no lo trae');
+});
+
+test('REGRESIÓN al día: vence hoy (días=0) NO es "al día" y no lo oculta el chip', () => {
+  const { repo } = abrir(almacenMemoria());
+  const fichas = repo.listarAlumnos();
+  // Mapa de Cobros: a3 vence hoy (0), a2 en 6 días, a10 vencido (-4); el resto sin entrada = al día.
+  const mapa = new Map<string, number>([['a3', 0], ['a2', 6], ['a10', -4]]);
+  const filas = construirVista(fichas, mapa, HOY);
+
+  const hoyFila = filas.find((f) => f.id === 'a3')!;
+  assert.equal(hoyFila.estadoVence, 'hoy');
+  assert.equal(hoyFila.vence, 0);
+  assert.equal(textoEstadoVence(hoyFila), 'vence hoy');
+  assert.equal(puntoEstadoVence(hoyFila), 'punto-ambar');
+
+  const alDia = filas.find((f) => f.id === 'a0')!; // sin entrada en el mapa
+  assert.equal(alDia.estadoVence, 'aldia');
+  assert.equal(alDia.vence, null);
+  assert.equal(textoEstadoVence(alDia), 'al día');
+  assert.equal(puntoEstadoVence(alDia), 'punto-verde');
+
+  // El chip «Al día» debe mostrar SOLO los que no tienen deuda pendiente.
+  const filtradas = filtrarYOrdenar(filas, '', new Set(['aldia']), 'ninguno');
+  assert.ok(filtradas.every((f) => f.estadoVence === 'aldia'));
+  assert.equal(filtradas.some((f) => f.id === 'a3'), false, 'vence hoy NO se oculta como al día');
+  assert.equal(filtradas.some((f) => f.id === 'a2'), false, 'pendiente NO se oculta como al día');
+  assert.equal(filtradas.some((f) => f.id === 'a10'), false, 'vencido NO se oculta como al día');
+  assert.equal(filtradas.some((f) => f.id === 'a0'), true, 'al día SÍ se muestra con el chip');
+});
+
+test('REGRESIÓN al día: texto, punto y chip son coherentes para los cuatro estados', () => {
+  const { repo } = abrir(almacenMemoria());
+  const mapa = new Map<string, number>([['a3', 0], ['a2', 6], ['a10', -4]]);
+  const filas = construirVista(repo.listarAlumnos(), mapa, HOY);
+  const esperado: Record<string, { texto: string; punto: string }> = {
+    a3: { texto: 'vence hoy', punto: 'punto-ambar' },
+    a2: { texto: 'vence en 6 días', punto: 'punto-ambar' },
+    a10: { texto: 'vencido', punto: 'punto-rosa' },
+    a0: { texto: 'al día', punto: 'punto-verde' },
+  };
+  for (const [id, exp] of Object.entries(esperado)) {
+    const f = filas.find((x) => x.id === id)!;
+    assert.equal(textoEstadoVence(f), exp.texto, id);
+    assert.equal(puntoEstadoVence(f), exp.punto, id);
+  }
+});
+
+test('REGRESIÓN al día: alta nueva sin deuda aparece "al día" y sobrevive recarga', () => {
+  const almacen = almacenMemoria();
+  const { repo } = abrir(almacen);
+  const creada = repo.crearAlumno({ nombre: 'Sin Deuda', modalidad: 'mensual', grupo: 'Lunes' });
+  const mapa = new Map<string, number>(); // nadie con deuda: la nueva no tiene tarifa en Cobros
+  const fila = construirVista(repo.listarAlumnos(), mapa, HOY).find((f) => f.id === creada.id)!;
+  assert.equal(fila.estadoVence, 'aldia');
+  assert.equal(textoEstadoVence(fila), 'al día');
+
+  const { repo: reabierta } = abrir(almacen);
+  const trasF5 = reabierta.listarAlumnos().find((a) => a.id === creada.id)!;
+  assert.equal(trasF5.nombre, 'Sin Deuda', 'la ficha nueva sigue tras recargar');
+  assert.equal(trasF5.ancla, 21, 'Su ancla default se mantiene tras recarga');
 });

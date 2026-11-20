@@ -73,3 +73,12 @@ Alta y edición de fichas de Alumnos sobre datos sintéticos, en la rama
   persistencia F5 y coherencia Cobros por ID, 0 errores/warnings de consola.
   Evidencia: `v5-diseno/v5-alumnos-c.png`, `v5-diseno/v5-alumnos-ficha.png`.
   No se agregó BD, login ni datos de terceros; `serve.mjs`/8797 intactos.
+
+Corrección post-revisión (Roma, 20/11): al editar se conservan los campos
+opcionales no editados (ancla y contacto); los defaults 21/vacío se aplican
+solo al crear, y la migración no inventa datos — guardar a2 sin tocar nada
+mantiene su ancla 26. La vista distingue «al día» (sin deuda, punto verde, lo
+muestra el chip), «vence hoy» (días=0, punto ambar, NO lo oculta el chip),
+«vencido» (punto rosa) y «vence en N días» (punto ambar), con texto/punto/chip
+coherentes y sin tocar las reglas de Cobros. Verificado en UI + F5 y con 84/84
+tests; evidencia en `v5-diseno/v5-alumnos-fix-regresiones.png`.
