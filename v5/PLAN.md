@@ -184,3 +184,29 @@ Al tocar "Cancelar clase" en cualquier vista:
   punto ambar). Sin cambiar chips/diseño ni las reglas de Cobros. Cubierto con
   edición desde UI + F5 (no solo input de dominio): typecheck 0, 84/84 tests,
   0 errores de consola. Evidencia: `v5-diseno/v5-alumnos-fix-regresiones.png`.
+
+### 7.5 Pieza D · interacciones de Agenda (20/11)
+
+> Pedido de Nico por Telegram, task `task_1a281434abba46e0`. Sin tocar BD,
+> FAB «Agendar», scroll de barra ni diseño visual: solo interacciones v5.
+
+- **Un toque en el almanaque**: selecciona el día y muestra debajo de la leyenda
+  las tarjetas v5 de ese día, ordenadas por hora, desde el repositorio vigente.
+  Día sin clases = «Sin clases ese día», sin restos del anterior. El primer
+  toque no se demora. `touch-action: manipulation` evita el zoom del doble
+  toque en la celda sin bloquear el zoom global. Acceso explícito «Ver semana».
+- **Doble toque en la MISMA fecha**: abre «Ver semana» con esa fecha activa en
+  la tira y la línea, aunque esté vacía o sea límite de mes. Fechas distintas no
+  cambian de vista; tras el doble se consume la secuencia. `Enter` una vez =
+  seleccionar, dos veces = semana. Lógica pura en `src/agenda.ts`.
+- **«Por dar» sin botón rojo**: desaparece «Cancelar clase» de las tarjetas
+  programadas; el chip «Por dar» (y «Dada») abre el cuadro con Marcar dada,
+  Cancelar (motivo opcional) y Cambiar de día. Nico aprobó **Marcar dada manual**
+  (Opción A) con auditoría append-only (`marcada-manual` /
+  `marca-manual-deshecha`), persistencia y deshacer desde el toast; «Volver a
+  Por dar» revierte la marca. Abrir el cuadro no modifica el estado.
+- **Verificación**: 94/94 tests (antes 84), typecheck 0 errores, `git diff
+  --check` limpio. Chrome 390 px claro/oscuro, fuente y `docs/` por HTTP:
+  toque simple/doble emulado, clic, teclado, día vacío, límite de mes (01/11 y
+  30/11), marcar/deshacer con F5, 0 errores de consola. Capturas en
+  `docs/qa/v5-agenda-*.png`. Cache-busting `?v=202611200510`.

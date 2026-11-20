@@ -348,6 +348,14 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; width: 0; }
   animation: pop var(--t-media) var(--ease);
 }
 .mes-dia.activo::after { background: var(--tq-300); }
+/* Un toque selecciona el día (sin salir del mes): borde + "pop" suave. */
+.mes-dia.seleccionado:not(.activo) {
+  border-color: var(--tq-500); background: var(--tq-50); font-weight: 700;
+  animation: pop var(--t-media) var(--ease);
+}
+.mes-dia.seleccionado.activo { box-shadow: 0 6px 18px rgba(11,107,106,.42); }
+/* Evita el zoom del doble toque en la celda sin desactivar el zoom global. */
+.mes-dia { touch-action: manipulation; }
 /* Punto 4: referencias de estado en el grid mensual (sobrias, un solo punto). */
 .mes-dia.tiene.todas-dadas::after { background: var(--verde); }
 .mes-dia.tiene.tiene-cancelada::after { background: var(--rosa); }
@@ -357,6 +365,37 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; width: 0; }
 .ley-dada { background: var(--verde); }
 .ley-prog { background: var(--tq-500); }
 .ley-canc { background: var(--rosa); }
+
+/* Tarjetas de las clases del día tocado, debajo de la leyenda del mes. */
+.dia-tarjetas { margin-top: 14px; animation: aparecer var(--t-media) var(--ease) both; }
+.dia-tarjetas-head {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  margin-bottom: 8px;
+}
+.dia-tarjetas-head p {
+  font-size: 12px; font-weight: 700; letter-spacing: .06em;
+  text-transform: uppercase; color: var(--tq-700);
+}
+.dia-ver-semana {
+  display: inline-flex; align-items: center; gap: 4px;
+  border: 1px solid var(--linea); background: var(--bg-alt); color: var(--tq-700);
+  border-radius: 999px; padding: 6px 10px; font-size: 11.5px; font-weight: 700;
+  cursor: pointer;
+  transition: background var(--t-rapida) var(--ease), transform var(--t-rapida) var(--ease);
+}
+.dia-ver-semana:hover { background: var(--tq-50); transform: translateY(-1px); }
+.dia-ver-semana:active { transform: scale(.96); }
+.dia-vacio {
+  font-size: 13px; color: var(--tinta-2); text-align: center;
+  background: var(--bg-alt); border: 1px dashed var(--borde-crema);
+  border-radius: var(--r-med); padding: 14px;
+}
+/* El chip "Por dar" también abre el cuadro de acciones. */
+.chip-por-dar.chip-boton { cursor: pointer; border: 0; font: inherit; }
+.chip-por-dar.chip-boton:focus-visible { outline: 2px solid var(--tq-600); outline-offset: 2px; }
+.accion-clase[data-acc="marcar"] .ico { color: var(--verde); }
+.accion-clase small { font-size: 11.5px; color: var(--tinta-2); }
+.accion-clase[data-acc="desmarcar"] .ico { color: var(--tinta-2); }
 .mes-dia.vacio { visibility: hidden; }
 
 /* ---------- Alumnos ---------- */

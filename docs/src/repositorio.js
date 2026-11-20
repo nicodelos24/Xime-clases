@@ -15,7 +15,7 @@
  *    cancelaciones, reversiones, reprogramaciones y el estado por hora.
  *  - Nunca se borra una clase: el historial de eventos queda en la clase.
  */
-import { cancelarClase, crearClase, deshacerCancelacion, reconciliar, registrarMensajeEnviado, reprogramarClase, } from './clases.js';
+import { cancelarClase, crearClase, deshacerCancelacion, deshacerMarcada, marcarDada, reconciliar, registrarMensajeEnviado, reprogramarClase, } from './clases.js';
 import { hoyLocal } from './reloj.js';
 import { anularPago, registrarPago } from './cobros.js';
 import { crearAlumno, editarAlumno, normalizarFichaGuardada, } from './alumnos.js';
@@ -166,6 +166,12 @@ export class RepositorioClases {
             return despues;
         this.actualizar(() => despues);
         return despues;
+    }
+    marcarDada(id, op) {
+        return this.reemplazar(marcarDada(this.una(id), op));
+    }
+    deshacerMarcada(id, op) {
+        return this.reemplazar(deshacerMarcada(this.una(id), op));
     }
     cancelar(id, op) {
         return this.reemplazar(cancelarClase(this.una(id), op));

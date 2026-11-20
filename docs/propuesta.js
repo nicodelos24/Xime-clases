@@ -6,7 +6,8 @@ import { CLAVE_ESTADO, RepositorioClases, almacenLocalStorage } from './src/repo
 import { alumnosCobrosDemo, datosDemo, fichasDemo } from './src/demo.js';
 import { resumenCobros } from './src/cobros.js';
 import { resumenHoy, clasesDelDia, clasesDeLaSemana } from './src/resumen.js';
-import { diaCorto, etiquetaDia, etiquetaMes, sumarDias, parseFecha } from './src/fechas.js';
+import { registrarToqueFecha, mesDe } from './src/agenda.js';
+import { diaCorto, etiquetaDia, etiquetaMes, sumarDias, parseFecha, lunesDe } from './src/fechas.js';
 import { relojDelDispositivo, hoyLocal } from './src/reloj.js';
 import { textoCancelacion, destinos, resumenEnvio, linkTexto, } from './src/whatsapp.js';
 /* ------------------------------------------------- estado persistente (local) */
@@ -40,20 +41,16 @@ function chipEstado(c) {
     if (c.estado === 'cancelada') {
         return '<span class="chip chip-cancelada"><svg class="ico" width="13" height="13"><use href="#i-alerta"/></svg>Cancelada</span>';
     }
-    return '<span class="chip chip-por chip-por-dar">Por dar</span>';
+    return '<button class="chip chip-por chip-por-dar chip-boton" type="button" data-acciones="' + c.id + '" aria-label="Opciones para la clase ' + esc(c.nombre) + ', por dar">Por dar</button>';
 }
-/** Acción de una fila de clase: Cancelar clase (reemplaza a "Marcar dada").
- *  Ronda 2 (b): en clases DADAS no se muestra "Cancelar clase" en la tarjeta —
- *  el chip "Dada" abre el sheet que ya incluye Cancelar / Cambiar de día —
- *  para que el botón no tape el nombre de la clase. */
+/** Acción de una fila de clase (20/11): ya no hay botón rojo "Cancelar clase".
+ *  El chip de estado (Por dar / Dada) abre el cuadro con las acciones;
+ *  solo Cancelada conserva su "Revertir" porque no hay chip tocable. */
 function accionClase(c) {
     if (c.estado === 'cancelada') {
         return `<button class="marcar marcar-reversa" type="button" data-reversa="${c.id}">Revertir</button>`;
     }
-    if (c.estado === 'dada') {
-        return '';
-    }
-    return `<button class="marcar marcar-cancelar" type="button" data-cancelar="${c.id}">Cancelar clase</button>`;
+    return '';
 }
 /* ------------------------------------------------------- vista Hoy (hero) */
 /** El anillo anima su llenado una sola vez, al abrir la app. */
@@ -153,11 +150,52 @@ function pintarSemana() {
 }
 /** Lunes de la semana que contiene `f` (o la semana de hoy). */
 function semanaActual(f) {
-    const idx = (new Date(`${f}T12:00:00Z`).getUTCDay() + 6) % 7;
-    return sumarDias(f, -idx);
+    return lunesDe(f);
+}
+/** Pinta la tira con la semana que contiene `f` (doble toque desde el mes). */
+function pintarSemanaDe(f) {
+    const lunes = lunesDe(f);
+    const dias = clasesDeLaSemana(clases, lunes);
+    const tira = $('.tira');
+    if (!tira)
+        return;
+    tira.innerHTML = dias
+        .map((d) => {
+        const dia = parseFecha(d.fecha);
+        const activo = d.fecha === f ? ' activo' : '';
+        const tiene = d.clases.length > 0 ? ' tiene' : '';
+        return `<button class="tira-dia${tiene}${activo}" type="button" data-fecha="${d.fecha}">
+        <span>${diaCorto(d.fecha)}</span><b>${dia.d}</b></button>`;
+    })
+        .join('');
+    tira.querySelectorAll('.tira-dia').forEach((b) => {
+        b.addEventListener('click', () => {
+            $$('.tira-dia').forEach((o) => o.classList.remove('activo'));
+            b.classList.add('activo');
+            const fecha = b.dataset.fecha;
+            pintarLinea(fecha);
+            if (!clases.some((c) => c.fecha === fecha))
+                avisar('Sin clases grupales ese día');
+        });
+    });
+}
+/** Cablea los chips y botones de un bloque de tarjetas (mes o semana). */
+function cablearTarjetas(raiz) {
+    raiz.querySelectorAll('[data-acciones]').forEach((b) => {
+        b.addEventListener('click', () => abrirAcciones(b.dataset.acciones));
+    });
+    raiz.querySelectorAll('[data-cancelar]').forEach((b) => {
+        b.addEventListener('click', () => abrirCancelacion(b.dataset.cancelar));
+    });
+    raiz.querySelectorAll('[data-reversa]').forEach((b) => {
+        b.addEventListener('click', () => revertirCancelacion(b.dataset.reversa));
+    });
 }
 /** La tira y la línea se pintan con la semana de hoy; elegir un día solo cambia la línea. */
 function pintarLineaSolo(dia) {
+    // Si el día viene del mes y está en otra semana, la tira no lo contiene.
+    if (!$(`.tira-dia[data-fecha="${dia}"]`))
+        pintarSemanaDe(dia);
     $$('.tira-dia').forEach((o) => o.classList.toggle('activo', o.getAttribute('data-fecha') === dia));
     pintarLinea(dia);
     const tiene = clases.some((c) => c.fecha === dia);
@@ -189,34 +227,41 @@ function pintarLinea(fecha) {
         </article>`)
         .join('')}
   </li>`;
-    cont.querySelectorAll('[data-acciones]').forEach((b) => {
-        b.addEventListener('click', () => abrirAcciones(b.dataset.acciones));
-    });
-    cont.querySelectorAll('[data-cancelar]').forEach((b) => {
-        b.addEventListener('click', () => abrirCancelacion(b.dataset.cancelar));
-    });
-    cont.querySelectorAll('[data-reversa]').forEach((b) => {
-        b.addEventListener('click', () => revertirCancelacion(b.dataset.reversa));
-    });
+    cablearTarjetas(cont);
 }
 /* ------------------------------------------------------- vista mes (puntos) */
+/** Fecha del mes abierto y día que el dueño tiene seleccionado. */
+function mesAbierto() {
+    return mesSeleccionado ? mesDe(mesSeleccionado) : mesDe(hoyLocal(reloj.ahora()));
+}
+let mesSeleccionado = null; // primer día del mes abierto
+let diaMesSeleccionado = null; // día cuyas tarjetas se muestran
+let ultimoToque = null;
+/** Días del mes en "AAAA-MM-DD" (lunes=0). */
+function diasDelMesAbierto() {
+    const { y, m } = parseFecha(mesAbierto() + '-01');
+    const dowLunes = (new Date(`${y}-${String(m).padStart(2, '0')}-01T12:00:00Z`).getUTCDay() + 6) % 7;
+    const total = new Date(Date.UTC(y, m, 0)).getUTCDate();
+    return [
+        ...Array.from({ length: dowLunes }, () => ''),
+        ...Array.from({ length: total }, (_, i) => `${y}-${String(m).padStart(2, '0')}-${String(i + 1).padStart(2, '0')}`),
+    ];
+}
 function pintarMes() {
     const hoy = hoyLocal(reloj.ahora());
-    const { y, m } = parseFecha(hoy);
+    const abierto = mesAbierto();
     const h2 = $('#v-mes .agenda-titulo h2');
     if (h2)
-        h2.textContent = etiquetaMes(hoy);
+        h2.textContent = etiquetaMes(abierto + '-01');
     const cont = $('#v-mes .mes');
     if (!cont)
         return;
-    const primerDia = `${y}-${String(m).padStart(2, '0')}-01`;
-    const dowLunes = (new Date(`${primerDia}T12:00:00Z`).getUTCDay() + 6) % 7;
-    const diasMes = new Date(Date.UTC(y, m, 0)).getUTCDate();
     const celdas = [];
-    for (let i = 0; i < dowLunes; i++)
-        celdas.push('<button class="mes-dia vacio" type="button" disabled></button>');
-    for (let d = 1; d <= diasMes; d++) {
-        const f = `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+    for (const f of diasDelMesAbierto()) {
+        if (!f) {
+            celdas.push('<button class="mes-dia vacio" type="button" disabled></button>');
+            continue;
+        }
         const delDia = clases.filter((c) => c.fecha === f);
         let claseEstado = '';
         if (delDia.length > 0) {
@@ -227,21 +272,112 @@ function pintarMes() {
         }
         const tiene = delDia.length > 0 ? ' tiene' : '';
         const activo = f === hoy ? ' activo' : '';
-        celdas.push(`<button class="mes-dia${tiene}${claseEstado}${activo}" type="button" data-fecha="${f}" aria-label="${d} de ${etiquetaMes(hoy)}${tiene ? ', con clases' : ''}">${d}</button>`);
+        const seleccionado = f === diaMesSeleccionado ? ' seleccionado' : '';
+        celdas.push(`<button class="mes-dia${tiene}${claseEstado}${activo}${seleccionado}" type="button" data-fecha="${f}" aria-label="${parseFecha(f).d} de ${etiquetaMes(f)}${tiene ? ', con clases' : ''}"${seleccionado ? ' aria-current="date"' : ''}>${parseFecha(f).d}</button>`);
     }
     cont.innerHTML = celdas.join('');
     // Punto 4: referencias coloridas sobrias, acordes a los tokens v5.
-    const leyenda = document.createElement('div');
-    leyenda.className = 'mes-leyenda';
+    let leyenda = $('#v-mes .mes-leyenda');
+    if (!leyenda) {
+        leyenda = document.createElement('div');
+        leyenda.className = 'mes-leyenda';
+        cont.parentElement?.appendChild(leyenda);
+    }
     leyenda.innerHTML = '<span><i class="ley-dada"></i>Dada</span><span><i class="ley-prog"></i>Por dar</span><span><i class="ley-canc"></i>Cancelada</span>';
-    cont.parentElement?.appendChild(leyenda);
     cont.querySelectorAll('.mes-dia:not(.vacio)').forEach((b) => {
-        b.addEventListener('click', () => {
-            const f = b.dataset.fecha;
-            irA('v-semana');
-            pintarLineaSolo(f);
+        const f = b.dataset.fecha;
+        b.addEventListener('click', (e) => {
+            if (e.detail >= 2)
+                return; // el doble clic lo resuelve dblclick
+            tocarDiaMes(f);
+        });
+        b.addEventListener('dblclick', (e) => {
+            e.preventDefault();
+            abrirSemanaDe(f);
+        });
+        b.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                if (e.repeat)
+                    abrirSemanaDe(f);
+                else
+                    tocarDiaMes(f);
+            }
         });
     });
+    pintarTarjetasDiaMes();
+}
+/** Un toque: selecciona el día y muestra sus tarjetas SIN salir del mes. */
+function tocarDiaMes(f) {
+    const r = registrarToqueFecha(ultimoToque, f, performance.now());
+    ultimoToque = r.ultimo;
+    diaMesSeleccionado = f;
+    $$('#v-mes .mes-dia:not(.vacio)').forEach((b) => {
+        const on = b.getAttribute('data-fecha') === f;
+        b.classList.toggle('seleccionado', on);
+        if (on)
+            b.setAttribute('aria-current', 'date');
+        else
+            b.removeAttribute('aria-current');
+    });
+    pintarTarjetasDiaMes();
+    if (r.doble)
+        abrirSemanaDe(f);
+}
+/** Doble toque: abre «Ver semana» con el día elegido a la vista. */
+function abrirSemanaDe(f) {
+    ultimoToque = null;
+    // La tira se pinta con la semana de la fecha tocada (no con la de hoy).
+    pintarSemanaDe(f);
+    irA('v-semana');
+    pintarLineaSolo(f);
+    const tiraDia = $(`.tira-dia[data-fecha="${f}"]`);
+    tiraDia?.focus({ preventScroll: true });
+    tiraDia?.scrollIntoView({ block: 'nearest', inline: 'center' });
+}
+/** Las tarjetas v5 de un día, debajo de la leyenda del almanaque. */
+function pintarTarjetasDiaMes() {
+    const viejo = $('#v-mes .dia-tarjetas');
+    viejo?.remove();
+    if (!diaMesSeleccionado)
+        return;
+    const seccion = $('#v-mes');
+    if (!seccion)
+        return;
+    const caja = document.createElement('div');
+    caja.className = 'dia-tarjetas';
+    caja.setAttribute('aria-live', 'polite');
+    const fecha = diaMesSeleccionado;
+    const delDia = clasesDelDia(clases, fecha);
+    const cabecera = document.createElement('div');
+    cabecera.className = 'dia-tarjetas-head';
+    cabecera.innerHTML = `<p>${esc(etiquetaDia(fecha))}</p><button class="dia-ver-semana" type="button">Ver semana<svg class="ico" width="13" height="13" aria-hidden="true"><use href="#i-agenda"/></svg></button>`;
+    cabecera.querySelector('button')?.addEventListener('click', () => abrirSemanaDe(fecha));
+    caja.appendChild(cabecera);
+    if (delDia.length === 0) {
+        const vacio = document.createElement('p');
+        vacio.className = 'dia-vacio';
+        vacio.textContent = 'Sin clases ese día';
+        caja.appendChild(vacio);
+    }
+    else {
+        const lista = document.createElement('div');
+        lista.className = 'dia-lista';
+        lista.innerHTML = delDia
+            .map((c) => `<article class="clase${c.estado === 'dada' ? ' hecha' : ''}${c.estado === 'cancelada' ? ' cancelada' : ''}${c.estado === 'programada' ? ' por-dar' : ''}" data-clase="${c.id}">
+          <div class="clase-hora"><b>${horaClase(c)}</b><span>${c.duracionMin} min</span></div>
+          <div class="clase-datos">
+            <p class="clase-nombre">${esc(c.nombre)}</p>
+            <p class="clase-sub">${c.alumnos.length} alumnos inscriptos${c.estado === 'cancelada' && c.cancelacion ? ` · ${esc(c.cancelacion.motivo)}` : ''}</p>
+          </div>
+          ${chipEstado(c)}
+          ${accionClase(c)}
+        </article>`)
+            .join('');
+        caja.appendChild(lista);
+        cablearTarjetas(caja);
+    }
+    seccion.appendChild(caja);
 }
 /* ------------------------------------------- cancelar clase (sheet + WhatsApp) */
 let sheet = null;
@@ -258,10 +394,11 @@ function cerrarSheet() {
     claseEnSheet = null;
     setTimeout(() => s.remove(), 240);
 }
-/** Punto 2: sheet con opciones sobre una clase ya Dada. */
+/** Cuadro de acciones (20/11): lo abre el chip de estado de la clase
+ *  («Por dar» o «Dada»). Abrir NO cambia el estado. */
 function abrirAcciones(id) {
     const c = clases.find((x) => x.id === id);
-    if (!c || (c.estado !== 'dada' && c.estado !== 'cancelada'))
+    if (!c || c.estado === 'cancelada')
         return;
     cerrarSheet();
     const previo = document.createElement('div');
@@ -270,16 +407,27 @@ function abrirAcciones(id) {
     previo.setAttribute('aria-modal', 'true');
     previo.setAttribute('aria-label', `Opciones para ${c.nombre}`);
     const proximos = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
+    const esManual = c.estado === 'dada' && c.eventos.at(-1)?.tipo === 'marcada-manual';
     previo.innerHTML = `
     <div class="sheet-head">
       <div>
         <p class="sheet-eyebrow">${esc(etiquetaDia(c.fecha))} · ${horaClase(c)}</p>
-        <h3>${c.estado === 'cancelada' ? 'Clase cancelada' : 'Clase dada'}</h3>
+        <h3>${c.estado === 'dada' ? 'Clase dada' : 'Clase por dar'}</h3>
       </div>
       <button class="sheet-cerrar" type="button" aria-label="Cerrar"><svg class="ico" width="18" height="18"><use href="#i-mas2"/></svg></button>
     </div>
     <p class="sheet-clase"><strong>${esc(c.nombre)}</strong> · ${c.alumnos.length} alumnos</p>
     <div class="acciones-clase">
+      ${c.estado === 'programada' ? `
+      <button class="accion-clase" type="button" data-acc="marcar">
+        <svg class="ico" width="19" height="19"><use href="#i-check"/>&lt;/svg>
+        <span><b>Marcar dada</b><small> Confirmar que se dictó</small></span>
+      </button>` : ''}
+      ${esManual ? `
+      <button class="accion-clase" type="button" data-acc="desmarcar">
+        <svg class="ico" width="19" height="19"><use href="#i-reloj"/>&lt;/svg>
+        <span><b>Volver a Por dar</b><small>Deshacer la marca manual</small></span>
+      </button>` : ''}
       <button class="accion-clase" type="button" data-acc="cancelar">
         <svg class="ico" width="19" height="19"><use href="#i-alerta"/></svg>
         <span><b>Cancelar clase</b><small>Avisar por WhatsApp (opcional)</small></span>
@@ -303,6 +451,29 @@ function abrirAcciones(id) {
     previo.querySelector('.sheet-cerrar')?.addEventListener('click', cerrarSheet);
     previo.querySelector('[data-accion="volver"]')?.addEventListener('click', cerrarSheet);
     previo.querySelector('[data-acc="cancelar"]')?.addEventListener('click', () => abrirCancelacion(id));
+    previo.querySelector('[data-acc="marcar"]')?.addEventListener('click', () => {
+        repo.marcarDada(id, { quien: QUIEN, ahora: reloj.ahora() });
+        clases = repo.listar();
+        cerrarSheet();
+        refrescar();
+        delete toast.dataset.revertirManual;
+        avisar('Clase marcada dada · Deshacer', 6000);
+        toast.dataset.deshacer = '1';
+        toast.dataset.revertirManual = id;
+    });
+    previo.querySelector('[data-acc="desmarcar"]')?.addEventListener('click', () => {
+        try {
+            repo.deshacerMarcada(id, { quien: QUIEN, ahora: reloj.ahora() });
+        }
+        catch (e) {
+            avisar(e instanceof Error ? e.message : 'No se pudo deshacer', 3000);
+            return;
+        }
+        clases = repo.listar();
+        cerrarSheet();
+        refrescar();
+        avisar('Clase vuelta a Por dar');
+    });
     const caja = previo.querySelector('.cambiar-dia');
     previo.querySelector('[data-acc="cambiar"]')?.addEventListener('click', () => { caja.hidden = false; });
     caja.querySelectorAll('[data-dia]').forEach((b) => {
@@ -454,6 +625,7 @@ function confirmarCancelacion(c, motivo) {
     // Cada cancelación arranca su propio aviso: nunca quedan enlaces de una
     // cancelación anterior ("No enviar ahora" deja 0 pendientes).
     delete toast.dataset.pendientes;
+    delete toast.dataset.revertirManual;
     if (lista.length > 0) {
         // Envío manual: el dueño confirma cada envío en WhatsApp (nunca automático).
         const primero = lista[0];
@@ -488,11 +660,27 @@ function revertirCancelacion(id) {
     return true;
 }
 toast.addEventListener('click', () => {
+    if (toast.dataset.revertirManual && toast.dataset.deshacer === '1') {
+        const id = toast.dataset.revertirManual;
+        try {
+            repo.deshacerMarcada(id, { quien: QUIEN, ahora: reloj.ahora() });
+            clases = repo.listar();
+            refrescar();
+            avisar('Marca manual deshecha · vuelve a Por dar');
+        }
+        catch (e) {
+            avisar(e instanceof Error ? e.message : 'No se pudo deshacer', 3000);
+        }
+        delete toast.dataset.deshacer;
+        toast.classList.remove('ver');
+        return;
+    }
     if (toast.dataset.deshacer === '1' && toast.dataset.clase) {
         revertirCancelacion(toast.dataset.clase);
         delete toast.dataset.deshacer;
         delete toast.dataset.clase;
         delete toast.dataset.pendientes;
+        delete toast.dataset.revertirManual;
         toast.classList.remove('ver');
         return;
     }
@@ -849,7 +1037,7 @@ function pintarTitulo(id) {
     if (h1)
         h1.textContent = titulos[id] || 'Hoy';
 }
-function irA(id) {
+function irA(id, fijarHash = true) {
     const destino = document.getElementById(id);
     if (!destino)
         return;
@@ -867,7 +1055,7 @@ function irA(id) {
             t.removeAttribute('aria-current');
     });
     pintarTitulo(id);
-    if (history.replaceState)
+    if (fijarHash && history.replaceState)
         history.replaceState(null, '', '#' + id);
 }
 tabs.forEach((t) => t.addEventListener('click', (e) => {
@@ -878,6 +1066,21 @@ $$('a.link-suave').forEach((a) => a.addEventListener('click', (e) => {
     e.preventDefault();
     irA(a.getAttribute('href').slice(1));
 }));
+// El mes es una vista dentro de Clases: el enlace «Ver mes» entra sin hash
+// propio para que la navegación hacia atrás no se coma la vista activa.
+$$('a.link-suave[href="#v-mes"]').forEach((a) => {
+    a.removeAttribute('href');
+    a.setAttribute('role', 'button');
+    a.setAttribute('tabindex', '0');
+    a.addEventListener('keydown', (e) => {
+        const k = e.key;
+        if (k === 'Enter' || k === ' ') {
+            e.preventDefault();
+            irA('v-mes', false);
+        }
+    });
+    a.addEventListener('click', (e) => { e.preventDefault(); e.stopImmediatePropagation(); irA('v-mes', false); });
+});
 $('.fab')?.addEventListener('click', () => avisar('Agendar: nueva clase (próximamente)'));
 window.addEventListener('storage', (e) => { if (e.key === CLAVE_ESTADO) {
     pintarCobros();
@@ -920,6 +1123,7 @@ window.ximeV5 = {
     get clases() { return structuredClone(clases); },
     get alumnos() { return structuredClone(repo.listarAlumnos()); },
     refrescar,
+    irA,
     abrirFicha,
     reloj,
     textoCancelacion,

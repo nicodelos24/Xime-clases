@@ -14,6 +14,7 @@ export * from './fechas.ts';
 export * from './clases.ts';
 export * from './whatsapp.ts';
 export * from './resumen.ts';
+export * from './agenda.ts';
 export * from './repositorio.ts';
 export * from './demo.ts';
 export * from './cobros.ts';

@@ -79,6 +79,57 @@ export function reconciliar(clases, ahora) {
     return clases.map((c) => marcarSiPasada(c, ahora));
 }
 /**
+ * Marca dada una clase programada a pedido del dueño, aunque su hora no haya
+ * llegado. Queda en la auditoría quién lo hizo y cuándo, y se puede deshacer.
+ */
+export function marcarDada(c, op) {
+    if (c.estado === 'cancelada')
+        throw new Error('No se puede marcar dada una clase cancelada');
+    if (c.estado === 'dada')
+        return c;
+    if (!op.quien.trim())
+        throw new Error('La marca manual necesita quién la hace');
+    return {
+        ...c,
+        estado: 'dada',
+        marcadaEn: op.ahora,
+        eventos: [
+            ...(c.eventos ?? []),
+            {
+                tipo: 'marcada-manual',
+                fecha: hoyLocal(op.ahora),
+                minutos: minutosLocales(op.ahora),
+                quien: op.quien.trim(),
+            },
+        ],
+    };
+}
+/**
+ * Deshace una marca manual: vuelve a Programada sin borrar el evento previo
+ * (auditoría append-only). Solo aplica si el último evento fue esa marca.
+ */
+export function deshacerMarcada(c, op) {
+    if (c.estado !== 'dada' || c.eventos.at(-1)?.tipo !== 'marcada-manual') {
+        throw new Error('Solo se deshace una clase marcada a mano');
+    }
+    if (!op.quien.trim())
+        throw new Error('La reversión necesita quién la hace');
+    return {
+        ...c,
+        estado: 'programada',
+        marcadaEn: null,
+        eventos: [
+            ...c.eventos,
+            {
+                tipo: 'marca-manual-deshecha',
+                fecha: hoyLocal(op.ahora),
+                minutos: minutosLocales(op.ahora),
+                quien: op.quien.trim(),
+            },
+        ],
+    };
+}
+/**
  * Cancela una clase programada (o dada, si fue un error del dueño).
  * Cancelada ≠ dada: no genera deuda ni prórroga.
  */

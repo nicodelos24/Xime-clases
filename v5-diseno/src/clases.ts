@@ -46,6 +46,18 @@ export type RegistroCancelacion = {
 export type EventoClase =
   | { tipo: 'cancelada'; registro: RegistroCancelacion }
   | {
+    tipo: 'marcada-manual';
+    fecha: string;
+    minutos: number;
+    quien: string;
+  }
+  | {
+    tipo: 'marca-manual-deshecha';
+    fecha: string;
+    minutos: number;
+    quien: string;
+  }
+  | {
     tipo: 'revertida';
     fecha: string;
     minutos: number;
@@ -159,6 +171,58 @@ export function marcarSiPasada(c: Clase, ahora: InstanteMs): Clase {
 /** Reconcilia toda la colección (lo que corre al abrir la app o con el cron). */
 export function reconciliar(clases: Clase[], ahora: InstanteMs): Clase[] {
   return clases.map((c) => marcarSiPasada(c, ahora));
+}
+
+/** Opciones para marcar dada a mano (20/11, decisión de Nico). */
+export type OpcionMarcar = { quien: string; ahora: InstanteMs };
+
+/**
+ * Marca dada una clase programada a pedido del dueño, aunque su hora no haya
+ * llegado. Queda en la auditoría quién lo hizo y cuándo, y se puede deshacer.
+ */
+export function marcarDada(c: Clase, op: OpcionMarcar): Clase {
+  if (c.estado === 'cancelada') throw new Error('No se puede marcar dada una clase cancelada');
+  if (c.estado === 'dada') return c;
+  if (!op.quien.trim()) throw new Error('La marca manual necesita quién la hace');
+  return {
+    ...c,
+    estado: 'dada',
+    marcadaEn: op.ahora,
+    eventos: [
+      ...(c.eventos ?? []),
+      {
+        tipo: 'marcada-manual' as const,
+        fecha: hoyLocal(op.ahora),
+        minutos: minutosLocales(op.ahora),
+        quien: op.quien.trim(),
+      },
+    ],
+  };
+}
+
+/**
+ * Deshace una marca manual: vuelve a Programada sin borrar el evento previo
+ * (auditoría append-only). Solo aplica si el último evento fue esa marca.
+ */
+export function deshacerMarcada(c: Clase, op: OpcionMarcar): Clase {
+  if (c.estado !== 'dada' || c.eventos.at(-1)?.tipo !== 'marcada-manual') {
+    throw new Error('Solo se deshace una clase marcada a mano');
+  }
+  if (!op.quien.trim()) throw new Error('La reversión necesita quién la hace');
+  return {
+    ...c,
+    estado: 'programada',
+    marcadaEn: null,
+    eventos: [
+      ...c.eventos,
+      {
+        tipo: 'marca-manual-deshecha' as const,
+        fecha: hoyLocal(op.ahora),
+        minutos: minutosLocales(op.ahora),
+        quien: op.quien.trim(),
+      },
+    ],
+  };
 }
 
 export type OpcionCancelar = { motivo: string; quien: string; ahora: InstanteMs };

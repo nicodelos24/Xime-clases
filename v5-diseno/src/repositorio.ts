@@ -16,8 +16,9 @@
  *  - Nunca se borra una clase: el historial de eventos queda en la clase.
  */
 import {
-  cancelarClase, crearClase, deshacerCancelacion, reconciliar,
+  cancelarClase, crearClase, deshacerCancelacion, deshacerMarcada, marcarDada, reconciliar,
   registrarMensajeEnviado, reprogramarClase,
+  type OpcionMarcar,
   type CanalMensaje, type Clase, type ClaseNueva, type OpcionCancelar,
   type OpcionReprogramar,
 } from './clases.ts';
@@ -131,6 +132,8 @@ export interface RepositorioDeClases {
   listar(): Clase[];
   crear(spec: ClaseNueva): Clase;
   reconciliar(ahora?: InstanteMs): Clase[];
+  marcarDada(id: string, op: OpcionMarcar): Clase;
+  deshacerMarcada(id: string, op: OpcionMarcar): Clase;
   cancelar(id: string, op: OpcionCancelar): Clase;
   revertir(id: string, op: OpcionCancelar): Clase;
   reprogramar(id: string, fechaNueva: string, op: OpcionReprogramar): Clase;
@@ -236,6 +239,14 @@ export class RepositorioClases implements RepositorioDeClases {
     if (despues.every((c, i) => c === antes[i])) return despues;
     this.actualizar(() => despues);
     return despues;
+  }
+
+  marcarDada(id: string, op: OpcionMarcar): Clase {
+    return this.reemplazar(marcarDada(this.una(id), op));
+  }
+
+  deshacerMarcada(id: string, op: OpcionMarcar): Clase {
+    return this.reemplazar(deshacerMarcada(this.una(id), op));
   }
 
   cancelar(id: string, op: OpcionCancelar): Clase {

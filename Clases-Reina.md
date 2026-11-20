@@ -82,3 +82,15 @@ muestra el chip), «vence hoy» (días=0, punto ambar, NO lo oculta el chip),
 «vencido» (punto rosa) y «vence en N días» (punto ambar), con texto/punto/chip
 coherentes y sin tocar las reglas de Cobros. Verificado en UI + F5 y con 84/84
 tests; evidencia en `v5-diseno/v5-alumnos-fix-regresiones.png`.
+
+Interacciones de Agenda (20/11, task `task_1a281434abba46e0`): en «Ver mes»,
+un toque en una fecha muestra sus clases debajo de la leyenda sin salir del
+almanaque (día vacío = «Sin clases ese día»); dos toques en la MISMA fecha
+abren «Ver semana» en esa fecha, incluso sin clases o en límite de mes. Regla
+pura en `src/agenda.ts` (`registrarToqueFecha`, 350 ms), con `Enter`/doble clic
+y `touch-action: manipulation` para no pelear con el zoom global. Se retiró el
+botón rojo «Cancelar clase»: el chip «Por dar» abre el cuadro con Marcar dada
+(aprobado por Nico), Cancelar y Cambiar de día, con auditoría append-only,
+deshacer y persistencia F5. Sin tocar BD, FAB ni scroll de barra. Verificado:
+94/94 tests, typecheck 0, `git diff --check` limpio, Chrome 390 px claro/oscuro
+y `docs/` por HTTP con 0 errores de consola; capturas en `docs/qa/v5-agenda-*.png`.
