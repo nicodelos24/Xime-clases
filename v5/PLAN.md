@@ -252,9 +252,48 @@ Al tocar "Cancelar clase" en cualquier vista:
   destino aunque cruce semana o mes y lo deja de ver en origen tras F5.
   Las flechas del almanaque v5 navegan entre meses; se preservan toque
   simple, doble toque y estilo v5. Sin otros módulos, barra inferior ni BD.
-- **Verificación**: `npm run typecheck` 0 errores; `npm test` 110/110
+- **Verificación**: `npm run typecheck` 0 errores; `npm test` 118/118
   (antes 95); `git diff --check` limpio; `origin/master` revalidado en
-  `8e853448`. Chrome 390 px claro/oscuro, fuente (8801) y `docs/` por HTTP
+  `9ca26108`. Chrome 390 px claro/oscuro, fuente (8801) y `docs/` por HTTP
   como Pages (8802): los 3 flujos (rutina, suelta, mover 25/11→3/12),
   F5, sin duplicados, fecha original ausente al mover, 0 errores de
-  consola. Cache-busting `?v=202611202020`.
+  consola. Cache-busting `?v=202611201755`.
+
+### Correcciones post-revisión (20/11, segunda ronda)
+
+Pedido por Roma en nombre de Nico tras la revisión en Pages:
+
+- **Horizonte por rango consultado**: antes las ocurrencias se generaban
+  solo hasta `hoy + 60 días`, así un mes lejano (p. ej. viernes 05/02/2027)
+  decía «Sin clases». `generarOcurrenciasEnRango()` y
+  `repo.materializarHasta()` materializan el mes/semana que se está mirando,
+  incluso a meses de distancia, sin duplicar IDs, sin inventar fechas
+  previas al inicio de la rutina. Consultar una fecha lejana **no** la trata
+  como «hoy»: no cambia estados (solo crea ocurrencias programadas).
+- **Reloj al volver de segundo plano**: `visibilitychange` y `pageshow`
+  reconcilian de inmediato con el reloj real; antes se esperaba al cron de
+  30 s. Probado con clase 23:00–00:00: sigue «Por dar» a las 23:59:59 y
+  pasa a «Dada» apenas se dispara la vuelta a 00:00:01, sin recargar.
+- **Persistencia atómica al reprogramar**: `reprogramar()` escribe estado +
+  auditoría + excepción en UNA sola llamada obligatoria; si falla el disco,
+  nada avanza en memoria ni se anuncia éxito, el cuadro queda abierto con
+  el error y el origen intacto tras F5. Origen y destino se muestran con
+  día/mes/año completos antes de confirmar.
+- **Protección de datos ante builds mezclados**: el estado se escribe como
+  `version: 2` con `rutinas` como campo aditivo, porque el build v2 anterior
+  (aún servido en pestañas viejas) descarta `version: 3` y **resembra la
+  demo**, borrando datos de la clienta. El lector acepta v1/v2/v3 y nunca
+  resembra sobre clases guardadas; las rutinas se respaldan además en
+  `xime.v5.rutinas` para recuperarlas si una pestaña v2 re-graba y las
+  omite. Test de escrituras de builds mezclados. Los imports de `docs/src/`
+  llevan cache-bust individual para no mezclar versiones del JS en caché.
+- **Navegación de mes y agendar desde otro mes** (pedido directo de Nico):
+  las flechas anterior/siguiente están junto al título mes+año, con áreas
+  táctiles de 44×44 px, nombres accesibles con el mes concreto y estilo v5.
+  En cada día elegido del almanaque (incluso vacío) aparece «Agendar acá»
+  que abre «Clase suelta» con esa fecha exacta precargada; «Clase semanal»
+  propone ese día como inicio si no es pasado. Al guardar se permanece en
+  el mes/día destino con la tarjeta visible, persistida tras F5. Criterio
+  móvil verificado: noviembre→diciembre→enero 2027, volver, agendar una
+  suelta desde un día vacío de otro mes y reencontrarla tras F5. Datos
+  ficticios, sin BD (Nico autorizó probar así hasta tener la base lista).

@@ -117,8 +117,27 @@ clase conservando ID, hora, duración, participantes y auditoría
 (`reprogramada`), muestra el destino aunque cruce mes y lo saca del origen
 tras F5. Flechas del almanaque v5 operativas, toque/doble toque y estilo
 intactos. Sin cambios al diseño v5, sin BD, sin barra inferior ni
-`serve.mjs`/8797. Compatibilidad aditiva de `xime.v5.estado` (repositorio
-v3). Verificado: typecheck 0, 110/110 tests, `git diff --check` limpio,
-Chrome 390 px claro/oscuro sobre fuente y `docs/` estático: los 3 flujos,
-F5, sin duplicados, 0 errores de consola. `docs/` regenerado con
-cache-bust `?v=202611202020`. `origin/master` revalidado en `8e853448`.
+`serve.mjs`/8797.
+
+Segunda ronda (misma tarea, correcciones de Roma y pedido de Nico): el
+horizonte de ocurrencias pasó a generarse por el rango consultado
+(`generarOcurrenciasEnRango` + `repo.materializarHasta`), así un mes lejano
+como febrero 2027 muestra sus clases sin duplicar ni inventar días previos
+al inicio, y sin usar esa fecha como «hoy». La vuelta de segundo plano
+reconcilia al instante (`visibilitychange`/`pageshow`), verificado con una
+clase 23:00–00:00 que pasa a «Dada» justo en medianoche sin recargar.
+`reprogramar()` hace una sola escritura obligatoria (estado + auditoría +
+excepción): con cuota llena el cuadro queda abierto con error, sin falso
+éxito ni cambios parciales, y origen/destino se leen con año completo.
+**Riesgo de datos resuelto**: el estado se escribe como `version: 2` con
+`rutinas` aditivo (el build v2 anterior descartaba v3 y resembraba la
+demo), el lector acepta v1/v2/v3 sin resembrar sobre clases y hay respaldo
+en `xime.v5.rutinas`; imports de `docs/src/` con cache-bust individual.
+Nico además pidió flechas de mes junto al título mes+año (44×44 px,
+aria-labels con el mes concreto) y «Agendar acá» desde el día elegido en
+otro mes, incluso vacío, con la fecha exacta precargada; al guardar se
+permanece en el mes/día destino y persiste tras F5. Verificado en Chrome
+390 px claro/oscuro, fuente y `docs/`: nov→dic→ene 2027, suelta desde día
+vacío de otro mes, F5, 0 errores. typecheck 0, 118/118 tests,
+`git diff --check` limpio, cache-bust `?v=202611201755`, `origin/master`
+revalidado en `9ca26108`.

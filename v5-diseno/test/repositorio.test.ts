@@ -346,3 +346,164 @@ test('auto-marcado al fin de duración en el repositorio (incluso al volver)', (
   const alVolver = luego.repo.reconciliar().find((c) => c.id === deHoy?.id);
   assert.equal(alVolver?.estado, 'dada', 'se marcó al terminar, no al empezar');
 });
+
+test('un build v2 anterior lee el estado del v3 SIN resembrar ni perder datos', () => {
+  // Una pestaña vieja del build v2 (VERSION_ESTADO=2) debe aceptar el estado
+  // escrito hoy. Para eso el estado escrito es version:2 con rutinas extra.
+  const almacen = almacenMemoria();
+  const { repo } = abrir(almacen, JUEVES_10);
+  repo.crearSuelta({ id: 'suelta-v3', nombre: 'Clase de la clienta', fecha: '2026-11-25', hora: '17:00' });
+  repo.reconciliar();
+  const guardado = JSON.parse(almacen.leer() as string);
+  assert.equal(guardado.version, 2, 'el build v2 acepta esta version (no la descarta)');
+  assert.ok(Array.isArray(guardado.clases) && guardado.clases.some((c: { id: string }) => c.id === 'suelta-v3'));
+  // Simular el lector del build v2: acepta version 1 o 2 y clases; NO resembra.
+  const esAceptadoPorV2 = guardado.version === 2 && Array.isArray(guardado.clases);
+  assert.equal(esAceptadoPorV2, true, 'el v2 leería el estado como válido');
+});
+
+test('builds mezclados: v2 re-graba sin rutinas y el v3 las recupera del respaldo', () => {
+  const almacen = almacenMemoria();
+  const { repo } = abrir(almacen, JUEVES_10);
+  const rutina = repo.crearRutina({ id: 'rut-mezcla', nombre: 'Mezcla', dias: [0], desde: '2026-11-16', hora: '10:00' });
+  repo.reconciliar();
+  const antes = repo.listar().filter((c) => c.rutinaId === rutina.id).length;
+  assert.ok(antes > 0);
+
+  // El build v2 re-graba su estado (sin campo rutinas), como haría una pestaña
+  // vieja al marcar una clase. Debe conservar clases, pagos y alumnos.
+  const grabado = JSON.parse(almacen.leer() as string);
+  delete grabado.rutinas;
+  almacen.escribir(JSON.stringify(grabado));
+
+  const { repo: reabierta } = abrir(almacen, JUEVES_10);
+  reabierta.reconciliar();
+  assert.equal(reabierta.listarRutinas().length, 1, 'la plantilla se recupera del respaldo');
+  assert.equal(reabierta.listarRutinas()[0].id, rutina.id);
+  assert.ok(reabierta.listar().some((c) => c.rutinaId === rutina.id), 'las ocurrencias siguen ahí');
+  assert.equal(reabierta.listar().some((c) => c.id === 'suelta-v3'), false);
+});
+
+test('estado version 3 (hipotético) se migra sin resembrar y conserva rutinas', () => {
+  const datos = {
+    version: 3, guardadoEn: '2026-11-20T13:00:00.000Z',
+    clases: [{ id: 'c-v3', nombre: 'V3', fecha: '2026-11-19', minutos: 960, duracionMin: 60, alumnos: [], estado: 'programada', cancelacion: null, eventos: [] }],
+    pagos: [], alumnos: [],
+    rutinas: [{ id: 'rut-v3', nombre: 'R', dias: [0], desde: '2026-11-16', hora: '10:00', duracionMin: 60, excepciones: {} }],
+  };
+  const almacen = almacenMemoria(JSON.stringify(datos));
+  const { repo } = abrir(almacen, JUEVES_10);
+  assert.equal(repo.listar().some((c) => c.id === 'c-v3'), true, 'no resembra');
+  assert.equal(repo.listarRutinas()[0]?.id, 'rut-v3');
+  assert.equal(JSON.parse(almacen.leer() as string).version, 2, 'se normaliza a la version escrita');
+});
+
+test('mover con fallo de disco: ni excepción ni clase cambian (una sola escritura)', () => {
+  const datos = {
+    version: 2, guardadoEn: '2026-11-20T13:00:00.000Z',
+    clases: [],
+    pagos: [], alumnos: [],
+    rutinas: [{ id: 'rut-atom', nombre: 'Atómica', dias: [0], desde: '2026-11-16', hora: '10:00', duracionMin: 60, excepciones: {} }],
+  };
+  const almacen = almacenMemoria(JSON.stringify(datos));
+  let escrituras = 0;
+  const fallar = { on: false };
+  const almacenQueFalla: Almacen = {
+    leer: () => almacen.leer(),
+    escribir: (texto, requiere) => {
+      if (requiere) {
+        escrituras++;
+        if (fallar.on) throw new Error('QuotaExceededError');
+      }
+      almacen.escribir(texto, requiere);
+    },
+  };
+  const { repo } = abrir(almacenQueFalla, JUEVES_10);
+  repo.reconciliar();
+  const occ = repo.listar().find((c) => c.rutinaId === 'rut-atom')!;
+  const origen = occ.fecha;
+  escrituras = 0;
+  fallar.on = true;
+  assert.throws(() => repo.reprogramar(occ.id, '2026-12-04', { quien: 'Xime', ahora: JUEVES_10 }), /QuotaExceededError/);
+  assert.equal(escrituras, 1, 'una sola escritura obligatoria, sin escritura parcial de excepción');
+  assert.equal(repo.listar().find((c) => c.id === occ.id)?.fecha, origen, 'la clase sigue en origen en memoria');
+  assert.equal(repo.listarRutinas()[0].excepciones[origen], undefined, 'sin excepción huérfana');
+  fallar.on = false;
+  const { repo: reabierta } = abrir(almacenQueFalla, JUEVES_10);
+  reabierta.reconciliar();
+  assert.equal(reabierta.listar().find((c) => c.id === occ.id)?.fecha, origen, 'F5 sigue en origen');
+});
+
+test('mover una clase suelta con fallo de disco tampoco anuncia éxito', () => {
+  const almacen = almacenMemoria();
+  const base = almacenMemoria();
+  const fallar = { on: false };
+  const almacenQueFalla: Almacen = {
+    leer: () => almacen.leer(),
+    escribir: (texto, requiere) => {
+      if (fallar.on && requiere) throw new Error('QuotaExceededError');
+      base.escribir(texto, requiere);
+      almacen.escribir(texto, requiere);
+    },
+  };
+  const { repo } = abrir(almacenQueFalla, JUEVES_10);
+  repo.reconciliar();
+  repo.crearSuelta({ id: 'suelta-atom', nombre: 'Suelta', fecha: '2026-12-03', hora: '17:30' });
+  fallar.on = true;
+  assert.throws(() => repo.reprogramar('suelta-atom', '2026-12-04', { quien: 'Xime', ahora: JUEVES_10 }), /QuotaExceededError/);
+  assert.equal(repo.listar().find((c) => c.id === 'suelta-atom')?.fecha, '2026-12-03');
+  assert.equal(JSON.parse(almacen.leer() as string).clases.find((c: { id: string }) => c.id === 'suelta-atom').fecha, '2026-12-03');
+});
+
+test('mes lejano > 60 días: materializa ocurrencias al consultarlo sin inventar pasado', () => {
+  const almacen = almacenMemoria();
+  const { repo } = abrir(almacen, JUEVES_10); // hoy 19/11/2026
+  const rutina = repo.crearRutina({ id: 'rut-lejana', nombre: 'Lejana', dias: [0, 4], desde: '2026-11-16', hora: '19:00' });
+  const iniciales = repo.listar().filter((c) => c.rutinaId === rutina.id).length;
+  assert.ok(iniciales > 0);
+
+  // Consultar febrero 2027 (más de 60 días después de hoy): debe materializar.
+  const materializadas = repo.materializarHasta('2027-02-28');
+  const enFeb = materializadas.filter((c) => c.rutinaId === rutina.id && c.fecha.startsWith('2027-02'));
+  assert.ok(enFeb.length >= 8, `febrero 2027 debería tener las ocurrencias de lun/vie (tiene ${enFeb.length})`);
+  assert.ok(enFeb.some((c) => c.fecha === '2027-02-05'), 'viernes 05/02/2027 ya no dice "Sin clases"');
+
+  // Sin días previos al inicio de la plantilla.
+  assert.equal(materializadas.some((c) => c.rutinaId === rutina.id && c.fecha < '2026-11-16'), false);
+  // Sin duplicados: llamar dos veces no agrega nada.
+  const { repo: reapertura } = abrir(almacen, JUEVES_10);
+  reapertura.reconciliar();
+  const demasiadas = reapertura.materializarHasta('2027-02-28');
+  const ids = demasiadas.filter((c) => c.rutinaId === rutina.id).map((c) => c.id);
+  assert.equal(new Set(ids).size, ids.length, 'IDs únicos, sin duplicar al volver');
+});
+
+test('materializar un mes lejano NO marca clases como dadas (no es hoy)', () => {
+  const almacen = almacenMemoria();
+  const { repo } = abrir(almacen, JUEVES_10);
+  const rutina = repo.crearRutina({ id: 'rut-futura', nombre: 'Futura', dias: [0], desde: '2026-11-16', hora: '10:00' });
+  repo.reconciliar();
+  const iniciales = repo.listar().filter((c) => c.rutinaId === rutina.id);
+  const antes = new Map(iniciales.map((c) => [c.id, c.estado]));
+  repo.materializarHasta('2027-06-30');
+  const despues = repo.listar().filter((c) => c.rutinaId === rutina.id && antes.has(c.id));
+  assert.ok(despues.every((c) => antes.get(c.id) === c.estado), 'consultar junio 2027 no cambia el estado de ninguna ocurrencia previa');
+  const futuras = repo.listar().filter((c) => c.rutinaId === rutina.id && c.fecha > '2027-01-01');
+  assert.ok(futuras.every((c) => c.estado === 'programada'), 'las ocurrencias lejanas se crean programadas');
+});
+
+test('excepción de una ocurrencia lejana no reaparece al consultar ese mes', () => {
+  const almacen = almacenMemoria();
+  const { repo } = abrir(almacen, JUEVES_10);
+  repo.crearRutina({ id: 'rut-exc', nombre: 'Exc', dias: [0], desde: '2026-11-16', hora: '10:00' });
+  repo.materializarHasta('2027-03-31');
+  const occ = repo.listar().find((c) => c.rutinaId === 'rut-exc' && c.fecha === '2027-03-01')!;
+  repo.cancelar(occ.id, { quien: 'Xime', motivo: 'Cancelada de prueba', ahora: JUEVES_10 });
+  const { repo: reabierta } = abrir(almacen, JUEVES_10);
+  reabierta.reconciliar();
+  reabierta.materializarHasta('2027-04-30');
+  const ids = reabierta.listar().filter((c) => c.rutinaId === 'rut-exc').map((c) => c.id);
+  assert.equal(ids.includes(occ.id), true, 'la cancelada sigue en el histórico');
+  assert.equal(reabierta.listarRutinas()[0].excepciones['2027-03-01'], 'cancelada');
+  assert.equal(ids.filter((x) => x === occ.id).length, 1, 'no se duplicó ni reapareció como nueva');
+});

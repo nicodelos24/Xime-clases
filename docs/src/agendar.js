@@ -15,9 +15,9 @@
  *    días. Al avanzar el reloj se generan las nuevas, sin corte fijo invisible
  *    y sin borrar las ya generadas (incluido el historial).
  */
-import { crearClase } from './clases.js';
-import { diaSemanaIndex, diasDeFecha, esFechaValida, sumarDias } from './fechas.js';
-import { hoyLocal, parsearMinutos } from './reloj.js';
+import { crearClase } from './clases.js?v=202611201755';
+import { diaSemanaIndex, diasDeFecha, esFechaValida, sumarDias } from './fechas.js?v=202611201755';
+import { hoyLocal, parsearMinutos } from './reloj.js?v=202611201755';
 /** Cuántos días por delante se materializan las ocurrencias de una rutina. */
 export const HORIZONTE_DIAS = 60;
 const ID_RUTINA = /^rut-[A-Za-z0-9-]+$/;
@@ -95,11 +95,28 @@ export function fechasDeSerie(rutina, hasta) {
  */
 export function generarOcurrencias(rutina, existentes, ahora, alumnos = [], horizonteDias = HORIZONTE_DIAS) {
     const hoy = hoyLocal(ahora);
-    const fin = sumarDias(hoy, horizonteDias);
+    return generarOcurrenciasEnRango(rutina, existentes, hoy, sumarDias(hoy, horizonteDias), alumnos);
+}
+/**
+ * Genera las ocurrencias que faltan en un rango ARBITRARIO `[desde, hasta]`
+ * (por ejemplo el mes o la semana que está mirando la persona, aunque esté a
+ * meses de distancia). NO usa la fecha consultada como «hoy»: solo crea
+ * ocurrencias programadas; la reconciliación por reloj es aparte.
+ *
+ * - Nunca crea fechas anteriores al inicio de la rutina (`desde` de plantilla).
+ * - Una fecha en `excepciones` (cancelada/movida) no se regenera en origen.
+ * - Un ID ya presente no se duplica.
+ */
+export function generarOcurrenciasEnRango(rutina, existentes, desde, hasta, alumnos = []) {
+    if (hasta < desde)
+        return [];
+    const inicio = desde > rutina.desde ? desde : rutina.desde;
+    if (hasta < inicio)
+        return [];
     const ya = new Set(existentes.map((c) => c.id));
     const nuevas = [];
-    for (const fecha of fechasDeSerie(rutina, fin)) {
-        if (fecha < rutina.desde)
+    for (const fecha of fechasDeSerie(rutina, hasta)) {
+        if (fecha < inicio)
             continue;
         if (rutina.excepciones[fecha])
             continue;

@@ -11,7 +11,7 @@ import { resumenCobros, type Pago } from './src/cobros.ts';
 import { resumenHoy, clasesDelDia, clasesDeLaSemana } from './src/resumen.ts';
 import { registrarToqueFecha, mesDe, type ToqueFecha } from './src/agenda.ts';
 import { destinoDeEnlace } from './src/navegacion.ts';
-import { diaCorto, etiquetaDia, etiquetaMes, sumarDias, parseFecha, lunesDe, diasDelMes, esFechaValida } from './src/fechas.ts';
+import { diaCorto, etiquetaDia, etiquetaDiaCompleta, etiquetaMes, sumarDias, parseFecha, lunesDe, diasDelMes, esFechaValida } from './src/fechas.ts';
 import { relojDelDispositivo, hoyLocal, type Reloj } from './src/reloj.ts';
 import {
   textoCancelacion, destinos, resumenEnvio, linkTexto, type Destino,
@@ -41,7 +41,7 @@ function avisar(txt: string, ms = 2200) {
 }
 
 function esc(s: string): string {
-  return s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', '\'': '&#39;' })[c] as string);
+  return s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '<', '>': '>', '"': '&quot;', '\'': '&#39;' })[c] as string);
 }
 
 /** Chip de estado de una clase (SVG, sin emoji). */
@@ -173,7 +173,13 @@ function semanaActual(f: string): string {
 }
 
 /** Pinta la tira con la semana que contiene `f` (doble toque desde el mes). */
+/** Asegura ocurrencias del rango que se está mirando, sin tocar marcas. */
+function asegurarOcurrencias(fecha: string): void {
+  clases = repo.materializarHasta(fecha);
+}
+
 function pintarSemanaDe(f: string): void {
+  asegurarOcurrencias(f);
   diaSemanaAnclado = f;
   const lunes = lunesDe(f);
   const dias = clasesDeLaSemana(clases, lunes);
@@ -277,15 +283,27 @@ function diasDelMesAbierto(): string[] {
 }
 
 function pintarMes() {
+  // Un mes lejano (p. ej. febrero 2027) debe mostrar sus ocurrencias sin
+  // inventar días previos al inicio ni usar esa fecha como «hoy».
+  const diasMes = diasDelMesAbierto();
+  const ultimo = diasMes.filter(Boolean).pop();
+  if (ultimo) asegurarOcurrencias(ultimo);
   const hoy = hoyLocal(reloj.ahora());
   const abierto = mesAbierto();
   const h2 = $('#v-mes .agenda-titulo h2');
   if (h2) h2.textContent = etiquetaMes(abierto + '-01');
+  // Nombres accesibles con el mes concreto al que se va (y el actual).
+  const { y: ay, m: am } = parseFecha(abierto + '-01');
+  const prev = new Date(Date.UTC(ay, am - 2, 1));
+  const next = new Date(Date.UTC(ay, am, 1));
+  const nomMes = (d: Date) => etiquetaMes(`${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-01`);
+  if (flechaAnt) flechaAnt.setAttribute('aria-label', `Mes anterior: ${nomMes(prev)}`);
+  if (flechaSig) flechaSig.setAttribute('aria-label', `Mes siguiente: ${nomMes(next)}`);
 
   const cont = $('#v-mes .mes');
   if (!cont) return;
   const celdas: string[] = [];
-  for (const f of diasDelMesAbierto()) {
+  for (const f of diasMes) {
     if (!f) { celdas.push('<button class="mes-dia vacio" type="button" disabled></button>'); continue; }
     const delDia = clases.filter((c) => c.fecha === f);
     let claseEstado = '';
@@ -341,8 +359,8 @@ function moverMes(delta: number): void {
   pintarMes();
 }
 
-const flechaAnt = $('#v-mes .mes-flechas .flecha') as HTMLElement | null;
-const flechaSig = $$('#v-mes .mes-flechas .flecha')[1] as HTMLElement | null;
+const flechaAnt = $('#v-mes .mes-titulo-nav .flecha') as HTMLElement | null;
+const flechaSig = $$('#v-mes .mes-titulo-nav .flecha')[1] as HTMLElement | null;
 flechaAnt?.addEventListener('click', () => moverMes(-1));
 flechaSig?.addEventListener('click', () => moverMes(1));
 
@@ -386,8 +404,10 @@ function pintarTarjetasDiaMes(): void {
   const delDia = clasesDelDia(clases, fecha);
   const cabecera = document.createElement('div');
   cabecera.className = 'dia-tarjetas-head';
-  cabecera.innerHTML = `<p>${esc(etiquetaDia(fecha))}</p><button class="dia-ver-semana" type="button">Ver semana<svg class="ico" width="13" height="13" aria-hidden="true"><use href="#i-agenda"/></svg></button>`;
-  cabecera.querySelector('button')?.addEventListener('click', () => abrirSemanaDe(fecha));
+  cabecera.innerHTML = `<p>${esc(etiquetaDia(fecha))}</p><span class="dia-acciones-head"><button class="dia-agendar" type="button" aria-label="Agendar clase el ${esc(etiquetaDiaCompleta(fecha))}">Agendar acá<svg class="ico" width="13" height="13" aria-hidden="true"><use href="#i-mas2"/></svg></button><button class="dia-ver-semana" type="button">Ver semana<svg class="ico" width="13" height="13" aria-hidden="true"><use href="#i-agenda"/></svg></button></span>`;
+  cabecera.querySelector('.dia-ver-semana')?.addEventListener('click', () => abrirSemanaDe(fecha));
+  // Desde un día de otro mes (incluso vacío), agendar una suelta ahí mismo.
+  cabecera.querySelector('.dia-agendar')?.addEventListener('click', () => abrirFormularioSuelta(fecha));
   caja.appendChild(cabecera);
   if (delDia.length === 0) {
     const vacio = document.createElement('p');
@@ -463,11 +483,11 @@ function abrirAgendar() {
   cuadro.querySelector('.sheet-cerrar')?.addEventListener('click', () => cerrarCuadro(cuadro));
   cuadro.querySelector('[data-mod="semanal"]')?.addEventListener('click', () => {
     cerrarCuadro(cuadro);
-    abrirFormularioSemanal();
+    abrirFormularioSemanal(diaMesSeleccionado ?? undefined);
   });
   cuadro.querySelector('[data-mod="suelta"]')?.addEventListener('click', () => {
     cerrarCuadro(cuadro);
-    abrirFormularioSuelta();
+    abrirFormularioSuelta(diaMesSeleccionado ?? undefined);
   });
   (cuadro.querySelector('[data-mod="semanal"]') as HTMLElement)?.focus();
 }
@@ -513,8 +533,11 @@ function cablearFecha(raiz: ParentNode, nombre: string, onChange?: () => void) {
   anio.addEventListener('change', actualizar);
 }
 
-function abrirFormularioSemanal() {
+function abrirFormularioSemanal(fechaDesdeDia?: string) {
   const hoy = hoyLocal(reloj.ahora());
+  const propuesta = fechaDesdeDia ?? diaMesSeleccionado;
+  // No proponer fechas pasadas: si el día elegido ya pasó, arrancar hoy.
+  const inicio = propuesta && propuesta >= hoy ? propuesta : hoy;
   const cuadro = document.createElement('div');
   cuadro.className = 'sheet';
   cuadro.setAttribute('role', 'dialog');
@@ -535,7 +558,7 @@ function abrirFormularioSemanal() {
         ${NOMBRES_DIAS.map(([nom, idx]) => `<button type="button" class="dia-chip" data-dia="${idx}" aria-pressed="false">${nom}</button>`).join('')}
       </div>
       <p class="sheet-paso">¿Cuándo empieza?</p>
-      ${selectorFecha('inicio', hoy)}
+      ${selectorFecha('inicio', inicio)}
       <div class="campo-duo">
         <label class="campo"><span>Hora de inicio</span><input name="hora" type="time" value="15:00"></label>
         <label class="campo"><span>Duración</span><select name="duracion"><option value="60" selected>60 min</option><option value="90">90 min</option><option value="120">120 min</option><option value="30">30 min</option><option value="45">45 min</option></select></label>
@@ -607,9 +630,9 @@ function abrirFormularioSemanal() {
   (cuadro.querySelector('[name="nombre"]') as HTMLElement)?.focus();
 }
 
-function abrirFormularioSuelta() {
-  // Si el mes tiene un día seleccionado, usarlo; si no, hoy.
-  const inicial = diaMesSeleccionado ?? hoyLocal(reloj.ahora());
+function abrirFormularioSuelta(fechaDesdeDia?: string) {
+  // Prioridad: día tocado «Agendar acá» > día seleccionado en el mes > hoy.
+  const inicial = fechaDesdeDia ?? diaMesSeleccionado ?? hoyLocal(reloj.ahora());
   const cuadro = document.createElement('div');
   cuadro.className = 'sheet';
   cuadro.setAttribute('role', 'dialog');
@@ -722,12 +745,12 @@ function abrirAcciones(id: string) {
     <div class="acciones-clase">
       ${c.estado === 'programada' ? `
       <button class="accion-clase" type="button" data-acc="marcar">
-        <svg class="ico" width="19" height="19"><use href="#i-check"/>&lt;/svg>
+        <svg class="ico" width="19" height="19"><use href="#i-check"/></svg>
         <span><b>Marcar dada</b><small> Confirmar que se dictó</small></span>
       </button>` : ''}
       ${esManual ? `
       <button class="accion-clase" type="button" data-acc="desmarcar">
-        <svg class="ico" width="19" height="19"><use href="#i-reloj"/>&lt;/svg>
+        <svg class="ico" width="19" height="19"><use href="#i-reloj"/></svg>
         <span><b>Volver a Por dar</b><small>Deshacer la marca manual</small></span>
       </button>` : ''}
       <button class="accion-clase" type="button" data-acc="cancelar">
@@ -741,8 +764,9 @@ function abrirAcciones(id: string) {
     </div>
     <div class="cambiar-dia" hidden>
       <p class="sheet-paso">Elegí la nueva fecha</p>
-      <p class="resumen-fecha">Fecha actual: <strong>${esc(etiquetaDia(c.fecha))}</strong> · ${horaClase(c)}</p>
+      <p class="resumen-fecha">Desde: <strong>${esc(etiquetaDiaCompleta(c.fecha))}</strong> · ${horaClase(c)}</p>
       ${selectorFecha('destino', c.fecha)}
+      <p class="resumen-fecha" data-resumen-destino>Hacia: <strong>${esc(etiquetaDiaCompleta(c.fecha))}</strong></p>
       <p class="campo-error" role="alert"></p>
       <div class="sheet-acciones">
         <button class="btn-secundario" type="button" data-accion="cancelar-cambio">Volver</button>
@@ -793,7 +817,11 @@ function abrirAcciones(id: string) {
     caja.hidden = true;
     principales.hidden = false;
   });
-  cablearFecha(caja, 'destino');
+  const resumenDestino = caja.querySelector('[data-resumen-destino] strong') as HTMLElement | null;
+  cablearFecha(caja, 'destino', () => {
+    const elegida = leerFechaDe(caja, 'destino');
+    if (resumenDestino) resumenDestino.textContent = elegida ? etiquetaDiaCompleta(elegida) : 'fecha inválida';
+  });
   caja.querySelector('[data-accion="confirmar-cambio"]')?.addEventListener('click', () => {
     errorCambio.textContent = '';
     const nuevaFecha = leerFechaDe(caja, 'destino');
@@ -815,7 +843,7 @@ function abrirAcciones(id: string) {
     pintarSemanaDe(nuevaFecha);
     cerrarSheet();
     refrescar();
-    avisar(`Clase movida al ${esc(etiquetaDia(nuevaFecha))} · ${horaClase(c)}`);
+    avisar(`Clase movida al ${esc(etiquetaDiaCompleta(nuevaFecha))} · ${horaClase(c)}`);
   });
 }
 
@@ -1440,6 +1468,24 @@ refrescar();
 pintarCobros();
 let diaCobros = hoyLocal(reloj.ahora());
 
+/** Reconcilia con el reloj REAL y repinta solo si cambió algún estado. */
+function reconciliarAlVolver(avisarCambio = false): void {
+  const antes = clases.map((c) => c.estado).join(',');
+  clases = repo.reconciliar();
+  if (clases.map((c) => c.estado).join(',') !== antes) {
+    refrescar();
+    if (avisarCambio) avisar('Se marcaron clases dadas por la hora');
+  }
+}
+
+// Vuelta de segundo plano: reconciliar YA (sin esperar al cron de 30 s), con
+// el reloj real, tanto al hacer visible la pestaña como al restaurar la página
+// desde la caché del navegador (pageshow, típico en móvil).
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') reconciliarAlVolver();
+});
+window.addEventListener('pageshow', () => reconciliarAlVolver());
+
 // El cron local avanza solo mientras la app está abierta (plan §2.1).
 setInterval(() => {
   const hoy = hoyLocal(reloj.ahora());
@@ -1448,12 +1494,7 @@ setInterval(() => {
     pintarCobros();
     pintarAlumnos();
   }
-  const antes = clases.map((c) => c.estado).join(',');
-  clases = repo.reconciliar();
-  if (clases.map((c) => c.estado).join(',') !== antes) {
-    refrescar();
-    avisar('Se marcaron clases dadas por la hora');
-  }
+  reconciliarAlVolver(true);
 }, 30000);
 
 const inicial = location.hash.slice(1);

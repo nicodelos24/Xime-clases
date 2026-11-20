@@ -139,11 +139,33 @@ export function generarOcurrencias(
   horizonteDias = HORIZONTE_DIAS,
 ): Clase[] {
   const hoy = hoyLocal(ahora);
-  const fin = sumarDias(hoy, horizonteDias);
+  return generarOcurrenciasEnRango(rutina, existentes, hoy, sumarDias(hoy, horizonteDias), alumnos);
+}
+
+/**
+ * Genera las ocurrencias que faltan en un rango ARBITRARIO `[desde, hasta]`
+ * (por ejemplo el mes o la semana que está mirando la persona, aunque esté a
+ * meses de distancia). NO usa la fecha consultada como «hoy»: solo crea
+ * ocurrencias programadas; la reconciliación por reloj es aparte.
+ *
+ * - Nunca crea fechas anteriores al inicio de la rutina (`desde` de plantilla).
+ * - Una fecha en `excepciones` (cancelada/movida) no se regenera en origen.
+ * - Un ID ya presente no se duplica.
+ */
+export function generarOcurrenciasEnRango(
+  rutina: RutinaSemanal,
+  existentes: Clase[],
+  desde: string,
+  hasta: string,
+  alumnos: AlumnoDeClase[] = [],
+): Clase[] {
+  if (hasta < desde) return [];
+  const inicio = desde > rutina.desde ? desde : rutina.desde;
+  if (hasta < inicio) return [];
   const ya = new Set(existentes.map((c) => c.id));
   const nuevas: Clase[] = [];
-  for (const fecha of fechasDeSerie(rutina, fin)) {
-    if (fecha < rutina.desde) continue;
+  for (const fecha of fechasDeSerie(rutina, hasta)) {
+    if (fecha < inicio) continue;
     if (rutina.excepciones[fecha]) continue;
     const id = idOcurrencia(rutina.id, fecha);
     if (ya.has(id)) continue;

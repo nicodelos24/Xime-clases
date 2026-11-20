@@ -92,6 +92,11 @@ export function etiquetaDia(f) {
     const { d, m } = parseFecha(f);
     return `${diaLargo(f)} ${d} de ${MESES[m - 1]}`;
 }
+/** Etiqueta larga con año, para origen/destino sin ambigüedad al reprogramar. */
+export function etiquetaDiaCompleta(f) {
+    const { y } = parseFecha(f);
+    return `${etiquetaDia(f)} de ${y}`;
+}
 /** "noviembre 2026". */
 export function etiquetaMes(f) {
     const { y, m } = parseFecha(f);

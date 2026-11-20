@@ -317,15 +317,19 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; width: 0; }
 .fab:active { transform: scale(.96); }
 
 /* ---------- Mes ---------- */
-.mes-flechas { display: flex; justify-content: flex-end; gap: 8px; margin: -4px 2px 8px; }
+/* Navegación de mes junto al título mes+año: fácil de ver y tocar en el celu. */
+.mes-titulo-nav { display: flex; align-items: center; gap: 4px; min-width: 0; }
+.mes-titulo-nav h2 { margin: 0; text-align: center; white-space: nowrap; }
 .flecha {
-  width: 34px; height: 34px; border-radius: 50%;
+  flex: 0 0 auto;
+  width: 44px; height: 44px; border-radius: 50%;           /* área táctil cómoda */
   border: 1px solid var(--linea); background: var(--bg-alt);
   color: var(--tinta); display: grid; place-items: center; cursor: pointer;
   transition: transform var(--t-rapida) var(--ease), background var(--t-rapida) var(--ease);
 }
 .flecha:hover { background: var(--tq-50); transform: translateY(-1px); }
 .flecha:active { transform: scale(.92); }
+.flecha:focus-visible { outline: 2px solid var(--tq-600); outline-offset: 2px; }
 
 .mes { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
 .mes-dow { font-size: 10.5px; text-align: center; color: var(--tinta-2); letter-spacing: .06em; padding-bottom: 2px; }
@@ -385,6 +389,18 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; width: 0; }
 }
 .dia-ver-semana:hover { background: var(--tq-50); transform: translateY(-1px); }
 .dia-ver-semana:active { transform: scale(.96); }
+.dia-acciones-head { display: inline-flex; align-items: center; gap: 6px; }
+.dia-agendar {
+  display: inline-flex; align-items: center; gap: 4px;
+  min-height: 34px; padding: 6px 12px;
+  border: 1px solid var(--tq-600); background: var(--tq-600); color: #fff;
+  border-radius: 999px; font-size: 11.5px; font-weight: 700; cursor: pointer;
+  transition: background var(--t-rapida) var(--ease), transform var(--t-rapida) var(--ease);
+}
+.dia-agendar:hover { background: var(--tq-700); transform: translateY(-1px); }
+.dia-agendar:active { transform: scale(.96); }
+.dia-agendar:focus-visible, .dia-ver-semana:focus-visible { outline: 2px solid var(--tq-600); outline-offset: 2px; }
+.dia-ver-semana { min-height: 34px; }
 .dia-vacio {
   font-size: 13px; color: var(--tinta-2); text-align: center;
   background: var(--bg-alt); border: 1px dashed var(--borde-crema);

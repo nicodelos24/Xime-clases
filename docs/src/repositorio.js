@@ -15,25 +15,37 @@
  *    cancelaciones, reversiones, reprogramaciones y el estado por hora.
  *  - Nunca se borra una clase: el historial de eventos queda en la clase.
  */
-import { cancelarClase, crearClase, deshacerCancelacion, deshacerMarcada, marcarDada, reconciliar, registrarMensajeEnviado, reprogramarClase, } from './clases.js';
-import { hoyLocal } from './reloj.js';
-import { anularPago, registrarPago } from './cobros.js';
-import { crearAlumno, editarAlumno, normalizarFichaGuardada, } from './alumnos.js';
-import { conExcepcion, crearClaseSuelta, crearRutina, generarOcurrencias, } from './agendar.js';
+import { cancelarClase, crearClase, deshacerCancelacion, deshacerMarcada, marcarDada, reconciliar, registrarMensajeEnviado, reprogramarClase, } from './clases.js?v=202611201755';
+import { hoyLocal } from './reloj.js?v=202611201755';
+import { anularPago, registrarPago } from './cobros.js?v=202611201755';
+import { crearAlumno, editarAlumno, normalizarFichaGuardada, } from './alumnos.js?v=202611201755';
+import { conExcepcion, crearClaseSuelta, crearRutina, generarOcurrencias, generarOcurrenciasEnRango, } from './agendar.js?v=202611201755';
 /**
- * Versión del formato guardado. v2 agregó `alumnos` (Pieza C); v3 (20/11)
- * agrega `rutinas` para las clases semanales SIN tocar clases, pagos ni
- * alumnos: el lector migra v1/v2→v3 conservando todo lo ya guardado.
+ * Versión del formato guardado. v2 agregó `alumnos` (Pieza C); las rutinas
+ * semanales (20/11) se guardan como campo ADITIVO `rutinas` SIN subir la
+ * versión: el build v2 anterior, que sigue servido en pestañas abiertas,
+ * acepta `version: 2` y conserva clases/pagos/alumnos. Si escribiéramos
+ * `version: 3`, ese v2 lo trataría como desconocido y RESEMBRARÍA la demo,
+ * borrando los datos de la clienta. Por eso el estado escrito es v2 con
+ * `rutinas` extra, y las rutinas además se respaldan en `CLAVE_RUTINAS`
+ * para recuperarlas si una pestaña v2 re-graba y las omite.
  */
-export const VERSION_ESTADO = 3;
+export const VERSION_ESTADO = 2;
+/** Versiones que el lector acepta (incluye v3 por si existediera un estado así). */
+const VERSIONES_LEIBLES = new Set([1, 2, 3]);
 /** Clave única de `localStorage` (por origen: puerto incluido). */
 export const CLAVE_ESTADO = 'xime.v5.estado';
+/** Respaldo separado de las plantillas de rutina, a prueba de pestañas v2. */
+export const CLAVE_RUTINAS = 'xime.v5.rutinas';
 /** Almacén en memoria (tests, o respaldo si `localStorage` no está). */
 export function almacenMemoria(inicial = null) {
     let valor = inicial;
+    let rutinas = null;
     return {
         leer: () => valor,
         escribir: (texto) => { valor = texto; },
+        leerRutinas: () => rutinas,
+        escribirRutinas: (texto) => { rutinas = texto; },
     };
 }
 /**
@@ -71,8 +83,26 @@ export function almacenLocalStorage(ventana = globalThis) {
                 }
             }
             if (requierePersistencia)
-                throw new Error('No se pudo guardar el pago en este navegador. No se aplicaron cambios.');
+                throw new Error('No se pudo guardar en este navegador. No se aplicaron cambios.');
             ultimo = texto;
+        },
+        leerRutinas: () => {
+            if (soloMemoria)
+                return null;
+            try {
+                return ventana.localStorage?.getItem(CLAVE_RUTINAS) ?? null;
+            }
+            catch {
+                return null;
+            }
+        },
+        escribirRutinas: (texto) => {
+            if (soloMemoria)
+                return;
+            try {
+                ventana.localStorage?.setItem(CLAVE_RUTINAS, texto);
+            }
+            catch { /* el estado principal ya está guardado */ }
         },
     };
 }
@@ -200,6 +230,32 @@ export class RepositorioClases {
         return this.cargar().rutinas;
     }
     /**
+     * Asegura que existan las ocurrencias de todas las rutinas hasta la fecha
+     * que se está mirando (mes/semana lejana incluida). No toca ninguna marca:
+     * `reconciliar` sigue siendo el ÚNICO lugar que cambia Por dar → Dada, y
+     * siempre con el reloj real, nunca con la fecha consultada.
+     */
+    materializarHasta(fecha) {
+        const estado = this.cargar();
+        let clases = estado.clases;
+        let cambio = false;
+        for (const rutina of estado.rutinas) {
+            // Desde el inicio de la plantilla hasta la fecha consultada: se crean
+            // TODAS las ocurrencias intermedias que falten (no solo ese día).
+            const nuevas = generarOcurrenciasEnRango(rutina, clases, rutina.desde, fecha);
+            if (nuevas.length) {
+                clases = [...clases, ...nuevas];
+                cambio = true;
+            }
+        }
+        if (cambio) {
+            const nuevo = { ...estado, clases };
+            this.persistir(nuevo);
+            this.estado = nuevo;
+        }
+        return clases;
+    }
+    /**
      * Al abrir/volver (y en el cron): (1) genera ocurrencias nuevas de las
      * rutinas para el horizonte móvil y (2) auto-marca por fin de duración.
      * No toca canceladas, dadas ni historial; solo guarda si algo cambió.
@@ -238,47 +294,52 @@ export class RepositorioClases {
         return this.reemplazar(deshacerMarcada(this.una(id), op));
     }
     cancelar(id, op) {
-        const clase = this.una(id);
-        this.marcarExcepcionDeOrigen(clase, 'cancelada');
-        return this.reemplazar(cancelarClase(clase, op));
+        return this.cambiarClaseYExcepcion(id, cancelarClase, op, 'cancelada');
     }
     revertir(id, op) {
-        const clase = this.una(id);
-        // Revertir una cancelación devuelve la clase a su día de origen: se quita
-        // la excepción para que la serie vuelva a estar completa.
-        this.quitarExcepcionDeOrigen(clase);
-        return this.reemplazar(deshacerCancelacion(clase, op));
+        // Revertir devuelve la clase a su día de origen: se quita la excepción.
+        return this.cambiarClaseYExcepcion(id, deshacerCancelacion, op, null);
     }
     reprogramar(id, fechaNueva, op) {
-        const clase = this.una(id);
-        this.marcarExcepcionDeOrigen(clase, 'movida');
-        return this.reemplazar(reprogramarClase(clase, fechaNueva, op));
+        return this.cambiarClaseYExcepcion(id, (c) => reprogramarClase(c, fechaNueva, op), op, 'movida');
     }
-    /** Si la clase es una ocurrencia, marca su fecha de origen como excepción. */
-    marcarExcepcionDeOrigen(clase, motivo) {
-        if (!clase.rutinaId || !clase.fechaRutina)
-            return;
+    /**
+     * Aplica un comando a UNA clase y, si es ocurrencia de una rutina, marca (o
+     * quita) su excepción de origen. Estado + auditoría + excepción se escriben
+     * en UNA SOLA llamada obligatoria: si falla el disco, no avanza nada en
+     * memoria, no queda halfway ni se anuncia éxito.
+     */
+    cambiarClaseYExcepcion(id, comando, op, motivo) {
         const estado = this.cargar();
-        const rutina = estado.rutinas.find((r) => r.id === clase.rutinaId);
-        if (!rutina || rutina.excepciones[clase.fechaRutina])
-            return;
-        const rutinas = estado.rutinas.map((r) => (r.id === rutina.id ? conExcepcion(r, clase.fechaRutina, motivo) : r));
-        this.persistir({ ...estado, rutinas });
-        this.estado = { ...estado, rutinas };
+        const clase = estado.clases.find((x) => x.id === id);
+        if (!clase)
+            throw new Error(`No existe la clase ${id}`);
+        const cambiada = comando(clase, op);
+        const rutinas = this.conExcepcionEn(estado.rutinas, clase, motivo);
+        const clases = estado.clases.map((x) => (x.id === id ? cambiada : x));
+        const nuevo = { ...estado, clases, rutinas };
+        this.persistir(nuevo, true);
+        this.estado = nuevo;
+        return cambiada;
     }
-    /** Si la clase vuelve a su origen (reversión), limpia la excepción. */
-    quitarExcepcionDeOrigen(clase) {
+    /** Calcula el cambio de excepción sobre el array de rutinas (puro). */
+    conExcepcionEn(rutinas, clase, motivo) {
         if (!clase.rutinaId || !clase.fechaRutina)
-            return;
-        const estado = this.cargar();
-        const rutina = estado.rutinas.find((r) => r.id === clase.rutinaId);
-        if (!rutina || !rutina.excepciones[clase.fechaRutina])
-            return;
-        const excepciones = { ...rutina.excepciones };
-        delete excepciones[clase.fechaRutina];
-        const rutinas = estado.rutinas.map((r) => (r.id === rutina.id ? { ...r, excepciones } : r));
-        this.persistir({ ...estado, rutinas });
-        this.estado = { ...estado, rutinas };
+            return rutinas;
+        return rutinas.map((r) => {
+            if (r.id !== clase.rutinaId)
+                return r;
+            if (motivo === null) {
+                if (!r.excepciones[clase.fechaRutina])
+                    return r;
+                const excepciones = { ...r.excepciones };
+                delete excepciones[clase.fechaRutina];
+                return { ...r, excepciones };
+            }
+            if (r.excepciones[clase.fechaRutina])
+                return r;
+            return conExcepcion(r, clase.fechaRutina, motivo);
+        });
     }
     registrarMensajeEnviado(id, canal) {
         return this.reemplazar(registrarMensajeEnviado(this.una(id), canal));
@@ -311,19 +372,21 @@ export class RepositorioClases {
             return null;
         try {
             const dato = JSON.parse(texto);
-            // Migra v1→v2→v3: clases, pagos y alumnos guardados se conservan tal
-            // cual; solo se agrega el campo `rutinas`. Versiones futuras → resembrar.
+            // Aceptamos v1, v2 y v3: NUNCA resembras sobre clases guardadas. Así una
+            // pestaña de otro build no puede borrar los datos de la clienta.
             const version = dato?.version;
-            if (!dato || (version !== VERSION_ESTADO && version !== 1 && version !== 2) || !Array.isArray(dato.clases))
+            if (!dato || !VERSIONES_LEIBLES.has(version) || !Array.isArray(dato.clases))
                 return null;
             const clases = dato.clases.map(normalizarClase);
             const pagos = Array.isArray(dato.pagos) ? dato.pagos : [];
             const alumnos = Array.isArray(dato.alumnos)
                 ? dato.alumnos.map(normalizarFichaGuardada).filter((a) => a !== null)
                 : this.sembrarAlumnos(hoyLocal(this.reloj.ahora()));
-            const rutinas = Array.isArray(dato.rutinas)
+            const rutinasGuardadas = Array.isArray(dato.rutinas)
                 ? dato.rutinas.map(normalizarRutina).filter((r) => r !== null)
                 : [];
+            // Si un build v2 re-grabó y quitó `rutinas`, las recuperamos del respaldo.
+            const rutinas = rutinasGuardadas.length ? rutinasGuardadas : this.leerRutinasRespaldadas();
             const estado = {
                 version: VERSION_ESTADO,
                 guardadoEn: typeof dato.guardadoEn === 'string' ? dato.guardadoEn : new Date(this.reloj.ahora()).toISOString(),
@@ -354,10 +417,30 @@ export class RepositorioClases {
         this.persistir(estado);
         return estado;
     }
+    /** Lee las rutinas del respaldo (clave aparte que el build v2 no toca). */
+    leerRutinasRespaldadas() {
+        try {
+            const texto = this.almacen.leerRutinas?.();
+            if (!texto)
+                return [];
+            const dato = JSON.parse(texto);
+            return Array.isArray(dato)
+                ? dato.map(normalizarRutina).filter((r) => r !== null)
+                : [];
+        }
+        catch {
+            return [];
+        }
+    }
     persistir(estado, requierePersistencia = false) {
+        // Si la escritura obligatoria falla, lanza ANTES de tocar el respaldo:
+        // así no quedan rutinas nuevas con un estado principal viejo.
         this.almacen.escribir(JSON.stringify({
             ...estado,
             guardadoEn: new Date(this.reloj.ahora()).toISOString(),
         }), requierePersistencia);
+        // Respaldo separado: si una pestaña v2 re-graba el estado principal y
+        // pierde `rutinas`, acá siguen para recuperarlas.
+        this.almacen.escribirRutinas?.(JSON.stringify(estado.rutinas));
     }
 }

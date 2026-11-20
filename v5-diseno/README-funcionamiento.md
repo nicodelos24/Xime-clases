@@ -98,3 +98,26 @@ servidor.
   del almanaque v5 navegan entre meses; toque simple/doble y estilo intactos.
 - Sin BD, sin login y sin tocar `serve.mjs`/8797. `docs/` se regenera
   transpilando TS a JS estático con cache-bust ( Pages no transpila en vivo).
+
+### Actualizado 20/11 (segunda ronda)
+
+- **Meses lejanos**: las ocurrencias se materializan para el rango que se
+  consulta (mes/semana visible), no solo hasta `hoy + 60 días`. Consultar
+  febrero 2027 muestra sus clases sin duplicar, sin inventar días previos al
+  inicio y sin marcarlas como dadas por el hecho de mirarlas.
+- **Vuelta de segundo plano**: `visibilitychange`/`pageshow` reconcilian el
+  reloj al instante; una clase 23:00–00:00 pasa a «Dada» apenas cruza la
+  medianoche, sin esperar el cron ni recargar.
+- **Mover con seguridad**: una sola escritura obligatoria para estado,
+  auditoría y excepción. Si falla el guardado, el cuadro sigue abierto con
+  el error y no se aplica ningún cambio parcial; origen y destino se muestran
+  con año antes de confirmar.
+- **Datos a salvo entre builds**: el estado se escribe en `version: 2` con
+  `rutinas` aditivo y respaldo en `xime.v5.rutinas`, para que una pestaña
+  antigua del build v2 no resembre ni borre clases. Los imports de
+  `docs/src/` llevan cache-bust individual para no mezclar versiones.
+- **Mes fácil de usar**: flechas anterior/siguiente de 44×44 px junto al
+  título mes+año, con nombres accesibles («Mes siguiente: enero 2027»). En
+  el día elegido del almanaque, incluso vacío, «Agendar acá» abre la suelta
+  con esa fecha precargada; al guardar se sigue en ese mes/día y la tarjeta
+  persiste tras F5. Datos ficticios (sin BD todavía).

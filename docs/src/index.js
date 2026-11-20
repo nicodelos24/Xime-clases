@@ -9,14 +9,14 @@
  * Sin DOM, sin `Date.now()` y sin estado global: la UI (propuesta.js) los
  * consume; las pruebas (test/*.test.ts) los consumen con reloj simulado.
  */
-export * from './reloj.js';
-export * from './fechas.js';
-export * from './clases.js';
-export * from './whatsapp.js';
-export * from './resumen.js';
-export * from './agenda.js';
-export * from './navegacion.js';
-export * from './repositorio.js';
-export * from './demo.js';
-export * from './cobros.js';
-export * from './alumnos.js';
+export * from './reloj.js?v=202611201755';
+export * from './fechas.js?v=202611201755';
+export * from './clases.js?v=202611201755';
+export * from './whatsapp.js?v=202611201755';
+export * from './resumen.js?v=202611201755';
+export * from './agenda.js?v=202611201755';
+export * from './navegacion.js?v=202611201755';
+export * from './repositorio.js?v=202611201755';
+export * from './demo.js?v=202611201755';
+export * from './cobros.js?v=202611201755';
+export * from './alumnos.js?v=202611201755';
