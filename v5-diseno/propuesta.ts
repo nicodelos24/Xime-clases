@@ -2,9 +2,10 @@
 // La estética vive en tokens.css/propuesta.css; acá solo se cambian estados,
 // textos y el flujo de cancelación. Sin emoji: solo SVG de icons.js.
 import {
-  crearClase, reconciliar, cancelarClase, deshacerCancelacion, registrarMensajeEnviado, reprogramarClase,
-  horaClase, etiquetaEstado, type Clase, type AlumnoDeClase,
+  horaClase, type Clase,
 } from './src/clases.ts';
+import { RepositorioClases, almacenLocalStorage, type RepositorioDeClases } from './src/repositorio.ts';
+import { datosDemo } from './src/demo.ts';
 import { resumenHoy, clasesDelDia, clasesDeLaSemana } from './src/resumen.ts';
 import { diaCorto, diaLargo, etiquetaDia, etiquetaMes, sumarDias, parseFecha } from './src/fechas.ts';
 import { relojDelDispositivo, hoyLocal, type Reloj } from './src/reloj.ts';
@@ -12,49 +13,15 @@ import {
   textoCancelacion, destinos, resumenEnvio, linkTexto, type Destino,
 } from './src/whatsapp.ts';
 
-/* ---------------------------------------------------------------- datos demo */
+/* ------------------------------------------------- estado persistente (local) */
 const reloj: Reloj = relojDelDispositivo();
+/** Quién opera la app hoy: único dueño. En Fase 4 sale de la sesión. */
+const QUIEN = 'dueño';
 
-function alumnos(nombres: [string, string][], prefijo: string): AlumnoDeClase[] {
-  return nombres.map(([nombre, telefono], i) => ({ id: `${prefijo}${i}`, nombre, telefono }));
-}
-
-const GRUPO_A = alumnos([
-  ['Carla T.', '099 123 456'], ['Bruno S.', '099 987 654'], ['Julieta P.', '099 112 233'],
-  ['Martín R.', '099 445 566'], ['Lucía C.', '099 778 899'], ['Diego G.', '099 321 654'],
-  ['Sofía M.', '099 555 101'], ['Tomás L.', '099 666 202'], ['Valentina R.', '099 777 303'],
-  ['Mateo F.', '099 888 404'], ['Camila S.', '099 999 505'], ['Joaquín P.', '099 101 606'],
-], 'a');
-
-const GRUPO_B = alumnos([
-  ['Julieta P.', '099 112 233'], ['Lucía C.', '099 778 899'], ['Sofía M.', '099 555 101'],
-  ['Tomás L.', '099 666 202'], ['Valentina R.', '099 777 303'], ['Mateo F.', '099 888 404'],
-  ['Camila S.', '099 999 505'], ['Joaquín P.', '099 101 606'], ['Abril G.', '099 212 717'],
-], 'b');
-
-const GRUPO_V = alumnos([
-  ['Martín R.', '099 445 566'], ['Diego G.', '099 321 654'], ['Sofía M.', '099 555 101'],
-  ['Tomás L.', '099 666 202'], ['Valentina R.', '099 777 303'], ['Mateo F.', '098 888 404'],
-  ['Camila S.', '098 999 505'], ['Joaquín P.', '098 101 606'], ['Abril G.', '098 212 717'],
-  ['Bruno S.', '098 987 654'], ['Lucía C.', '098 778 899'],
-], 'v');
-
-/** Semana de la demo: lunes 16 al domingo 22 de noviembre de 2026. */
-function datosDemo(): Clase[] {
-  const lunes = '2026-11-16';
-  return [
-    crearClase({ id: 'c-lun', nombre: 'Grupo Lunes', fecha: lunes, hora: '15:00', alumnos: GRUPO_A.slice(0, 8) }),
-    crearClase({ id: 'c-mar-a', nombre: 'Grupo Martes A', fecha: sumarDias(lunes, 1), hora: '15:00', alumnos: GRUPO_A }),
-    crearClase({ id: 'c-mar-b', nombre: 'Grupo Martes B', fecha: sumarDias(lunes, 1), hora: '17:30', alumnos: GRUPO_B }),
-    crearClase({ id: 'c-mie', nombre: 'Grupo Miércoles', fecha: sumarDias(lunes, 2), hora: '10:00', alumnos: GRUPO_B.slice(0, 6) }),
-    crearClase({ id: 'c-jue', nombre: 'Grupo Jueves', fecha: sumarDias(lunes, 3), hora: '16:00', alumnos: GRUPO_V.slice(0, 7) }),
-    crearClase({ id: 'c-vie', nombre: 'Grupo Viernes', fecha: sumarDias(lunes, 4), hora: '15:00', alumnos: GRUPO_V }),
-    crearClase({ id: 'c-vie-b', nombre: 'Grupo Viernes B', fecha: sumarDias(lunes, 4), hora: '18:00', alumnos: GRUPO_A.slice(2, 9) }),
-    crearClase({ id: 'c-sab', nombre: 'Grupo Sábado', fecha: sumarDias(lunes, 5), hora: '11:00', alumnos: GRUPO_B.slice(1, 6) }),
-  ];
-}
-
-let clases: Clase[] = reconciliar(datosDemo(), reloj.ahora());
+// Un solo repositorio: siembra la demo anclada a hoy la primera vez y desde
+// ahí todo comando se guarda en localStorage (un refresh no pierde nada).
+const repo: RepositorioDeClases = new RepositorioClases(almacenLocalStorage(), reloj, datosDemo);
+let clases: Clase[];
 
 /* ------------------------------------------------------------------- helpers */
 const $ = (sel: string) => document.querySelector(sel);
@@ -370,7 +337,8 @@ function abrirAcciones(id: string) {
       const base = sumarDias(c.fecha, 1);
       const delta = ((idx - ((new Date(`${base}T12:00:00Z`).getUTCDay() + 6) % 7) + 7) % 7);
       const nuevaFecha = sumarDias(base, delta);
-      clases = clases.map((x) => (x.id === id ? reprogramarClase(x, nuevaFecha, 'dueño') : x));
+      repo.reprogramar(id, nuevaFecha, { quien: QUIEN, ahora: reloj.ahora() });
+      clases = repo.listar();
       cerrarSheet();
       refrescar();
       avisar(`Clase movida al ${esc(etiquetaDia(nuevaFecha))} · ${horaClase(c)}`);
@@ -494,7 +462,7 @@ function abrirCancelacion(id: string) {
 
 function confirmarCancelacion(c: Clase, motivo: string) {
   const ahora = reloj.ahora();
-  const cancelada = cancelarClase(c, { motivo: motivo || 'sin motivo', quien: 'dueño', ahora });
+  const cancelada = repo.cancelar(c.id, { motivo: motivo || 'sin motivo', quien: QUIEN, ahora });
 
   let lista: Destino[] = [];
   let texto = textoEnviado;
@@ -506,14 +474,13 @@ function confirmarCancelacion(c: Clase, motivo: string) {
   }
 
   const anterior = c.estado;
-  const registrada =
-    modoEnvio === 'masivo' && lista.length > 0
-      ? registrarMensajeEnviado(cancelada, 'masivo')
-      : modoEnvio === 'individual' && lista.length > 0
-        ? registrarMensajeEnviado(cancelada, 'individual')
-        : registrarMensajeEnviado(cancelada, 'ninguno');
-
-  clases = clases.map((x) => (x.id === c.id ? registrada : x));
+  const canal = modoEnvio === 'masivo' && lista.length > 0
+    ? 'masivo'
+    : modoEnvio === 'individual' && lista.length > 0
+      ? 'individual'
+      : 'ninguno';
+  repo.registrarMensajeEnviado(cancelada.id, canal);
+  clases = repo.listar();
   cerrarSheet();
   refrescar();
 
@@ -545,8 +512,8 @@ function revertirCancelacion(id: string): boolean {
   // El toast es reutilizable: si algo falla, se limpia igual para que no
   // quede un "Deshacer" que vuelve a lanzar el mismo error.
   try {
-    const revertida = deshacerCancelacion(c, { motivo: 'error del dueño', quien: 'dueño', ahora: reloj.ahora() });
-    clases = clases.map((x) => (x.id === id ? revertida : x));
+    repo.revertir(id, { motivo: 'error del dueño', quien: QUIEN, ahora: reloj.ahora() });
+    clases = repo.listar();
   } catch (e) {
     avisar(e instanceof Error ? e.message : 'No se pudo deshacer', 3000);
     return false;
@@ -720,14 +687,14 @@ function refrescar() {
   pintarAlumnos();
 }
 
-// Re-alineado al abrir: las clases cuya hora pasó quedan Dadas.
-clases = reconciliar(clases, reloj.ahora());
+// Re-alineado al abrir: las clases cuya hora pasó quedan Dadas (y se guarda).
+clases = repo.reconciliar();
 refrescar();
 
 // El cron local avanza solo mientras la app está abierta (plan §2.1).
 setInterval(() => {
   const antes = clases.map((c) => c.estado).join(',');
-  clases = reconciliar(clases, reloj.ahora());
+  clases = repo.reconciliar();
   if (clases.map((c) => c.estado).join(',') !== antes) {
     refrescar();
     avisar('Se marcaron clases dadas por la hora');
@@ -740,7 +707,7 @@ else pintarTitulo('v-hoy');
 
 // Exposición mínima para QA (consola / capturas): sin tocar el estado real.
 (window as unknown as Record<string, unknown>).ximeV5 = {
-  get clases() { return clases; },
+  get clases() { return structuredClone(clases); },
   refrescar,
   reloj,
   textoCancelacion,

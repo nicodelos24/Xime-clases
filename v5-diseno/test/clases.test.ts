@@ -158,15 +158,56 @@ test('instanteInicio: 15:00 del 18/11 en Uruguay = 18:00 UTC', () => {
 test('punto 2: cambiar de día reprograma a Programada y limpia el marcado', () => {
   const dada = marcarSiPasada(claseBase(), t(ISO_1830)); // 15:00 del 18/11 ya pasó
   assert.equal(dada.estado, 'dada');
-  const movida = reprogramarClase(dada, '2026-11-25', 'dueño');
+  const movida = reprogramarClase(dada, '2026-11-25', { quien: 'dueño', ahora: t(ISO_1830) });
   assert.equal(movida.estado, 'programada');
   assert.equal(movida.fecha, '2026-11-25');
   assert.equal(movida.minutos, 900, 'conserva la hora');
   assert.equal(movida.marcadaEn, null);
   // La reconciliación con el reloj actual NO la marca de nuevo (el día es futuro).
   assert.equal(reconciliar([movida], t(ISO_1830))[0].estado, 'programada');
-  assert.throws(() => reprogramarClase(dada, '30/11/2026', 'dueño'), /Fecha inválida/);
-  assert.throws(() => reprogramarClase(dada, '2026-11-25', ''), /quién/);
+  assert.throws(() => reprogramarClase(dada, '30/11/2026', { quien: 'dueño', ahora: t(ISO_1830) }), /Fecha inválida/);
+  assert.throws(() => reprogramarClase(dada, '2026-11-25', { quien: '', ahora: t(ISO_1830) }), /quién/);
+});
+
+test('reprogramar una cancelada conserva la cancelación anterior y quién la hizo', () => {
+  const cancelada = cancelarClase(claseBase(), { motivo: 'Lluvia', quien: 'Xime', ahora: t(ISO_1830) });
+  const movida = reprogramarClase(cancelada, '2026-11-25', { quien: 'Xime', ahora: t('2026-11-18T22:00:00.000Z') });
+
+  assert.equal(movida.estado, 'programada');
+  assert.equal(movida.cancelacion, null, 'la clase vuelve a estar activa');
+  const ultimo = movida.eventos.at(-1);
+  assert.equal(ultimo?.tipo, 'reprogramada');
+  assert.deepEqual(ultimo, {
+    tipo: 'reprogramada',
+    fecha: '2026-11-18',
+    minutos: 19 * 60,
+    fechaAnterior: '2026-11-18',
+    fechaNueva: '2026-11-25',
+    quien: 'Xime',
+    cancelacionAnterior: {
+      fecha: '2026-11-18',
+      minutos: 18 * 60 + 30,
+      motivo: 'Lluvia',
+      quien: 'Xime',
+      mensajesEnviados: null,
+    },
+  });
+  // La cancelación anterior sigue además en el evento de cancelación.
+  assert.deepEqual(movida.eventos[0], {
+    tipo: 'cancelada',
+    registro: cancelada.cancelacion,
+  });
+});
+
+test('la auditoría acumula cancelar, revertir y mensajes sin borrar nada', () => {
+  const cancelada = cancelarClase(claseBase(), { motivo: 'Lluvia', quien: 'Xime', ahora: t(ISO_1830) });
+  const conMensaje = registrarMensajeEnviado(cancelada, 'masivo');
+  const revertida = deshacerCancelacion(conMensaje, { motivo: 'error del dueño', quien: 'Xime', ahora: t(ISO_1830) });
+
+  assert.deepEqual(revertida.eventos.map((e) => e.tipo), ['cancelada', 'mensajes', 'revertida']);
+  const rev = revertida.eventos[2];
+  assert.equal(rev.tipo === 'revertida' && rev.cancelacion.quien, 'Xime');
+  assert.equal(rev.tipo === 'revertida' && rev.motivo, 'error del dueño');
 });
 
 test('punto 3: cancelar sin motivo registra "sin motivo"', () => {
