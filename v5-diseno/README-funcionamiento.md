@@ -121,3 +121,23 @@ servidor.
   el día elegido del almanaque, incluso vacío, «Agendar acá» abre la suelta
   con esa fecha precargada; al guardar se sigue en ese mes/día y la tarjeta
   persiste tras F5. Datos ficticios (sin BD todavía).
+
+### Actualizado 20/11 (barra inferior que se oculta al scrollear)
+
+- **Más espacio en el celu**: al bajar por el contenido la barra inferior se
+  desliza suavemente fuera de pantalla y al subir vuelve a aparecer; al llegar
+  arriba del todo queda siempre visible. Mismo diseño, ancho, bordes y color
+  (claro/oscuro) en reposo: solo cambia su posición, sin tocar el layout ni
+  generar saltos de contenido, franjas de fondo ni tap targets invisibles
+  (`pointer-events: none` mientras está fuera).
+- **Sin parpadeos**: la decisión es pura (`src/barra-scroll.ts`) con zona
+  muerta de 6 px (ignora micro-scroll y rebotes), tope de 4 px (siempre visible
+  arriba) y overscroll negativo tratado como 0. El listener `scroll` es
+  `passive` y va por `requestAnimationFrame`. Si el teclado enfoca la barra
+  (Tab) o cambia la vista (hash), reaparece y se recalibra la referencia.
+- **Movimiento reducido**: `prefers-reduced-motion` anula la transición global
+  (cambio instantáneo, sin animación).
+- **Verificado en Chrome** (390 px, claro/oscuro, con/sin scroll): bajar oculta
+  (transform 87 px, opacity 0), subir reaparece, micro-scroll de 3 px no cambia
+  el estado, la animación es suave (~120–150 ms), el foco por teclado la devuelve
+  y no hay errores de consola. Capturas en `docs/qa/barra-scroll/`.

@@ -578,6 +578,15 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; width: 0; }
   border-radius: 28px;
   box-shadow: 0 10px 30px rgba(8,69,74,.16), 0 2px 8px rgba(11,107,106,.08);
   padding: 7px 6px calc(8px + env(safe-area-inset-bottom));
+  /* Se desliza al bajar / reaparece al subir: solo transform + opacidad, sin
+     tocar layout, para que no haya saltos ni franjas de fondo. La transición
+     la anula el bloque global de prefers-reduced-motion (cambio instantáneo). */
+  transition: transform var(--t-media) var(--ease), opacity var(--t-media) var(--ease);
+}
+.tabbar.oculta {
+  transform: translateY(calc(100% + 24px + env(safe-area-inset-bottom)));
+  opacity: 0;
+  pointer-events: none; /* ningún tap target invisible intercepta toques */
 }
 .tab {
   display: grid; justify-items: center; gap: 2px;

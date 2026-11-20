@@ -1,16 +1,17 @@
 // Clases v5 · navegación + funcionamiento (auto-marcado, Cancelar clase, WhatsApp)
 // La estética vive en tokens.css/propuesta.css; acá solo se cambian estados,
 // textos y el flujo de cancelación. Sin emoji: solo SVG de icons.js.
-import { horaClase, } from './src/clases.js?v=202611201755';
-import { CLAVE_ESTADO, RepositorioClases, almacenLocalStorage } from './src/repositorio.js?v=202611201755';
-import { alumnosCobrosDemo, datosDemo, fichasDemo } from './src/demo.js?v=202611201755';
-import { resumenCobros } from './src/cobros.js?v=202611201755';
-import { resumenHoy, clasesDelDia, clasesDeLaSemana } from './src/resumen.js?v=202611201755';
-import { registrarToqueFecha, mesDe } from './src/agenda.js?v=202611201755';
-import { destinoDeEnlace } from './src/navegacion.js?v=202611201755';
-import { diaCorto, etiquetaDia, etiquetaDiaCompleta, etiquetaMes, parseFecha, lunesDe, diasDelMes, esFechaValida } from './src/fechas.js?v=202611201755';
-import { relojDelDispositivo, hoyLocal } from './src/reloj.js?v=202611201755';
-import { textoCancelacion, destinos, resumenEnvio, linkTexto, } from './src/whatsapp.js?v=202611201755';
+import { horaClase, } from './src/clases.js?v=202611202205';
+import { CLAVE_ESTADO, RepositorioClases, almacenLocalStorage } from './src/repositorio.js?v=202611202205';
+import { alumnosCobrosDemo, datosDemo, fichasDemo } from './src/demo.js?v=202611202205';
+import { resumenCobros } from './src/cobros.js?v=202611202205';
+import { resumenHoy, clasesDelDia, clasesDeLaSemana } from './src/resumen.js?v=202611202205';
+import { registrarToqueFecha, mesDe } from './src/agenda.js?v=202611202205';
+import { destinoDeEnlace } from './src/navegacion.js?v=202611202205';
+import { debeOcultarBarra } from './src/barra-scroll.js?v=202611202205';
+import { diaCorto, etiquetaDia, etiquetaDiaCompleta, etiquetaMes, parseFecha, lunesDe, diasDelMes, esFechaValida } from './src/fechas.js?v=202611202205';
+import { relojDelDispositivo, hoyLocal } from './src/reloj.js?v=202611202205';
+import { textoCancelacion, destinos, resumenEnvio, linkTexto, } from './src/whatsapp.js?v=202611202205';
 /* ------------------------------------------------- estado persistente (local) */
 const reloj = relojDelDispositivo();
 /** Quién opera la app hoy: único dueño. En Fase 4 sale de la sesión. */
@@ -1058,7 +1059,7 @@ toast.addEventListener('click', () => {
     }
 });
 /* ------------------------------------------------------- alumnos (fichas) */
-import { GRUPOS_DEMO, construirVista, filtrarYOrdenar, puntoEstadoVence, textoEstadoVence, validarAlumno, } from './src/alumnos.js?v=202611201755';
+import { GRUPOS_DEMO, construirVista, filtrarYOrdenar, puntoEstadoVence, textoEstadoVence, validarAlumno, } from './src/alumnos.js?v=202611202205';
 let ordenAlumnos = 'ninguno';
 const filtrosAlumnos = new Set();
 let busquedaAlumno = '';
@@ -1427,6 +1428,47 @@ tabs.forEach((t) => t.addEventListener('click', (e) => {
     e.preventDefault();
     irA(t.getAttribute('href').slice(1));
 }));
+/* -------------------------------------- barra inferior: ocultar al bajar */
+// Se desliza fuera de pantalla al bajar por el contenido y vuelve al subir,
+// para ganar espacio útil en el celu. La decisión (zona muerta, tope, etc.)
+// vive en `src/barra-scroll.ts` y es pura; acá solo se aplica al DOM.
+const tabbar = document.querySelector('.tabbar');
+if (tabbar) {
+    let ultimoY = Math.max(0, window.scrollY);
+    let oculta = false;
+    let framePendiente = false;
+    const aplicar = (ocultar) => {
+        if (ocultar === oculta)
+            return;
+        oculta = ocultar;
+        tabbar.classList.toggle('oculta', oculta);
+    };
+    const muestrear = () => {
+        framePendiente = false;
+        const y = Math.max(0, window.scrollY);
+        oculta = debeOcultarBarra(y, ultimoY, oculta);
+        tabbar.classList.toggle('oculta', oculta);
+        ultimoY = y;
+    };
+    window.addEventListener('scroll', () => {
+        if (framePendiente)
+            return;
+        framePendiente = true;
+        requestAnimationFrame(muestrear);
+    }, { passive: true });
+    // Nunca dejar un destino invisible pero enfocable: si el teclado enfoca
+    // la barra (Tab), se muestra y se reinicia la referencia de scroll.
+    tabbar.addEventListener('focusin', () => {
+        ultimoY = Math.max(0, window.scrollY);
+        aplicar(false);
+    });
+    // Al cambiar de vista puede cambiar la altura del contenido y el scroll;
+    // recalcular la referencia para no interpretar ese salto como una dirección.
+    window.addEventListener('hashchange', () => {
+        ultimoY = Math.max(0, window.scrollY);
+        aplicar(false);
+    });
+}
 $$('a.link-suave').forEach((a) => a.addEventListener('click', (e) => {
     const destino = destinoDeEnlace(a.getAttribute('href'));
     if (!destino)

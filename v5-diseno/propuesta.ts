@@ -11,6 +11,7 @@ import { resumenCobros, type Pago } from './src/cobros.ts';
 import { resumenHoy, clasesDelDia, clasesDeLaSemana } from './src/resumen.ts';
 import { registrarToqueFecha, mesDe, type ToqueFecha } from './src/agenda.ts';
 import { destinoDeEnlace } from './src/navegacion.ts';
+import { debeOcultarBarra } from './src/barra-scroll.ts';
 import { diaCorto, etiquetaDia, etiquetaDiaCompleta, etiquetaMes, sumarDias, parseFecha, lunesDe, diasDelMes, esFechaValida } from './src/fechas.ts';
 import { relojDelDispositivo, hoyLocal, type Reloj } from './src/reloj.ts';
 import {
@@ -1430,6 +1431,51 @@ tabs.forEach((t) => t.addEventListener('click', (e) => {
   e.preventDefault();
   irA((t.getAttribute('href') as string).slice(1));
 }));
+
+/* -------------------------------------- barra inferior: ocultar al bajar */
+// Se desliza fuera de pantalla al bajar por el contenido y vuelve al subir,
+// para ganar espacio útil en el celu. La decisión (zona muerta, tope, etc.)
+// vive en `src/barra-scroll.ts` y es pura; acá solo se aplica al DOM.
+const tabbar = document.querySelector('.tabbar') as HTMLElement | null;
+if (tabbar) {
+  let ultimoY = Math.max(0, window.scrollY);
+  let oculta = false;
+  let framePendiente = false;
+
+  const aplicar = (ocultar: boolean) => {
+    if (ocultar === oculta) return;
+    oculta = ocultar;
+    tabbar.classList.toggle('oculta', oculta);
+  };
+
+  const muestrear = () => {
+    framePendiente = false;
+    const y = Math.max(0, window.scrollY);
+    oculta = debeOcultarBarra(y, ultimoY, oculta);
+    tabbar.classList.toggle('oculta', oculta);
+    ultimoY = y;
+  };
+
+  window.addEventListener('scroll', () => {
+    if (framePendiente) return;
+    framePendiente = true;
+    requestAnimationFrame(muestrear);
+  }, { passive: true });
+
+  // Nunca dejar un destino invisible pero enfocable: si el teclado enfoca
+  // la barra (Tab), se muestra y se reinicia la referencia de scroll.
+  tabbar.addEventListener('focusin', () => {
+    ultimoY = Math.max(0, window.scrollY);
+    aplicar(false);
+  });
+
+  // Al cambiar de vista puede cambiar la altura del contenido y el scroll;
+  // recalcular la referencia para no interpretar ese salto como una dirección.
+  window.addEventListener('hashchange', () => {
+    ultimoY = Math.max(0, window.scrollY);
+    aplicar(false);
+  });
+}
 
 $$('a.link-suave').forEach((a) => a.addEventListener('click', (e) => {
   const destino = destinoDeEnlace(a.getAttribute('href'));
