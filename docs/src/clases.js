@@ -56,6 +56,7 @@ export function crearClase(spec) {
         estado: 'programada',
         marcadaEn: null,
         cancelacion: null,
+        eventos: [],
     };
 }
 /** ¿La fecha y hora de la clase ya pasaron según `ahora`? */
@@ -88,30 +89,33 @@ export function cancelarClase(c, op) {
     // "sin motivo" (antes era obligatorio y bloqueaba la cancelación).
     if (!op.quien.trim())
         throw new Error('La cancelación necesita quién la hace');
+    const registro = {
+        fecha: hoyLocal(op.ahora),
+        minutos: minutosLocales(op.ahora),
+        motivo: op.motivo.trim() || 'sin motivo',
+        quien: op.quien.trim(),
+        mensajesEnviados: null,
+    };
     return {
         ...c,
         estado: 'cancelada',
         marcadaEn: null,
-        cancelacion: {
-            fecha: hoyLocal(op.ahora),
-            minutos: minutosLocales(op.ahora),
-            motivo: op.motivo.trim() || 'sin motivo',
-            quien: op.quien.trim(),
-            mensajesEnviados: null,
-        },
+        cancelacion: registro,
+        eventos: [...(c.eventos ?? []), { tipo: 'cancelada', registro }],
     };
 }
 /**
  * Punto 2: cambiar una clase de día (reprogramar). Vuelve a Programada con la
  * nueva fecha; se limpia el marcado de "dada" para que la reconciliación no la
- * vuelva a marcar hasta la hora del nuevo día. Queda registrado en `nota` quién
- * reprogramó. Nunca se borra la clase (regla vigente).
+ * vuelva a marcar hasta la hora del nuevo día. Queda registrado en `eventos`
+ * quién reprogramó y, si estaba cancelada, la cancelación anterior completa
+ * (con quién la había cancelado). Nunca se borra la clase (regla vigente).
  */
-export function reprogramarClase(c, fechaNueva, quien) {
+export function reprogramarClase(c, fechaNueva, op) {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(fechaNueva))
         throw new Error(`Fecha inválida: ${JSON.stringify(fechaNueva)}`);
     diasDeFecha(fechaNueva); // valida día real (bisiestos, meses)
-    if (!quien.trim())
+    if (!op.quien.trim())
         throw new Error('La reprogramación necesita quién la hace');
     return {
         ...c,
@@ -119,6 +123,18 @@ export function reprogramarClase(c, fechaNueva, quien) {
         estado: 'programada',
         marcadaEn: null,
         cancelacion: null,
+        eventos: [
+            ...(c.eventos ?? []),
+            {
+                tipo: 'reprogramada',
+                fecha: hoyLocal(op.ahora),
+                minutos: minutosLocales(op.ahora),
+                fechaAnterior: c.fecha,
+                fechaNueva,
+                quien: op.quien.trim(),
+                cancelacionAnterior: c.cancelacion,
+            },
+        ],
     };
 }
 /**
@@ -127,8 +143,10 @@ export function reprogramarClase(c, fechaNueva, quien) {
  * siguiente reconciliación la volverá a marcar Dada sola.
  */
 export function deshacerCancelacion(c, op) {
-    if (c.estado !== 'cancelada')
+    if (c.estado !== 'cancelada' || !c.cancelacion)
         throw new Error('Solo se revierte una clase cancelada');
+    if (!op.quien.trim())
+        throw new Error('La reversión necesita quién la hace');
     if (!op.motivo.trim())
         throw new Error('La reversión necesita un motivo');
     return {
@@ -136,6 +154,18 @@ export function deshacerCancelacion(c, op) {
         estado: 'programada',
         marcadaEn: null,
         cancelacion: null,
+        eventos: [
+            ...(c.eventos ?? []),
+            {
+                tipo: 'revertida',
+                fecha: hoyLocal(op.ahora),
+                minutos: minutosLocales(op.ahora),
+                motivo: op.motivo.trim(),
+                quien: op.quien.trim(),
+                // La cancelación deshecha no se pierde: queda en la auditoría.
+                cancelacion: c.cancelacion,
+            },
+        ],
     };
 }
 /** Registra en la auditoría de la cancelación qué salió por WhatsApp. */
@@ -143,7 +173,11 @@ export function registrarMensajeEnviado(c, canal) {
     if (c.estado !== 'cancelada' || !c.cancelacion) {
         throw new Error('Los mensajes de cancelación se registran sobre una clase cancelada');
     }
-    return { ...c, cancelacion: { ...c.cancelacion, mensajesEnviados: canal } };
+    return {
+        ...c,
+        cancelacion: { ...c.cancelacion, mensajesEnviados: canal },
+        eventos: [...(c.eventos ?? []), { tipo: 'mensajes', canal }],
+    };
 }
 /** Chip de estado para la UI: "Programada" | "Dada" | "Cancelada". */
 export function etiquetaEstado(c) {

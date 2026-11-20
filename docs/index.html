@@ -5,8 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Clases v5 · Xime Clases</title>
 <link rel="icon" href="data:,">
-<link rel="stylesheet" href="tokens.css?v=202611191805">
-<link rel="stylesheet" href="propuesta.css?v=202611191924">
+<link rel="stylesheet" href="tokens.css?v=202611200145">
+<link rel="stylesheet" href="propuesta.css?v=202611200145">
 </head>
 <body>
 <p class="marca">XIME CLASES · V5</p>
@@ -18,7 +18,7 @@
       <h1 class="barra-titulo">Hoy</h1>
     </div>
     <div class="barra-acciones">
-      <button class="campana" type="button" aria-label="3 notificaciones">
+      <button class="campana" type="button" aria-label="Avisos de cobro" aria-haspopup="dialog">
         <svg class="ico" width="21" height="21"><use href="#i-campana"/></svg>
         <span class="campana-punto"></span>
       </button>
@@ -61,19 +61,19 @@
       <div class="kpis">
         <article class="kpi kpi-cobrado">
           <span class="kpi-ico"><svg class="ico" width="16" height="16"><use href="#i-cobros"/></svg></span>
-          <p class="kpi-valor">$36.400</p>
+          <p class="kpi-valor">—</p>
           <p class="kpi-titulo">Cobrado hoy</p>
           <span class="kpi-punto"><i></i></span>
         </article>
         <article class="kpi kpi-por">
           <span class="kpi-ico"><svg class="ico" width="16" height="16"><use href="#i-reloj"/></svg></span>
-          <p class="kpi-valor">$18.000</p>
+          <p class="kpi-valor">—</p>
           <p class="kpi-titulo">Por cobrar</p>
           <span class="kpi-punto"><i></i></span>
         </article>
         <article class="kpi kpi-vencen">
           <span class="kpi-ico"><svg class="ico" width="16" height="16"><use href="#i-alerta"/></svg></span>
-          <p class="kpi-valor">2</p>
+          <p class="kpi-valor">—</p>
           <p class="kpi-titulo">Vencen hoy</p>
           <span class="kpi-punto"><i></i></span>
         </article>
@@ -82,8 +82,8 @@
       <article class="aviso">
         <span class="aviso-ico"><svg class="ico" width="17" height="17"><use href="#i-alerta"/></svg></span>
         <div>
-          <p><strong>2 mensualidades vencen hoy</strong></p>
-          <p class="aviso-sub">Carla T. y Bruno S. · revisalas en Cobros</p>
+          <p><strong>Vencimientos de hoy</strong></p>
+          <p class="aviso-sub"></p>
         </div>
       </article>
     </section>
@@ -214,38 +214,26 @@
     <section id="v-cobros" class="vista">
       <div class="agenda-titulo">
         <h2>Cobros</h2>
-        <span class="conteo">Noviembre</span>
+        <div class="cobros-contexto">
+          <span class="conteo"></span>
+          <button type="button" class="link-suave" id="abrir-historial" aria-haspopup="dialog">
+            <svg class="ico" width="14" height="14" aria-hidden="true"><use href="#i-reloj"/></svg>Historial
+          </button>
+        </div>
       </div>
       <div class="kpis kpis-cobros">
         <article class="kpi kpi-cobrado">
           <span class="kpi-ico"><svg class="ico" width="16" height="16"><use href="#i-cobros"/></svg></span>
-          <p class="kpi-valor">$312.500</p>
+          <p class="kpi-valor">—</p>
           <p class="kpi-titulo">Cobrado</p>
         </article>
         <article class="kpi kpi-vencen">
           <span class="kpi-ico"><svg class="ico" width="16" height="16"><use href="#i-alerta"/></svg></span>
-          <p class="kpi-valor">2</p>
+          <p class="kpi-valor">—</p>
           <p class="kpi-titulo">Vencen hoy</p>
         </article>
       </div>
-      <ul class="lista-cobros">
-        <li>
-          <div><p class="al-nombre">Carla T.</p><p class="al-sub">Vence hoy · Grupo Martes A</p></div>
-          <strong class="monto">$6.500</strong>
-        </li>
-        <li>
-          <div><p class="al-nombre">Bruno S.</p><p class="al-sub">Vence hoy · Grupo Martes A</p></div>
-          <strong class="monto">$6.500</strong>
-        </li>
-        <li>
-          <div><p class="al-nombre">Julieta P.</p><p class="al-sub">Vence en 5 días · Grupo Martes B</p></div>
-          <strong class="monto monto-suave">$6.500</strong>
-        </li>
-        <li>
-          <div><p class="al-nombre">Martín R.</p><p class="al-sub">Pagado el 3/11 · Grupo Viernes</p></div>
-          <strong class="monto monto-ok">Pagado</strong>
-        </li>
-      </ul>
+      <ul class="lista-cobros" id="lista-cobros"></ul>
     </section>
   </main>
 
@@ -290,7 +278,7 @@
     });
   })();
 </script>
-<script src="icons.js?v=202611191805"></script>
-<script type="module" src="propuesta.js?v=202611191805"></script>
+<script src="icons.js?v=202611200145"></script>
+<script type="module" src="propuesta.js?v=202611200145"></script>
 </body>
 </html>

@@ -82,3 +82,59 @@ Al tocar "Cancelar clase" en cualquier vista:
 - Respaldo v4: rama `backup/v4-antes-rediseño-20261118` + tag `backup-v4-20261118` (master `5326ac23`).
 - `v5-diseno/` es el diseño aprobado y vivo (localhost:8797 o túnel `ximeclasesv5.loca.lt`).
 - La Fase 3 arranca con la decisión de Nico sobre WhatsApp (§3) — todo lo demás (modelo de clase, auto-marcado, Cancelar clase, estética) no depende de esa decisión y puede arrancar ya.
+
+## 7. Piezas A y B — prototipo persistente (A 19/11, B 20/11/2026)
+
+> Implementadas en `v5-diseno/`, integradas en master y publicadas en GitHub Pages.
+> No cambian el diseño visual aprobado ni las reglas de negocio v1 §3; son el
+> cimiento local del funcionamiento de la Fase 3 (la app real sigue en Fase 4).
+
+### 7.1 Pieza A · persistencia local y auditoría
+
+- `src/repositorio.ts`: interfaz de comandos sobre clases y pagos; adaptador
+  `localStorage` por origen (`almacenLocalStorage`), con caída a memoria si el
+  navegador no permite guardar. Formato de `Pago` reservado sin uso en A.
+- Los datos demo se siembran una sola vez, anclados a la semana de la primera
+  apertura en `America/Montevideo`; no se regeneran sobre datos guardados.
+- Actor local único `dueño` (Fase 4 lo reemplaza por identidad autenticada).
+- Cancelar/reprogramar/registrar WhatsApp quedan en la auditoría; registrar un
+  mensaje dice qué opción se preparó, nunca que el envío se concretó.
+
+### 7.2 Pieza B · Cobros y contrato de Pago
+
+- `src/cobros.ts` deriva vencimientos, avisos y KPIs de los alumnos y los pagos
+  activos; no hay deuda acumulada ni cálculo de arrastre en el prototipo.
+- **Contrato `Pago`** (en `src/cobros.ts`): `{ id, alumnoId, periodo (AAAA-MM),
+  montoUYU (entero positivo), fecha (AAAA-MM-DD local), quien, anulado }`.
+  `registrarPago` valida y congela monto/fecha/actor, y rechaza duplicar el par
+  alumno-período entre pagos activos. `anularPago` conserva el original y
+  agrega `{ fecha, motivo, quien }`; ningún pago se borra. Si no se puede
+  persistir, la UI no confirma la operación.
+- **Convención demo — `periodo` = mes del último día cubierto** (coherente con
+  `PLAN.md` §3.1 / ciclo day-anchor: inicio 17/04 → último día cubierto 16/05 →
+  `periodo` 2026-05). Cobros muestra el mes actual, próximos avisos (umbral 7
+  días, configurable a 10 o solo hoy) e historial. No calcula reinicio de ciclo
+  ni prórroga por primera clase tras pagar vencido.
+- Nico pidió (20/11)filas de Cobros que abren el panel completas, sin botón
+  repetido, con historial al lado del mes y paneles de registro/anulación y
+  campana con tokens v5. Capturas: `v5-diseno/v5-cobros-b-*.png`.
+
+### 7.3 Procedimiento de publicación (Pages, master:/docs)
+
+1. Integrar la rama de trabajo en master con merge fast-forward (nunca pelear
+   con cambios ajenos ni tocar `serve.mjs`/puerto 8797, que es de otro agente).
+2. En `v5-diseno/`: `npm install --offline` si falta `node_modules`,
+   `npm run typecheck` y `npm test` (63 tests, 0 fallos).
+3. Copiar `index.html`, `propuesta.css`, `tokens.css`, `icons.js` a `docs/`.
+4. Transpilar cada `src/*.ts` y `propuesta.ts` a `.js` en `docs/` con
+   `ts.transpileModule` del TypeScript del proyecto (mismas opciones que
+   `serve.mjs`: ES2023, ESNext, Bundler, `isolatedModules`), reemplazando los
+   imports relativos `.ts` por `.js`. GitHub Pages sirve JS estático: no puede
+   servir la transpilación en vivo ni módulos `.ts`.
+5. Reemplazar en `docs/index.html` Cache-Busting `?v=AAAAMMDDHHMM` de todos los
+   assets (tokens.css, propuesta.css, icons.js, propuesta.js) por el instante
+   de la publicación. En `v5-diseno/index.html` se actualiza el mismo valor
+   (segue sirviendo `propuesta.ts`).
+6. Verificar `git diff --check`, HTTP 200 local, commit y push a origin/master.
+7. Confirmar `https://nicodelos24.github.io/Xime-clases/` HTTP 200 con el
+   `?v=` nuevo en el HTML público antes de avisar que está listo.

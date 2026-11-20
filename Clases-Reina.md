@@ -31,3 +31,19 @@ Sin autorización aplicable, no integrar, publicar ni desplegar. Un commit/compi
 `v5-diseno/src/cobros.ts` deriva vencimientos y KPIs de los alumnos demo y de los pagos activos. Registrar congela monto, fecha local y actor; anular conserva el original y agrega fecha, actor y motivo. Si el navegador no permite persistir, la UI no confirma la operación. La campana usa el umbral de 7 días por defecto; la función admite 10 o solo hoy. Convención demo: `periodo` es el mes del último día cubierto; Cobros muestra el mes actual, próximos avisos e historial de pagos, no calcula arrastre de deuda ni el reinicio por primera clase tras pagar vencido. El actor local `dueño` no equivale a identidad autenticada. Sin procesador ni datos personales reales.
 
 Rediseño pedido por Nico: toda la fila abre el panel, sin botones repetidos; historial al lado del mes; paneles de registro, anulación y campana con componentes y tokens v5, sin cambios globales. Capturas de la revisión en `v5-diseno/v5-cobros-b-*.png`.
+
+## v5 · Publicación de A y B (20/11/2026)
+
+Autorización de Nico (20/11 04:43, vía Roma): integrar y publicar A y B en
+`master` para probar desde el móvil por GitHub Pages (sin la Wi-Fi del PC).
+
+- Merge fast-forward de `feat/v5-persistencia` (adf940b7, 07fa8692, 9afb64eb)
+  sobre master `d1f7fea0`, en worktree propio; `serve.mjs`/8797 intactos.
+- `docs/` regenerado desde `v5-diseno/`: CSS/HTML copiados y todo TS transpilado
+  a JS estático con `ts.transpileModule` (imports `.ts` → `.js`), porque Pages
+  no transpila en vivo. Cache-bust `?v=202611200145` en los cuatro assets.
+- Verificación: `npm run typecheck` 0 errores, `npm test` 63/63,
+  `git diff --check` limpio, HTTP 200 local y público, y el HTML público con el
+  cache-bust nuevo. Procedimiento completo en `v5/PLAN.md` §7.3.
+- Nico quiere verlo y probarlo en el celular: la URL pública es
+  `https://nicodelos24.github.io/Xime-clases/`.

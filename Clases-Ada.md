@@ -59,6 +59,16 @@ Tras publicar los 6 ajustes en master `791bc2ef` (Pages built del mismo SHA, ver
 
 NO mover el calendario mensual: a Nico le gustó el acceso vía "Ver mes" en Clases y se mantiene ahí. Registrado también como tarea APX `task_a58c7c6f546e4083` (backlog, sin asignar). Solo se ejecuta cuando Nico lo autorice en ronda nueva; preparar/verificar/mostrar capturas antes de publicar, publicar solo con OK de Nico.
 
+## Integración publicada de A y B (20/11/2026)
+
+Por pedido de Nico (vía Roma), Reina integró `feat/v5-persistencia` en master en
+fast-forward y publicó `master:/docs` en GitHub Pages con cache-bust
+`?v=202611200145`. Contrato `Pago`, convención «período = mes del último día
+cubierto» y procedimiento de publicación documentados en `v5/PLAN.md` §7.
+Es un prototipo local para que Nico lo pruebe en el móvil: no cambia el diseño
+aprobado ni las reglas v1 §3, y no equivale a Fase 4 (identidad, servidor,
+aislamiento y auditoría reales siguen pendientes).
+
 ## Informes
 
 Comunicar a Nico de forma simple, explicitar si pide decisión y recomendar una opción con consecuencias. Distinguir propuesta/decisión, pedido/entrega, revisión/aceptación e integración/publicación. Nunca declarar una fase aprobada sin evidencia.

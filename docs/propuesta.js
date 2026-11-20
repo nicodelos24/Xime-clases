@@ -1,48 +1,22 @@
 // Clases v5 · navegación + funcionamiento (auto-marcado, Cancelar clase, WhatsApp)
 // La estética vive en tokens.css/propuesta.css; acá solo se cambian estados,
 // textos y el flujo de cancelación. Sin emoji: solo SVG de icons.js.
-import { crearClase, reconciliar, cancelarClase, deshacerCancelacion, registrarMensajeEnviado, reprogramarClase, horaClase, } from './src/clases.js';
+import { horaClase, } from './src/clases.js';
+import { CLAVE_ESTADO, RepositorioClases, almacenLocalStorage } from './src/repositorio.js';
+import { alumnosCobrosDemo, datosDemo } from './src/demo.js';
+import { resumenCobros } from './src/cobros.js';
 import { resumenHoy, clasesDelDia, clasesDeLaSemana } from './src/resumen.js';
 import { diaCorto, etiquetaDia, etiquetaMes, sumarDias, parseFecha } from './src/fechas.js';
 import { relojDelDispositivo, hoyLocal } from './src/reloj.js';
 import { textoCancelacion, destinos, resumenEnvio, linkTexto, } from './src/whatsapp.js';
-/* ---------------------------------------------------------------- datos demo */
+/* ------------------------------------------------- estado persistente (local) */
 const reloj = relojDelDispositivo();
-function alumnos(nombres, prefijo) {
-    return nombres.map(([nombre, telefono], i) => ({ id: `${prefijo}${i}`, nombre, telefono }));
-}
-const GRUPO_A = alumnos([
-    ['Carla T.', '099 123 456'], ['Bruno S.', '099 987 654'], ['Julieta P.', '099 112 233'],
-    ['Martín R.', '099 445 566'], ['Lucía C.', '099 778 899'], ['Diego G.', '099 321 654'],
-    ['Sofía M.', '099 555 101'], ['Tomás L.', '099 666 202'], ['Valentina R.', '099 777 303'],
-    ['Mateo F.', '099 888 404'], ['Camila S.', '099 999 505'], ['Joaquín P.', '099 101 606'],
-], 'a');
-const GRUPO_B = alumnos([
-    ['Julieta P.', '099 112 233'], ['Lucía C.', '099 778 899'], ['Sofía M.', '099 555 101'],
-    ['Tomás L.', '099 666 202'], ['Valentina R.', '099 777 303'], ['Mateo F.', '099 888 404'],
-    ['Camila S.', '099 999 505'], ['Joaquín P.', '099 101 606'], ['Abril G.', '099 212 717'],
-], 'b');
-const GRUPO_V = alumnos([
-    ['Martín R.', '099 445 566'], ['Diego G.', '099 321 654'], ['Sofía M.', '099 555 101'],
-    ['Tomás L.', '099 666 202'], ['Valentina R.', '099 777 303'], ['Mateo F.', '098 888 404'],
-    ['Camila S.', '098 999 505'], ['Joaquín P.', '098 101 606'], ['Abril G.', '098 212 717'],
-    ['Bruno S.', '098 987 654'], ['Lucía C.', '098 778 899'],
-], 'v');
-/** Semana de la demo: lunes 16 al domingo 22 de noviembre de 2026. */
-function datosDemo() {
-    const lunes = '2026-11-16';
-    return [
-        crearClase({ id: 'c-lun', nombre: 'Grupo Lunes', fecha: lunes, hora: '15:00', alumnos: GRUPO_A.slice(0, 8) }),
-        crearClase({ id: 'c-mar-a', nombre: 'Grupo Martes A', fecha: sumarDias(lunes, 1), hora: '15:00', alumnos: GRUPO_A }),
-        crearClase({ id: 'c-mar-b', nombre: 'Grupo Martes B', fecha: sumarDias(lunes, 1), hora: '17:30', alumnos: GRUPO_B }),
-        crearClase({ id: 'c-mie', nombre: 'Grupo Miércoles', fecha: sumarDias(lunes, 2), hora: '10:00', alumnos: GRUPO_B.slice(0, 6) }),
-        crearClase({ id: 'c-jue', nombre: 'Grupo Jueves', fecha: sumarDias(lunes, 3), hora: '16:00', alumnos: GRUPO_V.slice(0, 7) }),
-        crearClase({ id: 'c-vie', nombre: 'Grupo Viernes', fecha: sumarDias(lunes, 4), hora: '15:00', alumnos: GRUPO_V }),
-        crearClase({ id: 'c-vie-b', nombre: 'Grupo Viernes B', fecha: sumarDias(lunes, 4), hora: '18:00', alumnos: GRUPO_A.slice(2, 9) }),
-        crearClase({ id: 'c-sab', nombre: 'Grupo Sábado', fecha: sumarDias(lunes, 5), hora: '11:00', alumnos: GRUPO_B.slice(1, 6) }),
-    ];
-}
-let clases = reconciliar(datosDemo(), reloj.ahora());
+/** Quién opera la app hoy: único dueño. En Fase 4 sale de la sesión. */
+const QUIEN = 'dueño';
+// Un solo repositorio: siembra la demo anclada a hoy la primera vez y desde
+// ahí todo comando se guarda en localStorage (un refresh no pierde nada).
+const repo = new RepositorioClases(almacenLocalStorage(), reloj, datosDemo);
+let clases;
 /* ------------------------------------------------------------------- helpers */
 const $ = (sel) => document.querySelector(sel);
 const $$ = (sel) => Array.from(document.querySelectorAll(sel));
@@ -139,12 +113,6 @@ function pintarHoy() {
         grupos.querySelectorAll('[data-acciones]').forEach((b) => {
             b.addEventListener('click', () => abrirAcciones(b.dataset.acciones));
         });
-    }
-    // KPIs del hero: cobrado hoy y por cobrar (demo) + vencimientos.
-    const kpis = $$('.vista#v-hoy .kpi-valor');
-    if (kpis.length >= 3) {
-        const vencen = r.canceladas > 0 ? 2 : 2;
-        kpis[2].textContent = String(vencen);
     }
 }
 /* -------------------------------------------------- vista Clases (semana) */
@@ -344,7 +312,8 @@ function abrirAcciones(id) {
             const base = sumarDias(c.fecha, 1);
             const delta = ((idx - ((new Date(`${base}T12:00:00Z`).getUTCDay() + 6) % 7) + 7) % 7);
             const nuevaFecha = sumarDias(base, delta);
-            clases = clases.map((x) => (x.id === id ? reprogramarClase(x, nuevaFecha, 'dueño') : x));
+            repo.reprogramar(id, nuevaFecha, { quien: QUIEN, ahora: reloj.ahora() });
+            clases = repo.listar();
             cerrarSheet();
             refrescar();
             avisar(`Clase movida al ${esc(etiquetaDia(nuevaFecha))} · ${horaClase(c)}`);
@@ -462,7 +431,7 @@ function abrirCancelacion(id) {
 }
 function confirmarCancelacion(c, motivo) {
     const ahora = reloj.ahora();
-    const cancelada = cancelarClase(c, { motivo: motivo || 'sin motivo', quien: 'dueño', ahora });
+    const cancelada = repo.cancelar(c.id, { motivo: motivo || 'sin motivo', quien: QUIEN, ahora });
     let lista = [];
     let texto = textoEnviado;
     if (modoEnvio === 'masivo') {
@@ -473,12 +442,13 @@ function confirmarCancelacion(c, motivo) {
         lista = destinos(cancelada, 'individual', elegidosLista, texto);
     }
     const anterior = c.estado;
-    const registrada = modoEnvio === 'masivo' && lista.length > 0
-        ? registrarMensajeEnviado(cancelada, 'masivo')
+    const canal = modoEnvio === 'masivo' && lista.length > 0
+        ? 'masivo'
         : modoEnvio === 'individual' && lista.length > 0
-            ? registrarMensajeEnviado(cancelada, 'individual')
-            : registrarMensajeEnviado(cancelada, 'ninguno');
-    clases = clases.map((x) => (x.id === c.id ? registrada : x));
+            ? 'individual'
+            : 'ninguno';
+    repo.registrarMensajeEnviado(cancelada.id, canal);
+    clases = repo.listar();
     cerrarSheet();
     refrescar();
     // Cada cancelación arranca su propio aviso: nunca quedan enlaces de una
@@ -506,8 +476,8 @@ function revertirCancelacion(id) {
     // El toast es reutilizable: si algo falla, se limpia igual para que no
     // quede un "Deshacer" que vuelve a lanzar el mismo error.
     try {
-        const revertida = deshacerCancelacion(c, { motivo: 'error del dueño', quien: 'dueño', ahora: reloj.ahora() });
-        clases = clases.map((x) => (x.id === id ? revertida : x));
+        repo.revertir(id, { motivo: 'error del dueño', quien: QUIEN, ahora: reloj.ahora() });
+        clases = repo.listar();
     }
     catch (e) {
         avisar(e instanceof Error ? e.message : 'No se pudo deshacer', 3000);
@@ -534,17 +504,16 @@ toast.addEventListener('click', () => {
         avisar(pendientes.length > 0 ? `Quedan ${pendientes.length} mensajes` : 'Último mensaje abierto', 2500);
     }
 });
-/* ------------------------------------------------------- alumnos (filtros) */
 const ALUMNOS_FICHA = [
-    { ini: 'CT', nom: 'Carla T.',    gr: 'Martes A',  vence: 0,   tipo: 'mensual',    alta: 3, color: 'avatar' },
-    { ini: 'BS', nom: 'Bruno S.',    gr: 'Martes A',  vence: 0,   tipo: 'mensual',    alta: 5, color: 'avatar-2' },
-    { ini: 'JP', nom: 'Julieta P.',  gr: 'Martes B',  vence: -1,  tipo: 'individual', alta: 8, color: 'avatar-3' },
-    { ini: 'MR', nom: 'Martín R.',   gr: 'Viernes',   vence: 12,  tipo: 'mensual',    alta: 1, color: 'avatar-4' },
-    { ini: 'LC', nom: 'Lucía C.',    gr: 'Martes B',  vence: 20,  tipo: 'individual', alta: 7, color: 'avatar-5' },
-    { ini: 'DG', nom: 'Diego G.',    gr: 'Viernes',   vence: 3,   tipo: 'mensual',    alta: 2, color: 'avatar-6' },
-    { ini: 'AF', nom: 'Ana F.',      gr: 'Lunes',     vence: -1,  tipo: 'individual', alta: 9, color: 'avatar' },
-    { ini: 'SN', nom: 'Sofía N.',    gr: 'Sábado',    vence: 15,  tipo: 'mensual',    alta: 4, color: 'avatar-3' },
-    { ini: 'EL', nom: 'Ezequiel L.', gr: 'Lunes',     vence: 6,   tipo: 'individual', alta: 6, color: 'avatar-4' },
+    { ini: 'CT', nom: 'Carla T.', gr: 'Martes A', vence: 0, tipo: 'mensual', alta: 3, color: 'avatar' },
+    { ini: 'BS', nom: 'Bruno S.', gr: 'Martes A', vence: 0, tipo: 'mensual', alta: 5, color: 'avatar-2' },
+    { ini: 'JP', nom: 'Julieta P.', gr: 'Martes B', vence: -1, tipo: 'individual', alta: 8, color: 'avatar-3' },
+    { ini: 'MR', nom: 'Martín R.', gr: 'Viernes', vence: 12, tipo: 'mensual', alta: 1, color: 'avatar-4' },
+    { ini: 'LC', nom: 'Lucía C.', gr: 'Martes B', vence: 20, tipo: 'individual', alta: 7, color: 'avatar-5' },
+    { ini: 'DG', nom: 'Diego G.', gr: 'Viernes', vence: 3, tipo: 'mensual', alta: 2, color: 'avatar-6' },
+    { ini: 'AF', nom: 'Ana F.', gr: 'Lunes', vence: -1, tipo: 'individual', alta: 9, color: 'avatar' },
+    { ini: 'SN', nom: 'Sofía N.', gr: 'Sábado', vence: 15, tipo: 'mensual', alta: 4, color: 'avatar-3' },
+    { ini: 'EL', nom: 'Ezequiel L.', gr: 'Lunes', vence: 6, tipo: 'individual', alta: 6, color: 'avatar-4' },
 ];
 let ordenAlumnos = 'ninguno';
 const filtrosAlumnos = new Set();
@@ -573,12 +542,17 @@ function pintarChipsAlumnos() {
 function pintarAlumnos() {
     const lista = $('#lista-alumnos');
     const conteo = $('#v-alumnos .conteo');
-    if (!lista) return;
+    if (!lista)
+        return;
     const out = ALUMNOS_FICHA.filter((a) => {
-        if (busquedaAlumno && a.nom.toLowerCase().indexOf(busquedaAlumno) < 0) return false;
-        if (filtrosAlumnos.has('mensual') && a.tipo !== 'mensual') return false;
-        if (filtrosAlumnos.has('individual') && a.tipo !== 'individual') return false;
-        if (filtrosAlumnos.has('aldia') && a.vence <= 0) return false;
+        if (busquedaAlumno && a.nom.toLowerCase().indexOf(busquedaAlumno) < 0)
+            return false;
+        if (filtrosAlumnos.has('mensual') && a.tipo !== 'mensual')
+            return false;
+        if (filtrosAlumnos.has('individual') && a.tipo !== 'individual')
+            return false;
+        if (filtrosAlumnos.has('aldia') && a.vence <= 0)
+            return false;
         return true;
     });
     const cmp = {
@@ -587,8 +561,10 @@ function pintarAlumnos() {
         recientes: (a, b) => a.alta - b.alta,
         vence: (a, b) => a.vence - b.vence,
     };
-    if (ordenAlumnos !== 'ninguno') out.sort(cmp[ordenAlumnos]);
-    if (conteo) conteo.textContent = `${out.length} ${out.length === 1 ? 'alumno' : 'alumnos'}`;
+    if (ordenAlumnos !== 'ninguno')
+        out.sort(cmp[ordenAlumnos]);
+    if (conteo)
+        conteo.textContent = `${out.length} ${out.length === 1 ? 'alumno' : 'alumnos'}`;
     lista.innerHTML = out.length
         ? out.map((a) => {
             const punto = a.vence < 0 || a.vence === 0 ? 'punto-rosa' : a.vence <= 3 ? 'punto-ambar' : 'punto-verde';
@@ -599,13 +575,15 @@ function pintarAlumnos() {
 }
 $('#filtros-alumnos')?.addEventListener('click', (e) => {
     const b = e.target.closest('.f-chip');
-    if (!b) return;
+    if (!b)
+        return;
     if (b.hasAttribute('data-todos')) {
         ordenAlumnos = 'ninguno';
         filtrosAlumnos.clear();
         busquedaAlumno = '';
         const input = $('#buscar-alumno');
-        if (input) input.value = '';
+        if (input)
+            input.value = '';
     }
     else if (b.dataset.orden) {
         const o = b.dataset.orden;
@@ -613,8 +591,10 @@ $('#filtros-alumnos')?.addEventListener('click', (e) => {
     }
     else if (b.dataset.filtro) {
         const f = b.dataset.filtro;
-        if (filtrosAlumnos.has(f)) filtrosAlumnos.delete(f);
-        else filtrosAlumnos.add(f);
+        if (filtrosAlumnos.has(f))
+            filtrosAlumnos.delete(f);
+        else
+            filtrosAlumnos.add(f);
     }
     pintarAlumnos();
 });
@@ -622,7 +602,144 @@ $('#buscar-alumno')?.addEventListener('input', (e) => {
     busquedaAlumno = e.target.value.toLowerCase();
     pintarAlumnos();
 });
-
+/* ------------------------------------------------------------- cobros */
+const formatoUYU = new Intl.NumberFormat('es-UY', { useGrouping: 'always' });
+const uyu = (monto) => `$${formatoUYU.format(monto)}`;
+const listaCobros = document.querySelector('#lista-cobros');
+const botonHistorial = document.querySelector('#abrir-historial');
+const campana = document.querySelector('.campana');
+const verCobros = (pagos = repo.listarPagos()) => resumenCobros(alumnosCobrosDemo, pagos, hoyLocal(reloj.ahora()));
+function fechaBreve(fecha) {
+    const { d, m } = parseFecha(fecha);
+    return `${d}/${m}`;
+}
+function textoVence(dias) {
+    if (dias === 0)
+        return 'Vence hoy';
+    const n = Math.abs(dias);
+    return `${dias < 0 ? 'Venció hace' : 'Vence en'} ${n} ${n === 1 ? 'día' : 'días'}`;
+}
+function pintarCobros() {
+    const pagos = repo.listarPagos();
+    const r = verCobros(pagos);
+    const kpis = {
+        '#v-hoy .kpi-cobrado': uyu(r.cobradoHoy), '#v-hoy .kpi-por': uyu(r.porCobrar),
+        '#v-hoy .kpi-vencen': String(r.vencenHoy.length), '#v-cobros .kpi-cobrado': uyu(r.cobradoMes),
+        '#v-cobros .kpi-vencen': String(r.vencenHoy.length),
+    };
+    for (const [selector, valor] of Object.entries(kpis))
+        $(`${selector} .kpi-valor`).textContent = valor;
+    $('#v-cobros .conteo').textContent = etiquetaMes(`${r.periodo}-01`).replace(/^./, (letra) => letra.toUpperCase());
+    const n = r.vencenHoy.length;
+    $('#v-hoy .aviso strong').textContent = n === 1 ? '1 mensualidad vence hoy' : `${n} mensualidades vencen hoy`;
+    $('#v-hoy .aviso-sub').textContent = n
+        ? `${new Intl.ListFormat('es-UY').format(r.vencenHoy.map((f) => f.alumno.nombre))} · Ver en Cobros`
+        : 'No hay vencimientos para hoy';
+    const avisos = r.avisos.length;
+    campana.setAttribute('aria-label', avisos === 1 ? '1 aviso de cobro' : `${avisos} avisos de cobro`);
+    campana.querySelector('.campana-punto').hidden = avisos === 0;
+    listaCobros.innerHTML = r.filas.map((f, indice) => `<li>
+    <button type="button" class="cobro-fila" data-fila="${indice}" aria-haspopup="dialog"
+      aria-label="${f.pago ? 'Ver pago' : 'Registrar pago'} de ${esc(f.alumno.nombre)}, ${f.periodo}">
+      <span><span class="al-nombre">${esc(f.alumno.nombre)}</span>
+      <span class="al-sub">${f.pago ? `Pagado el ${fechaBreve(f.pago.fecha)}` : textoVence(f.dias)} · ${esc(f.alumno.grupo)}</span></span>
+      <strong class="monto ${f.pago ? 'monto-ok' : f.dias > 0 ? 'monto-suave' : ''}">${f.pago ? 'Pagado' : uyu(f.alumno.montoUYU)}</strong>
+      <svg class="ico" width="13" height="13" aria-hidden="true"><use href="#i-der"/></svg>
+    </button>
+  </li>`).join('');
+    listaCobros.querySelectorAll('[data-fila]').forEach((b, i) => {
+        const fila = r.filas[i];
+        b.addEventListener('click', () => abrirPago(fila.alumno.nombre, fila.periodo, fila.alumno.montoUYU, b, fila.pago, fila));
+    });
+}
+function nombrePago(pago) {
+    return alumnosCobrosDemo.find((a) => a.id === pago.alumnoId)?.nombre ?? pago.alumnoId;
+}
+botonHistorial.addEventListener('click', () => {
+    const pagos = [...repo.listarPagos()].reverse();
+    const dialogo = abrirDialogoCobros('Historial de pagos', 'Cobros', 'reloj', pagos.length ? `<ul class="cobros-panel-lista">${pagos.map((p, i) => `<li>
+    <div><p class="al-nombre">${esc(nombrePago(p))}</p><p class="al-sub">${esc(p.periodo)} · Registrado el ${esc(p.fecha)} por ${esc(p.quien)}</p>
+      ${p.anulado ? `<p class="al-sub">Anulado el ${esc(p.anulado.fecha)} por ${esc(p.anulado.quien)} · ${esc(p.anulado.motivo)}</p>` : ''}</div>
+    <div class="cobros-panel-dato"><strong>${uyu(p.montoUYU)}</strong>
+      ${p.anulado ? '<span class="al-sub">Anulado</span>' : `<button type="button" class="cobros-link" data-pago="${i}" aria-label="Ver pago de ${esc(nombrePago(p))}, ${esc(p.periodo)}">Ver pago</button>`}</div>
+  </li>`).join('')}</ul>` : '<p class="cobros-panel-nota">Todavía no registraste pagos.</p>', botonHistorial);
+    dialogo.querySelectorAll('[data-pago]').forEach((b) => {
+        const pago = pagos[Number(b.dataset.pago)];
+        b.addEventListener('click', () => {
+            dialogo.close();
+            dialogo.remove();
+            abrirPago(nombrePago(pago), pago.periodo, pago.montoUYU, botonHistorial, pago);
+        });
+    });
+});
+function abrirDialogoCobros(titulo, contexto, icono, contenido, origen) {
+    const dialogo = document.createElement('dialog');
+    dialogo.className = 'sheet cobros-panel';
+    dialogo.setAttribute('aria-labelledby', 'cobros-panel-titulo');
+    dialogo.innerHTML = `<div class="sheet-head cobros-panel-head">
+    <span class="cobros-panel-icono"><svg class="ico" width="21" height="21" aria-hidden="true"><use href="#i-${icono}"/></svg></span>
+    <div><p class="sheet-eyebrow">${esc(contexto)}</p><h3 id="cobros-panel-titulo">${esc(titulo)}</h3></div>
+    <button type="button" class="sheet-cerrar" aria-label="Cerrar" autofocus><svg class="ico" width="18" height="18" aria-hidden="true"><use href="#i-mas2"/></svg></button></div>${contenido}`;
+    dialogo.querySelector('.sheet-cerrar').addEventListener('click', () => dialogo.close());
+    dialogo.addEventListener('close', () => {
+        dialogo.remove();
+        if (!document.querySelector('.cobros-panel[open]') && origen.isConnected)
+            origen.focus();
+    });
+    $('.cel').appendChild(dialogo);
+    dialogo.showModal();
+    return dialogo;
+}
+function abrirPago(nombre, periodo, monto, origen, pago, fila) {
+    const accion = pago ? 'Anular pago' : 'Registrar pago';
+    const mes = etiquetaMes(`${periodo}-01`);
+    const dialogo = abrirDialogoCobros(accion, 'Mensualidad', pago ? 'alerta' : 'cobros', `<div class="cobros-panel-resumen">
+    <div><p class="al-nombre">${esc(nombre)}</p><p class="al-sub">${esc(mes)}</p></div>
+    <div class="cobros-panel-dato"><strong>${uyu(pago?.montoUYU ?? monto)}</strong><span class="al-sub">UYU</span></div></div>
+    <p class="cobros-panel-nota">${pago ? `Registrado el ${esc(pago.fecha)} por ${esc(pago.quien)}. La anulación queda en el historial.` : 'Confirmá que ya recibiste el pago. La app no mueve dinero.'}</p>
+    <form>${pago ? '<label class="campo"><span>Motivo de anulación</span><input name="motivo" required maxlength="160"></label>' : ''}
+      <p class="cobros-panel-error" role="alert"></p>
+      <div class="sheet-acciones"><button type="button" class="btn-secundario">Volver</button>
+      <button type="submit" class="btn-primario${pago ? ' cobros-anular' : ''}">${pago ? 'Confirmar anulación' : 'Confirmar pago'}</button></div>
+    </form>`, origen);
+    const form = dialogo.querySelector('form');
+    form.querySelector('.btn-secundario').addEventListener('click', () => dialogo.close());
+    form.addEventListener('submit', (e) => {
+        e.preventDefault();
+        if (!dialogo.open)
+            return;
+        try {
+            if (pago)
+                repo.anularPago(pago.id, String(new FormData(form).get('motivo') ?? ''), QUIEN);
+            else if (fila) {
+                const id = Array.from(crypto.getRandomValues(new Uint32Array(4)), (n) => n.toString(16).padStart(8, '0')).join('');
+                repo.registrarPago({ id, alumnoId: fila.alumno.id, periodo, montoUYU: monto, quien: QUIEN });
+            }
+        }
+        catch (error) {
+            form.querySelector('[role="alert"]').textContent = error instanceof Error ? error.message : 'No se pudo guardar';
+            return;
+        }
+        dialogo.close();
+        pintarCobros();
+        if (origen.dataset.fila)
+            listaCobros.querySelector(`[data-fila="${origen.dataset.fila}"]`)?.focus();
+        else
+            botonHistorial.focus();
+    });
+}
+campana.addEventListener('click', () => {
+    const { avisos } = verCobros();
+    abrirDialogoCobros('Avisos de cobro', 'Mensualidades', 'campana', avisos.length ? `<p class="cobros-panel-nota">Mensualidades sin pagar que vencen hoy o en los próximos 7 días.</p>
+    <ul class="cobros-panel-lista">${avisos.map((f) => `<li>
+    <div><p class="al-nombre">${esc(f.alumno.nombre)}</p><p class="al-sub">${esc(f.alumno.grupo)}</p></div>
+    <span class="cobros-aviso${f.dias === 0 ? ' cobros-aviso-hoy' : ''}">${textoVence(f.dias)}</span></li>`).join('')}</ul>
+    <div class="cobros-panel-pie"><button class="btn-secundario" type="button" data-ver-cobros>Ver Cobros</button></div>`
+        : '<p class="cobros-panel-nota">No hay avisos de vencimientos.</p>', campana).querySelector('[data-ver-cobros]')?.addEventListener('click', (e) => {
+        e.currentTarget.closest('dialog')?.close();
+        irA('v-cobros');
+    });
+});
 /* ------------------------------------------------------------- navegación */
 const tabs = $$('.tab');
 const vistas = $$('.vista');
@@ -659,12 +776,13 @@ tabs.forEach((t) => t.addEventListener('click', (e) => {
     e.preventDefault();
     irA(t.getAttribute('href').slice(1));
 }));
-$$('.link-suave').forEach((a) => a.addEventListener('click', (e) => {
+$$('a.link-suave').forEach((a) => a.addEventListener('click', (e) => {
     e.preventDefault();
     irA(a.getAttribute('href').slice(1));
 }));
 $('.fab')?.addEventListener('click', () => avisar('Agendar: nueva clase (próximamente)'));
-$('.campana')?.addEventListener('click', () => avisar('3 avisos · 2 mensualidades vencen hoy'));
+window.addEventListener('storage', (e) => { if (e.key === CLAVE_ESTADO)
+    pintarCobros(); });
 /* --------------------------------------------------------------- arranque */
 function refrescar() {
     pintarSemana();
@@ -672,13 +790,20 @@ function refrescar() {
     pintarMes();
     pintarAlumnos();
 }
-// Re-alineado al abrir: las clases cuya hora pasó quedan Dadas.
-clases = reconciliar(clases, reloj.ahora());
+// Re-alineado al abrir: las clases cuya hora pasó quedan Dadas (y se guarda).
+clases = repo.reconciliar();
 refrescar();
+pintarCobros();
+let diaCobros = hoyLocal(reloj.ahora());
 // El cron local avanza solo mientras la app está abierta (plan §2.1).
 setInterval(() => {
+    const hoy = hoyLocal(reloj.ahora());
+    if (hoy !== diaCobros) {
+        diaCobros = hoy;
+        pintarCobros();
+    }
     const antes = clases.map((c) => c.estado).join(',');
-    clases = reconciliar(clases, reloj.ahora());
+    clases = repo.reconciliar();
     if (clases.map((c) => c.estado).join(',') !== antes) {
         refrescar();
         avisar('Se marcaron clases dadas por la hora');
@@ -691,7 +816,7 @@ else
     pintarTitulo('v-hoy');
 // Exposición mínima para QA (consola / capturas): sin tocar el estado real.
 window.ximeV5 = {
-    get clases() { return clases; },
+    get clases() { return structuredClone(clases); },
     refrescar,
     reloj,
     textoCancelacion,
