@@ -21,31 +21,16 @@ import {
   type CanalMensaje, type Clase, type ClaseNueva, type OpcionCancelar,
   type OpcionReprogramar,
 } from './clases.ts';
-import type { InstanteMs, Reloj } from './reloj.ts';
+import { hoyLocal, type InstanteMs, type Reloj } from './reloj.ts';
+import { anularPago, registrarPago, type Pago, type PagoNuevo } from './cobros.ts';
+export type { Pago } from './cobros.ts';
 
 /** Versión del formato guardado. Subirla obliga a migrar o resembrar. */
 export const VERSION_ESTADO = 1;
 /** Clave única de `localStorage` (por origen: puerto incluido). */
 export const CLAVE_ESTADO = 'xime.v5.estado';
 
-/**
- * Pago manual: Fase 4 lo lleva a BD sin tocar la UI. Montos en UYU enteros;
- * un pago no se edita ni se borra, se anula con registro trazable.
- */
-export type Pago = {
-  id: string;
-  alumnoId: string;
-  /** Mes cobrado, "AAAA-MM". */
-  periodo: string;
-  /** Monto en pesos uruguayos, entero. */
-  montoUYU: number;
-  /** Día en que se registró, "AAAA-MM-DD". */
-  fecha: string;
-  quien: string;
-  anulado: { fecha: string; motivo: string; quien: string } | null;
-};
-
-/** Estado completo que se guarda. `pagos` queda listo para la pieza B. */
+/** Estado completo que se guarda. El formato de `pagos` ya existía en v1. */
 export type EstadoClases = {
   version: number;
   /** ISO UTC del último guardado (diagnóstico). */
@@ -57,7 +42,7 @@ export type EstadoClases = {
 /** Contrato mínimo del almacén: lo único que cambia en la Fase 4. */
 export type Almacen = {
   leer(): string | null;
-  escribir(texto: string): void;
+  escribir(texto: string, requierePersistencia?: boolean): void;
 };
 
 /** Almacén en memoria (tests, o respaldo si `localStorage` no está). */
@@ -97,16 +82,19 @@ export function almacenLocalStorage(
       }
       return ultimo;
     },
-    escribir: (texto) => {
-      ultimo = texto;
+    escribir: (texto, requierePersistencia = false) => {
       if (!soloMemoria) {
         try {
-          if (ventana.localStorage) ventana.localStorage.setItem(CLAVE_ESTADO, texto);
-          else soloMemoria = true;
+          if (!ventana.localStorage) throw new Error('localStorage no disponible');
+          ventana.localStorage.setItem(CLAVE_ESTADO, texto);
+          ultimo = texto;
+          return;
         } catch {
-          soloMemoria = true;
+          if (!requierePersistencia) soloMemoria = true;
         }
       }
+      if (requierePersistencia) throw new Error('No se pudo guardar el pago en este navegador. No se aplicaron cambios.');
+      ultimo = texto;
     },
   };
 }
@@ -136,6 +124,9 @@ export interface RepositorioDeClases {
   revertir(id: string, op: OpcionCancelar): Clase;
   reprogramar(id: string, fechaNueva: string, op: OpcionReprogramar): Clase;
   registrarMensajeEnviado(id: string, canal: CanalMensaje): Clase;
+  listarPagos(): readonly Pago[];
+  registrarPago(nuevo: Omit<PagoNuevo, 'fecha'>): void;
+  anularPago(id: string, motivo: string, quien: string): void;
 }
 
 /** Repositorio único: la UI lee y manda comandos acá, nunca al estado suelto. */
@@ -156,9 +147,25 @@ export class RepositorioClases implements RepositorioDeClases {
     return this.cargar().clases;
   }
 
-  /** Pagos guardados; hoy vacío, la pieza B (Cobros) los escribe. */
-  listarPagos(): Pago[] {
+  listarPagos(): readonly Pago[] {
     return this.cargar().pagos;
+  }
+
+  registrarPago(nuevo: Omit<PagoNuevo, 'fecha'>): void {
+    const fecha = hoyLocal(this.reloj.ahora());
+    this.actualizarPagos((pagos) => registrarPago(pagos, { ...nuevo, fecha }));
+  }
+
+  anularPago(id: string, motivo: string, quien: string): void {
+    const fecha = hoyLocal(this.reloj.ahora());
+    this.actualizarPagos((pagos) => anularPago(pagos, id, { fecha, motivo, quien }));
+  }
+
+  private actualizarPagos(transformar: (pagos: Pago[]) => Pago[]): void {
+    const estado = this.cargar();
+    const nuevo = { ...estado, pagos: transformar(estado.pagos) };
+    this.persistir(nuevo, true);
+    this.estado = nuevo;
   }
 
   /** Crea una clase nueva y la persiste. */
@@ -218,9 +225,8 @@ export class RepositorioClases implements RepositorioDeClases {
   }
 
   private cargar(): EstadoClases {
-    if (this.estado) return this.estado;
-    this.estado = this.leer() ?? this.sembrarEstado();
-    return this.estado;
+    // Una pestaña no debe sobreescribir pagos ya guardados por otra.
+    return this.estado = this.leer() ?? this.estado ?? this.sembrarEstado();
   }
 
   private leer(): EstadoClases | null {
@@ -252,10 +258,10 @@ export class RepositorioClases implements RepositorioDeClases {
     return estado;
   }
 
-  private persistir(estado: EstadoClases): void {
+  private persistir(estado: EstadoClases, requierePersistencia = false): void {
     this.almacen.escribir(JSON.stringify({
       ...estado,
       guardadoEn: new Date(this.reloj.ahora()).toISOString(),
-    }));
+    }), requierePersistencia);
   }
 }

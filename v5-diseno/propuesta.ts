@@ -4,8 +4,9 @@
 import {
   horaClase, type Clase,
 } from './src/clases.ts';
-import { RepositorioClases, almacenLocalStorage, type RepositorioDeClases } from './src/repositorio.ts';
-import { datosDemo } from './src/demo.ts';
+import { CLAVE_ESTADO, RepositorioClases, almacenLocalStorage, type RepositorioDeClases } from './src/repositorio.ts';
+import { alumnosCobrosDemo, datosDemo } from './src/demo.ts';
+import { resumenCobros, type Pago } from './src/cobros.ts';
 import { resumenHoy, clasesDelDia, clasesDeLaSemana } from './src/resumen.ts';
 import { diaCorto, diaLargo, etiquetaDia, etiquetaMes, sumarDias, parseFecha } from './src/fechas.ts';
 import { relojDelDispositivo, hoyLocal, type Reloj } from './src/reloj.ts';
@@ -128,12 +129,6 @@ function pintarHoy() {
     });
   }
 
-  // KPIs del hero: cobrado hoy y por cobrar (demo) + vencimientos.
-  const kpis = $$('.vista#v-hoy .kpi-valor');
-  if (kpis.length >= 3) {
-    const vencen = r.canceladas > 0 ? 2 : 2;
-    kpis[2].textContent = String(vencen);
-  }
 }
 
 /* -------------------------------------------------- vista Clases (semana) */
@@ -637,6 +632,120 @@ $('#buscar-alumno')?.addEventListener('input', (e) => {
   pintarAlumnos();
 });
 
+/* ------------------------------------------------------------- cobros */
+const formatoUYU = new Intl.NumberFormat('es-UY', { useGrouping: 'always' });
+const uyu = (monto: number) => `$${formatoUYU.format(monto)}`;
+const listaCobros = document.querySelector<HTMLUListElement>('#lista-cobros')!;
+const historialCobros = document.querySelector<HTMLUListElement>('#historial-cobros')!;
+const campana = document.querySelector<HTMLButtonElement>('.campana')!;
+const verCobros = (pagos = repo.listarPagos()) => resumenCobros(alumnosCobrosDemo, pagos, hoyLocal(reloj.ahora()));
+type FilaCobro = ReturnType<typeof verCobros>['filas'][number];
+
+function textoVence(dias: number) {
+  if (dias === 0) return 'Vence hoy';
+  const n = Math.abs(dias);
+  return `${dias < 0 ? 'Venció hace' : 'Vence en'} ${n} ${n === 1 ? 'día' : 'días'}`;
+}
+
+function pintarCobros() {
+  const pagos = repo.listarPagos();
+  const r = verCobros(pagos);
+  const kpis: Record<string, string> = {
+    '#v-hoy .kpi-cobrado': uyu(r.cobradoHoy), '#v-hoy .kpi-por': uyu(r.porCobrar),
+    '#v-hoy .kpi-vencen': String(r.vencenHoy.length), '#v-cobros .kpi-cobrado': uyu(r.cobradoMes),
+    '#v-cobros .kpi-vencen': String(r.vencenHoy.length),
+  };
+  for (const [selector, valor] of Object.entries(kpis)) $(`${selector} .kpi-valor`)!.textContent = valor;
+  $('#v-cobros .conteo')!.textContent = etiquetaMes(`${r.periodo}-01`).replace(/^./, (letra) => letra.toUpperCase());
+  const n = r.vencenHoy.length;
+  $('#v-hoy .aviso strong')!.textContent = n === 1 ? '1 mensualidad vence hoy' : `${n} mensualidades vencen hoy`;
+  $('#v-hoy .aviso-sub')!.textContent = n
+    ? `${new Intl.ListFormat('es-UY').format(r.vencenHoy.map((f) => f.alumno.nombre))} · Ver en Cobros`
+    : 'No hay vencimientos para hoy';
+  const avisos = r.avisos.length;
+  campana.setAttribute('aria-label', avisos === 1 ? '1 aviso de cobro' : `${avisos} avisos de cobro`);
+  campana.querySelector<HTMLElement>('.campana-punto')!.hidden = avisos === 0;
+
+  listaCobros.innerHTML = r.filas.map((f, indice) => `<li>
+    <div><p class="al-nombre">${esc(f.alumno.nombre)}</p>
+    <p class="al-sub">${f.pago ? `Pagado el ${esc(f.pago.fecha)}` : textoVence(f.dias)} · ${esc(f.alumno.grupo)}</p></div>
+    <strong class="monto ${f.pago ? 'monto-ok' : f.dias > 0 ? 'monto-suave' : ''}">${uyu(f.pago?.montoUYU ?? f.alumno.montoUYU)}</strong>
+    <button type="button" class="marcar" data-fila="${indice}" aria-label="${f.pago ? 'Anular pago' : 'Registrar pago'} de ${esc(f.alumno.nombre)}, ${f.periodo}">${f.pago ? 'Anular' : 'Registrar'}</button>
+  </li>`).join('');
+  listaCobros.querySelectorAll<HTMLButtonElement>('[data-fila]').forEach((b, i) => {
+    const fila = r.filas[i];
+    b.addEventListener('click', () => abrirPago(fila.alumno.nombre, fila.periodo, fila.alumno.montoUYU, b, fila.pago, fila));
+  });
+
+  const visibles = new Set(r.filas.map((f) => f.pago?.id));
+  const historial = pagos.filter((p) => !visibles.has(p.id)).reverse();
+  historialCobros.innerHTML = historial.length ? historial.map((p) => {
+    const nombre = alumnosCobrosDemo.find((a) => a.id === p.alumnoId)?.nombre ?? p.alumnoId;
+    const estado = p.anulado ? `Anulado el ${esc(p.anulado.fecha)} por ${esc(p.anulado.quien)} · ${esc(p.anulado.motivo)}` : 'Pagado';
+    return `<li><div><p class="al-nombre">${esc(nombre)} · ${uyu(p.montoUYU)}</p>
+      <p class="al-sub">${esc(p.periodo)} · Registrado el ${esc(p.fecha)} por ${esc(p.quien)}</p>
+      <p class="al-sub">${estado}</p></div>${p.anulado ? '' : `<button class="marcar" type="button" data-pago="${esc(p.id)}" aria-label="Anular pago de ${esc(nombre)}, ${esc(p.periodo)}">Anular</button>`}</li>`;
+  }).join('') : '<li><p class="al-sub">Sin otros pagos registrados</p></li>';
+  historialCobros.querySelectorAll<HTMLButtonElement>('[data-pago]').forEach((b) => b.addEventListener('click', () => {
+    const pago = historial.find((p) => p.id === b.dataset.pago)!;
+    abrirPago(alumnosCobrosDemo.find((a) => a.id === pago.alumnoId)?.nombre ?? pago.alumnoId, pago.periodo, pago.montoUYU, b, pago);
+  }));
+}
+
+function abrirDialogoCobros(titulo: string, contenido: string, origen: HTMLElement) {
+  const dialogo = document.createElement('dialog');
+  dialogo.className = 'sheet';
+  // Neutraliza la caja del navegador; el color de fondo, radio y animación los aporta .sheet.
+  dialogo.style.cssText = 'position:fixed;inset:auto 0 0;width:100%;max-width:min(390px,100%);margin:0 auto;border-inline:0;border-bottom:0;color:inherit';
+  dialogo.setAttribute('aria-label', titulo);
+  dialogo.innerHTML = `<div class="sheet-head"><h3>${titulo}</h3>
+    <button type="button" class="sheet-cerrar" aria-label="Cerrar"><svg class="ico" width="18" height="18"><use href="#i-mas2"/></svg></button></div>${contenido}`;
+  dialogo.querySelector('.sheet-cerrar')!.addEventListener('click', () => dialogo.close());
+  dialogo.addEventListener('close', () => { dialogo.remove(); if (origen.isConnected) origen.focus(); });
+  $('.cel')!.appendChild(dialogo);
+  dialogo.showModal();
+  return dialogo;
+}
+
+function abrirPago(nombre: string, periodo: string, monto: number, origen: HTMLButtonElement, pago?: Pago, fila?: FilaCobro) {
+  const accion = pago ? 'Anular pago' : 'Registrar pago';
+  const dialogo = abrirDialogoCobros(accion, `<p class="sheet-clase"><strong>${esc(nombre)}</strong> · ${esc(periodo)} · ${uyu(pago?.montoUYU ?? monto)} UYU</p>
+    ${pago ? `<p class="sheet-clase">Registrado el ${esc(pago.fecha)} por ${esc(pago.quien)}. La anulación queda en el historial.</p>` : '<p class="sheet-clase">Confirmá que ya recibiste el pago. La app no mueve dinero.</p>'}
+    <form>${pago ? '<label class="campo"><span>Motivo de anulación</span><input name="motivo" required maxlength="160"></label>' : ''}
+      <p class="sheet-clase" role="alert"></p>
+      <div class="sheet-acciones"><button type="button" class="btn-secundario">Volver</button>
+      <button type="submit" class="btn-primario">${pago ? 'Confirmar anulación' : 'Confirmar pago'}</button></div>
+    </form>`, origen);
+  const form = dialogo.querySelector('form')!;
+  form.querySelector('.btn-secundario')!.addEventListener('click', () => dialogo.close());
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    if (!dialogo.open) return;
+    try {
+      if (pago) repo.anularPago(pago.id, String(new FormData(form).get('motivo') ?? ''), QUIEN);
+      else if (fila) {
+        const id = Array.from(crypto.getRandomValues(new Uint32Array(4)), (n) => n.toString(16).padStart(8, '0')).join('');
+        repo.registrarPago({ id, alumnoId: fila.alumno.id, periodo, montoUYU: monto, quien: QUIEN });
+      }
+    } catch (error) {
+      form.querySelector('[role="alert"]')!.textContent = error instanceof Error ? error.message : 'No se pudo guardar';
+      return;
+    }
+    dialogo.close();
+    pintarCobros();
+    if (origen.dataset.fila) listaCobros.querySelector<HTMLButtonElement>(`[data-fila="${origen.dataset.fila}"]`)?.focus();
+    else document.querySelector<HTMLElement>('#detalle-cobros > summary')?.focus();
+  });
+}
+
+campana.addEventListener('click', () => {
+  const { avisos } = verCobros();
+  abrirDialogoCobros('Avisos de cobro', avisos.length ? `<ul class="lista-cobros">${avisos.map((f) => `<li>
+    <div><p class="al-nombre">${esc(f.alumno.nombre)}</p><p class="al-sub">${textoVence(f.dias)} · ${esc(f.alumno.grupo)}</p></div>
+    <strong class="monto ${f.dias > 0 ? 'monto-suave' : ''}">${uyu(f.alumno.montoUYU)}</strong></li>`).join('')}</ul>`
+    : '<p class="sheet-clase">No hay avisos de vencimientos.</p>', campana);
+});
+
 /* ------------------------------------------------------------- navegación */
 const tabs = $$('.tab') as HTMLElement[];
 const vistas = $$('.vista') as HTMLElement[];
@@ -677,7 +786,7 @@ $$('.link-suave').forEach((a) => a.addEventListener('click', (e) => {
 }));
 
 $('.fab')?.addEventListener('click', () => avisar('Agendar: nueva clase (próximamente)'));
-$('.campana')?.addEventListener('click', () => avisar('3 avisos · 2 mensualidades vencen hoy'));
+window.addEventListener('storage', (e) => { if (e.key === CLAVE_ESTADO) pintarCobros(); });
 
 /* --------------------------------------------------------------- arranque */
 function refrescar() {
@@ -690,9 +799,16 @@ function refrescar() {
 // Re-alineado al abrir: las clases cuya hora pasó quedan Dadas (y se guarda).
 clases = repo.reconciliar();
 refrescar();
+pintarCobros();
+let diaCobros = hoyLocal(reloj.ahora());
 
 // El cron local avanza solo mientras la app está abierta (plan §2.1).
 setInterval(() => {
+  const hoy = hoyLocal(reloj.ahora());
+  if (hoy !== diaCobros) {
+    diaCobros = hoy;
+    pintarCobros();
+  }
   const antes = clases.map((c) => c.estado).join(',');
   clases = repo.reconciliar();
   if (clases.map((c) => c.estado).join(',') !== antes) {

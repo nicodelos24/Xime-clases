@@ -10,6 +10,7 @@
 import { crearClase, type AlumnoDeClase, type Clase } from './clases.ts';
 import { lunesDe, sumarDias } from './fechas.ts';
 import { hoyLocal, type InstanteMs } from './reloj.ts';
+import type { AlumnoCobro } from './cobros.ts';
 
 function alumnos(nombres: [string, string][], prefijo: string): AlumnoDeClase[] {
   return nombres.map(([nombre, telefono], i) => ({ id: `${prefijo}${i}`, nombre, telefono }));
@@ -34,6 +35,20 @@ const GRUPO_V = alumnos([
   ['Camila S.', '098 999 505'], ['Joaquín P.', '098 101 606'], ['Abril G.', '098 212 717'],
   ['Bruno S.', '098 987 654'], ['Lucía C.', '098 778 899'],
 ], 'v');
+
+// Identidad canónica por alumno: A/B/V reutilizan nombres con IDs de clase distintos.
+// Anclas y tarifa son fixtures sintéticos para la demo de mensualidades.
+export const alumnosCobrosDemo: AlumnoCobro[] = ([
+  [GRUPO_A[0], 'Martes A', 21], [GRUPO_A[1], 'Martes A', 21],
+  [GRUPO_A[2], 'Martes B', 26], [GRUPO_A[3], 'Viernes', 20],
+  [GRUPO_A[4], 'Martes B', 1], [GRUPO_A[5], 'Viernes', 2],
+  [GRUPO_A[6], 'Martes A', 3], [GRUPO_A[7], 'Martes A', 8],
+  [GRUPO_A[8], 'Martes A', 9], [GRUPO_A[9], 'Martes A', 12],
+  [GRUPO_A[10], 'Martes A', 16], [GRUPO_A[11], 'Martes A', 31],
+  [GRUPO_B[8], 'Martes B', 28],
+] satisfies [AlumnoDeClase, string, number][]).map(([alumno, grupo, ancla]) => ({
+  id: alumno.id, nombre: alumno.nombre, grupo: `Grupo ${grupo}`, ancla, montoUYU: 6500,
+}));
 
 /**
  * La semana demo (lunes a sábado) que contiene el día de `ahora`.
