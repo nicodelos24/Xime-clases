@@ -94,3 +94,8 @@ botón rojo «Cancelar clase»: el chip «Por dar» abre el cuadro con Marcar da
 deshacer y persistencia F5. Sin tocar BD, FAB ni scroll de barra. Verificado:
 94/94 tests, typecheck 0, `git diff --check` limpio, Chrome 390 px claro/oscuro
 y `docs/` por HTTP con 0 errores de consola; capturas en `docs/qa/v5-agenda-*.png`.
+  Corrección post-revisión (Roma): el enlace «Ver mes» se convierte en botón sin
+  `href` y el handler genérico de `a.link-suave` accedía a `href.slice(1)` →
+  TypeError en consola. Política en `src/navegacion.ts` que ignora enlaces sin
+  destino, con test de regresión (95/95 tests); 0 errores reverificados en
+  fuente y `docs/`, cache-busting `?v=202611200915`.

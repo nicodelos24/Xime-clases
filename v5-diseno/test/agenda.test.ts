@@ -5,6 +5,7 @@ import { strict as assert } from 'node:assert';
 import {
   registrarToqueFecha, mesDe, VENTANA_DOBLE_TOQUE,
   marcarDada, deshacerMarcada, crearClase, marcarSiPasada,
+  destinoDeEnlace,
   clasesDelDia, lunesDe, esFechaValida, sumarDias,
   RepositorioClases, almacenMemoria, relojFalso, datosDemo, fichasDemo,
   type Clase,
@@ -19,6 +20,19 @@ function claseBase(): Clase {
     alumnos: [{ id: 'a1', nombre: 'Carla', telefono: '099123456' }],
   });
 }
+
+/* --------------------------------------------- navegación suave (regresión) */
+
+test('enlace «Ver mes» sin href: el handler genérico no navega ni lanza TypeError', () => {
+  // El bloque específico le quita el href al enlace para que entre sin hash
+  // propio. El handler genérico de a.link-suave corre igual y antes existía
+  // `getAttribute('href').slice(1)` → TypeError en la consola.
+  assert.equal(destinoDeEnlace(null), null, 'sin href no hay destino: se ignora');
+  assert.equal(destinoDeEnlace('#v-mes'), 'v-mes', 'los enlaces con href siguen navegando');
+  assert.equal(destinoDeEnlace('#v-semana'), 'v-semana');
+  assert.equal(destinoDeEnlace(''), null);
+  assert.equal(destinoDeEnlace('v-mes'), null, 'sin # no es enlace interno');
+});
 
 /* ------------------------------------------------ toque simple / doble en el mes */
 

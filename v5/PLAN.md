@@ -210,3 +210,13 @@ Al tocar "Cancelar clase" en cualquier vista:
   toque simple/doble emulado, clic, teclado, día vacío, límite de mes (01/11 y
   30/11), marcar/deshacer con F5, 0 errores de consola. Capturas en
   `docs/qa/v5-agenda-*.png`. Cache-busting `?v=202611200510`.
+- **Corrección post-revisión (Roma, 20/11)**: al entrar a Clases y tocar
+  «Ver mes» se lanzaba `TypeError: Cannot read properties of null (reading
+  'slice')`: el handler genérico de `a.link-suave` hacía
+  `getAttribute('href').slice(1)` sobre el enlace convertido en botón (sin
+  `href`). La navegación ocurría igual, pero ensuciaba la consola. Política
+  pura en `src/navegacion.ts` (`destinoDeEnlace`), que devuelve `null` para
+  enlaces sin `href`; el handler genérico los ignora. Test de regresión en
+  `test/agenda.test.ts` (95/95). Reverificado en fuente y `docs/` por HTTP:
+  0 errores de consola, clic y teclado, 2 tarjetas del 20. Cache-busting
+  `?v=202611200915`.

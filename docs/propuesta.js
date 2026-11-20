@@ -7,6 +7,7 @@ import { alumnosCobrosDemo, datosDemo, fichasDemo } from './src/demo.js';
 import { resumenCobros } from './src/cobros.js';
 import { resumenHoy, clasesDelDia, clasesDeLaSemana } from './src/resumen.js';
 import { registrarToqueFecha, mesDe } from './src/agenda.js';
+import { destinoDeEnlace } from './src/navegacion.js';
 import { diaCorto, etiquetaDia, etiquetaMes, sumarDias, parseFecha, lunesDe } from './src/fechas.js';
 import { relojDelDispositivo, hoyLocal } from './src/reloj.js';
 import { textoCancelacion, destinos, resumenEnvio, linkTexto, } from './src/whatsapp.js';
@@ -1063,8 +1064,11 @@ tabs.forEach((t) => t.addEventListener('click', (e) => {
     irA(t.getAttribute('href').slice(1));
 }));
 $$('a.link-suave').forEach((a) => a.addEventListener('click', (e) => {
+    const destino = destinoDeEnlace(a.getAttribute('href'));
+    if (!destino)
+        return; // enlace convertido en botón (p. ej. «Ver mes»)
     e.preventDefault();
-    irA(a.getAttribute('href').slice(1));
+    irA(destino);
 }));
 // El mes es una vista dentro de Clases: el enlace «Ver mes» entra sin hash
 // propio para que la navegación hacia atrás no se coma la vista activa.

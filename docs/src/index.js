@@ -15,6 +15,7 @@ export * from './clases.js';
 export * from './whatsapp.js';
 export * from './resumen.js';
 export * from './agenda.js';
+export * from './navegacion.js';
 export * from './repositorio.js';
 export * from './demo.js';
 export * from './cobros.js';

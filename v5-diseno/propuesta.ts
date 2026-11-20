@@ -9,6 +9,7 @@ import { alumnosCobrosDemo, datosDemo, fichasDemo } from './src/demo.ts';
 import { resumenCobros, type Pago } from './src/cobros.ts';
 import { resumenHoy, clasesDelDia, clasesDeLaSemana } from './src/resumen.ts';
 import { registrarToqueFecha, mesDe, type ToqueFecha } from './src/agenda.ts';
+import { destinoDeEnlace } from './src/navegacion.ts';
 import { diaCorto, etiquetaDia, etiquetaMes, sumarDias, parseFecha, lunesDe } from './src/fechas.ts';
 import { relojDelDispositivo, hoyLocal, type Reloj } from './src/reloj.ts';
 import {
@@ -1090,8 +1091,10 @@ tabs.forEach((t) => t.addEventListener('click', (e) => {
 }));
 
 $$('a.link-suave').forEach((a) => a.addEventListener('click', (e) => {
+  const destino = destinoDeEnlace(a.getAttribute('href'));
+  if (!destino) return; // enlace convertido en botón (p. ej. «Ver mes»)
   e.preventDefault();
-  irA((a.getAttribute('href') as string).slice(1));
+  irA(destino);
 }));
 
 // El mes es una vista dentro de Clases: el enlace «Ver mes» entra sin hash
