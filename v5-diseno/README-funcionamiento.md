@@ -1,16 +1,16 @@
 # Clases v5 · funcionamiento (prototipo)
 
-> **Estado (19/11/2026, Reina):** entregado para QA. `feat/v5-funcionamiento`.
-> El diseño visual de este prototipo estaba aprobado por Nico y es fijo;
-> acá se agregó el funcionamiento de `v5/PLAN.md` (estado de clase,
-> auto-marcado por hora, Cancelar clase, WhatsApp Opción A).
+> **Estado (20/11/2026, Reina):** `feat/v5-agendar-clases`. El diseño visual
+> v5 está aprobado por Nico y es fijo; acá vive el funcionamiento de
+> `v5/PLAN.md`: estado de clase, auto-marcado, Cancelar, WhatsApp Opción A,
+> interacciones de Agenda y agendar/reprogramar clases. 110 tests en verde.
 
 ## Qué corre
 
 ```bash
 npm install        # solo typescript + @types/node (una vez)
 npm run typecheck  # tsc --noEmit → 0 errores
-npm test           # node --test test/*.test.ts → 41 tests, 0 fallos
+npm test           # node --test test/*.test.ts → 110 tests, 0 fallos
 npm run serve      # servidor estático en http://localhost:8797/index.html
 ```
 
@@ -78,3 +78,23 @@ servidor.
   deja `dataset` vacío; **3 clics seguidos sobre el toast → 0 errores de
   consola** (antes lanzaba "Solo se revierte una clase cancelada").
 - Consola de la sesión final: **0 errores, 0 warnings**.
+
+## Agendar y reprogramar (20/11)
+
+- **FAB «Agendar»**: ofrece «Clase semanal» (nombre, días de la semana,
+  inicio visible —hoy por defecto—, hora y duración) y «Clase suelta»
+  (nombre, fecha exacta, hora y duración). Ambas validan y guardan en
+  `xime.v5.estado` sin duplicados.
+- **`src/agendar.ts`**: genera las ocurrencias de cada rutina con ID estable
+  (`rutinaId + fecha + minutos`) y horizonte deslizante. Cancelar o mover una
+  ocurrencia no reaparece en origen ni cambia el resto de la serie.
+- **Estado «Dada»**: `src/clases.ts` la clase sigue «Por dar» hasta
+  `inicio + duración` (Montevideo, incluso cruzando medianoche). Se
+  reconcilia al abrir, al volver y con la app abierta; no pisa marcas
+  manuales, canceladas ni auditoría.
+- **«Cambiar de día»**: selector día/mes/año accesible con la fecha original
+  legible; mueve solo esa clase conservando ID, hora, duración, alumnos y
+  auditoría, y la muestra en destino aunque cruce semana/mes. Las flechas
+  del almanaque v5 navegan entre meses; toque simple/doble y estilo intactos.
+- Sin BD, sin login y sin tocar `serve.mjs`/8797. `docs/` se regenera
+  transpilando TS a JS estático con cache-bust ( Pages no transpila en vivo).

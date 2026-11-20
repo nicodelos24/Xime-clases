@@ -4,8 +4,8 @@ import { strict as assert } from 'node:assert';
 
 import {
   crearClase, marcarSiPasada, reconciliar, cancelarClase, deshacerCancelacion,
-  reprogramarClase, registrarMensajeEnviado, inicioPasado, horaClase, etiquetaEstado, finClase,
-  instanteInicio, type Clase,
+  reprogramarClase, registrarMensajeEnviado, horaClase, etiquetaEstado, finClase,
+  instanteInicio, instanteFin, finPasado, type Clase,
 } from '../src/clases.ts';
 import { relojFalso } from '../src/reloj.ts';
 
@@ -40,32 +40,46 @@ test('crearClase arranca en Programada y normaliza la hora', () => {
   assert.throws(() => crearClase({ id: 'x', nombre: 'x', fecha: '2026-11-18', hora: '25:00' }), /Hora inválida/);
 });
 
-test('auto-marcado: la clase pasa a Dada sola al llegar su hora', () => {
-  const c = claseBase(); // 15:00 = 18:00 UTC
+test('auto-marcado: la clase sigue Por dar hasta que TERMINA (inicio + duración)', () => {
+  const c = claseBase(); // 15:00–16:00 = 18:00–19:00 UTC
   const antes = t('2026-11-18T17:59:59.000Z'); // 14:59:59 en Uruguay
-  const despues = t('2026-11-18T18:00:00.000Z'); // 15:00 exacto
+  const inicio = t('2026-11-18T18:00:00.000Z'); // 15:00 exacto
+  const durante = t('2026-11-18T18:30:00.000Z'); // 15:30, se está dictando
+  const fin = t('2026-11-18T19:00:00.000Z'); // 16:00, terminó
 
   assert.equal(marcarSiPasada(c, antes).estado, 'programada', 'antes de la hora no se marca');
-  const dada = marcarSiPasada(c, despues);
-  assert.equal(dada.estado, 'dada');
-  assert.equal(dada.marcadaEn, despues);
+  assert.equal(marcarSiPasada(c, inicio).estado, 'programada', 'al inicio sigue Por dar');
+  assert.equal(marcarSiPasada(c, durante).estado, 'programada', 'DURANTE la clase sigue Por dar');
+  const dada = marcarSiPasada(c, fin);
+  assert.equal(dada.estado, 'dada', 'recíen al terminar se marca Dada');
+  assert.equal(dada.marcadaEn, fin);
   assert.equal(etiquetaEstado(dada), 'Dada');
 });
 
-test('la hora exacta de inicio ya cuenta como pasada', () => {
-  const c = claseBase(); // 15:00 = 18:00 UTC
-  const exacto = t('2026-11-18T18:00:00.000Z');
-  assert.equal(inicioPasado(c, exacto), true);
-  assert.equal(marcarSiPasada(c, exacto - 1).estado, 'programada');
-  assert.equal(marcarSiPasada(c, exacto).estado, 'dada');
+test('el instante exacto de FIN ya cuenta como terminado', () => {
+  const c = claseBase(); // 15:00–16:00 = 18:00–19:00 UTC
+  const fin = t('2026-11-18T19:00:00.000Z');
+  assert.equal(instanteFin(c), fin);
+  assert.equal(finPasado(c, fin), true);
+  assert.equal(finPasado(c, fin - 1), false);
+  assert.equal(marcarSiPasada(c, fin - 1).estado, 'programada');
+  assert.equal(marcarSiPasada(c, fin).estado, 'dada');
 });
 
-test('nunca se marca dada antes de su fecha y hora', () => {
+test('nunca se marca dada antes de que termine, ni en otra fecha', () => {
   const manana = crearClase({ id: 'c2', nombre: 'Grupo Viernes', fecha: '2026-11-20', hora: '15:00' });
   assert.equal(marcarSiPasada(manana, t(ISO_1830)).estado, 'programada');
-  assert.equal(marcarSiPasada(manana, t('2026-11-19T23:59:00.000Z')).estado, 'programada');
-  // 15:00 del viernes en Uruguay = 18:00 UTC
-  assert.equal(marcarSiPasada(manana, t('2026-11-20T18:00:00.000Z')).estado, 'dada');
+  assert.equal(marcarSiPasada(manana, t('2026-11-20T18:00:00.000Z')).estado, 'programada', 'a las 15:00 sigue Por dar');
+  // 16:00 del viernes en Uruguay = 19:00 UTC → terminó
+  assert.equal(marcarSiPasada(manana, t('2026-11-20T19:00:00.000Z')).estado, 'dada');
+});
+
+test('duración que cruza medianoche: sigue Por dar a las 00:30 y se marca a la 01:00', () => {
+  const noche = crearClase({ id: 'cn', nombre: 'Grupo Noche', fecha: '2026-11-18', hora: '23:00', duracionMin: 120 });
+  // 23:00 del 18/11 = 02:00 UTC del 19; 01:00 del 19 = 04:00 UTC del 19
+  assert.equal(marcarSiPasada(noche, t('2026-11-19T02:30:00.000Z')).estado, 'programada', '00:30 sigue Por dar');
+  assert.equal(marcarSiPasada(noche, t('2026-11-19T03:59:59.000Z')).estado, 'programada');
+  assert.equal(marcarSiPasada(noche, t('2026-11-19T04:00:00.000Z')).estado, 'dada');
 });
 
 test('el auto-marcado es idempotente: no re-marcia ni toca canceladas', () => {

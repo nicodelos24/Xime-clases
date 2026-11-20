@@ -220,3 +220,41 @@ Al tocar "Cancelar clase" en cualquier vista:
   `test/agenda.test.ts` (95/95). Reverificado en fuente y `docs/` por HTTP:
   0 errores de consola, clic y teclado, 2 tarjetas del 20. Cache-busting
   `?v=202611200915`.
+
+### 7.6 Agendar clases semanales y sueltas; reprogramar por fecha (20/11)
+
+> Pedido de Nico (20/11 18:57), brief de Roma, task
+> `task_2a5b01fab0944d6e`. Sin tocar el diseño visual v5, sin BD y sin
+> `serve.mjs`/8797. rama `feat/v5-agendar-clases`, worktree
+> `.worktrees/v5-agendar-clases`.
+
+- **Dos formas de agregar desde el FAB «Agendar»**: reemplazado el toast
+  único por un cuadro con «Clase semanal» y «Clase suelta». Semanal =
+  nombre, uno o más días de la semana, inicio visible (hoy por defecto,
+  nunca en el pasado), hora y duración (60 min por defecto); horarios
+  distintos se crean como rutinas separadas. Suelta = nombre, fecha exacta
+  (día seleccionado o hoy), hora y duración. Validación visible, guardado
+  atómico y navegación al día destino sin éxito falso ni duplicados.
+- **Repetición persistente**: `src/agendar.ts` genera ocurrencias de cada
+  rutina con ID estable derivado de `rutinaId + fecha + minutos`, con
+  horizonte deslizante. Navegar adelante y reabrir muestra las ocurrencias;
+  una ocurrencia cancelada o movida no reaparece en origen y el resto de la
+  serie no cambia. Se preserva la compatibilidad aditiva de
+  `xime.v5.estado` (clases y campos previos intactos; v3 del repositorio).
+- **Regla «Dada» compartida**: en `src/clases.ts` la clase queda «Por dar»
+  hasta `inicio + duración` (Montevideo, incluso si cruza medianoche), no
+  al inicio. Se reconcilia al abrir, al volver y con la app abierta; no pisa
+  marcas manuales, cancelaciones ni historial.
+- **«Cambiar de día» funcional e intuitivo**: reemplazados Lun/Mar… por un
+  selector accesible de día/mes/año con la fecha original legible y la
+  confirmación en destino. Mueve SOLO esa clase conservando ID, hora,
+  duración, participantes y auditoría (evento `reprogramada`). Muestra el
+  destino aunque cruce semana o mes y lo deja de ver en origen tras F5.
+  Las flechas del almanaque v5 navegan entre meses; se preservan toque
+  simple, doble toque y estilo v5. Sin otros módulos, barra inferior ni BD.
+- **Verificación**: `npm run typecheck` 0 errores; `npm test` 110/110
+  (antes 95); `git diff --check` limpio; `origin/master` revalidado en
+  `8e853448`. Chrome 390 px claro/oscuro, fuente (8801) y `docs/` por HTTP
+  como Pages (8802): los 3 flujos (rutina, suelta, mover 25/11→3/12),
+  F5, sin duplicados, fecha original ausente al mover, 0 errores de
+  consola. Cache-busting `?v=202611202020`.

@@ -185,3 +185,164 @@ test('el demo es determinista para un instante dado y se ancla al día local', (
   assert.equal(clases.at(-1)?.fecha, '2026-11-21', 'el sábado de la demo es hoy');
   assert.deepEqual(datosDemo(ahora), clases, 'misma entrada, misma salida');
 });
+
+/* ------------------------------------------------ v3: agendar + sueltas ---- */
+
+test('crearRutina genera ocurrencias y sobrevive F5 sin duplicar', () => {
+  const almacen = almacenMemoria();
+  const { repo } = abrir(almacen, JUEVES_10);
+  repo.reconciliar();
+  const antes = repo.listar().length;
+  const rutina = repo.crearRutina({
+    id: 'rut-lun-mie', nombre: 'Grupo Lunes y Miércoles', dias: [0, 2],
+    desde: '2026-11-19', hora: '15:00',
+  });
+  const conOc = repo.listar().filter((c) => c.rutinaId === rutina.id);
+  assert.ok(conOc.length > 0, 'se materializaron ocurrencias');
+  assert.equal(repo.listar().length, antes + conOc.length);
+
+  // F5: el repositorio nuevo genera 0 ocurrencias nuevas (ya están guardadas).
+  const luego = abrir(almacen, JUEVES_10);
+  luego.repo.reconciliar();
+  const trasF5 = luego.repo.listar().filter((c) => c.rutinaId === rutina.id);
+  assert.equal(trasF5.length, conOc.length, 'no duplica al reabrir');
+  assert.deepEqual(trasF5.map((c) => c.id).sort(), conOc.map((c) => c.id).sort());
+  const guardado = JSON.parse(almacen.leer() as string);
+  assert.equal(guardado.version, VERSION_ESTADO);
+  assert.equal(guardado.rutinas.length, 1, 'la plantilla quedó guardada');
+});
+
+test('navegar adelante y reabrir sigue mostrando ocurrencias (sin corte fijo)', () => {
+  const almacen = almacenMemoria();
+  const { repo } = abrir(almacen, JUEVES_10);
+  repo.crearRutina({ id: 'rut-vie', nombre: 'Viernes', dias: [4], desde: '2026-11-20', hora: '10:00' });
+  const inicial = repo.listar().filter((c) => c.rutinaId === 'rut-vie').length;
+
+  // El reloj avanza un mes: al reconciliar aparecen más ocurrencias.
+  const luego = abrir(almacen, t('2026-12-20T13:00:00.000Z'));
+  const clases = luego.repo.reconciliar();
+  const finales = clases.filter((c) => c.rutinaId === 'rut-vie');
+  assert.ok(finales.length > inicial, 'el horizonte se extendió');
+  assert.ok(finales.some((c) => c.fecha >= '2026-12-20' && c.fecha <= '2027-01-01'));
+});
+
+test('cancelar una ocurrencia no la regenera en origen tras F5; el resto intacto', () => {
+  const almacen = almacenMemoria();
+  const { repo, reloj } = abrir(almacen, JUEVES_10);
+  repo.crearRutina({ id: 'rut-lm', nombre: 'Lunes', dias: [0], desde: '2026-11-23', hora: '15:00' });
+  const occ = repo.listar().filter((c) => c.rutinaId === 'rut-lm').sort((a, b) => a.fecha.localeCompare(b.fecha));
+  const origen = occ[0];
+  const total = occ.length;
+  repo.cancelar(origen.id, { motivo: 'Lluvia', quien: 'Xime', ahora: reloj.ahora() });
+
+  const luego = abrir(almacen, JUEVES_10);
+  luego.repo.reconciliar();
+  const tras = luego.repo.listar().filter((c) => c.rutinaId === 'rut-lm');
+  assert.equal(tras.length, total, 'la cancelada sigue en la lista con su auditoría');
+  assert.equal(tras.find((c) => c.id === origen.id)?.estado, 'cancelada');
+  assert.equal(tras.find((c) => c.id === origen.id)?.cancelacion?.motivo, 'Lluvia');
+  const rutina = luego.repo.listarRutinas()[0];
+  assert.equal(rutina.excepciones[origen.fechaRutina as string], 'cancelada', 'la fecha quedó exceptuada');
+
+  // Incluso si la clase se eliminara del estado, la fecha no reaparece.
+  const estado = JSON.parse(almacen.leer() as string);
+  estado.clases = estado.clases.filter((c: { id: string }) => c.id !== origen.id);
+  const soloConExcepcion = almacenMemoria(JSON.stringify(estado));
+  const recon = abrir(soloConExcepcion, JUEVES_10).repo.reconciliar();
+  assert.equal(recon.some((c) => c.fecha === origen.fecha && c.rutinaId === 'rut-lm'), false);
+});
+
+test('mover una ocurrencia conserva hora/duración/participantes y no reaparece en origen', () => {
+  const almacen = almacenMemoria();
+  const { repo, reloj } = abrir(almacen, JUEVES_10);
+  repo.crearRutina({
+    id: 'rut-mar', nombre: 'Martes', dias: [1], desde: '2026-11-24', hora: '17:30', duracionMin: 90,
+    // Sin alumnos: el foco es conservar hora/duración/auditoría.
+  });
+  const occ = repo.listar().filter((c) => c.rutinaId === 'rut-mar').sort((a, b) => a.fecha.localeCompare(b.fecha))[0];
+  const fechaOrigen = occ.fecha;
+  repo.reprogramar(occ.id, '2026-12-15', { quien: 'Xime', ahora: reloj.ahora() });
+
+  const luego = abrir(almacen, JUEVES_10);
+  luego.repo.reconciliar();
+  const movida = luego.repo.listar().find((c) => c.id === occ.id);
+  assert.equal(movida?.fecha, '2026-12-15');
+  assert.equal(movida?.minutos, 17 * 60 + 30, 'conserva la hora');
+  assert.equal(movida?.duracionMin, 90, 'conserva la duración');
+  assert.equal(movida?.eventos.at(-1)?.tipo, 'reprogramada', 'auditoría intacta');
+  assert.equal(luego.repo.listar().some((c) => c.id === occ.id && c.fecha === fechaOrigen), false, 'no está en origen');
+  const rutina = luego.repo.listarRutinas()[0];
+  assert.equal(rutina.excepciones[occ.fechaRutina as string], 'movida');
+});
+
+test('clase suelta: alta, F5 y sin duplicado', () => {
+  const almacen = almacenMemoria();
+  const { repo } = abrir(almacen, JUEVES_10);
+  repo.reconciliar();
+  const suelta = repo.crearSuelta({ id: 'suelta-1', nombre: 'Inglés individual', fecha: '2026-11-25', hora: '17:30' });
+  assert.equal(suelta.estado, 'programada');
+  assert.equal(repo.listar().filter((c) => c.id === suelta.id).length, 1);
+
+  const luego = abrir(almacen, JUEVES_10);
+  luego.repo.reconciliar();
+  const trasF5 = luego.repo.listar().filter((c) => c.id === suelta.id);
+  assert.equal(trasF5.length, 1, 'no se duplica al reabrir');
+  assert.equal(trasF5[0].fecha, '2026-11-25');
+  assert.equal(trasF5[0].nombre, 'Inglés individual');
+});
+
+test('migración v1/v2 → v3 conserva clases, pagos, alumnos e historial', () => {
+  const base = {
+    version: 2,
+    guardadoEn: '2026-11-19T13:00:00.000Z',
+    clases: [{
+      id: 'c-vieja', nombre: 'Grupo Viejo', fecha: '2026-11-18', minutos: 900, duracionMin: 60,
+      alumnos: [], estado: 'dada', marcadaEn: t('2026-11-18T19:00:00.000Z'), cancelacion: null,
+      eventos: [{ tipo: 'marcada-manual', fecha: '2026-11-18', minutos: 900, quien: 'Xime' }],
+    }],
+    pagos: [{ id: 'p1', alumnoId: 'a0', periodo: '2026-11', montoUYU: 6500, fecha: '2026-11-18', quien: 'Xime' }],
+    alumnos: [],
+  };
+  const almacen = almacenMemoria(JSON.stringify(base));
+  const { repo } = abrir(almacen, JUEVES_10);
+  repo.reconciliar();
+  assert.equal(repo.listar().length, 1, 'la demo NO resembra sobre datos guardados');
+  const c = repo.listar()[0];
+  assert.equal(c.id, 'c-vieja');
+  assert.equal(c.estado, 'dada', 'no se pisa la marca manual');
+  assert.equal(c.eventos.length, 1, 'se conserva la auditoría');
+  assert.equal(repo.listarPagos().length, 1, 'se conservan los pagos');
+  const guardado = JSON.parse(almacen.leer() as string);
+  assert.equal(guardado.version, VERSION_ESTADO);
+  assert.deepEqual(guardado.rutinas, [], 'se agregó el campo rutinas sin tocar lo demás');
+});
+
+test('fallo del guardado: crearSuelta no anuncia éxito (lanza)', () => {
+  const almacen = almacenMemoria();
+  let fallar = false;
+  const almacenQueFalla: Almacen = {
+    leer: () => almacen.leer(),
+    escribir: (texto, requiere) => {
+      if (fallar && requiere) throw new Error('No se pudo guardar');
+      almacen.escribir(texto, requiere);
+    },
+  };
+  const { repo } = abrir(almacenQueFalla, JUEVES_10);
+  repo.reconciliar();
+  fallar = true;
+  assert.throws(() => repo.crearSuelta({ id: 'suelta-x', nombre: 'x', fecha: '2026-11-25', hora: '10:00' }), /No se pudo guardar/);
+  assert.equal(repo.listar().some((c) => c.id === 'suelta-x'), false, 'el estado en memoria no avanzó');
+});
+
+test('auto-marcado al fin de duración en el repositorio (incluso al volver)', () => {
+  const almacen = almacenMemoria();
+  const { repo } = abrir(almacen, JUEVES_10);
+  const clases = repo.reconciliar(); // jueves 10:00: la clase de hoy (16:00) sigue por dar
+  const deHoy = clases.find((c) => c.fecha === '2026-11-19');
+  assert.equal(deHoy?.estado, 'programada');
+
+  // Vuelve a las 17:30 local (20:30 UTC): la clase 16:00–17:00 ya terminó.
+  const luego = abrir(almacen, t('2026-11-19T20:30:00.000Z'));
+  const alVolver = luego.repo.reconciliar().find((c) => c.id === deHoy?.id);
+  assert.equal(alVolver?.estado, 'dada', 'se marcó al terminar, no al empezar');
+});

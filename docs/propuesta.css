@@ -794,3 +794,50 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; width: 0; }
 [data-tema="oscuro"] .chip-dada { background: #2A5A42; color: #D6F3E2; }
 [data-tema="oscuro"] .chip-cancelada { background: #5A3A1C; color: #F6D9B0; }
 [data-tema="oscuro"] .marcar-cancelar { background: #3A2418; color: #F0C9A8; border-color: #6B4E2E; }
+
+/* ------------------------------------------------------------------ */
+/* Agendar clases (20/11): FAB → elegir modalidad → formulario v5.      */
+/* Reutiliza .sheet/.campo/.btn-*; acá solo lo nuevo. Sin cambiar el    */
+/* diseño aprobado: mismos tokens, radios y transiciones sobrias.       */
+/* ------------------------------------------------------------------ */
+.opcion-agendar .ico { color: var(--tq-600); }
+.opcion-agendar[data-mod="suelta"] .ico { color: var(--lila); }
+
+/* Elegir días de la semana (rutina): 7 chips cuadrados, lunes=0. */
+.semana-elegir { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; }
+.dia-chip {
+  border: 1.5px solid var(--linea); background: var(--bg-alt); color: var(--tinta);
+  border-radius: var(--r-chico); padding: 9px 0; cursor: pointer; font: inherit;
+  font-size: 11.5px; font-weight: 700;
+  transition: border-color var(--t-rapida) var(--ease), background var(--t-rapida) var(--ease), color var(--t-rapida) var(--ease), transform var(--t-rapida) var(--ease);
+}
+.dia-chip:hover { transform: translateY(-2px); background: var(--tq-50); }
+.dia-chip:active { transform: scale(.92); }
+.dia-chip.activo { border-color: var(--tq-600); background: var(--tq-600); color: #fff; }
+.dia-chip:focus-visible { outline: 2px solid var(--tq-600); outline-offset: 2px; }
+
+/* Fila de dos campos (hora + duración). */
+.campo-duo { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
+.campo-duo .campo { margin-top: 10px; }
+.campo-error { font-size: 11.5px; color: var(--rosa); min-height: 14px; margin-top: 4px; }
+
+/* Selector de fecha exacta para «Cambiar de día» / «Clase suelta». */
+.fecha-elegir { display: grid; grid-template-columns: 1fr 1fr 1.4fr; gap: 7px; }
+.fecha-elegir .campo { margin-top: 8px; }
+.fecha-elegir select {
+  width: 100%; border: 1px solid var(--linea); border-radius: var(--r-chico);
+  background: var(--bg); color: var(--tinta); font: inherit; font-size: 14px;
+  padding: 9px 8px; cursor: pointer;
+}
+.fecha-elegir select:focus { outline: none; border-color: var(--tq-500); box-shadow: 0 0 0 3px var(--tq-100); }
+
+.resumen-fecha {
+  background: var(--tq-50); border: 1px solid var(--tq-300);
+  border-radius: var(--r-med); padding: 10px 12px; margin-top: 12px;
+  font-size: 13px; color: var(--tinta);
+}
+.resumen-fecha strong { color: var(--tq-700); }
+[data-tema="oscuro"] .resumen-fecha { background: #163A38; border-color: #2E5E5A; }
+[data-tema="oscuro"] .resumen-fecha strong { color: #BFE9E2; }
+[data-tema="oscuro"] .dia-chip.activo { background: var(--tq-600); color: #fff; }
+[data-tema="oscuro"] .opcion-agendar[data-mod="suelta"] .ico { color: #C9B6E8; }

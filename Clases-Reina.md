@@ -99,3 +99,26 @@ y `docs/` por HTTP con 0 errores de consola; capturas en `docs/qa/v5-agenda-*.pn
   TypeError en consola. Política en `src/navegacion.ts` que ignora enlaces sin
   destino, con test de regresión (95/95 tests); 0 errores reverificados en
   fuente y `docs/`, cache-busting `?v=202611200915`.
+
+Agendar clases (20/11, task `task_2a5b01fab0944d6e`, rama
+`feat/v5-agendar-clases`): Nico pidió dos formas de agregar clase desde el
+móvil y un «Cambiar de día» con fecha concreta legible. Reemplacé el toast
+del FAB por «Clase semanal» / «Clase suelta»: la semanal toma nombre, días,
+inicio visible (hoy por defecto), hora y duración (60 min default), con
+horarios distintos como rutinas separadas; la suelta toma nombre, fecha
+exacta, hora y duración. Nuevo `src/agendar.ts` con ocurrencias de rutina de
+ID estable y horizonte deslizante: repiten sin duplicados ni corte fijo, y
+cancelar/mover una ocurrencia no altera el resto de la serie. Regla «Dada»
+unificada en `src/clases.ts`: «Por dar» hasta inicio + duración en
+Montevideo (cruza medianoche), reconciliada al abrir/volver/con app abierta,
+sin pisar marcas manuales, canceladas ni historial. «Cambiar de día» usa un
+selector día/mes/año accesible con fecha original legible; mueve solo esa
+clase conservando ID, hora, duración, participantes y auditoría
+(`reprogramada`), muestra el destino aunque cruce mes y lo saca del origen
+tras F5. Flechas del almanaque v5 operativas, toque/doble toque y estilo
+intactos. Sin cambios al diseño v5, sin BD, sin barra inferior ni
+`serve.mjs`/8797. Compatibilidad aditiva de `xime.v5.estado` (repositorio
+v3). Verificado: typecheck 0, 110/110 tests, `git diff --check` limpio,
+Chrome 390 px claro/oscuro sobre fuente y `docs/` estático: los 3 flujos,
+F5, sin duplicados, 0 errores de consola. `docs/` regenerado con
+cache-bust `?v=202611202020`. `origin/master` revalidado en `8e853448`.

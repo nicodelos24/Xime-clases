@@ -1,8 +1,10 @@
 /**
  * Dominio de la clase grupal (v5): estado, auto-marcado por hora y cancelación.
  *
- * Reglas (v5/PLAN.md §2):
- *  - Programada → (hora pasada) → Dada (automática) → o Cancelada (manual).
+ * Reglas (v5/PLAN.md §2, actualizado 20/11):
+ *  - Programada → (terminó la duración) → Dada (automática) → o Cancelada (manual).
+ *    Una clase sigue «Por dar» mientras se está dictando, incluso al cruzar
+ *    la medianoche; recién se marca Dada al inicio + duración (zona Montevideo).
  *  - El auto-marcado corre con el reloj `America/Montevideo`, inyectado.
  *    Una clase jamás se marca dada antes de su fecha y hora.
  *  - Cancelar una clase ya dada permite revertir a Programada (con motivo).
@@ -34,6 +36,20 @@ function minutosUtcDia(diasCivil, minutos) {
 export function instanteInicio(c) {
     return minutosUtcDia(diasDeFecha(c.fecha), c.minutos);
 }
+/**
+ * Minuto exacto en que la clase TERMINA (instante UTC del instante local).
+ * La duración puede cruzar la medianoche: 23:00 + 120 min → 01:00 del día
+ * siguiente. Se deriva el desplazamiento del día civil de fin, para que el
+ * cálculo siga siendo correcto si algún día cambia el horario de verano.
+ */
+export function instanteFin(c) {
+    const inicioDia = diasDeFecha(c.fecha);
+    const total = c.minutos + c.duracionMin;
+    const diasExtra = Math.floor(total / 1440);
+    const minutosDelDia = total % 1440;
+    const finDia = inicioDia + diasExtra;
+    return minutosUtcDia(finDia, minutosDelDia);
+}
 /** Crea una clase en estado Programada. Lanza si la fecha u hora no valen. */
 export function crearClase(spec) {
     const minutos = typeof spec.hora === 'number' ? spec.hora : parsearMinutos(spec.hora);
@@ -57,20 +73,28 @@ export function crearClase(spec) {
         marcadaEn: null,
         cancelacion: null,
         eventos: [],
+        ...(spec.rutinaId ? { rutinaId: spec.rutinaId } : {}),
+        ...(spec.fechaRutina ? { fechaRutina: spec.fechaRutina } : {}),
     };
 }
-/** ¿La fecha y hora de la clase ya pasaron según `ahora`? */
+/** ¿La fecha y hora de INICIO de la clase ya pasaron según `ahora`? */
 export function inicioPasado(c, ahora) {
     return instanteInicio(c) <= ahora;
 }
+/** ¿La clase ya TERMINÓ según `ahora`? (inicio + duración, cruce de medianoche incluido). */
+export function finPasado(c, ahora) {
+    return instanteFin(c) <= ahora;
+}
 /**
- * Auto-marcado: Programada → Dada si la hora de inicio ya pasó.
- * Idempotente: no re-marcia clases dadas ni canceladas.
+ * Auto-marcado (20/11, decisión de Nico): la clase sigue «Por dar» DURANTE
+ * todo el horario, incluso si cruza la medianoche, y pasa a «Dada» sola
+ * recién al TERMINAR (inicio + duración). Idempotente: no re-marcia clases
+ * dadas ni canceladas. Se usa tanto al abrir/volver como con la app abierta.
  */
 export function marcarSiPasada(c, ahora) {
     if (c.estado !== 'programada')
         return c;
-    if (!inicioPasado(c, ahora))
+    if (!finPasado(c, ahora))
         return c;
     return { ...c, estado: 'dada', marcadaEn: ahora };
 }

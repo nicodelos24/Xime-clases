@@ -8,7 +8,7 @@ import { resumenCobros } from './src/cobros.js';
 import { resumenHoy, clasesDelDia, clasesDeLaSemana } from './src/resumen.js';
 import { registrarToqueFecha, mesDe } from './src/agenda.js';
 import { destinoDeEnlace } from './src/navegacion.js';
-import { diaCorto, etiquetaDia, etiquetaMes, sumarDias, parseFecha, lunesDe } from './src/fechas.js';
+import { diaCorto, etiquetaDia, etiquetaMes, parseFecha, lunesDe, diasDelMes, esFechaValida } from './src/fechas.js';
 import { relojDelDispositivo, hoyLocal } from './src/reloj.js';
 import { textoCancelacion, destinos, resumenEnvio, linkTexto, } from './src/whatsapp.js';
 /* ------------------------------------------------- estado persistente (local) */
@@ -116,14 +116,15 @@ function pintarHoy() {
 /* -------------------------------------------------- vista Clases (semana) */
 function pintarSemana() {
     const hoy = hoyLocal(reloj.ahora());
-    const lunes = semanaActual(hoy);
+    const anclado = diaSemanaAnclado && diaSemanaAnclado >= lunesDe(hoy) ? diaSemanaAnclado : hoy;
+    const lunes = semanaActual(anclado);
     const dias = clasesDeLaSemana(clases, lunes);
     const tira = $('.tira');
     if (tira) {
         tira.innerHTML = dias
             .map((d) => {
             const dia = parseFecha(d.fecha);
-            const activo = d.fecha === hoy ? ' activo' : '';
+            const activo = d.fecha === anclado ? ' activo' : '';
             const tiene = d.clases.length > 0 ? ' tiene' : '';
             return `<button class="tira-dia${tiene}${activo}" type="button" data-fecha="${d.fecha}">
           <span>${diaCorto(d.fecha)}</span><b>${dia.d}</b></button>`;
@@ -141,7 +142,7 @@ function pintarSemana() {
             });
         });
     }
-    pintarLinea(hoy);
+    pintarLinea(anclado);
     const h2 = $('#v-semana .agenda-titulo h2');
     if (h2)
         h2.textContent = 'Esta semana';
@@ -155,6 +156,7 @@ function semanaActual(f) {
 }
 /** Pinta la tira con la semana que contiene `f` (doble toque desde el mes). */
 function pintarSemanaDe(f) {
+    diaSemanaAnclado = f;
     const lunes = lunesDe(f);
     const dias = clasesDeLaSemana(clases, lunes);
     const tira = $('.tira');
@@ -238,6 +240,8 @@ function mesAbierto() {
 let mesSeleccionado = null; // primer día del mes abierto
 let diaMesSeleccionado = null; // día cuyas tarjetas se muestran
 let ultimoToque = null;
+/** Día anclado de la vista semana: se preserva al repintar (F5, guardar, mover). */
+let diaSemanaAnclado = null;
 /** Días del mes en "AAAA-MM-DD" (lunes=0). */
 function diasDelMesAbierto() {
     const { y, m } = parseFecha(mesAbierto() + '-01');
@@ -308,6 +312,21 @@ function pintarMes() {
     });
     pintarTarjetasDiaMes();
 }
+/** Mueve el almanaque al mes anterior/siguiente (flechas v5). */
+function moverMes(delta) {
+    const actual = mesAbierto() + '-01';
+    const { y, m } = parseFecha(actual);
+    const nuevo = new Date(Date.UTC(y, m - 1 + delta, 1));
+    const primero = `${String(nuevo.getUTCFullYear()).padStart(4, '0')}-${String(nuevo.getUTCMonth() + 1).padStart(2, '0')}-01`;
+    mesSeleccionado = primero;
+    diaMesSeleccionado = null;
+    ultimoToque = null;
+    pintarMes();
+}
+const flechaAnt = $('#v-mes .mes-flechas .flecha');
+const flechaSig = $$('#v-mes .mes-flechas .flecha')[1];
+flechaAnt?.addEventListener('click', () => moverMes(-1));
+flechaSig?.addEventListener('click', () => moverMes(1));
 /** Un toque: selecciona el día y muestra sus tarjetas SIN salir del mes. */
 function tocarDiaMes(f) {
     const r = registrarToqueFecha(ultimoToque, f, performance.now());
@@ -380,6 +399,291 @@ function pintarTarjetasDiaMes() {
     }
     seccion.appendChild(caja);
 }
+/* --------------------------------------------------------- agendar clases (20/11) */
+/** ID único para rutinas y sueltas (sin BD: contador local + aleatorio corto). */
+function nuevoId(prefijo) {
+    const azar = Array.from(crypto.getRandomValues(new Uint32Array(2)), (n) => n.toString(36)).join('').slice(0, 10);
+    return `${prefijo}-${azar}`;
+}
+const NOMBRES_DIAS = [
+    ['Lun', 0], ['Mar', 1], ['Mié', 2], ['Jue', 3], ['Vie', 4], ['Sáb', 5], ['Dom', 6],
+];
+/** Cierra el sheet activo (genérico, lo usan todos los cuadros). */
+function cerrarCuadro(el) {
+    el.classList.add('cerrando');
+    setTimeout(() => el.remove(), 240);
+}
+/** Abre el primer cuadro del FAB: elegir «Clase semanal» o «Clase suelta». */
+function abrirAgendar() {
+    cerrarSheet();
+    const cuadro = document.createElement('div');
+    cuadro.className = 'sheet';
+    cuadro.setAttribute('role', 'dialog');
+    cuadro.setAttribute('aria-modal', 'true');
+    cuadro.setAttribute('aria-labelledby', 'agendar-titulo');
+    cuadro.innerHTML = `
+    <div class="sheet-head">
+      <div>
+        <p class="sheet-eyebrow">Nueva clase</p>
+        <h3 id="agendar-titulo">¿Cómo la agregamos?</h3>
+      </div>
+      <button class="sheet-cerrar" type="button" aria-label="Cerrar"><svg class="ico" width="18" height="18"><use href="#i-mas2"/></svg></button>
+    </div>
+    <div class="opciones" role="group" aria-label="Tipo de clase">
+      <button class="opcion opcion-agendar" type="button" data-mod="semanal">
+        <svg class="ico" width="19" height="19"><use href="#i-agenda"/></svg>
+        <span><b>Clase semanal</b><small>Una rutina: elegís los días y la hora, se repite sola</small></span>
+      </button>
+      <button class="opcion opcion-agendar" type="button" data-mod="suelta">
+        <svg class="ico" width="19" height="19"><use href="#i-reloj"/></svg>
+        <span><b>Clase suelta</b><small>Un solo día concreto, sin repetición</small></span>
+      </button>
+    </div>`;
+    $('.cel')?.appendChild(cuadro);
+    cuadro.querySelector('.sheet-cerrar')?.addEventListener('click', () => cerrarCuadro(cuadro));
+    cuadro.querySelector('[data-mod="semanal"]')?.addEventListener('click', () => {
+        cerrarCuadro(cuadro);
+        abrirFormularioSemanal();
+    });
+    cuadro.querySelector('[data-mod="suelta"]')?.addEventListener('click', () => {
+        cerrarCuadro(cuadro);
+        abrirFormularioSuelta();
+    });
+    cuadro.querySelector('[data-mod="semanal"]')?.focus();
+}
+/** Arma el <select> de día/mes/año reutilizable por reprogramar y suelta. */
+function selectorFecha(nombre, inicial, anclaAncho = 6) {
+    const { y, m, d } = parseFecha(inicial);
+    const anios = Array.from({ length: anclaAncho * 2 + 1 }, (_, i) => y - anclaAncho + i);
+    const dias = Array.from({ length: diasDelMes(y, m) }, (_, i) => i + 1);
+    return `<div class="fecha-elegir" data-fecha="${nombre}">
+    <label class="campo"><span>Día</span><select name="dia" aria-label="Día">${dias.map((n) => `<option value="${n}"${n === d ? ' selected' : ''}>${n}</option>`).join('')}</select></label>
+    <label class="campo"><span>Mes</span><select name="mes" aria-label="Mes">${Array.from({ length: 12 }, (_, i) => i + 1).map((n) => `<option value="${n}"${n === m ? ' selected' : ''}>${new Intl.DateTimeFormat('es', { month: 'short' }).format(new Date(2000, n - 1, 1)).replace('.', '')}</option>`).join('')}</select></label>
+    <label class="campo"><span>Año</span><select name="anio" aria-label="Año">${anios.map((n) => `<option value="${n}"${n === y ? ' selected' : ''}>${n}</option>`).join('')}</select></label>
+  </div>`;
+}
+/** Lee un selectorFecha armado por `selectorFecha`. Devuelve "AAAA-MM-DD" o null. */
+function leerFechaDe(raiz, nombre) {
+    const caja = raiz.querySelector(`[data-fecha="${nombre}"]`);
+    if (!caja)
+        return null;
+    const d = Number(caja.querySelector('[name="dia"]').value);
+    const m = Number(caja.querySelector('[name="mes"]').value);
+    const y = Number(caja.querySelector('[name="anio"]').value);
+    const fecha = `${String(y).padStart(4, '0')}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+    return esFechaValida(fecha) ? fecha : null;
+}
+/** Actualiza los días del selector cuando cambia el mes/año (bisiestos). */
+function cablearFecha(raiz, nombre, onChange) {
+    const caja = raiz.querySelector(`[data-fecha="${nombre}"]`);
+    if (!caja)
+        return;
+    const dia = caja.querySelector('[name="dia"]');
+    const mes = caja.querySelector('[name="mes"]');
+    const anio = caja.querySelector('[name="anio"]');
+    const actualizar = () => {
+        const elegido = Number(dia.value);
+        const total = diasDelMes(Number(anio.value), Number(mes.value));
+        dia.innerHTML = Array.from({ length: total }, (_, i) => i + 1)
+            .map((n) => `<option value="${n}"${n === Math.min(elegido, total) ? ' selected' : ''}>${n}</option>`).join('');
+        onChange?.();
+    };
+    mes.addEventListener('change', actualizar);
+    anio.addEventListener('change', actualizar);
+}
+function abrirFormularioSemanal() {
+    const hoy = hoyLocal(reloj.ahora());
+    const cuadro = document.createElement('div');
+    cuadro.className = 'sheet';
+    cuadro.setAttribute('role', 'dialog');
+    cuadro.setAttribute('aria-modal', 'true');
+    cuadro.setAttribute('aria-labelledby', 'semanal-titulo');
+    cuadro.innerHTML = `
+    <div class="sheet-head">
+      <div>
+        <p class="sheet-eyebrow">Clase semanal</p>
+        <h3 id="semanal-titulo">Nueva rutina</h3>
+      </div>
+      <button class="sheet-cerrar" type="button" aria-label="Cerrar"><svg class="ico" width="18" height="18"><use href="#i-mas2"/></svg></button>
+    </div>
+    <form novalidate>
+      <label class="campo"><span>Nombre de la clase</span><input name="nombre" type="text" maxlength="60" placeholder="Ej.: Grupo Martes" autocomplete="off"></label>
+      <p class="sheet-paso">Días de la semana</p>
+      <div class="semana-elegir" role="group" aria-label="Días de la semana">
+        ${NOMBRES_DIAS.map(([nom, idx]) => `<button type="button" class="dia-chip" data-dia="${idx}" aria-pressed="false">${nom}</button>`).join('')}
+      </div>
+      <p class="sheet-paso">¿Cuándo empieza?</p>
+      ${selectorFecha('inicio', hoy)}
+      <div class="campo-duo">
+        <label class="campo"><span>Hora de inicio</span><input name="hora" type="time" value="15:00"></label>
+        <label class="campo"><span>Duración</span><select name="duracion"><option value="60" selected>60 min</option><option value="90">90 min</option><option value="120">120 min</option><option value="30">30 min</option><option value="45">45 min</option></select></label>
+      </div>
+      <p class="campo-error" role="alert"></p>
+      <p class="resumen-fecha" hidden></p>
+      <div class="sheet-acciones">
+        <button class="btn-secundario" type="button" data-accion="volver">Volver</button>
+        <button class="btn-primario" type="submit">Guardar rutina</button>
+      </div>
+    </form>`;
+    $('.cel')?.appendChild(cuadro);
+    const form = cuadro.querySelector('form');
+    const error = cuadro.querySelector('.campo-error');
+    const resumen = cuadro.querySelector('.resumen-fecha');
+    const elegidos = new Set();
+    cuadro.querySelector('.sheet-cerrar')?.addEventListener('click', () => cerrarCuadro(cuadro));
+    cuadro.querySelector('[data-accion="volver"]')?.addEventListener('click', () => { cerrarCuadro(cuadro); abrirAgendar(); });
+    cuadro.querySelectorAll('.dia-chip').forEach((b) => {
+        b.addEventListener('click', () => {
+            const d = Number(b.dataset.dia);
+            if (elegidos.has(d))
+                elegidos.delete(d);
+            else
+                elegidos.add(d);
+            b.classList.toggle('activo', elegidos.has(d));
+            b.setAttribute('aria-pressed', elegidos.has(d) ? 'true' : 'false');
+            actualizarResumen();
+        });
+    });
+    const actualizarResumen = () => {
+        const fecha = leerFechaDe(cuadro, 'inicio');
+        if (!fecha) {
+            resumen.hidden = true;
+            return;
+        }
+        const nom = Array.from(elegidos).sort().map((d) => NOMBRES_DIAS[d][0]).join(', ');
+        resumen.hidden = false;
+        resumen.innerHTML = `Empieza el <strong>${esc(etiquetaDia(fecha))}</strong>${nom ? ` · ${esc(nom)}` : ''}. Se repetirá cada semana.`;
+    };
+    cablearFecha(cuadro, 'inicio', actualizarResumen);
+    cuadro.querySelectorAll('[data-fecha="inicio"] select').forEach((s) => s.addEventListener('change', actualizarResumen));
+    form.addEventListener('submit', (e) => {
+        e.preventDefault();
+        error.textContent = '';
+        const nombre = String(new FormData(form).get('nombre') ?? '').trim();
+        const hora = String(new FormData(form).get('hora') ?? '');
+        const duracionMin = Number(new FormData(form).get('duracion') ?? 60);
+        const desde = leerFechaDe(cuadro, 'inicio');
+        if (!nombre) {
+            error.textContent = 'Poné el nombre de la clase.';
+            return;
+        }
+        if (elegidos.size === 0) {
+            error.textContent = 'Elegí al menos un día de la semana.';
+            return;
+        }
+        if (!desde) {
+            error.textContent = 'Elegí una fecha de inicio válida.';
+            return;
+        }
+        if (!/^\d{1,2}:\d{2}$/.test(hora)) {
+            error.textContent = 'Elegí la hora de inicio.';
+            return;
+        }
+        const id = nuevoId('rut');
+        try {
+            repo.crearRutina({ id, nombre, dias: Array.from(elegidos), desde, hora, duracionMin });
+        }
+        catch (err) {
+            error.textContent = err instanceof Error ? err.message : 'No se pudo guardar. Intentá de nuevo.';
+            return;
+        }
+        clases = repo.listar();
+        // Mostrar la nueva rutina en destino: primer día de ESA serie.
+        const primera = clases.filter((c) => c.rutinaId === id).sort((a, b) => a.fecha.localeCompare(b.fecha) || (a.minutos - b.minutos))[0];
+        if (primera) {
+            mesSeleccionado = primera.fecha;
+            diaMesSeleccionado = primera.fecha;
+            pintarSemanaDe(primera.fecha);
+        }
+        cerrarCuadro(cuadro);
+        refrescar();
+        avisar(`Rutina guardada · ${esc(nombre)} empieza el ${esc(etiquetaDia(desde))}`);
+    });
+    cuadro.querySelector('[name="nombre"]')?.focus();
+}
+function abrirFormularioSuelta() {
+    // Si el mes tiene un día seleccionado, usarlo; si no, hoy.
+    const inicial = diaMesSeleccionado ?? hoyLocal(reloj.ahora());
+    const cuadro = document.createElement('div');
+    cuadro.className = 'sheet';
+    cuadro.setAttribute('role', 'dialog');
+    cuadro.setAttribute('aria-modal', 'true');
+    cuadro.setAttribute('aria-labelledby', 'suelta-titulo');
+    cuadro.innerHTML = `
+    <div class="sheet-head">
+      <div>
+        <p class="sheet-eyebrow">Clase suelta</p>
+        <h3 id="suelta-titulo">Un solo día</h3>
+      </div>
+      <button class="sheet-cerrar" type="button" aria-label="Cerrar"><svg class="ico" width="18" height="18"><use href="#i-mas2"/></svg></button>
+    </div>
+    <form novalidate>
+      <label class="campo"><span>Nombre de la clase</span><input name="nombre" type="text" maxlength="60" placeholder="Ej.: Inglés individual" autocomplete="off"></label>
+      <p class="sheet-paso">Fecha de la clase</p>
+      ${selectorFecha('fecha', inicial)}
+      <div class="campo-duo">
+        <label class="campo"><span>Hora de inicio</span><input name="hora" type="time" value="15:00"></label>
+        <label class="campo"><span>Duración</span><select name="duracion"><option value="60" selected>60 min</option><option value="90">90 min</option><option value="120">120 min</option><option value="30">30 min</option><option value="45">45 min</option></select></label>
+      </div>
+      <p class="campo-error" role="alert"></p>
+      <p class="resumen-fecha" hidden></p>
+      <div class="sheet-acciones">
+        <button class="btn-secundario" type="button" data-accion="volver">Volver</button>
+        <button class="btn-primario" type="submit">Guardar clase</button>
+      </div>
+    </form>`;
+    $('.cel')?.appendChild(cuadro);
+    const form = cuadro.querySelector('form');
+    const error = cuadro.querySelector('.campo-error');
+    const resumen = cuadro.querySelector('.resumen-fecha');
+    cuadro.querySelector('.sheet-cerrar')?.addEventListener('click', () => cerrarCuadro(cuadro));
+    cuadro.querySelector('[data-accion="volver"]')?.addEventListener('click', () => { cerrarCuadro(cuadro); abrirAgendar(); });
+    const actualizarResumen = () => {
+        const fecha = leerFechaDe(cuadro, 'fecha');
+        resumen.hidden = !fecha;
+        if (fecha)
+            resumen.innerHTML = `La clase se dictará el <strong>${esc(etiquetaDia(fecha))}</strong>.`;
+    };
+    cablearFecha(cuadro, 'fecha', actualizarResumen);
+    cuadro.querySelectorAll('[data-fecha="fecha"] select').forEach((s) => s.addEventListener('change', actualizarResumen));
+    form.addEventListener('submit', (e) => {
+        e.preventDefault();
+        error.textContent = '';
+        const fd = new FormData(form);
+        const nombre = String(fd.get('nombre') ?? '').trim();
+        const hora = String(fd.get('hora') ?? '');
+        const duracionMin = Number(fd.get('duracion') ?? 60);
+        const fecha = leerFechaDe(cuadro, 'fecha');
+        if (!nombre) {
+            error.textContent = 'Poné el nombre de la clase.';
+            return;
+        }
+        if (!fecha) {
+            error.textContent = 'Elegí una fecha válida.';
+            return;
+        }
+        if (!/^\d{1,2}:\d{2}$/.test(hora)) {
+            error.textContent = 'Elegí la hora de inicio.';
+            return;
+        }
+        try {
+            repo.crearSuelta({ id: nuevoId('suelta'), nombre, fecha, hora, duracionMin });
+        }
+        catch (err) {
+            error.textContent = err instanceof Error ? err.message : 'No se pudo guardar. Intentá de nuevo.';
+            return;
+        }
+        clases = repo.listar();
+        mesSeleccionado = fecha;
+        diaMesSeleccionado = fecha;
+        pintarSemanaDe(fecha);
+        cerrarCuadro(cuadro);
+        refrescar();
+        avisar(`Clase guardada · ${esc(nombre)} el ${esc(etiquetaDia(fecha))}`);
+    });
+    actualizarResumen();
+    cuadro.querySelector('[name="nombre"]')?.focus();
+}
 /* ------------------------------------------- cancelar clase (sheet + WhatsApp) */
 let sheet = null;
 let claseEnSheet = null;
@@ -407,7 +711,6 @@ function abrirAcciones(id) {
     previo.setAttribute('role', 'dialog');
     previo.setAttribute('aria-modal', 'true');
     previo.setAttribute('aria-label', `Opciones para ${c.nombre}`);
-    const proximos = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
     const esManual = c.estado === 'dada' && c.eventos.at(-1)?.tipo === 'marcada-manual';
     previo.innerHTML = `
     <div class="sheet-head">
@@ -439,12 +742,16 @@ function abrirAcciones(id) {
       </button>
     </div>
     <div class="cambiar-dia" hidden>
-      <p class="sheet-paso">Elegí el nuevo día</p>
-      <div class="dias-elegir">
-        ${proximos.map((nombre, i) => `<button class="dia-elegir" type="button" data-dia="${i}">${nombre.slice(0, 3)}</button>`).join('')}
+      <p class="sheet-paso">Elegí la nueva fecha</p>
+      <p class="resumen-fecha">Fecha actual: <strong>${esc(etiquetaDia(c.fecha))}</strong> · ${horaClase(c)}</p>
+      ${selectorFecha('destino', c.fecha)}
+      <p class="campo-error" role="alert"></p>
+      <div class="sheet-acciones">
+        <button class="btn-secundario" type="button" data-accion="cancelar-cambio">Volver</button>
+        <button class="btn-primario" type="button" data-accion="confirmar-cambio">Mover clase</button>
       </div>
     </div>
-    <div class="sheet-acciones">
+    <div class="sheet-acciones" data-acciones-principales>
       <button class="btn-secundario" type="button" data-accion="volver">Volver</button>
     </div>`;
     document.querySelector('.cel')?.appendChild(previo);
@@ -476,20 +783,46 @@ function abrirAcciones(id) {
         avisar('Clase vuelta a Por dar');
     });
     const caja = previo.querySelector('.cambiar-dia');
-    previo.querySelector('[data-acc="cambiar"]')?.addEventListener('click', () => { caja.hidden = false; });
-    caja.querySelectorAll('[data-dia]').forEach((b) => {
-        b.addEventListener('click', () => {
-            const idx = Number(b.dataset.dia);
-            // Próxima aparición de ese día de semana (lunes=0), estrictamente después de la fecha actual.
-            const base = sumarDias(c.fecha, 1);
-            const delta = ((idx - ((new Date(`${base}T12:00:00Z`).getUTCDay() + 6) % 7) + 7) % 7);
-            const nuevaFecha = sumarDias(base, delta);
+    const principales = previo.querySelector('[data-acciones-principales]');
+    const errorCambio = caja.querySelector('.campo-error');
+    previo.querySelector('[data-acc="cambiar"]')?.addEventListener('click', () => {
+        caja.hidden = false;
+        principales.hidden = true;
+        caja.querySelector('[data-fecha="destino"] select')?.focus();
+    });
+    // «Volver» sin cambios: se cierra el cuadro de fecha y quedan las acciones.
+    caja.querySelector('[data-accion="cancelar-cambio"]')?.addEventListener('click', () => {
+        errorCambio.textContent = '';
+        caja.hidden = true;
+        principales.hidden = false;
+    });
+    cablearFecha(caja, 'destino');
+    caja.querySelector('[data-accion="confirmar-cambio"]')?.addEventListener('click', () => {
+        errorCambio.textContent = '';
+        const nuevaFecha = leerFechaDe(caja, 'destino');
+        if (!nuevaFecha) {
+            errorCambio.textContent = 'Elegí una fecha válida.';
+            return;
+        }
+        if (nuevaFecha === c.fecha) {
+            errorCambio.textContent = 'Esa ya es la fecha de la clase.';
+            return;
+        }
+        try {
             repo.reprogramar(id, nuevaFecha, { quien: QUIEN, ahora: reloj.ahora() });
-            clases = repo.listar();
-            cerrarSheet();
-            refrescar();
-            avisar(`Clase movida al ${esc(etiquetaDia(nuevaFecha))} · ${horaClase(c)}`);
-        });
+        }
+        catch (err) {
+            errorCambio.textContent = err instanceof Error ? err.message : 'No se pudo mover la clase.';
+            return;
+        }
+        clases = repo.listar();
+        // Mostrar la clase en el destino aunque cruce semana o mes.
+        mesSeleccionado = nuevaFecha;
+        diaMesSeleccionado = nuevaFecha;
+        pintarSemanaDe(nuevaFecha);
+        cerrarSheet();
+        refrescar();
+        avisar(`Clase movida al ${esc(etiquetaDia(nuevaFecha))} · ${horaClase(c)}`);
     });
 }
 function abrirCancelacion(id) {
@@ -1085,7 +1418,7 @@ $$('a.link-suave[href="#v-mes"]').forEach((a) => {
     });
     a.addEventListener('click', (e) => { e.preventDefault(); e.stopImmediatePropagation(); irA('v-mes', false); });
 });
-$('.fab')?.addEventListener('click', () => avisar('Agendar: nueva clase (próximamente)'));
+$('.fab')?.addEventListener('click', () => abrirAgendar());
 window.addEventListener('storage', (e) => { if (e.key === CLAVE_ESTADO) {
     pintarCobros();
     pintarAlumnos();

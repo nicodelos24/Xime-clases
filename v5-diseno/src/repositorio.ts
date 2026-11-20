@@ -28,14 +28,20 @@ import {
   crearAlumno, editarAlumno, normalizarFichaGuardada,
   type AlumnoFicha, type AlumnoFichaInput,
 } from './alumnos.ts';
+import {
+  conExcepcion, crearClaseSuelta, crearRutina, generarOcurrencias,
+  type ClaseSueltaNueva, type RutinaNueva, type RutinaSemanal,
+} from './agendar.ts';
 export type { Pago } from './cobros.ts';
 export type { AlumnoFicha, AlumnoFichaInput } from './alumnos.ts';
+export type { RutinaSemanal, RutinaNueva, ClaseSueltaNueva } from './agendar.ts';
 
 /**
- * Versión del formato guardado. v2 agrega `alumnos` (Pieza C) SIN tocar
- * clases ni pagos: el lector migra v1→v2 conservando todo lo ya guardado.
+ * Versión del formato guardado. v2 agregó `alumnos` (Pieza C); v3 (20/11)
+ * agrega `rutinas` para las clases semanales SIN tocar clases, pagos ni
+ * alumnos: el lector migra v1/v2→v3 conservando todo lo ya guardado.
  */
-export const VERSION_ESTADO = 2;
+export const VERSION_ESTADO = 3;
 /** Clave única de `localStorage` (por origen: puerto incluido). */
 export const CLAVE_ESTADO = 'xime.v5.estado';
 
@@ -48,6 +54,8 @@ export type EstadoClases = {
   pagos: Pago[];
   /** Fichas de alumnos (v2). Las de la demo se siembran solas la 1.ª vez. */
   alumnos: AlumnoFicha[];
+  /** Plantillas de rutinas semanales (v3). */
+  rutinas: RutinaSemanal[];
 };
 
 /** Contrato mínimo del almacén: lo único que cambia en la Fase 4. */
@@ -127,10 +135,27 @@ function normalizarClase(c: Clase): Clase {
   };
 }
 
+/** Sanea una rutina guardada: completa excepciones y valida lo esencial. */
+function normalizarRutina(r: RutinaSemanal): RutinaSemanal | null {
+  if (!r || typeof r.id !== 'string' || typeof r.nombre !== 'string'
+    || !Array.isArray(r.dias) || typeof r.desde !== 'string' || typeof r.hora !== 'string') return null;
+  return {
+    ...r,
+    dias: r.dias,
+    duracionMin: r.duracionMin ?? 60,
+    excepciones: r.excepciones && typeof r.excepciones === 'object' ? r.excepciones : {},
+  };
+}
+
 /** Comandos y consultas que consume la UI, independientes del almacenamiento. */
 export interface RepositorioDeClases {
   listar(): Clase[];
   crear(spec: ClaseNueva): Clase;
+  /** Alta de clase suelta ( fecha exacta), persistida antes de devolver. */
+  crearSuelta(spec: ClaseSueltaNueva): Clase;
+  /** Alta de rutina semanal + materialización de sus ocurrencias. */
+  crearRutina(spec: RutinaNueva): RutinaSemanal;
+  listarRutinas(): readonly RutinaSemanal[];
   reconciliar(ahora?: InstanteMs): Clase[];
   marcarDada(id: string, op: OpcionMarcar): Clase;
   deshacerMarcada(id: string, op: OpcionMarcar): Clase;
@@ -229,16 +254,68 @@ export class RepositorioClases implements RepositorioDeClases {
     return clase;
   }
 
+  /** Alta de clase suelta en una fecha concreta. Persiste antes de devolver. */
+  crearSuelta(spec: ClaseSueltaNueva): Clase {
+    const clase = crearClaseSuelta(spec);
+    this.actualizar((clases) => {
+      if (clases.some((c) => c.id === clase.id)) throw new Error(`Ya existe la clase ${clase.id}`);
+      return [...clases, clase];
+    }, true);
+    return clase;
+  }
+
+  /** Alta de rutina semanal: guarda la plantilla y materializa sus ocurrencias. */
+  crearRutina(spec: RutinaNueva): RutinaSemanal {
+    const rutina = crearRutina(spec);
+    const estado = this.cargar();
+    if (estado.rutinas.some((r) => r.id === rutina.id)) throw new Error(`Ya existe la rutina ${rutina.id}`);
+    const nuevas = generarOcurrencias(rutina, estado.clases, this.reloj.ahora());
+    const nuevo: EstadoClases = {
+      ...estado,
+      rutinas: [...estado.rutinas, rutina],
+      clases: [...estado.clases, ...nuevas],
+    };
+    // Persistir ANTES de devolver: si falla el guardado, no se anuncia éxito.
+    this.persistir(nuevo, true);
+    this.estado = nuevo;
+    return rutina;
+  }
+
+  listarRutinas(): readonly RutinaSemanal[] {
+    return this.cargar().rutinas;
+  }
+
   /**
-   * Auto-marcado por hora (al abrir la app y en el cron local). No toca
-   * clases canceladas ni dadas y solo guarda si algo cambió.
+   * Al abrir/volver (y en el cron): (1) genera ocurrencias nuevas de las
+   * rutinas para el horizonte móvil y (2) auto-marca por fin de duración.
+   * No toca canceladas, dadas ni historial; solo guarda si algo cambió.
    */
   reconciliar(ahora: InstanteMs = this.reloj.ahora()): Clase[] {
-    const antes = this.cargar().clases;
-    const despues = reconciliar(antes, ahora);
-    if (despues.every((c, i) => c === antes[i])) return despues;
-    this.actualizar(() => despues);
+    const estado = this.cargar();
+    const conOcurrencias = this.materializar(estado, ahora);
+    const despues = reconciliar(conOcurrencias.clases, ahora);
+    const cambioOcurrencias = despues.length !== estado.clases.length
+      || conOcurrencias.clases.some((c, i) => c !== estado.clases[i]);
+    const cambioMarcas = despues.some((c, i) => c !== conOcurrencias.clases[i]);
+    if (!cambioOcurrencias && !cambioMarcas) return despues;
+    const nuevo: EstadoClases = { ...conOcurrencias, clases: despues };
+    this.persistir(nuevo);
+    this.estado = nuevo;
     return despues;
+  }
+
+  /** Genera las ocurrencias que falten de todas las rutinas (sin duplicar). */
+  private materializar(estado: EstadoClases, ahora: InstanteMs): EstadoClases {
+    let clases = estado.clases;
+    let cambio = false;
+    for (const rutina of estado.rutinas) {
+      const nuevas = generarOcurrencias(rutina, clases, ahora);
+      if (nuevas.length) {
+        clases = [...clases, ...nuevas];
+        cambio = true;
+      }
+    }
+    return cambio ? { ...estado, clases } : estado;
   }
 
   marcarDada(id: string, op: OpcionMarcar): Clase {
@@ -250,15 +327,47 @@ export class RepositorioClases implements RepositorioDeClases {
   }
 
   cancelar(id: string, op: OpcionCancelar): Clase {
-    return this.reemplazar(cancelarClase(this.una(id), op));
+    const clase = this.una(id);
+    this.marcarExcepcionDeOrigen(clase, 'cancelada');
+    return this.reemplazar(cancelarClase(clase, op));
   }
 
   revertir(id: string, op: OpcionCancelar): Clase {
-    return this.reemplazar(deshacerCancelacion(this.una(id), op));
+    const clase = this.una(id);
+    // Revertir una cancelación devuelve la clase a su día de origen: se quita
+    // la excepción para que la serie vuelva a estar completa.
+    this.quitarExcepcionDeOrigen(clase);
+    return this.reemplazar(deshacerCancelacion(clase, op));
   }
 
   reprogramar(id: string, fechaNueva: string, op: OpcionReprogramar): Clase {
-    return this.reemplazar(reprogramarClase(this.una(id), fechaNueva, op));
+    const clase = this.una(id);
+    this.marcarExcepcionDeOrigen(clase, 'movida');
+    return this.reemplazar(reprogramarClase(clase, fechaNueva, op));
+  }
+
+  /** Si la clase es una ocurrencia, marca su fecha de origen como excepción. */
+  private marcarExcepcionDeOrigen(clase: Clase, motivo: 'cancelada' | 'movida'): void {
+    if (!clase.rutinaId || !clase.fechaRutina) return;
+    const estado = this.cargar();
+    const rutina = estado.rutinas.find((r) => r.id === clase.rutinaId);
+    if (!rutina || rutina.excepciones[clase.fechaRutina]) return;
+    const rutinas = estado.rutinas.map((r) => (r.id === rutina.id ? conExcepcion(r, clase.fechaRutina as string, motivo) : r));
+    this.persistir({ ...estado, rutinas });
+    this.estado = { ...estado, rutinas };
+  }
+
+  /** Si la clase vuelve a su origen (reversión), limpia la excepción. */
+  private quitarExcepcionDeOrigen(clase: Clase): void {
+    if (!clase.rutinaId || !clase.fechaRutina) return;
+    const estado = this.cargar();
+    const rutina = estado.rutinas.find((r) => r.id === clase.rutinaId);
+    if (!rutina || !rutina.excepciones[clase.fechaRutina]) return;
+    const excepciones = { ...rutina.excepciones };
+    delete excepciones[clase.fechaRutina];
+    const rutinas = estado.rutinas.map((r) => (r.id === rutina.id ? { ...r, excepciones } : r));
+    this.persistir({ ...estado, rutinas });
+    this.estado = { ...estado, rutinas };
   }
 
   registrarMensajeEnviado(id: string, canal: CanalMensaje): Clase {
@@ -276,10 +385,12 @@ export class RepositorioClases implements RepositorioDeClases {
     return clase;
   }
 
-  private actualizar(transformar: (clases: Clase[]) => Clase[]): void {
+  private actualizar(transformar: (clases: Clase[]) => Clase[], requierePersistencia = false): void {
     const estado = this.cargar();
     const nuevo: EstadoClases = { ...estado, clases: transformar(estado.clases) };
-    this.persistir(nuevo);
+    // Persistir ANTES de asignar `this.estado`: si falla, el estado en memoria
+    // no avanza y la UI no debe anunciar éxito.
+    this.persistir(nuevo, requierePersistencia);
     this.estado = nuevo;
   }
 
@@ -293,23 +404,28 @@ export class RepositorioClases implements RepositorioDeClases {
     if (!texto) return null;
     try {
       const dato = JSON.parse(texto) as Partial<EstadoClases> | null;
-      // Migra v1→v2: clases y pagos guardados se conservan tal cual; solo se
-      // agrega el campo alumnos. Versiones futuras/desconocidas → resembrar.
-      if (!dato || (dato.version !== VERSION_ESTADO && dato.version !== 1) || !Array.isArray(dato.clases)) return null;
+      // Migra v1→v2→v3: clases, pagos y alumnos guardados se conservan tal
+      // cual; solo se agrega el campo `rutinas`. Versiones futuras → resembrar.
+      const version = dato?.version;
+      if (!dato || (version !== VERSION_ESTADO && version !== 1 && version !== 2) || !Array.isArray(dato.clases)) return null;
       const clases = dato.clases.map(normalizarClase);
       const pagos = Array.isArray(dato.pagos) ? dato.pagos : [];
       const alumnos = Array.isArray(dato.alumnos)
         ? dato.alumnos.map(normalizarFichaGuardada).filter((a): a is AlumnoFicha => a !== null)
         : this.sembrarAlumnos(hoyLocal(this.reloj.ahora()));
+      const rutinas = Array.isArray(dato.rutinas)
+        ? dato.rutinas.map(normalizarRutina).filter((r): r is RutinaSemanal => r !== null)
+        : [];
       const estado: EstadoClases = {
         version: VERSION_ESTADO,
         guardadoEn: typeof dato.guardadoEn === 'string' ? dato.guardadoEn : new Date(this.reloj.ahora()).toISOString(),
         clases,
         pagos,
         alumnos,
+        rutinas,
       };
-      // Si venía de v1 (o faltaba alumnos), persistimos la versión migrada.
-      if (dato.version !== VERSION_ESTADO || !Array.isArray(dato.alumnos)) this.persistir(estado);
+      // Si venía de una versión anterior (o faltaban campos), persistimos la migrada.
+      if (version !== VERSION_ESTADO || !Array.isArray(dato.alumnos) || !Array.isArray(dato.rutinas)) this.persistir(estado);
       return estado;
     } catch {
       return null;
@@ -324,6 +440,7 @@ export class RepositorioClases implements RepositorioDeClases {
       clases: reconciliar(this.sembrar(ahora), ahora),
       pagos: [],
       alumnos: this.sembrarAlumnos(hoyLocal(ahora)),
+      rutinas: [],
     };
     this.persistir(estado);
     return estado;
