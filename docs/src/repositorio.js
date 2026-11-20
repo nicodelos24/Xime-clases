@@ -18,8 +18,12 @@
 import { cancelarClase, crearClase, deshacerCancelacion, reconciliar, registrarMensajeEnviado, reprogramarClase, } from './clases.js';
 import { hoyLocal } from './reloj.js';
 import { anularPago, registrarPago } from './cobros.js';
-/** Versión del formato guardado. Subirla obliga a migrar o resembrar. */
-export const VERSION_ESTADO = 1;
+import { crearAlumno, editarAlumno, normalizarFichaGuardada, } from './alumnos.js';
+/**
+ * Versión del formato guardado. v2 agrega `alumnos` (Pieza C) SIN tocar
+ * clases ni pagos: el lector migra v1→v2 conservando todo lo ya guardado.
+ */
+export const VERSION_ESTADO = 2;
 /** Clave única de `localStorage` (por origen: puerto incluido). */
 export const CLAVE_ESTADO = 'xime.v5.estado';
 /** Almacén en memoria (tests, o respaldo si `localStorage` no está). */
@@ -89,10 +93,12 @@ export class RepositorioClases {
     almacen;
     reloj;
     sembrar;
-    constructor(almacen, reloj, sembrar = () => []) {
+    sembrarAlumnos;
+    constructor(almacen, reloj, sembrar = () => [], sembrarAlumnos = () => []) {
         this.almacen = almacen;
         this.reloj = reloj;
         this.sembrar = sembrar;
+        this.sembrarAlumnos = sembrarAlumnos;
     }
     /** Clases actuales; la UI las usa solo para lectura. */
     listar() {
@@ -114,6 +120,30 @@ export class RepositorioClases {
         const nuevo = { ...estado, pagos: transformar(estado.pagos) };
         this.persistir(nuevo, true);
         this.estado = nuevo;
+    }
+    /* ------------------------------------------------------- fichas (Pieza C) */
+    listarAlumnos() {
+        return this.cargar().alumnos;
+    }
+    crearAlumno(input) {
+        const estado = this.cargar();
+        const fechaAlta = hoyLocal(this.reloj.ahora());
+        const ficha = crearAlumno(input, fechaAlta, (id) => estado.alumnos.some((a) => a.id === id));
+        const nuevo = { ...estado, alumnos: [...estado.alumnos, ficha] };
+        this.persistir(nuevo, true);
+        this.estado = nuevo;
+        return ficha;
+    }
+    editarAlumno(id, input) {
+        const estado = this.cargar();
+        const original = estado.alumnos.find((a) => a.id === id);
+        if (!original)
+            throw new Error('No se encontró la ficha del alumno');
+        const editada = editarAlumno(original, input);
+        const nuevo = { ...estado, alumnos: estado.alumnos.map((a) => (a.id === id ? editada : a)) };
+        this.persistir(nuevo, true);
+        this.estado = nuevo;
+        return editada;
     }
     /** Crea una clase nueva y la persiste. */
     crear(spec) {
@@ -175,14 +205,26 @@ export class RepositorioClases {
             return null;
         try {
             const dato = JSON.parse(texto);
-            if (!dato || dato.version !== VERSION_ESTADO || !Array.isArray(dato.clases))
+            // Migra v1→v2: clases y pagos guardados se conservan tal cual; solo se
+            // agrega el campo alumnos. Versiones futuras/desconocidas → resembrar.
+            if (!dato || (dato.version !== VERSION_ESTADO && dato.version !== 1) || !Array.isArray(dato.clases))
                 return null;
-            return {
+            const clases = dato.clases.map(normalizarClase);
+            const pagos = Array.isArray(dato.pagos) ? dato.pagos : [];
+            const alumnos = Array.isArray(dato.alumnos)
+                ? dato.alumnos.map(normalizarFichaGuardada).filter((a) => a !== null)
+                : this.sembrarAlumnos(hoyLocal(this.reloj.ahora()));
+            const estado = {
                 version: VERSION_ESTADO,
                 guardadoEn: typeof dato.guardadoEn === 'string' ? dato.guardadoEn : new Date(this.reloj.ahora()).toISOString(),
-                clases: dato.clases.map(normalizarClase),
-                pagos: Array.isArray(dato.pagos) ? dato.pagos : [],
+                clases,
+                pagos,
+                alumnos,
             };
+            // Si venía de v1 (o faltaba alumnos), persistimos la versión migrada.
+            if (dato.version !== VERSION_ESTADO || !Array.isArray(dato.alumnos))
+                this.persistir(estado);
+            return estado;
         }
         catch {
             return null;
@@ -195,6 +237,7 @@ export class RepositorioClases {
             guardadoEn: new Date(ahora).toISOString(),
             clases: reconciliar(this.sembrar(ahora), ahora),
             pagos: [],
+            alumnos: this.sembrarAlumnos(hoyLocal(ahora)),
         };
         this.persistir(estado);
         return estado;

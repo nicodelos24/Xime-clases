@@ -5,7 +5,7 @@ import {
   horaClase, type Clase,
 } from './src/clases.ts';
 import { CLAVE_ESTADO, RepositorioClases, almacenLocalStorage, type RepositorioDeClases } from './src/repositorio.ts';
-import { alumnosCobrosDemo, datosDemo } from './src/demo.ts';
+import { alumnosCobrosDemo, datosDemo, fichasDemo } from './src/demo.ts';
 import { resumenCobros, type Pago } from './src/cobros.ts';
 import { resumenHoy, clasesDelDia, clasesDeLaSemana } from './src/resumen.ts';
 import { diaCorto, diaLargo, etiquetaDia, etiquetaMes, sumarDias, parseFecha } from './src/fechas.ts';
@@ -21,7 +21,7 @@ const QUIEN = 'dueño';
 
 // Un solo repositorio: siembra la demo anclada a hoy la primera vez y desde
 // ahí todo comando se guarda en localStorage (un refresh no pierde nada).
-const repo: RepositorioDeClases = new RepositorioClases(almacenLocalStorage(), reloj, datosDemo);
+const repo: RepositorioDeClases = new RepositorioClases(almacenLocalStorage(), reloj, datosDemo, fichasDemo);
 let clases: Clase[];
 
 /* ------------------------------------------------------------------- helpers */
@@ -536,31 +536,40 @@ toast.addEventListener('click', () => {
   }
 });
 
-/* ------------------------------------------------------- alumnos (filtros) */
-type AlumnoFicha = {
-  ini: string; nom: string; gr: string; vence: number;
-  tipo: 'mensual' | 'individual'; alta: number; color: string;
-};
-const ALUMNOS_FICHA: AlumnoFicha[] = [
-  { ini: 'CT', nom: 'Carla T.',    gr: 'Martes A',  vence: 0,   tipo: 'mensual',    alta: 3, color: 'avatar' },
-  { ini: 'BS', nom: 'Bruno S.',    gr: 'Martes A',  vence: 0,   tipo: 'mensual',    alta: 5, color: 'avatar-2' },
-  { ini: 'JP', nom: 'Julieta P.',  gr: 'Martes B',  vence: -1,  tipo: 'individual', alta: 8, color: 'avatar-3' },
-  { ini: 'MR', nom: 'Martín R.',   gr: 'Viernes',   vence: 12,  tipo: 'mensual',    alta: 1, color: 'avatar-4' },
-  { ini: 'LC', nom: 'Lucía C.',    gr: 'Martes B',  vence: 20,  tipo: 'individual', alta: 7, color: 'avatar-5' },
-  { ini: 'DG', nom: 'Diego G.',    gr: 'Viernes',   vence: 3,   tipo: 'mensual',    alta: 2, color: 'avatar-6' },
-  { ini: 'AF', nom: 'Ana F.',      gr: 'Lunes',     vence: -1,  tipo: 'individual', alta: 9, color: 'avatar' },
-  { ini: 'SN', nom: 'Sofía N.',    gr: 'Sábado',    vence: 15,  tipo: 'mensual',    alta: 4, color: 'avatar-3' },
-  { ini: 'EL', nom: 'Ezequiel L.', gr: 'Lunes',     vence: 6,   tipo: 'individual', alta: 6, color: 'avatar-4' },
-];
-type OrdenAlumnos = 'ninguno' | 'az' | 'za' | 'recientes' | 'vence';
+/* ------------------------------------------------------- alumnos (fichas) */
+import {
+  GRUPOS_DEMO, construirVista, filtrarYOrdenar, validarAlumno,
+  type AlumnoFicha, type AlumnoFichaInput, type FichaVista, type OrdenAlumnos,
+} from './src/alumnos.ts';
+
 let ordenAlumnos: OrdenAlumnos = 'ninguno';
 const filtrosAlumnos = new Set<string>();
 let busquedaAlumno = '';
 
-function alumnoSub(a: AlumnoFicha): string {
-  const v = a.vence < 0 ? 'vencido' : a.vence === 0 ? 'vence hoy' : `vence en ${a.vence} días`;
-  const et = a.tipo === 'mensual' ? 'et-mensual' : 'et-individual';
-  return `<p class="al-sub">${esc(a.gr)} · ${v} <span class="etiqueta ${et}">${a.tipo === 'mensual' ? 'Mensual' : 'Individual'}</span></p><span class="al-fecha">Alta hace ${a.alta} días</span>`;
+/**
+ * Días hasta el próximo vencimiento de cada alumno, derivados de Cobros
+ * (mismo repositorio, mismos pagos). El que no tiene deuda pendiente queda al
+ * día (0). Nunca se guarda este valor: es un cálculo de la vista.
+ */
+function vencimientosDeCobros(): Map<string, number> {
+  const r = verCobros(repo.listarPagos());
+  const mapa = new Map<string, number>();
+  for (const f of r.filas) {
+    if (f.pago) continue;
+    const actual = mapa.get(f.alumno.id);
+    if (actual === undefined || f.dias < actual) mapa.set(f.alumno.id, f.dias);
+  }
+  return mapa;
+}
+
+function filasAlumnos(): FichaVista[] {
+  return construirVista(repo.listarAlumnos(), vencimientosDeCobros(), hoyLocal(reloj.ahora()));
+}
+
+function alumnoSub(a: FichaVista): string {
+  const v = a.vence < 0 ? 'vencido' : a.vence === 0 ? 'al día' : `vence en ${a.vence} días`;
+  const et = a.modalidad === 'mensual' ? 'et-mensual' : 'et-individual';
+  return `<p class="al-sub">${esc(a.grupo)} · ${v} <span class="etiqueta ${et}">${a.modalidad === 'mensual' ? 'Mensual' : 'Individual'}</span></p><span class="al-fecha">Alta ${esc(a.fechaAlta)}</span>`;
 }
 
 function pintarChipsAlumnos(): void {
@@ -584,27 +593,20 @@ function pintarAlumnos(): void {
   const lista = $('#lista-alumnos');
   const conteo = $('#v-alumnos .conteo');
   if (!lista) return;
-  const out = ALUMNOS_FICHA.filter((a) => {
-    if (busquedaAlumno && a.nom.toLowerCase().indexOf(busquedaAlumno) < 0) return false;
-    if (filtrosAlumnos.has('mensual') && a.tipo !== 'mensual') return false;
-    if (filtrosAlumnos.has('individual') && a.tipo !== 'individual') return false;
-    if (filtrosAlumnos.has('aldia') && a.vence <= 0) return false;
-    return true;
-  });
-  const cmp: Record<Exclude<OrdenAlumnos, 'ninguno'>, (a: AlumnoFicha, b: AlumnoFicha) => number> = {
-    az: (a, b) => a.nom.localeCompare(b.nom),
-    za: (a, b) => b.nom.localeCompare(a.nom),
-    recientes: (a, b) => a.alta - b.alta,
-    vence: (a, b) => a.vence - b.vence,
-  };
-  if (ordenAlumnos !== 'ninguno') out.sort(cmp[ordenAlumnos]);
+  const todas = filasAlumnos();
+  const out = filtrarYOrdenar(todas, busquedaAlumno, filtrosAlumnos, ordenAlumnos);
   if (conteo) conteo.textContent = `${out.length} ${out.length === 1 ? 'alumno' : 'alumnos'}`;
   lista.innerHTML = out.length
     ? out.map((a) => {
         const punto = a.vence < 0 || a.vence === 0 ? 'punto-rosa' : a.vence <= 3 ? 'punto-ambar' : 'punto-verde';
-        return `<li><span class="avatar ${a.color}">${a.ini}</span><div><p class="al-nombre">${esc(a.nom)}</p>${alumnoSub(a)}</div><span class="punto ${punto}"></span></li>`;
+        return `<li class="fila-alumno"><button type="button" class="alumno-fila-btn" data-ficha="${esc(a.id)}" aria-label="Abrir ficha de ${esc(a.nombre)}">
+          <span class="avatar ${a.color}">${esc(a.ini)}</span><div><p class="al-nombre">${esc(a.nombre)}</p>${alumnoSub(a)}</div><span class="punto ${punto}"></span>
+        </button></li>`;
       }).join('')
-    : '<p class="pv-vacio">Ningún alumno con estos filtros</p>';
+    : `<p class="pv-vacio">${todas.length === 0 ? 'Todavía no hay alumnos. Tocá «Nuevo alumno» para cargar el primero.' : 'Ningún alumno con estos filtros'}</p>`;
+  lista.querySelectorAll<HTMLButtonElement>('[data-ficha]').forEach((b) => {
+    b.addEventListener('click', () => abrirFicha(repo.listarAlumnos().find((f) => f.id === b.dataset.ficha) ?? null, b));
+  });
   pintarChipsAlumnos();
 }
 
@@ -628,9 +630,93 @@ $('#filtros-alumnos')?.addEventListener('click', (e) => {
   pintarAlumnos();
 });
 $('#buscar-alumno')?.addEventListener('input', (e) => {
-  busquedaAlumno = (e.target as HTMLInputElement).value.toLowerCase();
+  busquedaAlumno = (e.target as HTMLInputElement).value;
   pintarAlumnos();
 });
+
+/* ------------------------------------------- alta / edición de ficha (C) */
+
+/** Diálogo de ficha: mismo sheet v5 de Cobros, sin rediseñar. */
+function abrirFicha(ficha: AlumnoFicha | null, origen: HTMLElement): void {
+  const esNueva = ficha === null;
+  const grupos = GRUPOS_DEMO as readonly string[];
+  const contenido = `<div class="cobros-panel-resumen">
+    <div><p class="al-nombre">${esNueva ? 'Nuevo alumno' : esc(ficha!.nombre)}</p>
+    <p class="al-sub">${esNueva ? 'Datos sintéticos de la demo' : `Alta ${esc(ficha!.fechaAlta)}`}</p></div>
+    <div class="cobros-panel-dato">${esNueva ? '' : `<span class="ficha-id">ID ${esc(ficha!.id)}</span>`}</div></div>
+    <p class="cobros-panel-nota">${esNueva ? 'Cargá una ficha para probar el alta. No envía nada ni crea grupos.' : 'Podés corregir nombre, grupo y modalidad. La identidad y el alta no se cambian.'}</p>
+    <form novalidate>
+      <label class="campo"><span>Nombre *</span><input name="nombre" required maxlength="80" autocomplete="off" value="${esNueva ? '' : esc(ficha!.nombre)}" placeholder="Nombre y apellido"></label>
+      <p class="campo"><span>Modalidad *</span></p>
+      <div class="ficha-grupo-opciones" role="group" aria-label="Modalidad">
+        <button type="button" class="ficha-grupo" data-modalidad="mensual" aria-pressed="false">Mensual</button>
+        <button type="button" class="ficha-grupo" data-modalidad="individual" aria-pressed="false">Individual</button>
+      </div>
+      <p class="sheet-paso">Grupo existente *</p>
+      <div class="ficha-grupo-opciones" role="group" aria-label="Grupo existente">
+        ${grupos.map((g) => `<button type="button" class="ficha-grupo" data-grupo="${esc(g)}" aria-pressed="false">${esc(g)}</button>`).join('')}
+      </div>
+      <div class="ficha-opcional">
+        <p>Contacto (opcional, apagado por defecto)</p>
+        <label class="campo"><span>Teléfono o tutor</span><input name="contacto" maxlength="120" autocomplete="off" value="${esNueva ? '' : esc(ficha!.contacto)}" placeholder="Solo si el contrato lo contempla"></label>
+      </div>
+      <p class="cobros-panel-error" role="alert"></p>
+      <div class="sheet-acciones"><button type="button" class="btn-secundario">Volver</button>
+      <button type="submit" class="btn-primario ficha-guardar">${esNueva ? 'Guardar alumno' : 'Guardar cambios'}</button></div>
+    </form>`;
+  const dialogo = abrirDialogoCobros(esNueva ? 'Nuevo alumno' : 'Editar ficha', 'Alumnos', 'alumnos', contenido, origen);
+
+  let modalidad = ficha?.modalidad ?? 'mensual';
+  let grupo = ficha?.grupo ?? grupos[0]!;
+  const pintarSeleccion = () => {
+    dialogo.querySelectorAll<HTMLButtonElement>('[data-modalidad]').forEach((b) => {
+      const on = b.dataset.modalidad === modalidad;
+      b.classList.toggle('activo', on);
+      b.setAttribute('aria-pressed', String(on));
+    });
+    dialogo.querySelectorAll<HTMLButtonElement>('[data-grupo]').forEach((b) => {
+      const on = b.dataset.grupo === grupo;
+      b.classList.toggle('activo', on);
+      b.setAttribute('aria-pressed', String(on));
+    });
+  };
+  dialogo.querySelectorAll<HTMLButtonElement>('[data-modalidad]').forEach((b) => b.addEventListener('click', () => { modalidad = b.dataset.modalidad as AlumnoFichaInput['modalidad']; pintarSeleccion(); }));
+  dialogo.querySelectorAll<HTMLButtonElement>('[data-grupo]').forEach((b) => b.addEventListener('click', () => { grupo = b.dataset.grupo!; pintarSeleccion(); }));
+  pintarSeleccion();
+
+  const form = dialogo.querySelector('form')!;
+  const error = form.querySelector<HTMLElement>('[role="alert"]')!;
+  form.querySelector('.btn-secundario')!.addEventListener('click', () => dialogo.close());
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    if (!dialogo.open) return;
+    const datos = new FormData(form);
+    const input: AlumnoFichaInput = {
+      nombre: String(datos.get('nombre') ?? ''),
+      modalidad,
+      grupo,
+      contacto: String(datos.get('contacto') ?? ''),
+    };
+    const errores = validarAlumno(input);
+    if (Object.keys(errores).length > 0) {
+      error.textContent = Object.values(errores)[0]!;
+      return;
+    }
+    try {
+      if (esNueva) repo.crearAlumno(input);
+      else repo.editarAlumno(ficha!.id, input);
+    } catch (err) {
+      error.textContent = err instanceof Error ? err.message : 'No se pudo guardar la ficha';
+      return;
+    }
+    dialogo.close();
+    pintarAlumnos();
+    pintarCobros();
+    avisar(esNueva ? 'Alumno guardado' : 'Ficha actualizada');
+  });
+}
+
+$('#nuevo-alumno')?.addEventListener('click', (e) => abrirFicha(null, e.currentTarget as HTMLElement));
 
 /* ------------------------------------------------------------- cobros */
 const formatoUYU = new Intl.NumberFormat('es-UY', { useGrouping: 'always' });
@@ -638,7 +724,19 @@ const uyu = (monto: number) => `$${formatoUYU.format(monto)}`;
 const listaCobros = document.querySelector<HTMLUListElement>('#lista-cobros')!;
 const botonHistorial = document.querySelector<HTMLButtonElement>('#abrir-historial')!;
 const campana = document.querySelector<HTMLButtonElement>('.campana')!;
-const verCobros = (pagos = repo.listarPagos()) => resumenCobros(alumnosCobrosDemo, pagos, hoyLocal(reloj.ahora()));
+/**
+ * Alumnos de Cobros: los del contrato demo (tarifa/ancla definida), con el
+ * nombre y grupo VIGENTES de la ficha cuando se editaron. Un alumno nuevo no
+ * entra acá: no tiene tarifa asignada y el alta no debe crear cargos.
+ */
+function alumnosParaCobros() {
+  const fichas = new Map(repo.listarAlumnos().map((a) => [a.id, a]));
+  return alumnosCobrosDemo.map((a) => {
+    const f = fichas.get(a.id);
+    return f ? { ...a, nombre: f.nombre, grupo: f.grupo } : a;
+  });
+}
+const verCobros = (pagos = repo.listarPagos()) => resumenCobros(alumnosParaCobros(), pagos, hoyLocal(reloj.ahora()));
 type FilaCobro = ReturnType<typeof verCobros>['filas'][number];
 
 function fechaBreve(fecha: string) {
@@ -687,7 +785,10 @@ function pintarCobros() {
 }
 
 function nombrePago(pago: Pago) {
-  return alumnosCobrosDemo.find((a) => a.id === pago.alumnoId)?.nombre ?? pago.alumnoId;
+  // Coherencia por ID: si se editó la ficha, Cobros muestra el nombre vigente.
+  return repo.listarAlumnos().find((a) => a.id === pago.alumnoId)?.nombre
+    ?? alumnosCobrosDemo.find((a) => a.id === pago.alumnoId)?.nombre
+    ?? pago.alumnoId;
 }
 
 botonHistorial.addEventListener('click', () => {
@@ -813,7 +914,7 @@ $$('a.link-suave').forEach((a) => a.addEventListener('click', (e) => {
 }));
 
 $('.fab')?.addEventListener('click', () => avisar('Agendar: nueva clase (próximamente)'));
-window.addEventListener('storage', (e) => { if (e.key === CLAVE_ESTADO) pintarCobros(); });
+window.addEventListener('storage', (e) => { if (e.key === CLAVE_ESTADO) { pintarCobros(); pintarAlumnos(); } });
 
 /* --------------------------------------------------------------- arranque */
 function refrescar() {
@@ -835,6 +936,7 @@ setInterval(() => {
   if (hoy !== diaCobros) {
     diaCobros = hoy;
     pintarCobros();
+    pintarAlumnos();
   }
   const antes = clases.map((c) => c.estado).join(',');
   clases = repo.reconciliar();
@@ -851,7 +953,9 @@ else pintarTitulo('v-hoy');
 // Exposición mínima para QA (consola / capturas): sin tocar el estado real.
 (window as unknown as Record<string, unknown>).ximeV5 = {
   get clases() { return structuredClone(clases); },
+  get alumnos() { return structuredClone(repo.listarAlumnos()); },
   refrescar,
+  abrirFicha,
   reloj,
   textoCancelacion,
   linkTexto,

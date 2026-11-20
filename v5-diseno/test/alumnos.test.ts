@@ -1,0 +1,234 @@
+/// <reference types="node" />
+/**
+ * Pieza C · fichas de alumnos: alta, edición, validación, persistencia y
+ * preservación del estado A/B (clases, pagos, anulaciones y agenda histórica).
+ * Sin DOM, sin reloj real: repositorio sobre almacén en memoria y reloj falso.
+ */
+import { test } from 'node:test';
+import { strict as assert } from 'node:assert';
+
+import {
+  RepositorioClases, almacenMemoria, CLAVE_ESTADO, VERSION_ESTADO,
+  type Almacen, type AlumnoFicha,
+} from '../src/repositorio.ts';
+import { datosDemo, fichasDemo } from '../src/demo.ts';
+import { hoyLocal, relojFalso, type InstanteMs } from '../src/reloj.ts';
+import {
+  crearAlumno, editarAlumno, esIdAlumno, filtrarYOrdenar, iniciales,
+  validarAlumno, type AlumnoFichaInput,
+} from '../src/alumnos.ts';
+
+const t = (s: string) => new Date(s).getTime();
+// Jueves 19/11/2026, 10:00 en Uruguay (UTC−3).
+const JUEVES_10: InstanteMs = t('2026-11-19T13:00:00.000Z');
+const HOY = hoyLocal(JUEVES_10);
+
+function abrir(almacen: Almacen, ahora: InstanteMs = JUEVES_10) {
+  const reloj = relojFalso(ahora);
+  return { reloj, repo: new RepositorioClases(almacen, reloj, datosDemo, fichasDemo) };
+}
+
+const Input: AlumnoFichaInput = { nombre: 'Nora Pérez', modalidad: 'mensual', grupo: 'Martes A' };
+
+/* ------------------------------------------------------------- validación */
+
+test('validación: nombre corto, modalidad y grupo existente son obligatorios', () => {
+  assert.ok(validarAlumno({ ...Input, nombre: 'N' }).nombre, 'nombre corto se rechaza');
+  assert.ok(validarAlumno({ ...Input, nombre: '   ' }).nombre, 'nombre vacío se rechaza');
+  assert.ok(validarAlumno({ ...Input, modalidad: 'otra' as AlumnoFichaInput['modalidad'] }).modalidad);
+  assert.ok(validarAlumno({ ...Input, grupo: 'Grupo Nuevo Inventado' }).grupo, 'grupo inexistente se rechaza');
+  assert.deepEqual(validarAlumno(Input), {}, 'input válido sin errores');
+});
+
+test('validación: acepta acentos, apóstrofos y guiones; ancla 1..31; contacto opcional', () => {
+  assert.deepEqual(validarAlumno({ ...Input, nombre: "María O'Donnell-Ruiz" }), {});
+  assert.deepEqual(validarAlumno({ ...Input, ancla: 1 }), {});
+  assert.deepEqual(validarAlumno({ ...Input, ancla: 31 }), {});
+  assert.ok(validarAlumno({ ...Input, ancla: 0 }).ancla);
+  assert.ok(validarAlumno({ ...Input, ancla: 32 }).ancla);
+  assert.ok(validarAlumno({ ...Input, contacto: 'x'.repeat(121) }).contacto);
+  assert.deepEqual(validarAlumno({ ...Input, contacto: '' }), {}, 'contacto vacío es opcional');
+});
+
+test('iniciales: 1–2 letras, sin acentos', () => {
+  assert.equal(iniciales('Nora Pérez'), 'NP');
+  assert.equal(iniciales('  ana  '), 'A');
+  assert.equal(iniciales(''), '?');
+});
+
+/* --------------------------------------------------------------- alta */
+
+test('alta: ID estable y único, fecha de alta local, contacto opcional', () => {
+  let n = 0;
+  const azar = () => (n++ * 0.37) % 1;
+  const f1 = crearAlumno(Input, HOY, () => false, azar);
+  const f2 = crearAlumno({ ...Input, nombre: 'Otro Alumno' }, HOY, (id) => id === f1.id, azar);
+  assert.ok(esIdAlumno(f1.id), 'ID con prefijo al-');
+  assert.notEqual(f1.id, f2.id);
+  assert.equal(f1.fechaAlta, HOY);
+  assert.equal(f1.nombre, 'Nora Pérez');
+  assert.equal(f1.activo, true);
+  assert.equal(f1.contacto, '');
+  assert.equal(f1.ancla, 21, 'ancla por default');
+  assert.ok(f1.color.startsWith('avatar'));
+  assert.throws(() => crearAlumno({ ...Input, nombre: 'x' }, HOY, () => false, azar), /nombre/);
+});
+
+test('alta desde el repositorio: persiste y sobrevive un refresh (F5)', () => {
+  const almacen = almacenMemoria();
+  const { repo } = abrir(almacen);
+  const antes = repo.listarAlumnos().length;
+  const creada = repo.crearAlumno({ ...Input, contacto: '099 111 222' });
+  assert.equal(repo.listarAlumnos().length, antes + 1);
+  assert.equal(creada.contacto, '099 111 222');
+
+  const { repo: reabierta } = abrir(almacen);
+  const guardada = reabierta.listarAlumnos().find((a) => a.id === creada.id);
+  assert.ok(guardada, 'la ficha sigue tras recargar');
+  assert.equal(guardada!.nombre, 'Nora Pérez');
+  assert.equal(guardada!.contacto, '099 111 222');
+  assert.equal(guardada!.fechaAlta, HOY);
+});
+
+test('no se puede persistir: el repositorio lanza y no confirma el alta', () => {
+  const almacen = almacenMemoria();
+  const { repo } = abrir(almacen);
+  assert.throws(() => repo.crearAlumno({ ...Input, nombre: 'x' }), /nombre/, 'validación antes de persistir');
+  assert.equal(repo.listarAlumnos().some((a) => a.nombre === 'x'), false);
+});
+
+/* -------------------------------------------------------------- edición */
+
+test('edición: conserva ID, alta, activo y color; cambia nombre/grupo/modalidad', () => {
+  const { repo } = abrir(almacenMemoria());
+  const creada = repo.crearAlumno(Input);
+  const editada = repo.editarAlumno(creada.id, {
+    nombre: 'Nora Pérez Ruiz', modalidad: 'individual', grupo: 'Viernes', ancla: 8, contacto: '099 000 111',
+  });
+  assert.equal(editada.id, creada.id, 'ID estable');
+  assert.equal(editada.fechaAlta, creada.fechaAlta, 'alta congelada');
+  assert.equal(editada.activo, creada.activo);
+  assert.equal(editada.color, creada.color);
+  assert.equal(editada.nombre, 'Nora Pérez Ruiz');
+  assert.equal(editada.modalidad, 'individual');
+  assert.equal(editada.grupo, 'Viernes');
+  assert.equal(editada.ancla, 8);
+  assert.equal(editada.contacto, '099 000 111');
+});
+
+test('edición: rechaza datos inválidos sin tocar la ficha original', () => {
+  const { repo } = abrir(almacenMemoria());
+  const creada = repo.crearAlumno(Input);
+  assert.throws(() => repo.editarAlumno(creada.id, { ...Input, nombre: '' }), /nombre/);
+  assert.throws(() => repo.editarAlumno(creada.id, { ...Input, grupo: 'Otro' }), /grupo/);
+  assert.equal(repo.listarAlumnos().find((a) => a.id === creada.id)!.nombre, 'Nora Pérez');
+  assert.throws(() => repo.editarAlumno('no-existe', Input), /No se encontró/);
+});
+
+test('editarAlumno puro: no muta el original', () => {
+  const original = crearAlumno(Input, HOY, () => false);
+  const copia = { ...original };
+  const editada = editarAlumno(original, { ...Input, nombre: 'Otra Persona' });
+  assert.equal(original.nombre, copia.nombre);
+  assert.notEqual(editada.nombre, original.nombre);
+});
+
+/* --------------------------------------------------- preservación A/B */
+
+test('preservación A/B: dar de alta no toca clases ni pagos existentes', () => {
+  const almacen = almacenMemoria();
+  const { repo } = abrir(almacen);
+  const clasesAntes = structuredClone(repo.listar());
+  const pago = { id: 'p-ab-1', alumnoId: 'a0', periodo: '2026-11', montoUYU: 6500, quien: 'dueño' };
+  repo.registrarPago(pago);
+  repo.anularPago(pago.id, 'Error de carga', 'dueño');
+  const pagosAntes = structuredClone(repo.listarPagos());
+
+  repo.crearAlumno(Input);
+  assert.deepEqual(repo.listar(), clasesAntes, 'agenda/clases intactas');
+  assert.deepEqual(repo.listarPagos(), pagosAntes, 'pagos y anulaciones intactos');
+});
+
+test('preservación A/B: migrar v1→v2 conserva clases, pagos y anulaciones', () => {
+  // Estado guardado por A/B (versión 1): sin campo alumnos.
+  const almacen = almacenMemoria();
+  const { repo: v1 } = abrir(almacen);
+  const clasesV1 = v1.listar();
+  v1.registrarPago({ id: 'p-v1', alumnoId: 'a2', periodo: '2026-11', montoUYU: 6500, quien: 'dueño' });
+  v1.anularPago('p-v1', 'Motivo v1', 'dueño');
+  const pagosV1 = structuredClone(v1.listarPagos());
+
+  // Simular el estado exacto que quedó en localStorage con la versión 1.
+  const guardadoV1 = JSON.parse(almacen.leer()!) as Record<string, unknown>;
+  guardadoV1.version = 1;
+  delete guardadoV1.alumnos;
+  almacen.escribir(JSON.stringify(guardadoV1));
+
+  const { repo: migrada } = abrir(almacen);
+  assert.equal(migrada.listar().length, clasesV1.length, 'mismas clases');
+  assert.deepEqual(migrada.listarPagos(), pagosV1, 'pagos/anulación intactos');
+  const trasMigrar = JSON.parse(almacen.leer()!) as Record<string, unknown>;
+  assert.equal(trasMigrar.version, VERSION_ESTADO, 'versión migrada a v2');
+  assert.ok(Array.isArray(trasMigrar.alumnos) && (trasMigrar.alumnos as unknown[]).length > 0, 'alumnos sembrados');
+  assert.equal((trasMigrar.clases as unknown[]).length, clasesV1.length, 'clases no reescritas');
+});
+
+test('demo: todas las fichas sembradas tienen grupo editable y pasan validación', () => {
+  const { repo } = abrir(almacenMemoria());
+  for (const f of repo.listarAlumnos()) {
+    assert.deepEqual(
+      validarAlumno({ nombre: f.nombre, modalidad: f.modalidad, grupo: f.grupo, contacto: f.contacto }),
+      {},
+      `ficha ${f.id} con grupo "${f.grupo}" debe ser editable`,
+    );
+    assert.ok(!f.grupo.startsWith('Grupo '), `grupo llano, sin prefijo: ${f.grupo}`);
+  }
+});
+
+test('preservación A/B: los pagos siguen vinculados por ID a la ficha demo', () => {
+  const { repo } = abrir(almacenMemoria());
+  repo.registrarPago({ id: 'p-vinculo', alumnoId: 'a2', periodo: '2026-11', montoUYU: 6500, quien: 'dueño' });
+  const ficha = repo.listarAlumnos().find((a) => a.id === 'a2');
+  assert.ok(ficha, 'existe la ficha con el ID del pago (no se unió por nombre)');
+  assert.equal(ficha!.nombre, 'Julieta P.');
+  assert.ok(repo.listarAlumnos().every((a) => esIdAlumno(a.id) || /^[ab]\d+$/.test(a.id)));
+});
+
+test('coherencia por ID: editar el nombre no rompe el vínculo del pago', () => {
+  const almacen = almacenMemoria();
+  const { repo } = abrir(almacen);
+  repo.registrarPago({ id: 'p-nombre', alumnoId: 'a0', periodo: '2026-11', montoUYU: 6500, quien: 'dueño' });
+  repo.editarAlumno('a0', { nombre: 'Carla Torres', modalidad: 'mensual', grupo: 'Martes A' });
+  const { repo: reabierta } = abrir(almacen);
+  const pago = reabierta.listarPagos().find((p) => p.id === 'p-nombre')!;
+  const nombreVigente = reabierta.listarAlumnos().find((a) => a.id === pago.alumnoId)?.nombre;
+  assert.equal(pago.alumnoId, 'a0', 'el pago sigue apuntando al mismo ID');
+  assert.equal(nombreVigente, 'Carla Torres', 'Cobros resuelve el nombre vigente por ID');
+});
+
+test('no resembrar sobre datos guardados: editar y recargar conserva el cambio', () => {
+  const almacen = almacenMemoria();
+  const { repo } = abrir(almacen);
+  const primera = repo.listarAlumnos()[0]!;
+  repo.editarAlumno(primera.id, { nombre: 'Nombre Cambiado', modalidad: 'individual', grupo: 'Lunes' });
+  const total = repo.listarAlumnos().length;
+  const { repo: reabierta } = abrir(almacen);
+  assert.equal(reabierta.listarAlumnos().length, total, 'no se duplicaron fichas');
+  assert.equal(reabierta.listarAlumnos().find((a) => a.id === primera.id)!.nombre, 'Nombre Cambiado');
+});
+
+/* ------------------------------------------------- búsqueda / filtros / orden */
+
+test('vista: búsqueda acento-insensible, filtros y orden sin mutar la lista', () => {
+  const { repo } = abrir(almacenMemoria());
+  const filas = repo.listarAlumnos().map((a) => ({
+    ...a, ini: '', vence: 0, tipo: a.modalidad, alta: 0,
+  }));
+  const porNombre = filtrarYOrdenar(filas, 'julieta', new Set(), 'ninguno');
+  assert.ok(porNombre.every((f) => f.nombre.toLowerCase().includes('julieta')));
+  const mensuales = filtrarYOrdenar(filas, '', new Set(['mensual']), 'ninguno');
+  assert.ok(mensuales.every((f) => f.modalidad === 'mensual'));
+  const az = filtrarYOrdenar(filas, '', new Set(), 'az').map((f) => f.nombre);
+  assert.deepEqual(az, [...az].sort((a, b) => a.localeCompare(b)));
+  assert.equal(filas[0]!.nombre, repo.listarAlumnos()[0]!.nombre, 'original intacto');
+});

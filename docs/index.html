@@ -5,8 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Clases v5 · Xime Clases</title>
 <link rel="icon" href="data:,">
-<link rel="stylesheet" href="tokens.css?v=202611200145">
-<link rel="stylesheet" href="propuesta.css?v=202611200145">
+<link rel="stylesheet" href="tokens.css?v=202611200630">
+<link rel="stylesheet" href="propuesta.css?v=202611200630">
 </head>
 <body>
 <p class="marca">XIME CLASES · V5</p>
@@ -190,8 +190,13 @@
     <!-- ================= ALUMNOS ================= -->
     <section id="v-alumnos" class="vista">
       <div class="agenda-titulo">
-        <h2>Alumnos</h2>
-        <span class="conteo">32 en total</span>
+        <div class="cobros-contexto">
+          <h2>Alumnos</h2>
+          <span class="conteo"></span>
+        </div>
+        <button type="button" class="link-suave" id="nuevo-alumno" aria-haspopup="dialog">
+          <svg class="ico" width="14" height="14" aria-hidden="true"><use href="#i-mas2"/></svg>Nuevo alumno
+        </button>
       </div>
       <div class="buscador">
         <svg class="ico" width="17" height="17"><use href="#i-alumnos"/></svg>
@@ -278,7 +283,7 @@
     });
   })();
 </script>
-<script src="icons.js?v=202611200145"></script>
-<script type="module" src="propuesta.js?v=202611200145"></script>
+<script src="icons.js?v=202611200630"></script>
+<script type="module" src="propuesta.js?v=202611200630"></script>
 </body>
 </html>

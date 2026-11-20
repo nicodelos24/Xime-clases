@@ -10,6 +10,7 @@
 import { crearClase } from './clases.js';
 import { lunesDe, sumarDias } from './fechas.js';
 import { hoyLocal } from './reloj.js';
+import { colorPorId } from './alumnos.js';
 function alumnos(nombres, prefijo) {
     return nombres.map(([nombre, telefono], i) => ({ id: `${prefijo}${i}`, nombre, telefono }));
 }
@@ -32,6 +33,11 @@ const GRUPO_V = alumnos([
 ], 'v');
 // Identidad canónica por alumno: A/B/V reutilizan nombres con IDs de clase distintos.
 // Anclas y tarifa son fixtures sintéticos para la demo de mensualidades.
+/** Anclas de la demo por ID, para que la ficha y Cobros compartan vencimiento. */
+const anclasCobroDemo = new Map([
+    ['a0', 21], ['a1', 21], ['a2', 26], ['a3', 20], ['a4', 1], ['a5', 2],
+    ['a6', 3], ['a7', 8], ['a8', 9], ['a9', 12], ['a10', 16], ['a11', 31], ['b8', 28],
+].map(([id, ancla]) => [id, ancla]));
 export const alumnosCobrosDemo = [
     [GRUPO_A[0], 'Martes A', 21], [GRUPO_A[1], 'Martes A', 21],
     [GRUPO_A[2], 'Martes B', 26], [GRUPO_A[3], 'Viernes', 20],
@@ -48,6 +54,27 @@ export const alumnosCobrosDemo = [
  * Los días pasados quedan "dada" por la reconciliación; hoy y los próximos,
  * "programada". Es determinista para un `ahora` dado (tests con reloj falso).
  */
+/**
+ * Fichas demo (Pieza C). Los IDs son EXACTAMENTE los de `alumnosCobrosDemo`:
+ * así un pago guardado en A/B sigue vinculado por ID al mismo alumno, sin
+ * unir por nombre ni reescribir agenda/auditoría. Las altas son sintéticas,
+ * repartidas en los últimos días respecto de `hoy`.
+ */
+export function fichasDemo(hoy) {
+    return alumnosCobrosDemo.map((a, i) => ({
+        id: a.id,
+        nombre: a.nombre,
+        modalidad: (i % 3 === 2 ? 'individual' : 'mensual'),
+        // `alumnosCobrosDemo.grupo` trae prefijo "Grupo " para Cobros; la ficha
+        // guarda el nombre llano que usa el editor y la validación ("Martes A").
+        grupo: a.grupo.replace(/^Grupo\s+/, ''),
+        ancla: anclasCobroDemo.get(a.id) ?? a.ancla,
+        fechaAlta: sumarDias(hoy, -(3 + (i * 2) % 27)),
+        activo: true,
+        color: colorPorId(a.id),
+        contacto: '',
+    }));
+}
 export function datosDemo(ahora) {
     const lunes = lunesDe(hoyLocal(ahora));
     return [

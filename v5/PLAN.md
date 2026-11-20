@@ -138,3 +138,38 @@ Al tocar "Cancelar clase" en cualquier vista:
 6. Verificar `git diff --check`, HTTP 200 local, commit y push a origin/master.
 7. Confirmar `https://nicodelos24.github.io/Xime-clases/` HTTP 200 con el
    `?v=` nuevo en el HTML público antes de avisar que está listo.
+
+### 7.4 Pieza C · alta y edición de fichas de Alumnos
+
+> Implementada en `v5-diseno/`, sobre la base publicada `dc951032`. No cambia
+> el diseño visual aprobado ni las reglas de negocio: solo permite cargar y
+> corregir fichas sintéticas desde la vista Alumnos y preserva lo guardado.
+
+- **UI**: «Nuevo alumno» en el encabezado y ficha táctil al tocar una fila, con
+  los mismos paneles/tokens v5 de Cobros (`sheet.cobros-panel`). Campos: nombre
+  (obligatorio, 2–80 caracteres, letras/acentos/apóstrofos/guiones), modalidad
+  (Mensual/Individual), grupo existente (selección de los 5 de la demo) y
+  contacto **opcional y apagado por defecto** (contrato v1: tutor queda como
+  campo opcional no habilitado). Sin borrar fichas, sin cambiar chips, sin
+  envíos. La lista sale del repositorio: búsqueda/filtros/orden se mantienen,
+  el conteo se calcula y hay estado vacío claro.
+- **Contrato `AlumnoFicha`** (`src/alumnos.ts`): `{ id, nombre, modalidad,
+  grupo, ancla, fechaAlta, activo, color, contacto }`. ID estable con prefijo
+  `al-` (generado, nunca derivado del nombre); `fechaAlta` y `activo` se
+  congelan al dar de alta; editar conserva ID/alta/activo/color. Ancla por
+  default 21; `validarAlumno` rechaza grupos inventados y contactos >120.
+- **Repositorio v2** (`src/repositorio.ts`): `VERSION_ESTADO` 1→2 con
+  **migración en lectura**: un estado v1 se lee conservando `clases` y `pagos`
+  tal cual (incluidas anulaciones y agenda histórica) y se le agrega `alumnos`
+  sembrados; nunca se resembra sobre datos guardados. Altas/ediciones persisten
+  antes de confirmar; si falla `storage`, la UI no confirma.
+- **Identidad por ID, nunca por nombre**: `fichasDemo` usa los mismos IDs que
+  `alumnosCobrosDemo` (`a0`…`a11`, `b8`), así los pagos de A/B siguen
+  vinculados. Cobros resuelve el nombre **vigente** desde la ficha por ID
+  (`alumnosParaCobros`/`nombrePago`). Un alumno nuevo no entra en la tarifa de
+  Cobros: el alta **no crea cargos**. Vencimientos de la vista Alumnos se
+  derivan de Cobros (no se editan a mano).
+- **Verificación**: `npm run typecheck` 0 errores, `npm test` 79/79 (era 63),
+  `git diff --check` limpio, alta/edición/validación/persistencia F5 y
+  coherencia Cobros por ID comprobadas en Chrome 390 px, 0 errores de consola.
+  Capturas: `v5-diseno/v5-alumnos-c.png`, `v5-diseno/v5-alumnos-ficha.png`.

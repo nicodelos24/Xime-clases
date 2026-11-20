@@ -481,6 +481,33 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; width: 0; }
 .cobros-aviso-hoy { background: var(--ambar-suave-tinte); color: var(--tinta); font-weight: 700; }
 .cobros-panel .btn-primario:not(.cobros-anular) { background: var(--tq-700); color: var(--bg-alt); box-shadow: var(--sombra); }
 
+/* ---------- Fichas de alumnos (Pieza C): reusa tokens v5 de Cobros ---------- */
+.agenda-titulo .cobros-contexto { gap: 8px; }
+.agenda-titulo .cobros-contexto h2 { font-size: 17.5px; letter-spacing: -.01em; }
+#nuevo-alumno { cursor: pointer; font-family: inherit; min-height: 38px; }
+.lista-alumnos li.fila-alumno { cursor: pointer; padding: 0; }
+.alumno-fila-btn {
+  display: flex; align-items: center; gap: 11px; width: 100%; min-width: 0;
+  padding: 11px 13px; border: 0; border-radius: inherit;
+  background: transparent; color: inherit; font: inherit; text-align: left; cursor: pointer;
+}
+.alumno-fila-btn:focus-visible { outline: 2px solid var(--tq-600); outline-offset: -2px; }
+.ficha-grupo-opciones { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 8px; }
+.ficha-grupo {
+  border: 1.5px solid var(--linea); background: var(--bg-alt); color: var(--tinta);
+  border-radius: 999px; padding: 7px 12px; font: inherit; font-size: 12.5px;
+  font-weight: 650; cursor: pointer; min-height: 36px;
+  transition: border-color var(--t-rapida) var(--ease), background var(--t-rapida) var(--ease);
+}
+.ficha-grupo:hover { border-color: var(--tq-300); }
+.ficha-grupo.activo { background: var(--tq-100); border-color: var(--tq-600); color: var(--tq-900); }
+.ficha-grupo:focus-visible { outline: 2px solid var(--tq-600); outline-offset: 2px; }
+.ficha-opcional { margin-top: 12px; padding-top: 11px; border-top: 1px dashed var(--linea); }
+.ficha-opcional > p { font-size: 12px; color: var(--tinta-2); }
+.cobros-panel .btn-primario.ficha-guardar { background: var(--tq-700); color: var(--bg-alt); box-shadow: var(--sombra); }
+.cobros-panel .btn-primario.ficha-guardar:disabled { opacity: .45; cursor: not-allowed; }
+.ficha-id { font-size: 11px; color: var(--tinta-2); overflow-wrap: anywhere; }
+
 /* ---------- Barra de pestañas (nueva: 4 destinos) ---------- */
 /* Ronda 2 (c): barra inferior como tarjeta/cápsula flotante, siempre fija y visible.
    position:fixed se mantiene para que nunca se oculte al scrollear; se recupera

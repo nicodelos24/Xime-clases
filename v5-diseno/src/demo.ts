@@ -11,6 +11,7 @@ import { crearClase, type AlumnoDeClase, type Clase } from './clases.ts';
 import { lunesDe, sumarDias } from './fechas.ts';
 import { hoyLocal, type InstanteMs } from './reloj.ts';
 import type { AlumnoCobro } from './cobros.ts';
+import { colorPorId, type AlumnoFicha } from './alumnos.ts';
 
 function alumnos(nombres: [string, string][], prefijo: string): AlumnoDeClase[] {
   return nombres.map(([nombre, telefono], i) => ({ id: `${prefijo}${i}`, nombre, telefono }));
@@ -38,6 +39,12 @@ const GRUPO_V = alumnos([
 
 // Identidad canónica por alumno: A/B/V reutilizan nombres con IDs de clase distintos.
 // Anclas y tarifa son fixtures sintéticos para la demo de mensualidades.
+/** Anclas de la demo por ID, para que la ficha y Cobros compartan vencimiento. */
+const anclasCobroDemo = new Map<string, number>(([
+  ['a0', 21], ['a1', 21], ['a2', 26], ['a3', 20], ['a4', 1], ['a5', 2],
+  ['a6', 3], ['a7', 8], ['a8', 9], ['a9', 12], ['a10', 16], ['a11', 31], ['b8', 28],
+] satisfies [string, number][]).map(([id, ancla]) => [id, ancla]));
+
 export const alumnosCobrosDemo: AlumnoCobro[] = ([
   [GRUPO_A[0], 'Martes A', 21], [GRUPO_A[1], 'Martes A', 21],
   [GRUPO_A[2], 'Martes B', 26], [GRUPO_A[3], 'Viernes', 20],
@@ -55,6 +62,28 @@ export const alumnosCobrosDemo: AlumnoCobro[] = ([
  * Los días pasados quedan "dada" por la reconciliación; hoy y los próximos,
  * "programada". Es determinista para un `ahora` dado (tests con reloj falso).
  */
+/**
+ * Fichas demo (Pieza C). Los IDs son EXACTAMENTE los de `alumnosCobrosDemo`:
+ * así un pago guardado en A/B sigue vinculado por ID al mismo alumno, sin
+ * unir por nombre ni reescribir agenda/auditoría. Las altas son sintéticas,
+ * repartidas en los últimos días respecto de `hoy`.
+ */
+export function fichasDemo(hoy: string): AlumnoFicha[] {
+  return alumnosCobrosDemo.map((a, i) => ({
+    id: a.id,
+    nombre: a.nombre,
+    modalidad: (i % 3 === 2 ? 'individual' : 'mensual') as AlumnoFicha['modalidad'],
+    // `alumnosCobrosDemo.grupo` trae prefijo "Grupo " para Cobros; la ficha
+    // guarda el nombre llano que usa el editor y la validación ("Martes A").
+    grupo: a.grupo.replace(/^Grupo\s+/, ''),
+    ancla: anclasCobroDemo.get(a.id) ?? a.ancla,
+    fechaAlta: sumarDias(hoy, -(3 + (i * 2) % 27)),
+    activo: true,
+    color: colorPorId(a.id),
+    contacto: '',
+  }));
+}
+
 export function datosDemo(ahora: InstanteMs): Clase[] {
   const lunes = lunesDe(hoyLocal(ahora));
   return [

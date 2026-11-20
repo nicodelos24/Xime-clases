@@ -47,3 +47,29 @@ Autorización de Nico (20/11 04:43, vía Roma): integrar y publicar A y B en
   cache-bust nuevo. Procedimiento completo en `v5/PLAN.md` §7.3.
 - Nico quiere verlo y probarlo en el celular: la URL pública es
   `https://nicodelos24.github.io/Xime-clases/`.
+
+## v5 · Pieza C (20/11/2026)
+
+Alta y edición de fichas de Alumnos sobre datos sintéticos, en la rama
+`feat/v5-alumnos` (base `dc951032`), con el diseño visual v5 intacto.
+
+- `v5-diseno/src/alumnos.ts`: contrato `AlumnoFicha` (ID estable, modalidad,
+  grupo existente, ancla, fecha de alta, contacto opcional), validación y
+  proyección de la vista (búsqueda acento-insensible, filtros, orden).
+  El contacto queda opcional y apagado: el contrato v1 no habilita tutor.
+- `src/repositorio.ts`: `VERSION_ESTADO` 1→2 con migración en lectura; un
+  estado v1 conserva clases, pagos y anulaciones tal cual y solo agrega
+  `alumnos`. Ninguna pestaña resembra sobre datos guardados; alta/edición
+  persisten antes de confirmar.
+- `src/demo.ts`: `fichasDemo` reutiliza los IDs de `alumnosCobrosDemo` (`a0`…
+  `b8`), así los pagos de A/B siguen vinculados por ID. Cobros resuelve el
+  nombre vigente de la ficha y no crea cargos por el solo alta; los
+  vencimientos de Alumnos se derivan de Cobros.
+- UI: «Nuevo alumno» y ficha táctil al tocar la fila, con los paneles/tokens
+  v5 de Cobros; estados vacíos claros y validación visible. Se mantuvieron
+  búsqueda/filtros/orden y el conteo calculado.
+- Verificado: `npm run typecheck` 0 errores, `npm test` 79/79 (era 63),
+  `git diff --check` limpio; en Chrome 390 px: alta, edición, validación,
+  persistencia F5 y coherencia Cobros por ID, 0 errores/warnings de consola.
+  Evidencia: `v5-diseno/v5-alumnos-c.png`, `v5-diseno/v5-alumnos-ficha.png`.
+  No se agregó BD, login ni datos de terceros; `serve.mjs`/8797 intactos.

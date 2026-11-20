@@ -17,3 +17,4 @@ export * from './resumen.js';
 export * from './repositorio.js';
 export * from './demo.js';
 export * from './cobros.js';
+export * from './alumnos.js';

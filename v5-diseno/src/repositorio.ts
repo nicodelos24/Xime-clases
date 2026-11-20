@@ -23,10 +23,18 @@ import {
 } from './clases.ts';
 import { hoyLocal, type InstanteMs, type Reloj } from './reloj.ts';
 import { anularPago, registrarPago, type Pago, type PagoNuevo } from './cobros.ts';
+import {
+  crearAlumno, editarAlumno, normalizarFichaGuardada,
+  type AlumnoFicha, type AlumnoFichaInput,
+} from './alumnos.ts';
 export type { Pago } from './cobros.ts';
+export type { AlumnoFicha, AlumnoFichaInput } from './alumnos.ts';
 
-/** Versión del formato guardado. Subirla obliga a migrar o resembrar. */
-export const VERSION_ESTADO = 1;
+/**
+ * Versión del formato guardado. v2 agrega `alumnos` (Pieza C) SIN tocar
+ * clases ni pagos: el lector migra v1→v2 conservando todo lo ya guardado.
+ */
+export const VERSION_ESTADO = 2;
 /** Clave única de `localStorage` (por origen: puerto incluido). */
 export const CLAVE_ESTADO = 'xime.v5.estado';
 
@@ -37,6 +45,8 @@ export type EstadoClases = {
   guardadoEn: string;
   clases: Clase[];
   pagos: Pago[];
+  /** Fichas de alumnos (v2). Las de la demo se siembran solas la 1.ª vez. */
+  alumnos: AlumnoFicha[];
 };
 
 /** Contrato mínimo del almacén: lo único que cambia en la Fase 4. */
@@ -100,6 +110,7 @@ export function almacenLocalStorage(
 }
 
 export type SembrarClases = (ahora: InstanteMs) => Clase[];
+export type SembrarAlumnos = (hoy: string) => AlumnoFicha[];
 
 /**
  * Sanea lo leído del almacén: completa campos que falten (p. ej. `eventos`
@@ -127,6 +138,9 @@ export interface RepositorioDeClases {
   listarPagos(): readonly Pago[];
   registrarPago(nuevo: Omit<PagoNuevo, 'fecha'>): void;
   anularPago(id: string, motivo: string, quien: string): void;
+  listarAlumnos(): readonly AlumnoFicha[];
+  crearAlumno(input: AlumnoFichaInput): AlumnoFicha;
+  editarAlumno(id: string, input: AlumnoFichaInput): AlumnoFicha;
 }
 
 /** Repositorio único: la UI lee y manda comandos acá, nunca al estado suelto. */
@@ -135,11 +149,18 @@ export class RepositorioClases implements RepositorioDeClases {
   private readonly almacen: Almacen;
   private readonly reloj: Reloj;
   private readonly sembrar: SembrarClases;
+  private readonly sembrarAlumnos: SembrarAlumnos;
 
-  constructor(almacen: Almacen, reloj: Reloj, sembrar: SembrarClases = () => []) {
+  constructor(
+    almacen: Almacen,
+    reloj: Reloj,
+    sembrar: SembrarClases = () => [],
+    sembrarAlumnos: SembrarAlumnos = () => [],
+  ) {
     this.almacen = almacen;
     this.reloj = reloj;
     this.sembrar = sembrar;
+    this.sembrarAlumnos = sembrarAlumnos;
   }
 
   /** Clases actuales; la UI las usa solo para lectura. */
@@ -166,6 +187,33 @@ export class RepositorioClases implements RepositorioDeClases {
     const nuevo = { ...estado, pagos: transformar(estado.pagos) };
     this.persistir(nuevo, true);
     this.estado = nuevo;
+  }
+
+  /* ------------------------------------------------------- fichas (Pieza C) */
+
+  listarAlumnos(): readonly AlumnoFicha[] {
+    return this.cargar().alumnos;
+  }
+
+  crearAlumno(input: AlumnoFichaInput): AlumnoFicha {
+    const estado = this.cargar();
+    const fechaAlta = hoyLocal(this.reloj.ahora());
+    const ficha = crearAlumno(input, fechaAlta, (id) => estado.alumnos.some((a) => a.id === id));
+    const nuevo = { ...estado, alumnos: [...estado.alumnos, ficha] };
+    this.persistir(nuevo, true);
+    this.estado = nuevo;
+    return ficha;
+  }
+
+  editarAlumno(id: string, input: AlumnoFichaInput): AlumnoFicha {
+    const estado = this.cargar();
+    const original = estado.alumnos.find((a) => a.id === id);
+    if (!original) throw new Error('No se encontró la ficha del alumno');
+    const editada = editarAlumno(original, input);
+    const nuevo = { ...estado, alumnos: estado.alumnos.map((a) => (a.id === id ? editada : a)) };
+    this.persistir(nuevo, true);
+    this.estado = nuevo;
+    return editada;
   }
 
   /** Crea una clase nueva y la persiste. */
@@ -234,13 +282,24 @@ export class RepositorioClases implements RepositorioDeClases {
     if (!texto) return null;
     try {
       const dato = JSON.parse(texto) as Partial<EstadoClases> | null;
-      if (!dato || dato.version !== VERSION_ESTADO || !Array.isArray(dato.clases)) return null;
-      return {
+      // Migra v1→v2: clases y pagos guardados se conservan tal cual; solo se
+      // agrega el campo alumnos. Versiones futuras/desconocidas → resembrar.
+      if (!dato || (dato.version !== VERSION_ESTADO && dato.version !== 1) || !Array.isArray(dato.clases)) return null;
+      const clases = dato.clases.map(normalizarClase);
+      const pagos = Array.isArray(dato.pagos) ? dato.pagos : [];
+      const alumnos = Array.isArray(dato.alumnos)
+        ? dato.alumnos.map(normalizarFichaGuardada).filter((a): a is AlumnoFicha => a !== null)
+        : this.sembrarAlumnos(hoyLocal(this.reloj.ahora()));
+      const estado: EstadoClases = {
         version: VERSION_ESTADO,
         guardadoEn: typeof dato.guardadoEn === 'string' ? dato.guardadoEn : new Date(this.reloj.ahora()).toISOString(),
-        clases: dato.clases.map(normalizarClase),
-        pagos: Array.isArray(dato.pagos) ? dato.pagos : [],
+        clases,
+        pagos,
+        alumnos,
       };
+      // Si venía de v1 (o faltaba alumnos), persistimos la versión migrada.
+      if (dato.version !== VERSION_ESTADO || !Array.isArray(dato.alumnos)) this.persistir(estado);
+      return estado;
     } catch {
       return null;
     }
@@ -253,6 +312,7 @@ export class RepositorioClases implements RepositorioDeClases {
       guardadoEn: new Date(ahora).toISOString(),
       clases: reconciliar(this.sembrar(ahora), ahora),
       pagos: [],
+      alumnos: this.sembrarAlumnos(hoyLocal(ahora)),
     };
     this.persistir(estado);
     return estado;

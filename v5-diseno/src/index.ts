@@ -17,3 +17,4 @@ export * from './resumen.ts';
 export * from './repositorio.ts';
 export * from './demo.ts';
 export * from './cobros.ts';
+export * from './alumnos.ts';
