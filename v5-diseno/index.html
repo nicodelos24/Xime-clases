@@ -214,7 +214,12 @@
     <section id="v-cobros" class="vista">
       <div class="agenda-titulo">
         <h2>Cobros</h2>
-        <span class="conteo"></span>
+        <div class="cobros-contexto">
+          <span class="conteo"></span>
+          <button type="button" class="link-suave" id="abrir-historial" aria-haspopup="dialog">
+            <svg class="ico" width="14" height="14" aria-hidden="true"><use href="#i-reloj"/></svg>Historial
+          </button>
+        </div>
       </div>
       <div class="kpis kpis-cobros">
         <article class="kpi kpi-cobrado">
@@ -228,10 +233,6 @@
           <p class="kpi-titulo">Vencen hoy</p>
         </article>
       </div>
-      <details id="detalle-cobros">
-        <summary class="f-chip">Historial de pagos</summary>
-        <ul class="lista-cobros" id="historial-cobros"></ul>
-      </details>
       <ul class="lista-cobros" id="lista-cobros"></ul>
     </section>
   </main>

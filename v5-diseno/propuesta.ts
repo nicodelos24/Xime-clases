@@ -636,10 +636,15 @@ $('#buscar-alumno')?.addEventListener('input', (e) => {
 const formatoUYU = new Intl.NumberFormat('es-UY', { useGrouping: 'always' });
 const uyu = (monto: number) => `$${formatoUYU.format(monto)}`;
 const listaCobros = document.querySelector<HTMLUListElement>('#lista-cobros')!;
-const historialCobros = document.querySelector<HTMLUListElement>('#historial-cobros')!;
+const botonHistorial = document.querySelector<HTMLButtonElement>('#abrir-historial')!;
 const campana = document.querySelector<HTMLButtonElement>('.campana')!;
 const verCobros = (pagos = repo.listarPagos()) => resumenCobros(alumnosCobrosDemo, pagos, hoyLocal(reloj.ahora()));
 type FilaCobro = ReturnType<typeof verCobros>['filas'][number];
+
+function fechaBreve(fecha: string) {
+  const { d, m } = parseFecha(fecha);
+  return `${d}/${m}`;
+}
 
 function textoVence(dias: number) {
   if (dias === 0) return 'Vence hoy';
@@ -667,41 +672,55 @@ function pintarCobros() {
   campana.querySelector<HTMLElement>('.campana-punto')!.hidden = avisos === 0;
 
   listaCobros.innerHTML = r.filas.map((f, indice) => `<li>
-    <div><p class="al-nombre">${esc(f.alumno.nombre)}</p>
-    <p class="al-sub">${f.pago ? `Pagado el ${esc(f.pago.fecha)}` : textoVence(f.dias)} · ${esc(f.alumno.grupo)}</p></div>
-    <strong class="monto ${f.pago ? 'monto-ok' : f.dias > 0 ? 'monto-suave' : ''}">${uyu(f.pago?.montoUYU ?? f.alumno.montoUYU)}</strong>
-    <button type="button" class="marcar" data-fila="${indice}" aria-label="${f.pago ? 'Anular pago' : 'Registrar pago'} de ${esc(f.alumno.nombre)}, ${f.periodo}">${f.pago ? 'Anular' : 'Registrar'}</button>
+    <button type="button" class="cobro-fila" data-fila="${indice}" aria-haspopup="dialog"
+      aria-label="${f.pago ? 'Ver pago' : 'Registrar pago'} de ${esc(f.alumno.nombre)}, ${f.periodo}">
+      <span><span class="al-nombre">${esc(f.alumno.nombre)}</span>
+      <span class="al-sub">${f.pago ? `Pagado el ${fechaBreve(f.pago.fecha)}` : textoVence(f.dias)} · ${esc(f.alumno.grupo)}</span></span>
+      <strong class="monto ${f.pago ? 'monto-ok' : f.dias > 0 ? 'monto-suave' : ''}">${f.pago ? 'Pagado' : uyu(f.alumno.montoUYU)}</strong>
+      <svg class="ico" width="13" height="13" aria-hidden="true"><use href="#i-der"/></svg>
+    </button>
   </li>`).join('');
   listaCobros.querySelectorAll<HTMLButtonElement>('[data-fila]').forEach((b, i) => {
     const fila = r.filas[i];
     b.addEventListener('click', () => abrirPago(fila.alumno.nombre, fila.periodo, fila.alumno.montoUYU, b, fila.pago, fila));
   });
-
-  const visibles = new Set(r.filas.map((f) => f.pago?.id));
-  const historial = pagos.filter((p) => !visibles.has(p.id)).reverse();
-  historialCobros.innerHTML = historial.length ? historial.map((p) => {
-    const nombre = alumnosCobrosDemo.find((a) => a.id === p.alumnoId)?.nombre ?? p.alumnoId;
-    const estado = p.anulado ? `Anulado el ${esc(p.anulado.fecha)} por ${esc(p.anulado.quien)} · ${esc(p.anulado.motivo)}` : 'Pagado';
-    return `<li><div><p class="al-nombre">${esc(nombre)} · ${uyu(p.montoUYU)}</p>
-      <p class="al-sub">${esc(p.periodo)} · Registrado el ${esc(p.fecha)} por ${esc(p.quien)}</p>
-      <p class="al-sub">${estado}</p></div>${p.anulado ? '' : `<button class="marcar" type="button" data-pago="${esc(p.id)}" aria-label="Anular pago de ${esc(nombre)}, ${esc(p.periodo)}">Anular</button>`}</li>`;
-  }).join('') : '<li><p class="al-sub">Sin otros pagos registrados</p></li>';
-  historialCobros.querySelectorAll<HTMLButtonElement>('[data-pago]').forEach((b) => b.addEventListener('click', () => {
-    const pago = historial.find((p) => p.id === b.dataset.pago)!;
-    abrirPago(alumnosCobrosDemo.find((a) => a.id === pago.alumnoId)?.nombre ?? pago.alumnoId, pago.periodo, pago.montoUYU, b, pago);
-  }));
 }
 
-function abrirDialogoCobros(titulo: string, contenido: string, origen: HTMLElement) {
+function nombrePago(pago: Pago) {
+  return alumnosCobrosDemo.find((a) => a.id === pago.alumnoId)?.nombre ?? pago.alumnoId;
+}
+
+botonHistorial.addEventListener('click', () => {
+  const pagos = [...repo.listarPagos()].reverse();
+  const dialogo = abrirDialogoCobros('Historial de pagos', 'Cobros', 'reloj', pagos.length ? `<ul class="cobros-panel-lista">${pagos.map((p, i) => `<li>
+    <div><p class="al-nombre">${esc(nombrePago(p))}</p><p class="al-sub">${esc(p.periodo)} · Registrado el ${esc(p.fecha)} por ${esc(p.quien)}</p>
+      ${p.anulado ? `<p class="al-sub">Anulado el ${esc(p.anulado.fecha)} por ${esc(p.anulado.quien)} · ${esc(p.anulado.motivo)}</p>` : ''}</div>
+    <div class="cobros-panel-dato"><strong>${uyu(p.montoUYU)}</strong>
+      ${p.anulado ? '<span class="al-sub">Anulado</span>' : `<button type="button" class="cobros-link" data-pago="${i}" aria-label="Ver pago de ${esc(nombrePago(p))}, ${esc(p.periodo)}">Ver pago</button>`}</div>
+  </li>`).join('')}</ul>` : '<p class="cobros-panel-nota">Todavía no registraste pagos.</p>', botonHistorial);
+  dialogo.querySelectorAll<HTMLButtonElement>('[data-pago]').forEach((b) => {
+    const pago = pagos[Number(b.dataset.pago)];
+    b.addEventListener('click', () => {
+      dialogo.close();
+      dialogo.remove();
+      abrirPago(nombrePago(pago), pago.periodo, pago.montoUYU, botonHistorial, pago);
+    });
+  });
+});
+
+function abrirDialogoCobros(titulo: string, contexto: string, icono: string, contenido: string, origen: HTMLElement) {
   const dialogo = document.createElement('dialog');
-  dialogo.className = 'sheet';
-  // Neutraliza la caja del navegador; el color de fondo, radio y animación los aporta .sheet.
-  dialogo.style.cssText = 'position:fixed;inset:auto 0 0;width:100%;max-width:min(390px,100%);margin:0 auto;border-inline:0;border-bottom:0;color:inherit';
-  dialogo.setAttribute('aria-label', titulo);
-  dialogo.innerHTML = `<div class="sheet-head"><h3>${titulo}</h3>
-    <button type="button" class="sheet-cerrar" aria-label="Cerrar"><svg class="ico" width="18" height="18"><use href="#i-mas2"/></svg></button></div>${contenido}`;
+  dialogo.className = 'sheet cobros-panel';
+  dialogo.setAttribute('aria-labelledby', 'cobros-panel-titulo');
+  dialogo.innerHTML = `<div class="sheet-head cobros-panel-head">
+    <span class="cobros-panel-icono"><svg class="ico" width="21" height="21" aria-hidden="true"><use href="#i-${icono}"/></svg></span>
+    <div><p class="sheet-eyebrow">${esc(contexto)}</p><h3 id="cobros-panel-titulo">${esc(titulo)}</h3></div>
+    <button type="button" class="sheet-cerrar" aria-label="Cerrar" autofocus><svg class="ico" width="18" height="18" aria-hidden="true"><use href="#i-mas2"/></svg></button></div>${contenido}`;
   dialogo.querySelector('.sheet-cerrar')!.addEventListener('click', () => dialogo.close());
-  dialogo.addEventListener('close', () => { dialogo.remove(); if (origen.isConnected) origen.focus(); });
+  dialogo.addEventListener('close', () => {
+    dialogo.remove();
+    if (!document.querySelector('.cobros-panel[open]') && origen.isConnected) origen.focus();
+  });
   $('.cel')!.appendChild(dialogo);
   dialogo.showModal();
   return dialogo;
@@ -709,12 +728,15 @@ function abrirDialogoCobros(titulo: string, contenido: string, origen: HTMLEleme
 
 function abrirPago(nombre: string, periodo: string, monto: number, origen: HTMLButtonElement, pago?: Pago, fila?: FilaCobro) {
   const accion = pago ? 'Anular pago' : 'Registrar pago';
-  const dialogo = abrirDialogoCobros(accion, `<p class="sheet-clase"><strong>${esc(nombre)}</strong> · ${esc(periodo)} · ${uyu(pago?.montoUYU ?? monto)} UYU</p>
-    ${pago ? `<p class="sheet-clase">Registrado el ${esc(pago.fecha)} por ${esc(pago.quien)}. La anulación queda en el historial.</p>` : '<p class="sheet-clase">Confirmá que ya recibiste el pago. La app no mueve dinero.</p>'}
+  const mes = etiquetaMes(`${periodo}-01`);
+  const dialogo = abrirDialogoCobros(accion, 'Mensualidad', pago ? 'alerta' : 'cobros', `<div class="cobros-panel-resumen">
+    <div><p class="al-nombre">${esc(nombre)}</p><p class="al-sub">${esc(mes)}</p></div>
+    <div class="cobros-panel-dato"><strong>${uyu(pago?.montoUYU ?? monto)}</strong><span class="al-sub">UYU</span></div></div>
+    <p class="cobros-panel-nota">${pago ? `Registrado el ${esc(pago.fecha)} por ${esc(pago.quien)}. La anulación queda en el historial.` : 'Confirmá que ya recibiste el pago. La app no mueve dinero.'}</p>
     <form>${pago ? '<label class="campo"><span>Motivo de anulación</span><input name="motivo" required maxlength="160"></label>' : ''}
-      <p class="sheet-clase" role="alert"></p>
+      <p class="cobros-panel-error" role="alert"></p>
       <div class="sheet-acciones"><button type="button" class="btn-secundario">Volver</button>
-      <button type="submit" class="btn-primario">${pago ? 'Confirmar anulación' : 'Confirmar pago'}</button></div>
+      <button type="submit" class="btn-primario${pago ? ' cobros-anular' : ''}">${pago ? 'Confirmar anulación' : 'Confirmar pago'}</button></div>
     </form>`, origen);
   const form = dialogo.querySelector('form')!;
   form.querySelector('.btn-secundario')!.addEventListener('click', () => dialogo.close());
@@ -734,16 +756,21 @@ function abrirPago(nombre: string, periodo: string, monto: number, origen: HTMLB
     dialogo.close();
     pintarCobros();
     if (origen.dataset.fila) listaCobros.querySelector<HTMLButtonElement>(`[data-fila="${origen.dataset.fila}"]`)?.focus();
-    else document.querySelector<HTMLElement>('#detalle-cobros > summary')?.focus();
+    else botonHistorial.focus();
   });
 }
 
 campana.addEventListener('click', () => {
   const { avisos } = verCobros();
-  abrirDialogoCobros('Avisos de cobro', avisos.length ? `<ul class="lista-cobros">${avisos.map((f) => `<li>
-    <div><p class="al-nombre">${esc(f.alumno.nombre)}</p><p class="al-sub">${textoVence(f.dias)} · ${esc(f.alumno.grupo)}</p></div>
-    <strong class="monto ${f.dias > 0 ? 'monto-suave' : ''}">${uyu(f.alumno.montoUYU)}</strong></li>`).join('')}</ul>`
-    : '<p class="sheet-clase">No hay avisos de vencimientos.</p>', campana);
+  abrirDialogoCobros('Avisos de cobro', 'Mensualidades', 'campana', avisos.length ? `<p class="cobros-panel-nota">Mensualidades sin pagar que vencen hoy o en los próximos 7 días.</p>
+    <ul class="cobros-panel-lista">${avisos.map((f) => `<li>
+    <div><p class="al-nombre">${esc(f.alumno.nombre)}</p><p class="al-sub">${esc(f.alumno.grupo)}</p></div>
+    <span class="cobros-aviso${f.dias === 0 ? ' cobros-aviso-hoy' : ''}">${textoVence(f.dias)}</span></li>`).join('')}</ul>
+    <div class="cobros-panel-pie"><button class="btn-secundario" type="button" data-ver-cobros>Ver Cobros</button></div>`
+    : '<p class="cobros-panel-nota">No hay avisos de vencimientos.</p>', campana).querySelector('[data-ver-cobros]')?.addEventListener('click', (e) => {
+      (e.currentTarget as HTMLElement).closest('dialog')?.close();
+      irA('v-cobros');
+    });
 });
 
 /* ------------------------------------------------------------- navegación */
@@ -780,7 +807,7 @@ tabs.forEach((t) => t.addEventListener('click', (e) => {
   irA((t.getAttribute('href') as string).slice(1));
 }));
 
-$$('.link-suave').forEach((a) => a.addEventListener('click', (e) => {
+$$('a.link-suave').forEach((a) => a.addEventListener('click', (e) => {
   e.preventDefault();
   irA((a.getAttribute('href') as string).slice(1));
 }));

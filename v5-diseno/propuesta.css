@@ -432,6 +432,55 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; width: 0; }
 .monto-suave { color: var(--ambar); }
 .monto-ok { color: var(--verde); font-size: 13px; background: var(--verde-tinte); padding: 5px 10px; border-radius: 999px; }
 
+/* Cobros: la fila completa abre el detalle, sin un botón repetido por alumno. */
+.cobros-contexto { display: flex; align-items: center; gap: 9px; }
+#abrir-historial { cursor: pointer; font-family: inherit; min-height: 38px; background: var(--tq-100); }
+#abrir-historial:hover { background: var(--tq-200); }
+#lista-cobros > li { padding: 0; }
+.cobro-fila {
+  display: flex; align-items: center; gap: 9px; width: 100%; min-width: 0;
+  padding: 13px 14px; border: 0; border-radius: inherit; background: transparent;
+  color: inherit; text-align: left; font: inherit; cursor: pointer;
+}
+.cobro-fila > span { flex: 1; min-width: 0; }
+.cobro-fila .al-nombre, .cobro-fila .al-sub { display: block; }
+.cobro-fila .ico { flex: none; color: var(--tinta-2); }
+.cobro-fila .monto { white-space: nowrap; }
+.cobro-fila:focus-visible { outline: 2px solid var(--tq-600); outline-offset: 2px; }
+[data-tema="oscuro"] .cobro-fila .monto { color: var(--tinta); }
+
+/* Mismo sheet v5, con el comportamiento nativo de un diálogo modal. */
+.sheet.cobros-panel {
+  position: fixed; inset: auto 0 0; width: 100%; max-width: 390px;
+  margin: 0 auto; border-inline: 0; border-bottom: 0; color: var(--tinta);
+  padding-bottom: calc(20px + env(safe-area-inset-bottom));
+}
+.cobros-panel::backdrop { background: rgb(14 27 30 / 42%); }
+.sheet-head.cobros-panel-head { align-items: center; }
+.cobros-panel-head > div { flex: 1; }
+.cobros-panel-icono {
+  display: grid; place-items: center; flex: none; width: 42px; height: 42px;
+  border-radius: var(--r-chico); color: var(--tq-700); background: var(--tq-100);
+}
+.cobros-panel-resumen, .cobros-panel-lista > li { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.cobros-panel-resumen {
+  margin-top: 16px; padding: 12px 14px; border-radius: var(--r-med); border: 1px solid var(--linea); background: var(--bg);
+}
+.cobros-panel-resumen > div:first-child, .cobros-panel-lista > li > div:first-child { min-width: 0; overflow-wrap: anywhere; }
+.cobros-panel-dato { text-align: right; white-space: nowrap; }
+.cobros-panel-dato > .al-sub { display: block; }
+.cobros-panel-nota, .cobros-panel-error:not(:empty) { margin-top: 12px; color: var(--tinta-2); font-size: 13px; }
+.cobros-panel-lista { list-style: none; margin-top: 12px; }
+.cobros-panel-lista > li { border-top: 1px solid var(--linea); padding: 10px 0; }
+.cobros-panel-pie { margin-top: 12px; text-align: right; }
+.cobros-link {
+  border: 0; background: transparent; color: var(--tq-700); padding: 5px 0;
+  font: inherit; font-size: 12px; font-weight: 700; text-decoration: underline; cursor: pointer;
+}
+.cobros-aviso { flex: none; border-radius: 999px; background: var(--bg); color: var(--tinta-2); padding: 5px 9px; font-size: 12px; }
+.cobros-aviso-hoy { background: var(--ambar-suave-tinte); color: var(--tinta); font-weight: 700; }
+.cobros-panel .btn-primario:not(.cobros-anular) { background: var(--tq-700); color: var(--bg-alt); box-shadow: var(--sombra); }
+
 /* ---------- Barra de pestañas (nueva: 4 destinos) ---------- */
 /* Ronda 2 (c): barra inferior como tarjeta/cápsula flotante, siempre fija y visible.
    position:fixed se mantiene para que nunca se oculte al scrollear; se recupera
