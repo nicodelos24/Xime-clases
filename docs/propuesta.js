@@ -1,18 +1,18 @@
 // Clases v5 · navegación + funcionamiento (auto-marcado, Cancelar clase, WhatsApp)
 // La estética vive en tokens.css/propuesta.css; acá solo se cambian estados,
 // textos y el flujo de cancelación. Sin emoji: solo SVG de icons.js.
-import { horaClase, } from "./src/clases.js?v=202611210422";
-import { CLAVE_ESTADO, RepositorioClases, almacenLocalStorage } from "./src/repositorio.js?v=202611210422";
-import { alumnosCobrosDemo, datosDemo, fichasDemo } from "./src/demo.js?v=202611210422";
-import { resumenCobros } from "./src/cobros.js?v=202611210422";
-import { resumenHoy, clasesDelDia, clasesDeLaSemana } from "./src/resumen.js?v=202611210422";
-import { registrarToqueFecha, mesDe } from "./src/agenda.js?v=202611210422";
-import { destinoDeEnlace } from "./src/navegacion.js?v=202611210422";
-import { actualizarBarra, estadoBarraInicial, } from "./src/barra-scroll.js?v=202611210422";
-import { ajustarLock, debeBloquearScroll, estiloSheet, debeCerrarPorToqueFuera, esToqueFuera, debeSuprimirClickTrasCierre, } from "./src/sheets.js?v=202611210422";
-import { diaCorto, etiquetaDia, etiquetaDiaCompleta, etiquetaMes, parseFecha, lunesDe, diasDelMes, esFechaValida } from "./src/fechas.js?v=202611210422";
-import { relojDelDispositivo, hoyLocal } from "./src/reloj.js?v=202611210422";
-import { textoCancelacion, destinos, resumenEnvio, linkTexto, } from "./src/whatsapp.js?v=202611210422";
+import { horaClase, } from "./src/clases.js?v=202611210430";
+import { CLAVE_ESTADO, RepositorioClases, almacenLocalStorage } from "./src/repositorio.js?v=202611210430";
+import { alumnosCobrosDemo, datosDemo, fichasDemo } from "./src/demo.js?v=202611210430";
+import { resumenCobros } from "./src/cobros.js?v=202611210430";
+import { resumenHoy, clasesDelDia, clasesDeLaSemana } from "./src/resumen.js?v=202611210430";
+import { registrarToqueFecha, mesDe } from "./src/agenda.js?v=202611210430";
+import { destinoDeEnlace } from "./src/navegacion.js?v=202611210430";
+import { actualizarBarra, estadoBarraInicial, } from "./src/barra-scroll.js?v=202611210430";
+import { ajustarLock, debeBloquearScroll, estiloSheet, debeCerrarPorToqueFuera, esToqueFuera, debeSuprimirClickTrasCierre, } from "./src/sheets.js?v=202611210430";
+import { diaCorto, etiquetaDia, etiquetaDiaCompleta, etiquetaMes, parseFecha, lunesDe, diasDelMes, esFechaValida } from "./src/fechas.js?v=202611210430";
+import { relojDelDispositivo, hoyLocal } from "./src/reloj.js?v=202611210430";
+import { textoCancelacion, destinos, resumenEnvio, linkTexto, } from "./src/whatsapp.js?v=202611210430";
 /* ------------------------------------------------- estado persistente (local) */
 const reloj = relojDelDispositivo();
 /** Quién opera la app hoy: único dueño. En Fase 4 sale de la sesión. */
@@ -1228,7 +1228,7 @@ toast.addEventListener('click', () => {
     }
 });
 /* ------------------------------------------------------- alumnos (fichas) */
-import { construirVista, filtrarYOrdenar, puntoEstadoVence, textoEstadoVence, validarAlumno, } from "./src/alumnos.js?v=202611210422";
+import { construirVista, filtrarYOrdenar, puntoEstadoVence, textoEstadoVence, validarAlumno, } from "./src/alumnos.js?v=202611210430";
 let ordenAlumnos = 'ninguno';
 const filtrosAlumnos = new Set();
 let busquedaAlumno = '';
@@ -1762,8 +1762,11 @@ const tabbar = document.querySelector('.tabbar');
 if (tabbar) {
     let estado = estadoBarraInicial(window.scrollY);
     let framePendiente = false;
+    // El telón crema (body::after) debe desvanecerse con la barra: si no, queda
+    // una franja crema flotando cuando la cápsula se desliza fuera de pantalla.
     const aplicar = (ocultar) => {
         tabbar.classList.toggle('oculta', ocultar);
+        document.documentElement.classList.toggle('barra-oculta', ocultar);
         estado = { ...estado, oculta: ocultar };
     };
     const recalibrar = () => {
@@ -1776,7 +1779,7 @@ if (tabbar) {
         // final de la página se lea como «subida» y haga reaparecer la barra.
         const limite = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
         estado = actualizarBarra(estado, window.scrollY, limite);
-        tabbar.classList.toggle('oculta', estado.oculta);
+        aplicar(estado.oculta);
     };
     window.addEventListener('scroll', () => {
         if (framePendiente)

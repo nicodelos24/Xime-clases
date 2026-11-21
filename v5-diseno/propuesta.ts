@@ -1755,8 +1755,11 @@ if (tabbar) {
   let estado: EstadoBarra = estadoBarraInicial(window.scrollY);
   let framePendiente = false;
 
+  // El telón crema (body::after) debe desvanecerse con la barra: si no, queda
+  // una franja crema flotando cuando la cápsula se desliza fuera de pantalla.
   const aplicar = (ocultar: boolean) => {
     tabbar.classList.toggle('oculta', ocultar);
+    document.documentElement.classList.toggle('barra-oculta', ocultar);
     estado = { ...estado, oculta: ocultar };
   };
 
@@ -1771,7 +1774,7 @@ if (tabbar) {
     // final de la página se lea como «subida» y haga reaparecer la barra.
     const limite = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
     estado = actualizarBarra(estado, window.scrollY, limite);
-    tabbar.classList.toggle('oculta', estado.oculta);
+    aplicar(estado.oculta);
   };
 
   window.addEventListener('scroll', () => {

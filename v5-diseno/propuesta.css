@@ -580,13 +580,13 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; width: 0; }
    la estética ovalada con márgenes laterales y sombra suave (ref. Nico 19/11). */
 .tabbar {
   position: fixed; z-index: 30;
-  left: 14px; right: 14px; bottom: 14px;
+  left: 0; right: 0; bottom: 14px;
   width: auto; max-width: none;
   display: grid; grid-template-columns: repeat(4, 1fr);
   background: #FFFFFF; /* sólido: backdrop-filter crea contexto y rompería el fixed */
 
   border: 1px solid rgba(220,232,231,.7);
-  border-radius: 28px;
+  border-radius: 30px;
   box-shadow: 0 10px 30px rgba(8,69,74,.16), 0 2px 8px rgba(11,107,106,.08);
   padding: 7px 6px calc(8px + env(safe-area-inset-bottom));
   /* Se desliza al bajar / reaparece al subir: solo transform + opacidad, sin
@@ -918,3 +918,18 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; width: 0; }
 [data-tema="oscuro"] .resumen-fecha strong { color: #BFE9E2; }
 [data-tema="oscuro"] .dia-chip.activo { background: var(--tq-600); color: #fff; }
 [data-tema="oscuro"] .opcion-agendar[data-mod="suelta"] .ico { color: #C9B6E8; }
+
+/* ---------- Prototipo A: hueco crema parejo bajo la cápsula ----------
+   Pseudo-elemento anclado al viewport: NO se usa mask-image en .cel (recortaría
+   la barra, el toast y los sheets fixed). Cero cambios al DOM; .cel ya tiene
+   padding-bottom de 96px y NO se toca. Se desvanece con la barra al ocultarse. */
+body::after{
+  content:"";position:fixed;z-index:20;pointer-events:none;
+  left:0;right:0;bottom:0;
+  height:calc(96px + env(safe-area-inset-bottom));
+  max-width:390px;margin:0 auto;
+  background:var(--bg-crema);
+  border-radius:30px 30px 0 0;
+  transition:opacity var(--t-media) var(--ease);
+}
+html.barra-oculta body::after{opacity:0}
