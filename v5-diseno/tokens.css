@@ -20,6 +20,7 @@
   /* --- Neutros --- */
   --bg: #F2F9F8;              /* fondo de app (ronda 2) */
   --bg-alt: #FFFFFF;
+  --bg-fuera: #E4ECEA;         /* exterior del panel menta: gris-mint suave, más oscuro que --bg */
   --bg-crema: #F7F4ED;         /* variante A: fondo crema parejo (Nico 19/11) */
   --borde-crema: #E4DCCB;      /* marco de las tarjetas sobre crema */
   --sombra-crema: 0 4px 14px rgba(84, 70, 40, .12); /* sombra cálida sobre crema */
@@ -350,6 +351,7 @@ body {
 [data-tema="oscuro"] {
   --bg: #0E1B1E;
   --bg-alt: #16272B;
+  --bg-fuera: #071013;         /* exterior del panel en modo oscuro, más oscuro que --bg */
   --bg-crema: #0E1B1E;
   --borde-crema: #274045;
   --linea: #274045;
