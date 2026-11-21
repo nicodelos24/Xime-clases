@@ -141,3 +141,26 @@ servidor.
   (transform 87 px, opacity 0), subir reaparece, micro-scroll de 3 px no cambia
   el estado, la animación es suave (~120–150 ms), el foco por teclado la devuelve
   y no hay errores de consola. Capturas en `docs/qa/barra-scroll/`.
+
+### Actualizado 21/11 (cuadros emergentes: scroll, cierre y altura)
+
+- **Sin rebote de la barra**: la decisión (`src/barra-scroll.ts`) recorta el
+  scroll al rango real del documento (`scrollHeight - innerHeight`) y exige dos
+  muestras de subida sostenida para reaparecer. El rebote elástico del fondo y
+  el micro-ruido al bajar ya no la devuelven; una subida real sí.
+- **El dedo mueve el cuadro, no la página**: con cualquier sheet abierto
+  (agendar, Por dar/Dada, cancelación, ficha, cobros, notificaciones) el
+  documento se fija sin perder la posición (`html/body.con-sheet`), el sheet
+  tiene `overscroll-behavior: contain` y scroll interno solo si excede su
+  altura. El lock es profundo: superponer dos cuadros y cerrar uno no
+  desbloquea antes.
+- **Cierre limpio**: tocar fuera, la X, Escape o cambiar de vista cierran el
+  cuadro. Si hay cambios sin guardar (ficha, agendar, cobros, cancelación,
+  cambio de día), aparece «¿Hay cambios sin guardar, querés guardarlos?» con
+  Guardar / Descartar / Seguir editando; en cuadros sin edición cierra directo.
+- **Cuadros completos**: la altura se mide con `visualViewport` real y
+  safe-area (`src/sheets.ts`), no con el 88% de un `.cel` que crece. «Por dar» y
+  «Dada» se ven enteros, sin scroll forzado. Mismos tokens v5, sin BD (datos
+  ficticios), sin emoji.
+- **Verificado en Chrome** (390 px): los cuatro puntos, con rueda real del
+  mouse y scroll simulado; sin errores de consola. Capturas en `docs/qa/`.

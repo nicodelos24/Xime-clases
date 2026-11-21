@@ -11,7 +11,12 @@ import { resumenCobros, type Pago } from './src/cobros.ts';
 import { resumenHoy, clasesDelDia, clasesDeLaSemana } from './src/resumen.ts';
 import { registrarToqueFecha, mesDe, type ToqueFecha } from './src/agenda.ts';
 import { destinoDeEnlace } from './src/navegacion.ts';
-import { debeOcultarBarra } from './src/barra-scroll.ts';
+import {
+  actualizarBarra, estadoBarraInicial, type EstadoBarra,
+} from './src/barra-scroll.ts';
+import {
+  ajustarLock, debeBloquearScroll, estiloSheet,
+} from './src/sheets.ts';
 import { diaCorto, etiquetaDia, etiquetaDiaCompleta, etiquetaMes, sumarDias, parseFecha, lunesDe, diasDelMes, esFechaValida } from './src/fechas.ts';
 import { relojDelDispositivo, hoyLocal, type Reloj } from './src/reloj.ts';
 import {
@@ -448,10 +453,128 @@ const NOMBRES_DIAS: [string, DiaSemana][] = [
   ['Lun', 0], ['Mar', 1], ['Mié', 2], ['Jue', 3], ['Vie', 4], ['Sáb', 5], ['Dom', 6],
 ];
 
+/* ------------------------------------- sheets: lock, medición y cierre limpio */
+/** Profundidad de sheets abiertos. Al volver a 0 se devuelve el scroll al body. */
+let profundidadSheets = 0;
+
+/**
+ * Mide el viewport real y ancla el sheet a él (no al `.cel`, que crece con el
+ * contenido). Así «Por dar / Dada», fichas y formularios se ven completos sin
+ * hacer scroll por una altura mal calculada.
+ */
+function ajustarAlViewport(el: HTMLElement): void {
+  const raiz = document.documentElement;
+  const safe = Number.parseFloat(getComputedStyle(raiz).getPropertyValue('--sheet-safe') || '0') || 0;
+  const alto = window.visualViewport?.height ?? window.innerHeight;
+  el.style.cssText += ';' + estiloSheet(alto, safe);
+}
+
+/** Bloquea el scroll de la página mientras haya cualquier sheet abierto. */
+function abrirSheet(el: HTMLElement): void {
+  ajustarAlViewport(el);
+  profundidadSheets = ajustarLock(profundidadSheets, true);
+  if (debeBloquearScroll(profundidadSheets)) {
+    document.body.classList.add('con-sheet');
+    document.documentElement.classList.add('con-sheet');
+  }
+}
+
+/**
+ * Libera el lock cuando ya no queda ningún sheet abierto. Cuenta los
+ * `<dialog open>` y los `.sheet` en animation de cierre para no desbloquear
+ * antes de tiempo si hay dos capas superpuestas.
+ */
+function liberarSiNoHaySheets(): void {
+  const quedan = document.querySelectorAll('.sheet:not(.cerrando), dialog.sheet[open]').length;
+  if (quedan > 0) return;
+  profundidadSheets = 0;
+  document.body.classList.remove('con-sheet');
+  document.documentElement.classList.remove('con-sheet');
+}
+
+/** Quita un sheet del DOM y libera el lock cuando no quede ninguno abierto. */
+function retirarSheet(el: HTMLElement): void {
+  el.classList.add('cerrando');
+  el.dataset.lockLiberado = '1'; // se va: deja de contar para el lock
+  liberarSiNoHaySheets();
+  setTimeout(() => { el.remove(); liberarSiNoHaySheets(); }, 240);
+}
+
+/**
+ * Marca un formulario como sucio cuando cambia cualquiera de sus controles.
+ * `input`/`change`/`click` cubren textos, selects, chips y checkboxes.
+ */
+function observarCambios(el: HTMLElement, onCambio?: () => void): void {
+  const marcar = () => {
+    if (el.dataset.dirty === '1') return;
+    el.dataset.dirty = '1';
+    onCambio?.();
+  };
+  el.addEventListener('input', marcar);
+  el.addEventListener('change', marcar);
+  el.addEventListener('click', (e) => {
+    // Solo botones que cambian una elección (chips, opciones); «Volver» /
+    // «Cerrar» no cuentan como cambio.
+    if (!(e.target instanceof Element)) return;
+    if (e.target.closest(
+      'button[aria-pressed],button[data-modo],button[data-modalidad],button[data-grupo],button[data-dia]',
+    )) marcar();
+  });
+}
+
+/**
+ * Si el sheet tiene cambios sin guardar, muestra el cuadro de confirmación:
+ * Guardar (ejecuta el submit), Descartar (cierra) y Seguir editando.
+ * Devuelve `true` cuando el dueño eligió guardar (quien llama decide si cierra).
+ */
+function confirmarCierreConCambios(el: HTMLElement, guardar: () => void, descartar: () => void): void {
+  if (document.querySelector('.confirmar-cambios')) return; // un solo cuadro a la vez
+  const caja = document.createElement('div');
+  caja.className = 'confirmar-cambios';
+  caja.setAttribute('role', 'alertdialog');
+  caja.setAttribute('aria-modal', 'true');
+  caja.setAttribute('aria-label', 'Cambios sin guardar');
+  caja.innerHTML = `
+    <div class="confirmar-cambios-caja">
+      <p class="sheet-eyebrow">Cambios sin guardar</p>
+      <h3>¿Hay cambios sin guardar, querés guardarlos?</h3>
+      <p class="confirmar-cambios-nota">Si descartás, se pierden los cambios de este cuadro.</p>
+      <div class="confirmar-cambios-acciones">
+        <button type="button" class="btn-secundario" data-decision="descartar">Descartar</button>
+        <button type="button" class="btn-secundario" data-decision="seguir">Seguir editando</button>
+        <button type="button" class="btn-primario" data-decision="guardar" autofocus>Guardar</button>
+      </div>
+    </div>`;
+  document.body.appendChild(caja);
+  const cerrarCuadroConfirm = () => { caja.remove(); liberarSiNoHaySheets(); };
+  const descartarYValidar = () => { cerrarCuadroConfirm(); descartar(); };
+  caja.addEventListener('click', (e) => {
+    if (!(e.target instanceof Element)) return;
+    const boton = e.target.closest('[data-decision]') as HTMLElement | null;
+    if (!boton) return;
+    const decision = boton.dataset.decision;
+    if (decision === 'guardar') { cerrarCuadroConfirm(); guardar(); }
+    else if (decision === 'descartar') descartarYValidar();
+    else cerrarCuadroConfirm();
+  });
+  (caja.querySelector('[data-decision="guardar"]') as HTMLElement).focus();
+}
+
+/**
+ * Cierre genérico de un sheet con formulario: si está `dirty`, pregunta antes;
+ * si no, cierra directo. `guardar` ejecuta el submit correspondiente.
+ */
+function cerrarCuadroConCambios(el: HTMLElement, guardar: () => void): void {
+  if (el.dataset.dirty === '1') {
+    confirmarCierreConCambios(el, guardar, () => retirarSheet(el));
+    return;
+  }
+  retirarSheet(el);
+}
+
 /** Cierra el sheet activo (genérico, lo usan todos los cuadros). */
 function cerrarCuadro(el: HTMLElement) {
-  el.classList.add('cerrando');
-  setTimeout(() => el.remove(), 240);
+  retirarSheet(el);
 }
 
 /** Abre el primer cuadro del FAB: elegir «Clase semanal» o «Clase suelta». */
@@ -481,6 +604,7 @@ function abrirAgendar() {
       </button>
     </div>`;
   $('.cel')?.appendChild(cuadro);
+  abrirSheet(cuadro);
   cuadro.querySelector('.sheet-cerrar')?.addEventListener('click', () => cerrarCuadro(cuadro));
   cuadro.querySelector('[data-mod="semanal"]')?.addEventListener('click', () => {
     cerrarCuadro(cuadro);
@@ -572,13 +696,15 @@ function abrirFormularioSemanal(fechaDesdeDia?: string) {
       </div>
     </form>`;
   $('.cel')?.appendChild(cuadro);
+  abrirSheet(cuadro);
   const form = cuadro.querySelector('form') as HTMLFormElement;
   const error = cuadro.querySelector('.campo-error') as HTMLElement;
   const resumen = cuadro.querySelector('.resumen-fecha') as HTMLElement;
   const elegidos = new Set<DiaSemana>();
 
-  cuadro.querySelector('.sheet-cerrar')?.addEventListener('click', () => cerrarCuadro(cuadro));
-  cuadro.querySelector('[data-accion="volver"]')?.addEventListener('click', () => { cerrarCuadro(cuadro); abrirAgendar(); });
+  observarCambios(cuadro);
+  cuadro.querySelector('.sheet-cerrar')?.addEventListener('click', () => cerrarCuadroConCambios(cuadro, () => form.requestSubmit()));
+  cuadro.querySelector('[data-accion="volver"]')?.addEventListener('click', () => cerrarCuadroConCambios(cuadro, () => form.requestSubmit()));
   cuadro.querySelectorAll<HTMLButtonElement>('.dia-chip').forEach((b) => {
     b.addEventListener('click', () => {
       const d = Number(b.dataset.dia) as DiaSemana;
@@ -663,12 +789,14 @@ function abrirFormularioSuelta(fechaDesdeDia?: string) {
       </div>
     </form>`;
   $('.cel')?.appendChild(cuadro);
+  abrirSheet(cuadro);
   const form = cuadro.querySelector('form') as HTMLFormElement;
   const error = cuadro.querySelector('.campo-error') as HTMLElement;
   const resumen = cuadro.querySelector('.resumen-fecha') as HTMLElement;
 
-  cuadro.querySelector('.sheet-cerrar')?.addEventListener('click', () => cerrarCuadro(cuadro));
-  cuadro.querySelector('[data-accion="volver"]')?.addEventListener('click', () => { cerrarCuadro(cuadro); abrirAgendar(); });
+  observarCambios(cuadro);
+  cuadro.querySelector('.sheet-cerrar')?.addEventListener('click', () => cerrarCuadroConCambios(cuadro, () => form.requestSubmit()));
+  cuadro.querySelector('[data-accion="volver"]')?.addEventListener('click', () => cerrarCuadroConCambios(cuadro, () => form.requestSubmit()));
   const actualizarResumen = () => {
     const fecha = leerFechaDe(cuadro, 'fecha');
     resumen.hidden = !fecha;
@@ -715,11 +843,32 @@ let textoEnviado = '';
 
 function cerrarSheet() {
   if (!sheet) return;
-  sheet.classList.add('cerrando');
   const s = sheet;
   sheet = null;
   claseEnSheet = null;
-  setTimeout(() => s.remove(), 240);
+  retirarSheet(s);
+}
+
+/** Cierre de las acciones de Por dar / Dada con aviso si se tocó la fecha. */
+function cerrarAcciones(): void {
+  if (!sheet) return;
+  const s = sheet;
+  if (s.dataset.dirty === '1') {
+    const cajaCambio = s.querySelector('.cambiar-dia') as HTMLElement | null;
+    const confirmar = s.querySelector('[data-accion="confirmar-cambio"]') as HTMLElement | null;
+    const guardar = () => {
+      if (cajaCambio && cajaCambio.hidden) {
+        // Estaba en el sub-cuadro de fecha: volver a mostrarlo para que el
+        // dueño revise antes de mover la clase.
+        cajaCambio.hidden = false;
+        (s.querySelector('[data-acciones-principales]') as HTMLElement).hidden = true;
+      }
+      confirmar?.click();
+    };
+    confirmarCierreConCambios(s, guardar, () => cerrarSheet());
+    return;
+  }
+  cerrarSheet();
 }
 
 /** Cuadro de acciones (20/11): lo abre el chip de estado de la clase
@@ -778,9 +927,10 @@ function abrirAcciones(id: string) {
       <button class="btn-secundario" type="button" data-accion="volver">Volver</button>
     </div>`;
   document.querySelector('.cel')?.appendChild(previo);
+  abrirSheet(previo);
   sheet = previo;
-  previo.querySelector('.sheet-cerrar')?.addEventListener('click', cerrarSheet);
-  previo.querySelector('[data-accion="volver"]')?.addEventListener('click', cerrarSheet);
+  previo.querySelector('.sheet-cerrar')?.addEventListener('click', cerrarAcciones);
+  previo.querySelector('[data-accion="volver"]')?.addEventListener('click', cerrarAcciones);
   previo.querySelector('[data-acc="cancelar"]')?.addEventListener('click', () => abrirCancelacion(id));
   previo.querySelector('[data-acc="marcar"]')?.addEventListener('click', () => {
     repo.marcarDada(id, { quien: QUIEN, ahora: reloj.ahora() });
@@ -807,6 +957,7 @@ function abrirAcciones(id: string) {
   const caja = previo.querySelector('.cambiar-dia') as HTMLElement;
   const principales = previo.querySelector('[data-acciones-principales]') as HTMLElement;
   const errorCambio = caja.querySelector('.campo-error') as HTMLElement;
+  observarCambios(previo);
   previo.querySelector('[data-acc="cambiar"]')?.addEventListener('click', () => {
     caja.hidden = false;
     principales.hidden = true;
@@ -855,6 +1006,14 @@ function abrirCancelacion(id: string) {
   modoEnvio = 'masivo';
   elegidos = new Set();
   textoEnviado = textoCancelacion(c);
+
+  /** Cierre de la cancelación con aviso si se editó motivo/mensaje/destino. */
+  const cerrarSheetConCambios = () => {
+    if (!sheet || sheet.dataset.dirty !== '1') { cerrarSheet(); return; }
+    confirmarCierreConCambios(sheet, () => {
+      (sheet?.querySelector('[data-accion="confirmar"]') as HTMLElement | null)?.click();
+    }, () => cerrarSheet());
+  };
 
   const previo = document.createElement('div');
   previo.className = 'sheet';
@@ -921,10 +1080,15 @@ function abrirCancelacion(id: string) {
       <button class="btn-primario" type="button" data-accion="confirmar">Cancelar clase</button>
     </div>`;
   document.querySelector('.cel')?.appendChild(previo);
+  abrirSheet(previo);
   sheet = previo;
 
-  previo.querySelector('.sheet-cerrar')?.addEventListener('click', cerrarSheet);
-  previo.querySelector('[data-accion="volver"]')?.addEventListener('click', cerrarSheet);
+  // «Cambiar de día» solo revela el sub-cuadro: no es un cambio del sheet.
+  // Se observa el sub-cuadro para que tocar la fecha sí marque dirty.
+  observarCambios(previo.querySelector('.cambiar-dia') as HTMLElement);
+
+  previo.querySelector('.sheet-cerrar')?.addEventListener('click', () => cerrarSheetConCambios());
+  previo.querySelector('[data-accion="volver"]')?.addEventListener('click', () => cerrarSheetConCambios());
 
   previo.querySelectorAll('.opcion').forEach((btn) => {
     btn.addEventListener('click', () => {
@@ -1341,13 +1505,25 @@ function abrirDialogoCobros(titulo: string, contexto: string, icono: string, con
     <span class="cobros-panel-icono"><svg class="ico" width="21" height="21" aria-hidden="true"><use href="#i-${icono}"/></svg></span>
     <div><p class="sheet-eyebrow">${esc(contexto)}</p><h3 id="cobros-panel-titulo">${esc(titulo)}</h3></div>
     <button type="button" class="sheet-cerrar" aria-label="Cerrar" autofocus><svg class="ico" width="18" height="18" aria-hidden="true"><use href="#i-mas2"/></svg></button></div>${contenido}`;
-  dialogo.querySelector('.sheet-cerrar')!.addEventListener('click', () => dialogo.close());
+  $('.cel')!.appendChild(dialogo);
+  abrirSheet(dialogo);
+  dialogo.showModal();
+
+  observarCambios(dialogo); // cubre el-form y los chips de modalidad/grupo
+  const form = dialogo.querySelector('form') as HTMLFormElement | null;
+  const submit = () => form?.requestSubmit();
+  const cerrarConAviso = () => {
+    if (dialogo.dataset.dirty === '1') {
+      confirmarCierreConCambios(dialogo, submit, () => dialogo.close());
+    } else dialogo.close();
+  };
+  dialogo.querySelector('.sheet-cerrar')!.addEventListener('click', cerrarConAviso);
   dialogo.addEventListener('close', () => {
+    dialogo.dataset.lockLiberado = '1';
     dialogo.remove();
+    liberarSiNoHaySheets();
     if (!document.querySelector('.cobros-panel[open]') && origen.isConnected) origen.focus();
   });
-  $('.cel')!.appendChild(dialogo);
-  dialogo.showModal();
   return dialogo;
 }
 
@@ -1364,7 +1540,11 @@ function abrirPago(nombre: string, periodo: string, monto: number, origen: HTMLB
       <button type="submit" class="btn-primario${pago ? ' cobros-anular' : ''}">${pago ? 'Confirmar anulación' : 'Confirmar pago'}</button></div>
     </form>`, origen);
   const form = dialogo.querySelector('form')!;
-  form.querySelector('.btn-secundario')!.addEventListener('click', () => dialogo.close());
+  form.querySelector('.btn-secundario')!.addEventListener('click', () => {
+    if (dialogo.dataset.dirty === '1') {
+      confirmarCierreConCambios(dialogo, () => form.requestSubmit(), () => dialogo.close());
+    } else dialogo.close();
+  });
   form.addEventListener('submit', (e) => {
     e.preventDefault();
     if (!dialogo.open) return;
@@ -1399,6 +1579,66 @@ campana.addEventListener('click', () => {
 });
 
 /* ------------------------------------------------------------- navegación */
+/** Cierra cualquier sheet abierto antes de cambiar de vista. */
+function cerrarSheetsPorNavegacion(): void {
+  if (sheet) cerrarAcciones();
+  $$('.sheet:not(.cerrando):not(.cobros-panel)').forEach((el) => cerrarCuadro(el as HTMLElement));
+  $$('dialog.sheet[open]').forEach((el) => (el as HTMLDialogElement).close());
+}
+
+/** Cierra el sheet cuando el dedo toca fuera de él (o Escape en el teclado). */
+document.addEventListener('pointerdown', (e) => {
+  const destino = e.target;
+  if (!(destino instanceof Element)) return;
+  if (destino.closest('.confirmar-cambios')) return; // el aviso tiene sus botones
+  const abierto = document.querySelector('.sheet:not(.cerrando)') as HTMLElement | null;
+  if (!abierto) return;
+  const r = abierto.getBoundingClientRect();
+  const dentroPorCoordenadas = e.clientX >= r.left && e.clientX <= r.right
+    && e.clientY >= r.top && e.clientY <= r.bottom;
+  // El toque puede caer en html/body (por encima del ::backdrop): comparar
+  // también por coordenadas evita cerrar al tocar dentro del sheet.
+  if (abierto.contains(destino) || dentroPorCoordenadas) return;
+  if (abierto.classList.contains('cobros-panel')) {
+    (abierto as HTMLDialogElement).close(); // el modal nativo ya avisa en `cancel`
+    return;
+  }
+  if (abierto === sheet) cerrarAcciones();
+  else if (abierto.dataset.dirty === '1') {
+    // Los cuadros sin submit propio (p. ej. «Agendar») también avisan.
+    const form = abierto.querySelector('form') as HTMLFormElement | null;
+    if (form) cerrarCuadroConCambios(abierto, () => form.requestSubmit());
+    else cerrarCuadro(abierto);
+  } else cerrarCuadro(abierto);
+}, true);
+
+// Escape: los <dialog> nativos lo manejan con `cancel`; los sheets <div>, acá.
+document.addEventListener('keydown', (e) => {
+  if (e.key !== 'Escape') return;
+  if (document.querySelector('.confirmar-cambios')) {
+    document.querySelector('.confirmar-cambios')?.remove();
+    return;
+  }
+  if (sheet && !sheet.classList.contains('cerrando')) { e.preventDefault(); cerrarAcciones(); return; }
+  const div = document.querySelector('.sheet:not(.cerrando):not(.cobros-panel)') as HTMLElement | null;
+  if (div) {
+    e.preventDefault();
+    const form = div.querySelector('form') as HTMLFormElement | null;
+    if (form && div.dataset.dirty === '1') cerrarCuadroConCambios(div, () => form.requestSubmit());
+    else cerrarCuadro(div);
+  }
+});
+
+// Escape en un <dialog> (también cierre por X / fuera): avisar si hay cambios.
+document.addEventListener('cancel', (e) => {
+  const dlg = e.target as HTMLDialogElement;
+  if (dlg.dataset.dirty === '1') {
+    e.preventDefault();
+    const form = dlg.querySelector('form') as HTMLFormElement | null;
+    confirmarCierreConCambios(dlg, () => form?.requestSubmit(), () => dlg.close());
+  }
+});
+
 const tabs = $$('.tab') as HTMLElement[];
 const vistas = $$('.vista') as HTMLElement[];
 const titulos: Record<string, string> = {
@@ -1413,6 +1653,7 @@ function pintarTitulo(id: string) {
 function irA(id: string, fijarHash = true) {
   const destino = document.getElementById(id);
   if (!destino) return;
+  cerrarSheetsPorNavegacion();
   vistas.forEach((v) => { if (v !== destino) v.classList.remove('activa'); });
   void destino.offsetWidth;
   destino.classList.add('activa');
@@ -1438,22 +1679,26 @@ tabs.forEach((t) => t.addEventListener('click', (e) => {
 // vive en `src/barra-scroll.ts` y es pura; acá solo se aplica al DOM.
 const tabbar = document.querySelector('.tabbar') as HTMLElement | null;
 if (tabbar) {
-  let ultimoY = Math.max(0, window.scrollY);
-  let oculta = false;
+  let estado: EstadoBarra = estadoBarraInicial(window.scrollY);
   let framePendiente = false;
 
   const aplicar = (ocultar: boolean) => {
-    if (ocultar === oculta) return;
-    oculta = ocultar;
-    tabbar.classList.toggle('oculta', oculta);
+    tabbar.classList.toggle('oculta', ocultar);
+    estado = { ...estado, oculta: ocultar };
+  };
+
+  const recalibrar = () => {
+    estado = estadoBarraInicial(window.scrollY);
+    aplicar(false);
   };
 
   const muestrear = () => {
     framePendiente = false;
-    const y = Math.max(0, window.scrollY);
-    oculta = debeOcultarBarra(y, ultimoY, oculta);
-    tabbar.classList.toggle('oculta', oculta);
-    ultimoY = y;
+    // Recortar contra el scroll máximo real evita que el rebote elástico del
+    // final de la página se lea como «subida» y haga reaparecer la barra.
+    const limite = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
+    estado = actualizarBarra(estado, window.scrollY, limite);
+    tabbar.classList.toggle('oculta', estado.oculta);
   };
 
   window.addEventListener('scroll', () => {
@@ -1464,17 +1709,12 @@ if (tabbar) {
 
   // Nunca dejar un destino invisible pero enfocable: si el teclado enfoca
   // la barra (Tab), se muestra y se reinicia la referencia de scroll.
-  tabbar.addEventListener('focusin', () => {
-    ultimoY = Math.max(0, window.scrollY);
-    aplicar(false);
-  });
+  tabbar.addEventListener('focusin', recalibrar);
 
   // Al cambiar de vista puede cambiar la altura del contenido y el scroll;
   // recalcular la referencia para no interpretar ese salto como una dirección.
-  window.addEventListener('hashchange', () => {
-    ultimoY = Math.max(0, window.scrollY);
-    aplicar(false);
-  });
+  window.addEventListener('hashchange', recalibrar);
+  window.addEventListener('resize', recalibrar, { passive: true });
 }
 
 $$('a.link-suave').forEach((a) => a.addEventListener('click', (e) => {
