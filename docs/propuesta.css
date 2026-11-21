@@ -33,7 +33,7 @@ html.con-sheet, body.con-sheet {
 html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; width: 0; }
 /* En móvil el contenido conserva el margen lateral del panel; solo sube arriba. */
 @media (max-width: 430px) {
-  body { padding-top: 22px; }
+  body { padding: 22px var(--margen-panel) 0; }
 }
 
 .marca, .pie {

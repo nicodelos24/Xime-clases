@@ -1,18 +1,18 @@
 // Clases v5 · navegación + funcionamiento (auto-marcado, Cancelar clase, WhatsApp)
 // La estética vive en tokens.css/propuesta.css; acá solo se cambian estados,
 // textos y el flujo de cancelación. Sin emoji: solo SVG de icons.js.
-import { horaClase, } from "./src/clases.js?v=202611210552";
-import { CLAVE_ESTADO, RepositorioClases, almacenLocalStorage } from "./src/repositorio.js?v=202611210552";
-import { alumnosCobrosDemo, datosDemo, fichasDemo } from "./src/demo.js?v=202611210552";
-import { resumenCobros } from "./src/cobros.js?v=202611210552";
-import { resumenHoy, clasesDelDia, clasesDeLaSemana } from "./src/resumen.js?v=202611210552";
-import { registrarToqueFecha, mesDe } from "./src/agenda.js?v=202611210552";
-import { destinoDeEnlace } from "./src/navegacion.js?v=202611210552";
-import { actualizarBarra, estadoBarraInicial, } from "./src/barra-scroll.js?v=202611210552";
-import { ajustarLock, debeBloquearScroll, estiloSheet, debeCerrarPorToqueFuera, esToqueFuera, debeSuprimirClickTrasCierre, } from "./src/sheets.js?v=202611210552";
-import { diaCorto, etiquetaDia, etiquetaDiaCompleta, etiquetaMes, parseFecha, lunesDe, diasDelMes, esFechaValida } from "./src/fechas.js?v=202611210552";
-import { relojDelDispositivo, hoyLocal } from "./src/reloj.js?v=202611210552";
-import { textoCancelacion, destinos, resumenEnvio, linkTexto, } from "./src/whatsapp.js?v=202611210552";
+import { horaClase, } from "./src/clases.js?v=202611210559";
+import { CLAVE_ESTADO, RepositorioClases, almacenLocalStorage } from "./src/repositorio.js?v=202611210559";
+import { alumnosCobrosDemo, datosDemo, fichasDemo } from "./src/demo.js?v=202611210559";
+import { resumenCobros } from "./src/cobros.js?v=202611210559";
+import { resumenHoy, clasesDelDia, clasesDeLaSemana } from "./src/resumen.js?v=202611210559";
+import { registrarToqueFecha, mesDe } from "./src/agenda.js?v=202611210559";
+import { destinoDeEnlace } from "./src/navegacion.js?v=202611210559";
+import { actualizarBarra, estadoBarraInicial, } from "./src/barra-scroll.js?v=202611210559";
+import { ajustarLock, debeBloquearScroll, estiloSheet, debeCerrarPorToqueFuera, esToqueFuera, debeSuprimirClickTrasCierre, } from "./src/sheets.js?v=202611210559";
+import { diaCorto, etiquetaDia, etiquetaDiaCompleta, etiquetaMes, parseFecha, lunesDe, diasDelMes, esFechaValida } from "./src/fechas.js?v=202611210559";
+import { relojDelDispositivo, hoyLocal } from "./src/reloj.js?v=202611210559";
+import { textoCancelacion, destinos, resumenEnvio, linkTexto, } from "./src/whatsapp.js?v=202611210559";
 /* ------------------------------------------------- estado persistente (local) */
 const reloj = relojDelDispositivo();
 /** Quién opera la app hoy: único dueño. En Fase 4 sale de la sesión. */
@@ -1228,7 +1228,7 @@ toast.addEventListener('click', () => {
     }
 });
 /* ------------------------------------------------------- alumnos (fichas) */
-import { construirVista, filtrarYOrdenar, puntoEstadoVence, textoEstadoVence, validarAlumno, } from "./src/alumnos.js?v=202611210552";
+import { construirVista, filtrarYOrdenar, puntoEstadoVence, textoEstadoVence, validarAlumno, } from "./src/alumnos.js?v=202611210559";
 let ordenAlumnos = 'ninguno';
 const filtrosAlumnos = new Set();
 let busquedaAlumno = '';
