@@ -230,6 +230,27 @@ test('vista: búsqueda acento-insensible, filtros y orden sin mutar la lista', (
   assert.equal(filas[0]!.nombre, repo.listarAlumnos()[0]!.nombre, 'original intacto');
 });
 
+test('REGRESIÓN filtros de modalidad: se combinan con OR; ambos muestran todos', () => {
+  const { repo } = abrir(almacenMemoria());
+  const filas = construirVista(repo.listarAlumnos(), new Map(), HOY);
+  const todos = filtrarYOrdenar(filas, '', new Set(), 'ninguno');
+  assert.ok(todos.some((f) => f.modalidad === 'mensual') && todos.some((f) => f.modalidad === 'individual'));
+
+  const soloMensual = filtrarYOrdenar(filas, '', new Set(['mensual']), 'ninguno');
+  assert.ok(soloMensual.length > 0 && soloMensual.every((f) => f.modalidad === 'mensual'));
+
+  const soloIndividual = filtrarYOrdenar(filas, '', new Set(['individual']), 'ninguno');
+  assert.ok(soloIndividual.length > 0 && soloIndividual.every((f) => f.modalidad === 'individual'));
+
+  const ambos = filtrarYOrdenar(filas, '', new Set(['mensual', 'individual']), 'ninguno');
+  assert.equal(ambos.length, todos.length, 'ambos = todos los alumnos, no cero');
+
+  const ambosAlDia = filtrarYOrdenar(filas, '', new Set(['mensual', 'individual', 'aldia']), 'ninguno');
+  const esperadosAlDia = todos.filter((f) => f.estadoVence === 'aldia');
+  assert.equal(ambosAlDia.length, esperadosAlDia.length, 'ambos + aldia = todos los al día');
+  assert.ok(ambosAlDia.every((f) => f.estadoVence === 'aldia'));
+});
+
 
 /* ------------------------- regresiones informadas por Roma (20/11/2026) ------------------------- */
 

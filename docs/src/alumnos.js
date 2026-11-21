@@ -190,9 +190,10 @@ export function filtrarYOrdenar(filas, busqueda, filtros, orden) {
     const out = filas.filter((a) => {
         if (q && !a.nombre.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').includes(q))
             return false;
-        if (filtros.has('mensual') && a.modalidad !== 'mensual')
-            return false;
-        if (filtros.has('individual') && a.modalidad !== 'individual')
+        // Modalidad se combina con OR: si se eligieron ambas, se muestran todos.
+        // El resto de los filtros (aldia, búsqueda) sigue combinándose con AND.
+        const modalidades = new Set(['mensual', 'individual'].filter((m) => filtros.has(m)));
+        if (modalidades.size > 0 && !modalidades.has(a.modalidad))
             return false;
         if (filtros.has('aldia') && a.estadoVence !== 'aldia')
             return false;

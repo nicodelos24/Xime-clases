@@ -681,20 +681,18 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; width: 0; }
 .dia-elegir:active { transform: scale(.92); }
 
 /* ---------- Sheet de cancelación ---------- */
-/* Fondo tenue para que se entienda que afuera se puede tocar y cerrar. */
-.sheet:not(.cobros-panel)::before {
-  content: ""; position: fixed; inset: 0; z-index: -1;
-  background: rgb(14 27 30 / 28%);
-  animation: aparecerFondo var(--t-media) var(--ease) both;
-}
+/* El telón se pinta con box-shadow en el propio sheet: un ::before hijo con
+   z-index negativo se dibuja sobre el fondo del panel (contexto z-index:40)
+   y lo dejaba gris. Así el panel queda claro y el fondo se oscurece afuera. */
+.sheet:not(.cobros-panel)::before { content: none; }
 @keyframes aparecerFondo { from { opacity: 0; } to { opacity: 1; } }
 .sheet {
   position: fixed; left: 0; right: 0; bottom: var(--sheet-base); z-index: 40;
   width: 100%; max-width: 390px; margin: 0 auto;
   background: var(--bg-alt);
   border-radius: var(--r-grande) var(--r-grande) var(--r-grande) var(--r-grande);
-  border: 1px solid var(--linea);
-  box-shadow: 0 -12px 34px rgba(8, 69, 74, .18);
+  border: 1px solid var(--borde-crema);
+  box-shadow: 0 0 0 100vmax rgb(14 27 30 / 28%), 0 -10px 30px rgba(8, 69, 74, .16), var(--sombra-crema);
   padding: 16px 16px calc(16px + env(safe-area-inset-bottom));
   /* JS ajusta max-height al viewport real; este valor es el fallback. */
   max-height: calc(100vh - 130px - env(safe-area-inset-bottom));
@@ -799,11 +797,15 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; width: 0; }
   padding: 12px 14px; border-radius: 999px; cursor: pointer;
   transition: transform var(--t-rapida) var(--ease), background var(--t-media) var(--ease), box-shadow var(--t-media) var(--ease);
 }
-.btn-primario { border: none; background: var(--rosa); color: #fff; box-shadow: 0 8px 20px rgba(142, 53, 82, .28); }
-.btn-primario:hover { background: #7C2C47; transform: translateY(-1px); }
+.btn-primario { border: none; background: var(--tq-700); color: var(--bg-alt); box-shadow: var(--sombra); }
+.btn-primario:hover { background: var(--tq-600); color: var(--bg-alt); box-shadow: var(--sombra); transform: translateY(-1px); }
 .btn-primario:active { transform: scale(.97); }
+/* Anulación de cobro conserva el rosa de urgencia (no es una acción turquesa). */
+.btn-primario.cobros-anular { background: var(--rosa); color: #fff; box-shadow: 0 8px 20px rgba(142, 53, 82, .28); }
+.btn-primario.cobros-anular:hover { background: #7C2C47; }
 .btn-secundario { border: 1.5px solid var(--linea); background: var(--bg-alt); color: var(--tinta); }
 .btn-secundario:hover { background: var(--bg); }
+[data-tema="oscuro"] .btn-primario { color: var(--bg-alt); }
 
 /* El toast del aviso también lleva la acción de deshacer. */
 .toast { cursor: pointer; }

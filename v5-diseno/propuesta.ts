@@ -543,8 +543,8 @@ function confirmarCierreConCambios(el: HTMLElement, guardar: () => void, descart
       <h3>¿Hay cambios sin guardar, querés guardarlos?</h3>
       <p class="confirmar-cambios-nota">Si descartás, se pierden los cambios de este cuadro.</p>
       <div class="confirmar-cambios-acciones">
-        <button type="button" class="btn-secundario" data-decision="descartar">Descartar</button>
         <button type="button" class="btn-secundario" data-decision="seguir">Seguir editando</button>
+        <button type="button" class="btn-secundario" data-decision="descartar">Descartar</button>
         <button type="button" class="btn-primario" data-decision="guardar">Guardar</button>
       </div>
     </div>`;
