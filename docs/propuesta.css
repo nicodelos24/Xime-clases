@@ -708,13 +708,20 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; width: 0; }
 @keyframes subirSheet { from { transform: translateY(24px); opacity: 0; } to { transform: none; opacity: 1; } }
 @keyframes bajarSheet { from { transform: none; opacity: 1; } to { transform: translateY(24px); opacity: 0; } }
 
-/* Aviso de cambios sin guardar: se abre por encima del sheet y del fondo. */
+/* Aviso de cambios sin guardar: es un <dialog> modal para compartir la "top
+   layer" con los sheets <dialog> (ficha/cobros) y poder pintar encima de ellos.
+   El navegador lo centra; z-index no aplica en la top layer. */
 .confirmar-cambios {
-  position: fixed; inset: 0; z-index: 90;
-  display: grid; place-items: center;
-  background: rgb(14 27 30 / 48%);
+  width: min(100%, 380px);
+  max-width: calc(100vw - 40px);
+  margin: auto;
+  border: 0;
+  background: transparent;
+  color: var(--tinta);
   padding: 20px;
+  overflow: visible;
 }
+.confirmar-cambios::backdrop { background: rgb(14 27 30 / 48%); }
 .confirmar-cambios-caja {
   width: min(100%, 340px);
   background: var(--bg-alt); color: var(--tinta);

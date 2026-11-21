@@ -4,7 +4,7 @@ import { strict as assert } from 'node:assert';
 
 import {
   MARGEN_SHEET, alturaMaximaSheet, estiloSheet, ajustarLock, debeBloquearScroll,
-  OPCIONES_CAMBIOS_SIN_GUARDAR,
+  OPCIONES_CAMBIOS_SIN_GUARDAR, DECISION_ESCAPE_AVISO,
 } from '../src/sheets.ts';
 
 test('el sheet cabe en el viewport y deja ver la página arriba y la cápsula abajo', () => {
@@ -36,4 +36,9 @@ test('el lock es profundo: dos sheets abiertos, cerrar uno no desbloquea', () =>
 
 test('confirmación de cambios sin guardar ofrece guardar, descartar y seguir', () => {
   assert.deepEqual([...OPCIONES_CAMBIOS_SIN_GUARDAR], ['guardar', 'descartar', 'seguir']);
+});
+
+test('Escape sobre el aviso de cambios sigue editando: nunca descarta', () => {
+  assert.equal(DECISION_ESCAPE_AVISO, 'seguir');
+  assert.ok(OPCIONES_CAMBIOS_SIN_GUARDAR.includes(DECISION_ESCAPE_AVISO));
 });

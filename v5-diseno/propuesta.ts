@@ -528,11 +528,13 @@ function observarCambios(el: HTMLElement, onCambio?: () => void): void {
  * Devuelve `true` cuando el dueño eligió guardar (quien llama decide si cierra).
  */
 function confirmarCierreConCambios(el: HTMLElement, guardar: () => void, descartar: () => void): void {
-  if (document.querySelector('.confirmar-cambios')) return; // un solo cuadro a la vez
-  const caja = document.createElement('div');
+  if (document.querySelector('dialog.confirmar-cambios[open]')) return; // un solo cuadro a la vez
+  // Debe ser un <dialog> modal, no un <div>: los sheets de ficha/cobros son
+  // <dialog> con showModal() y viven en la "top layer" del navegador; ningún
+  // z-index del document puede pintar por encima. Otro modal nativo sí comparte
+  // esa capa y se muestra encima del sheet que lo originó (Guardar recibe clics).
+  const caja = document.createElement('dialog');
   caja.className = 'confirmar-cambios';
-  caja.setAttribute('role', 'alertdialog');
-  caja.setAttribute('aria-modal', 'true');
   caja.setAttribute('aria-label', 'Cambios sin guardar');
   caja.innerHTML = `
     <div class="confirmar-cambios-caja">
@@ -542,12 +544,14 @@ function confirmarCierreConCambios(el: HTMLElement, guardar: () => void, descart
       <div class="confirmar-cambios-acciones">
         <button type="button" class="btn-secundario" data-decision="descartar">Descartar</button>
         <button type="button" class="btn-secundario" data-decision="seguir">Seguir editando</button>
-        <button type="button" class="btn-primario" data-decision="guardar" autofocus>Guardar</button>
+        <button type="button" class="btn-primario" data-decision="guardar">Guardar</button>
       </div>
     </div>`;
   document.body.appendChild(caja);
-  const cerrarCuadroConfirm = () => { caja.remove(); liberarSiNoHaySheets(); };
+  const cerrarCuadroConfirm = () => { if (caja.open) caja.close(); caja.remove(); liberarSiNoHaySheets(); };
   const descartarYValidar = () => { cerrarCuadroConfirm(); descartar(); };
+  // Escape sobre el aviso significa "Seguir editando": no descarta cambios.
+  caja.addEventListener('cancel', (e) => { e.preventDefault(); cerrarCuadroConfirm(); });
   caja.addEventListener('click', (e) => {
     if (!(e.target instanceof Element)) return;
     const boton = e.target.closest('[data-decision]') as HTMLElement | null;
@@ -557,6 +561,7 @@ function confirmarCierreConCambios(el: HTMLElement, guardar: () => void, descart
     else if (decision === 'descartar') descartarYValidar();
     else cerrarCuadroConfirm();
   });
+  caja.showModal();
   (caja.querySelector('[data-decision="guardar"]') as HTMLElement).focus();
 }
 
@@ -1374,7 +1379,7 @@ function abrirFicha(ficha: AlumnoFicha | null, origen: HTMLElement): void {
 
   const form = dialogo.querySelector('form')!;
   const error = form.querySelector<HTMLElement>('[role="alert"]')!;
-  form.querySelector('.btn-secundario')!.addEventListener('click', () => dialogo.close());
+  form.querySelector('.btn-secundario')!.addEventListener('click', () => cerrarDialogoConAviso(dialogo));
   form.addEventListener('submit', (e) => {
     e.preventDefault();
     if (!dialogo.open) return;
@@ -1513,11 +1518,19 @@ function abrirDialogoCobros(titulo: string, contexto: string, icono: string, con
   const form = dialogo.querySelector('form') as HTMLFormElement | null;
   const submit = () => form?.requestSubmit();
   const cerrarConAviso = () => {
+    if (document.querySelector('dialog.confirmar-cambios[open]')) return; // ya hay un aviso
     if (dialogo.dataset.dirty === '1') {
       confirmarCierreConCambios(dialogo, submit, () => dialogo.close());
     } else dialogo.close();
   };
+  // Guardamos el cierre con aviso en el elemento para que la X, el "Volver",
+  // el toque fuera, Escape y el cambio de vista usen TODOS el mismo camino.
+  (dialogo as HTMLDialogElement & { cerrarConAviso?: () => void }).cerrarConAviso = cerrarConAviso;
   dialogo.querySelector('.sheet-cerrar')!.addEventListener('click', cerrarConAviso);
+  // Escape sobre el modal: el evento `cancel` se dispara en el <dialog> mismo;
+  // engancharlo acá (y no solo en `document`) evita perderlo cuando hay modales
+  // apilados, que era el motivo por el que cerraba sin avisar.
+  dialogo.addEventListener('cancel', (e) => { e.preventDefault(); cerrarConAviso(); });
   dialogo.addEventListener('close', () => {
     dialogo.dataset.lockLiberado = '1';
     dialogo.remove();
@@ -1525,6 +1538,13 @@ function abrirDialogoCobros(titulo: string, contexto: string, icono: string, con
     if (!document.querySelector('.cobros-panel[open]') && origen.isConnected) origen.focus();
   });
   return dialogo;
+}
+
+/** Cierra un <dialog> de los de cobros/ficha pasando por su aviso, si existe. */
+function cerrarDialogoConAviso(dlg: HTMLDialogElement): void {
+  const conAviso = (dlg as HTMLDialogElement & { cerrarConAviso?: () => void }).cerrarConAviso;
+  if (conAviso) conAviso();
+  else dlg.close();
 }
 
 function abrirPago(nombre: string, periodo: string, monto: number, origen: HTMLButtonElement, pago?: Pago, fila?: FilaCobro) {
@@ -1540,11 +1560,7 @@ function abrirPago(nombre: string, periodo: string, monto: number, origen: HTMLB
       <button type="submit" class="btn-primario${pago ? ' cobros-anular' : ''}">${pago ? 'Confirmar anulación' : 'Confirmar pago'}</button></div>
     </form>`, origen);
   const form = dialogo.querySelector('form')!;
-  form.querySelector('.btn-secundario')!.addEventListener('click', () => {
-    if (dialogo.dataset.dirty === '1') {
-      confirmarCierreConCambios(dialogo, () => form.requestSubmit(), () => dialogo.close());
-    } else dialogo.close();
-  });
+  form.querySelector('.btn-secundario')!.addEventListener('click', () => cerrarDialogoConAviso(dialogo));
   form.addEventListener('submit', (e) => {
     e.preventDefault();
     if (!dialogo.open) return;
@@ -1583,7 +1599,7 @@ campana.addEventListener('click', () => {
 function cerrarSheetsPorNavegacion(): void {
   if (sheet) cerrarAcciones();
   $$('.sheet:not(.cerrando):not(.cobros-panel)').forEach((el) => cerrarCuadro(el as HTMLElement));
-  $$('dialog.sheet[open]').forEach((el) => (el as HTMLDialogElement).close());
+  $$('dialog.sheet[open]').forEach((el) => cerrarDialogoConAviso(el as HTMLDialogElement));
 }
 
 /** Cierra el sheet cuando el dedo toca fuera de él (o Escape en el teclado). */
@@ -1600,7 +1616,7 @@ document.addEventListener('pointerdown', (e) => {
   // también por coordenadas evita cerrar al tocar dentro del sheet.
   if (abierto.contains(destino) || dentroPorCoordenadas) return;
   if (abierto.classList.contains('cobros-panel')) {
-    (abierto as HTMLDialogElement).close(); // el modal nativo ya avisa en `cancel`
+    cerrarDialogoConAviso(abierto as HTMLDialogElement);
     return;
   }
   if (abierto === sheet) cerrarAcciones();
@@ -1612,13 +1628,15 @@ document.addEventListener('pointerdown', (e) => {
   } else cerrarCuadro(abierto);
 }, true);
 
-// Escape: los <dialog> nativos lo manejan con `cancel`; los sheets <div>, acá.
+// Escape: los <dialog> nativos lo manejan con su propio `cancel` (enganchado
+// en abrirDialogoCobros); los sheets <div> los atiende acá. Si hay un aviso de
+// cambios abierto, su `cancel` ya lo cierra como "Seguir editando": no hacemos
+// nada para no cerrar también el sheet de abajo ni solapar dos avisos.
 document.addEventListener('keydown', (e) => {
   if (e.key !== 'Escape') return;
-  if (document.querySelector('.confirmar-cambios')) {
-    document.querySelector('.confirmar-cambios')?.remove();
-    return;
-  }
+  if (document.querySelector('dialog.confirmar-cambios[open]')) return;
+  // Un <dialog> modal abierto ya recibió (o va a recibir) su evento `cancel`.
+  if (document.querySelector('dialog.sheet[open]')) return;
   if (sheet && !sheet.classList.contains('cerrando')) { e.preventDefault(); cerrarAcciones(); return; }
   const div = document.querySelector('.sheet:not(.cerrando):not(.cobros-panel)') as HTMLElement | null;
   if (div) {
@@ -1626,16 +1644,6 @@ document.addEventListener('keydown', (e) => {
     const form = div.querySelector('form') as HTMLFormElement | null;
     if (form && div.dataset.dirty === '1') cerrarCuadroConCambios(div, () => form.requestSubmit());
     else cerrarCuadro(div);
-  }
-});
-
-// Escape en un <dialog> (también cierre por X / fuera): avisar si hay cambios.
-document.addEventListener('cancel', (e) => {
-  const dlg = e.target as HTMLDialogElement;
-  if (dlg.dataset.dirty === '1') {
-    e.preventDefault();
-    const form = dlg.querySelector('form') as HTMLFormElement | null;
-    confirmarCierreConCambios(dlg, () => form?.requestSubmit(), () => dlg.close());
   }
 });
 

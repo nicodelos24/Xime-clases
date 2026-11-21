@@ -49,3 +49,8 @@ export function debeBloquearScroll(profundidad) {
 export const OPCIONES_CAMBIOS_SIN_GUARDAR = [
     'guardar', 'descartar', 'seguir',
 ];
+/**
+ * Escape sobre el cuadro de confirmación equivale a "Seguir editando": nunca
+ * descarta los cambios. La UI (propuesta.ts) cierra el aviso sin tocar el sheet.
+ */
+export const DECISION_ESCAPE_AVISO = 'seguir';

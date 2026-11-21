@@ -1,18 +1,18 @@
 // Clases v5 · navegación + funcionamiento (auto-marcado, Cancelar clase, WhatsApp)
 // La estética vive en tokens.css/propuesta.css; acá solo se cambian estados,
 // textos y el flujo de cancelación. Sin emoji: solo SVG de icons.js.
-import { horaClase, } from './src/clases.js?v=202611210115';
-import { CLAVE_ESTADO, RepositorioClases, almacenLocalStorage } from './src/repositorio.js?v=202611210115';
-import { alumnosCobrosDemo, datosDemo, fichasDemo } from './src/demo.js?v=202611210115';
-import { resumenCobros } from './src/cobros.js?v=202611210115';
-import { resumenHoy, clasesDelDia, clasesDeLaSemana } from './src/resumen.js?v=202611210115';
-import { registrarToqueFecha, mesDe } from './src/agenda.js?v=202611210115';
-import { destinoDeEnlace } from './src/navegacion.js?v=202611210115';
-import { actualizarBarra, estadoBarraInicial, } from './src/barra-scroll.js?v=202611210115';
-import { ajustarLock, debeBloquearScroll, estiloSheet, } from './src/sheets.js?v=202611210115';
-import { diaCorto, etiquetaDia, etiquetaDiaCompleta, etiquetaMes, parseFecha, lunesDe, diasDelMes, esFechaValida } from './src/fechas.js?v=202611210115';
-import { relojDelDispositivo, hoyLocal } from './src/reloj.js?v=202611210115';
-import { textoCancelacion, destinos, resumenEnvio, linkTexto, } from './src/whatsapp.js?v=202611210115';
+import { horaClase, } from './src/clases.js?v=202611210210';
+import { CLAVE_ESTADO, RepositorioClases, almacenLocalStorage } from './src/repositorio.js?v=202611210210';
+import { alumnosCobrosDemo, datosDemo, fichasDemo } from './src/demo.js?v=202611210210';
+import { resumenCobros } from './src/cobros.js?v=202611210210';
+import { resumenHoy, clasesDelDia, clasesDeLaSemana } from './src/resumen.js?v=202611210210';
+import { registrarToqueFecha, mesDe } from './src/agenda.js?v=202611210210';
+import { destinoDeEnlace } from './src/navegacion.js?v=202611210210';
+import { actualizarBarra, estadoBarraInicial, } from './src/barra-scroll.js?v=202611210210';
+import { ajustarLock, debeBloquearScroll, estiloSheet, } from './src/sheets.js?v=202611210210';
+import { diaCorto, etiquetaDia, etiquetaDiaCompleta, etiquetaMes, parseFecha, lunesDe, diasDelMes, esFechaValida } from './src/fechas.js?v=202611210210';
+import { relojDelDispositivo, hoyLocal } from './src/reloj.js?v=202611210210';
+import { textoCancelacion, destinos, resumenEnvio, linkTexto, } from './src/whatsapp.js?v=202611210210';
 /* ------------------------------------------------- estado persistente (local) */
 const reloj = relojDelDispositivo();
 /** Quién opera la app hoy: único dueño. En Fase 4 sale de la sesión. */
@@ -503,12 +503,14 @@ function observarCambios(el, onCambio) {
  * Devuelve `true` cuando el dueño eligió guardar (quien llama decide si cierra).
  */
 function confirmarCierreConCambios(el, guardar, descartar) {
-    if (document.querySelector('.confirmar-cambios'))
+    if (document.querySelector('dialog.confirmar-cambios[open]'))
         return; // un solo cuadro a la vez
-    const caja = document.createElement('div');
+    // Debe ser un <dialog> modal, no un <div>: los sheets de ficha/cobros son
+    // <dialog> con showModal() y viven en la "top layer" del navegador; ningún
+    // z-index del document puede pintar por encima. Otro modal nativo sí comparte
+    // esa capa y se muestra encima del sheet que lo originó (Guardar recibe clics).
+    const caja = document.createElement('dialog');
     caja.className = 'confirmar-cambios';
-    caja.setAttribute('role', 'alertdialog');
-    caja.setAttribute('aria-modal', 'true');
     caja.setAttribute('aria-label', 'Cambios sin guardar');
     caja.innerHTML = `
     <div class="confirmar-cambios-caja">
@@ -518,12 +520,15 @@ function confirmarCierreConCambios(el, guardar, descartar) {
       <div class="confirmar-cambios-acciones">
         <button type="button" class="btn-secundario" data-decision="descartar">Descartar</button>
         <button type="button" class="btn-secundario" data-decision="seguir">Seguir editando</button>
-        <button type="button" class="btn-primario" data-decision="guardar" autofocus>Guardar</button>
+        <button type="button" class="btn-primario" data-decision="guardar">Guardar</button>
       </div>
     </div>`;
     document.body.appendChild(caja);
-    const cerrarCuadroConfirm = () => { caja.remove(); liberarSiNoHaySheets(); };
+    const cerrarCuadroConfirm = () => { if (caja.open)
+        caja.close(); caja.remove(); liberarSiNoHaySheets(); };
     const descartarYValidar = () => { cerrarCuadroConfirm(); descartar(); };
+    // Escape sobre el aviso significa "Seguir editando": no descarta cambios.
+    caja.addEventListener('cancel', (e) => { e.preventDefault(); cerrarCuadroConfirm(); });
     caja.addEventListener('click', (e) => {
         if (!(e.target instanceof Element))
             return;
@@ -540,6 +545,7 @@ function confirmarCierreConCambios(el, guardar, descartar) {
         else
             cerrarCuadroConfirm();
     });
+    caja.showModal();
     caja.querySelector('[data-decision="guardar"]').focus();
 }
 /**
@@ -1222,7 +1228,7 @@ toast.addEventListener('click', () => {
     }
 });
 /* ------------------------------------------------------- alumnos (fichas) */
-import { GRUPOS_DEMO, construirVista, filtrarYOrdenar, puntoEstadoVence, textoEstadoVence, validarAlumno, } from './src/alumnos.js?v=202611210115';
+import { GRUPOS_DEMO, construirVista, filtrarYOrdenar, puntoEstadoVence, textoEstadoVence, validarAlumno, } from './src/alumnos.js?v=202611210210';
 let ordenAlumnos = 'ninguno';
 const filtrosAlumnos = new Set();
 let busquedaAlumno = '';
@@ -1368,7 +1374,7 @@ function abrirFicha(ficha, origen) {
     pintarSeleccion();
     const form = dialogo.querySelector('form');
     const error = form.querySelector('[role="alert"]');
-    form.querySelector('.btn-secundario').addEventListener('click', () => dialogo.close());
+    form.querySelector('.btn-secundario').addEventListener('click', () => cerrarDialogoConAviso(dialogo));
     form.addEventListener('submit', (e) => {
         e.preventDefault();
         if (!dialogo.open)
@@ -1502,13 +1508,22 @@ function abrirDialogoCobros(titulo, contexto, icono, contenido, origen) {
     const form = dialogo.querySelector('form');
     const submit = () => form?.requestSubmit();
     const cerrarConAviso = () => {
+        if (document.querySelector('dialog.confirmar-cambios[open]'))
+            return; // ya hay un aviso
         if (dialogo.dataset.dirty === '1') {
             confirmarCierreConCambios(dialogo, submit, () => dialogo.close());
         }
         else
             dialogo.close();
     };
+    // Guardamos el cierre con aviso en el elemento para que la X, el "Volver",
+    // el toque fuera, Escape y el cambio de vista usen TODOS el mismo camino.
+    dialogo.cerrarConAviso = cerrarConAviso;
     dialogo.querySelector('.sheet-cerrar').addEventListener('click', cerrarConAviso);
+    // Escape sobre el modal: el evento `cancel` se dispara en el <dialog> mismo;
+    // engancharlo acá (y no solo en `document`) evita perderlo cuando hay modales
+    // apilados, que era el motivo por el que cerraba sin avisar.
+    dialogo.addEventListener('cancel', (e) => { e.preventDefault(); cerrarConAviso(); });
     dialogo.addEventListener('close', () => {
         dialogo.dataset.lockLiberado = '1';
         dialogo.remove();
@@ -1517,6 +1532,14 @@ function abrirDialogoCobros(titulo, contexto, icono, contenido, origen) {
             origen.focus();
     });
     return dialogo;
+}
+/** Cierra un <dialog> de los de cobros/ficha pasando por su aviso, si existe. */
+function cerrarDialogoConAviso(dlg) {
+    const conAviso = dlg.cerrarConAviso;
+    if (conAviso)
+        conAviso();
+    else
+        dlg.close();
 }
 function abrirPago(nombre, periodo, monto, origen, pago, fila) {
     const accion = pago ? 'Anular pago' : 'Registrar pago';
@@ -1531,13 +1554,7 @@ function abrirPago(nombre, periodo, monto, origen, pago, fila) {
       <button type="submit" class="btn-primario${pago ? ' cobros-anular' : ''}">${pago ? 'Confirmar anulación' : 'Confirmar pago'}</button></div>
     </form>`, origen);
     const form = dialogo.querySelector('form');
-    form.querySelector('.btn-secundario').addEventListener('click', () => {
-        if (dialogo.dataset.dirty === '1') {
-            confirmarCierreConCambios(dialogo, () => form.requestSubmit(), () => dialogo.close());
-        }
-        else
-            dialogo.close();
-    });
+    form.querySelector('.btn-secundario').addEventListener('click', () => cerrarDialogoConAviso(dialogo));
     form.addEventListener('submit', (e) => {
         e.preventDefault();
         if (!dialogo.open)
@@ -1580,7 +1597,7 @@ function cerrarSheetsPorNavegacion() {
     if (sheet)
         cerrarAcciones();
     $$('.sheet:not(.cerrando):not(.cobros-panel)').forEach((el) => cerrarCuadro(el));
-    $$('dialog.sheet[open]').forEach((el) => el.close());
+    $$('dialog.sheet[open]').forEach((el) => cerrarDialogoConAviso(el));
 }
 /** Cierra el sheet cuando el dedo toca fuera de él (o Escape en el teclado). */
 document.addEventListener('pointerdown', (e) => {
@@ -1600,7 +1617,7 @@ document.addEventListener('pointerdown', (e) => {
     if (abierto.contains(destino) || dentroPorCoordenadas)
         return;
     if (abierto.classList.contains('cobros-panel')) {
-        abierto.close(); // el modal nativo ya avisa en `cancel`
+        cerrarDialogoConAviso(abierto);
         return;
     }
     if (abierto === sheet)
@@ -1616,14 +1633,18 @@ document.addEventListener('pointerdown', (e) => {
     else
         cerrarCuadro(abierto);
 }, true);
-// Escape: los <dialog> nativos lo manejan con `cancel`; los sheets <div>, acá.
+// Escape: los <dialog> nativos lo manejan con su propio `cancel` (enganchado
+// en abrirDialogoCobros); los sheets <div> los atiende acá. Si hay un aviso de
+// cambios abierto, su `cancel` ya lo cierra como "Seguir editando": no hacemos
+// nada para no cerrar también el sheet de abajo ni solapar dos avisos.
 document.addEventListener('keydown', (e) => {
     if (e.key !== 'Escape')
         return;
-    if (document.querySelector('.confirmar-cambios')) {
-        document.querySelector('.confirmar-cambios')?.remove();
+    if (document.querySelector('dialog.confirmar-cambios[open]'))
         return;
-    }
+    // Un <dialog> modal abierto ya recibió (o va a recibir) su evento `cancel`.
+    if (document.querySelector('dialog.sheet[open]'))
+        return;
     if (sheet && !sheet.classList.contains('cerrando')) {
         e.preventDefault();
         cerrarAcciones();
@@ -1637,15 +1658,6 @@ document.addEventListener('keydown', (e) => {
             cerrarCuadroConCambios(div, () => form.requestSubmit());
         else
             cerrarCuadro(div);
-    }
-});
-// Escape en un <dialog> (también cierre por X / fuera): avisar si hay cambios.
-document.addEventListener('cancel', (e) => {
-    const dlg = e.target;
-    if (dlg.dataset.dirty === '1') {
-        e.preventDefault();
-        const form = dlg.querySelector('form');
-        confirmarCierreConCambios(dlg, () => form?.requestSubmit(), () => dlg.close());
     }
 });
 const tabs = $$('.tab');

@@ -58,3 +58,9 @@ export type DecisionCierre = 'guardar' | 'descartar' | 'seguir';
 export const OPCIONES_CAMBIOS_SIN_GUARDAR: readonly DecisionCierre[] = [
   'guardar', 'descartar', 'seguir',
 ];
+
+/**
+ * Escape sobre el cuadro de confirmación equivale a "Seguir editando": nunca
+ * descarta los cambios. La UI (propuesta.ts) cierra el aviso sin tocar el sheet.
+ */
+export const DECISION_ESCAPE_AVISO: DecisionCierre = 'seguir';
