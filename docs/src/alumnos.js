@@ -45,8 +45,6 @@ export function validarAlumno(input) {
         errores.nombre = 'El nombre solo admite letras, espacios, apóstrofos, guiones y puntos';
     if (input.modalidad !== 'mensual' && input.modalidad !== 'individual')
         errores.modalidad = 'Elegí una modalidad';
-    if (!GRUPOS_DEMO.includes(input.grupo))
-        errores.grupo = 'Elegí un grupo existente';
     if (input.ancla !== undefined && (!Number.isInteger(input.ancla) || input.ancla < 1 || input.ancla > 31)) {
         errores.ancla = 'El día ancla debe estar entre 1 y 31';
     }
@@ -108,7 +106,9 @@ export function editarAlumno(alumno, input) {
         ...alumno,
         nombre: texto(input.nombre),
         modalidad: input.modalidad,
-        grupo: texto(input.grupo),
+        // El formulario ya no expone grupo: si el input no lo trae, se conserva el
+        // grupo vigente de la ficha (dato demo/heredado, no se edita desde la UI).
+        grupo: input.grupo === undefined ? alumno.grupo : texto(input.grupo),
         ancla: input.ancla ?? alumno.ancla,
         contacto: input.contacto === undefined ? alumno.contacto : texto(input.contacto),
     };

@@ -1,18 +1,18 @@
 // Clases v5 · navegación + funcionamiento (auto-marcado, Cancelar clase, WhatsApp)
 // La estética vive en tokens.css/propuesta.css; acá solo se cambian estados,
 // textos y el flujo de cancelación. Sin emoji: solo SVG de icons.js.
-import { horaClase, } from "./src/clases.js?v=202611210322";
-import { CLAVE_ESTADO, RepositorioClases, almacenLocalStorage } from "./src/repositorio.js?v=202611210322";
-import { alumnosCobrosDemo, datosDemo, fichasDemo } from "./src/demo.js?v=202611210322";
-import { resumenCobros } from "./src/cobros.js?v=202611210322";
-import { resumenHoy, clasesDelDia, clasesDeLaSemana } from "./src/resumen.js?v=202611210322";
-import { registrarToqueFecha, mesDe } from "./src/agenda.js?v=202611210322";
-import { destinoDeEnlace } from "./src/navegacion.js?v=202611210322";
-import { actualizarBarra, estadoBarraInicial, } from "./src/barra-scroll.js?v=202611210322";
-import { ajustarLock, debeBloquearScroll, estiloSheet, debeCerrarPorToqueFuera, esToqueFuera, debeSuprimirClickTrasCierre, } from "./src/sheets.js?v=202611210322";
-import { diaCorto, etiquetaDia, etiquetaDiaCompleta, etiquetaMes, parseFecha, lunesDe, diasDelMes, esFechaValida } from "./src/fechas.js?v=202611210322";
-import { relojDelDispositivo, hoyLocal } from "./src/reloj.js?v=202611210322";
-import { textoCancelacion, destinos, resumenEnvio, linkTexto, } from "./src/whatsapp.js?v=202611210322";
+import { horaClase, } from "./src/clases.js?v=202611210406";
+import { CLAVE_ESTADO, RepositorioClases, almacenLocalStorage } from "./src/repositorio.js?v=202611210406";
+import { alumnosCobrosDemo, datosDemo, fichasDemo } from "./src/demo.js?v=202611210406";
+import { resumenCobros } from "./src/cobros.js?v=202611210406";
+import { resumenHoy, clasesDelDia, clasesDeLaSemana } from "./src/resumen.js?v=202611210406";
+import { registrarToqueFecha, mesDe } from "./src/agenda.js?v=202611210406";
+import { destinoDeEnlace } from "./src/navegacion.js?v=202611210406";
+import { actualizarBarra, estadoBarraInicial, } from "./src/barra-scroll.js?v=202611210406";
+import { ajustarLock, debeBloquearScroll, estiloSheet, debeCerrarPorToqueFuera, esToqueFuera, debeSuprimirClickTrasCierre, } from "./src/sheets.js?v=202611210406";
+import { diaCorto, etiquetaDia, etiquetaDiaCompleta, etiquetaMes, parseFecha, lunesDe, diasDelMes, esFechaValida } from "./src/fechas.js?v=202611210406";
+import { relojDelDispositivo, hoyLocal } from "./src/reloj.js?v=202611210406";
+import { textoCancelacion, destinos, resumenEnvio, linkTexto, } from "./src/whatsapp.js?v=202611210406";
 /* ------------------------------------------------- estado persistente (local) */
 const reloj = relojDelDispositivo();
 /** Quién opera la app hoy: único dueño. En Fase 4 sale de la sesión. */
@@ -1228,7 +1228,7 @@ toast.addEventListener('click', () => {
     }
 });
 /* ------------------------------------------------------- alumnos (fichas) */
-import { GRUPOS_DEMO, construirVista, filtrarYOrdenar, puntoEstadoVence, textoEstadoVence, validarAlumno, } from "./src/alumnos.js?v=202611210322";
+import { construirVista, filtrarYOrdenar, puntoEstadoVence, textoEstadoVence, validarAlumno, } from "./src/alumnos.js?v=202611210406";
 let ordenAlumnos = 'ninguno';
 const filtrosAlumnos = new Set();
 let busquedaAlumno = '';
@@ -1329,22 +1329,17 @@ $('#buscar-alumno')?.addEventListener('input', (e) => {
 /** Diálogo de ficha: mismo sheet v5 de Cobros, sin rediseñar. */
 function abrirFicha(ficha, origen) {
     const esNueva = ficha === null;
-    const grupos = GRUPOS_DEMO;
     const contenido = `<div class="cobros-panel-resumen">
     <div><p class="al-nombre">${esNueva ? 'Nuevo alumno' : esc(ficha.nombre)}</p>
     <p class="al-sub">${esNueva ? 'Datos sintéticos de la demo' : `Alta ${esc(ficha.fechaAlta)}`}</p></div>
     <div class="cobros-panel-dato">${esNueva ? '' : `<span class="ficha-id">ID ${esc(ficha.id)}</span>`}</div></div>
-    <p class="cobros-panel-nota">${esNueva ? 'Cargá una ficha para probar el alta. No envía nada ni crea grupos.' : 'Podés corregir nombre, grupo y modalidad. La identidad y el alta no se cambian.'}</p>
+    <p class="cobros-panel-nota">${esNueva ? 'Cargá una ficha para probar el alta. No envía nada ni crea grupos.' : 'Podés corregir nombre y modalidad. La identidad y el alta no se cambian.'}</p>
     <form novalidate>
       <label class="campo"><span>Nombre *</span><input name="nombre" required maxlength="80" autocomplete="off" value="${esNueva ? '' : esc(ficha.nombre)}" placeholder="Nombre y apellido"></label>
       <p class="campo"><span>Modalidad *</span></p>
       <div class="ficha-grupo-opciones" role="group" aria-label="Modalidad">
         <button type="button" class="ficha-grupo" data-modalidad="mensual" aria-pressed="false">Mensual</button>
         <button type="button" class="ficha-grupo" data-modalidad="individual" aria-pressed="false">Individual</button>
-      </div>
-      <p class="sheet-paso">Grupo existente *</p>
-      <div class="ficha-grupo-opciones" role="group" aria-label="Grupo existente">
-        ${grupos.map((g) => `<button type="button" class="ficha-grupo" data-grupo="${esc(g)}" aria-pressed="false">${esc(g)}</button>`).join('')}
       </div>
       <div class="ficha-opcional">
         <p>Contacto (opcional, apagado por defecto)</p>
@@ -1356,21 +1351,14 @@ function abrirFicha(ficha, origen) {
     </form>`;
     const dialogo = abrirDialogoCobros(esNueva ? 'Nuevo alumno' : 'Editar ficha', 'Alumnos', 'alumnos', contenido, origen);
     let modalidad = ficha?.modalidad ?? 'mensual';
-    let grupo = ficha?.grupo ?? grupos[0];
     const pintarSeleccion = () => {
         dialogo.querySelectorAll('[data-modalidad]').forEach((b) => {
             const on = b.dataset.modalidad === modalidad;
             b.classList.toggle('activo', on);
             b.setAttribute('aria-pressed', String(on));
         });
-        dialogo.querySelectorAll('[data-grupo]').forEach((b) => {
-            const on = b.dataset.grupo === grupo;
-            b.classList.toggle('activo', on);
-            b.setAttribute('aria-pressed', String(on));
-        });
     };
     dialogo.querySelectorAll('[data-modalidad]').forEach((b) => b.addEventListener('click', () => { modalidad = b.dataset.modalidad; pintarSeleccion(); }));
-    dialogo.querySelectorAll('[data-grupo]').forEach((b) => b.addEventListener('click', () => { grupo = b.dataset.grupo; pintarSeleccion(); }));
     pintarSeleccion();
     const form = dialogo.querySelector('form');
     const error = form.querySelector('[role="alert"]');
@@ -1383,7 +1371,6 @@ function abrirFicha(ficha, origen) {
         const input = {
             nombre: String(datos.get('nombre') ?? ''),
             modalidad,
-            grupo,
             contacto: String(datos.get('contacto') ?? ''),
         };
         const errores = validarAlumno(input);

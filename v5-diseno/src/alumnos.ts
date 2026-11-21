@@ -19,7 +19,7 @@ export type AlumnoFicha = {
   id: string;
   nombre: string;
   modalidad: Modalidad;
-  /** Grupo existente (texto libre elegido en la ficha). */
+  /** Grupo heredado de datos demo/guardados; la UI ya no lo pide ni lo edita. */
   grupo: string;
   /** Día ancla del ciclo para Cobros (1..31); default 21 si no se da. */
   ancla: number;
@@ -33,11 +33,14 @@ export type AlumnoFicha = {
   contacto: string;
 };
 
-/** Datos que la ficha permite cargar/editar (sin ID, sin fecha de alta). */
+/** Datos que la ficha permite cargar/editar (sin ID, sin fecha de alta).
+ *  El formulario sólo pide Nombre y Modalidad: no hay grupos al inicio, la
+ *  clienta cobra por mes o por clase individual. `grupo` queda como dato
+ *  heredado opcional (sólo para no romper fichas/datos demo ya guardados). */
 export type AlumnoFichaInput = {
   nombre: string;
   modalidad: Modalidad;
-  grupo: string;
+  grupo?: string;
   ancla?: number;
   contacto?: string;
 };
@@ -76,7 +79,6 @@ export function validarAlumno(input: AlumnoFichaInput): Record<string, string> {
   if (nombre.length < 2) errores.nombre = 'Ingresá el nombre del alumno';
   else if (!/^[\p{L}\p{M}][\p{L}\p{M} '\-.]*$/u.test(nombre)) errores.nombre = 'El nombre solo admite letras, espacios, apóstrofos, guiones y puntos';
   if (input.modalidad !== 'mensual' && input.modalidad !== 'individual') errores.modalidad = 'Elegí una modalidad';
-  if (!GRUPOS_DEMO.includes(input.grupo as (typeof GRUPOS_DEMO)[number])) errores.grupo = 'Elegí un grupo existente';
   if (input.ancla !== undefined && (!Number.isInteger(input.ancla) || input.ancla < 1 || input.ancla > 31)) {
     errores.ancla = 'El día ancla debe estar entre 1 y 31';
   }
@@ -154,7 +156,9 @@ export function editarAlumno(alumno: AlumnoFicha, input: AlumnoFichaInput): Alum
     ...alumno,
     nombre: texto(input.nombre),
     modalidad: input.modalidad,
-    grupo: texto(input.grupo),
+    // El formulario ya no expone grupo: si el input no lo trae, se conserva el
+    // grupo vigente de la ficha (dato demo/heredado, no se edita desde la UI).
+    grupo: input.grupo === undefined ? alumno.grupo : texto(input.grupo),
     ancla: input.ancla ?? alumno.ancla,
     contacto: input.contacto === undefined ? alumno.contacto : texto(input.contacto),
   };

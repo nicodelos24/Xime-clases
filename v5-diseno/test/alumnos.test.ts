@@ -28,16 +28,16 @@ function abrir(almacen: Almacen, ahora: InstanteMs = JUEVES_10) {
   return { reloj, repo: new RepositorioClases(almacen, reloj, datosDemo, fichasDemo) };
 }
 
-const Input: AlumnoFichaInput = { nombre: 'Nora Pérez', modalidad: 'mensual', grupo: 'Martes A' };
+const Input: AlumnoFichaInput = { nombre: 'Nora Pérez', modalidad: 'mensual' };
 
 /* ------------------------------------------------------------- validación */
 
-test('validación: nombre corto, modalidad y grupo existente son obligatorios', () => {
+test('validación: nombre corto y modalidad son obligatorios; grupo ya no se exige', () => {
   assert.ok(validarAlumno({ ...Input, nombre: 'N' }).nombre, 'nombre corto se rechaza');
   assert.ok(validarAlumno({ ...Input, nombre: '   ' }).nombre, 'nombre vacío se rechaza');
   assert.ok(validarAlumno({ ...Input, modalidad: 'otra' as AlumnoFichaInput['modalidad'] }).modalidad);
-  assert.ok(validarAlumno({ ...Input, grupo: 'Grupo Nuevo Inventado' }).grupo, 'grupo inexistente se rechaza');
-  assert.deepEqual(validarAlumno(Input), {}, 'input válido sin errores');
+  assert.deepEqual(validarAlumno({ ...Input, grupo: 'Grupo Nuevo Inventado' }), {}, 'grupo ya no se valida');
+  assert.deepEqual(validarAlumno(Input), {}, 'input válido sin errores, sin grupo');
 });
 
 test('validación: acepta acentos, apóstrofos y guiones; ancla 1..31; contacto opcional', () => {
@@ -99,11 +99,11 @@ test('no se puede persistir: el repositorio lanza y no confirma el alta', () => 
 
 /* -------------------------------------------------------------- edición */
 
-test('edición: conserva ID, alta, activo y color; cambia nombre/grupo/modalidad', () => {
+test('edición: conserva ID, alta, activo y color; cambia nombre/modalidad y preserva grupo', () => {
   const { repo } = abrir(almacenMemoria());
-  const creada = repo.crearAlumno(Input);
+  const creada = repo.crearAlumno({ ...Input, grupo: 'Martes A' });
   const editada = repo.editarAlumno(creada.id, {
-    nombre: 'Nora Pérez Ruiz', modalidad: 'individual', grupo: 'Viernes', ancla: 8, contacto: '099 000 111',
+    nombre: 'Nora Pérez Ruiz', modalidad: 'individual', ancla: 8, contacto: '099 000 111',
   });
   assert.equal(editada.id, creada.id, 'ID estable');
   assert.equal(editada.fechaAlta, creada.fechaAlta, 'alta congelada');
@@ -111,7 +111,7 @@ test('edición: conserva ID, alta, activo y color; cambia nombre/grupo/modalidad
   assert.equal(editada.color, creada.color);
   assert.equal(editada.nombre, 'Nora Pérez Ruiz');
   assert.equal(editada.modalidad, 'individual');
-  assert.equal(editada.grupo, 'Viernes');
+  assert.equal(editada.grupo, 'Martes A', 'grupo heredado se conserva, la UI no lo edita');
   assert.equal(editada.ancla, 8);
   assert.equal(editada.contacto, '099 000 111');
 });
@@ -120,7 +120,7 @@ test('edición: rechaza datos inválidos sin tocar la ficha original', () => {
   const { repo } = abrir(almacenMemoria());
   const creada = repo.crearAlumno(Input);
   assert.throws(() => repo.editarAlumno(creada.id, { ...Input, nombre: '' }), /nombre/);
-  assert.throws(() => repo.editarAlumno(creada.id, { ...Input, grupo: 'Otro' }), /grupo/);
+  assert.deepEqual(validarAlumno({ ...Input, grupo: 'Otro' }), {}, 'grupo arbitrario ya no se rechaza');
   assert.equal(repo.listarAlumnos().find((a) => a.id === creada.id)!.nombre, 'Nora Pérez');
   assert.throws(() => repo.editarAlumno('no-existe', Input), /No se encontró/);
 });
@@ -173,15 +173,14 @@ test('preservación A/B: migrar v1→v2 conserva clases, pagos y anulaciones', (
   assert.equal((trasMigrar.clases as unknown[]).length, clasesV1.length, 'clases no reescritas');
 });
 
-test('demo: todas las fichas sembradas tienen grupo editable y pasan validación', () => {
+test('demo: todas las fichas sembradas pasan validación con el formulario sin grupo', () => {
   const { repo } = abrir(almacenMemoria());
   for (const f of repo.listarAlumnos()) {
     assert.deepEqual(
-      validarAlumno({ nombre: f.nombre, modalidad: f.modalidad, grupo: f.grupo, contacto: f.contacto }),
+      validarAlumno({ nombre: f.nombre, modalidad: f.modalidad, contacto: f.contacto }),
       {},
-      `ficha ${f.id} con grupo "${f.grupo}" debe ser editable`,
+      `ficha ${f.id} debe ser editable sin pasar grupo`,
     );
-    assert.ok(!f.grupo.startsWith('Grupo '), `grupo llano, sin prefijo: ${f.grupo}`);
   }
 });
 
@@ -198,7 +197,7 @@ test('coherencia por ID: editar el nombre no rompe el vínculo del pago', () => 
   const almacen = almacenMemoria();
   const { repo } = abrir(almacen);
   repo.registrarPago({ id: 'p-nombre', alumnoId: 'a0', periodo: '2026-11', montoUYU: 6500, quien: 'dueño' });
-  repo.editarAlumno('a0', { nombre: 'Carla Torres', modalidad: 'mensual', grupo: 'Martes A' });
+  repo.editarAlumno('a0', { nombre: 'Carla Torres', modalidad: 'mensual' });
   const { repo: reabierta } = abrir(almacen);
   const pago = reabierta.listarPagos().find((p) => p.id === 'p-nombre')!;
   const nombreVigente = reabierta.listarAlumnos().find((a) => a.id === pago.alumnoId)?.nombre;
@@ -210,7 +209,7 @@ test('no resembrar sobre datos guardados: editar y recargar conserva el cambio',
   const almacen = almacenMemoria();
   const { repo } = abrir(almacen);
   const primera = repo.listarAlumnos()[0]!;
-  repo.editarAlumno(primera.id, { nombre: 'Nombre Cambiado', modalidad: 'individual', grupo: 'Lunes' });
+  repo.editarAlumno(primera.id, { nombre: 'Nombre Cambiado', modalidad: 'individual' });
   const total = repo.listarAlumnos().length;
   const { repo: reabierta } = abrir(almacen);
   assert.equal(reabierta.listarAlumnos().length, total, 'no se duplicaron fichas');
@@ -240,10 +239,10 @@ test('REGRESIÓN ancla: guardar la ficha a2 sin tocar nada conserva su ancla 26 
   const a2 = repo.listarAlumnos().find((a) => a.id === 'a2')!;
   assert.equal(a2.ancla, 26, 'fixture a2 arranca con ancla 26');
 
-  // Exactamente lo que envía el formulario al editar: nombre, modalidad, grupo y
-  // contacto (el formulario NO expone campo de ancla, así que no lo incluye).
+  // Exactamente lo que envía el formulario al editar: nombre, modalidad y
+  // contacto (ni ancla ni grupo: el formulario NO los expone).
   const inputComoLaUI = {
-    nombre: a2.nombre, modalidad: a2.modalidad, grupo: a2.grupo, contacto: a2.contacto,
+    nombre: a2.nombre, modalidad: a2.modalidad, contacto: a2.contacto,
   };
   const editada = repo.editarAlumno('a2', inputComoLaUI);
   assert.equal(editada.ancla, 26, 'el default 21 solo aplica al crear, no al editar');
@@ -258,13 +257,13 @@ test('REGRESIÓN ancla: guardar la ficha a2 sin tocar nada conserva su ancla 26 
 test('REGRESIÓN ancla: los defaults (21 / contacto vacío) se aplican SOLO al crear', () => {
   const almacen = almacenMemoria();
   const { repo } = abrir(almacen);
-  const creada = repo.crearAlumno({ nombre: 'Nueva Ficha', modalidad: 'mensual', grupo: 'Lunes' });
+  const creada = repo.crearAlumno({ nombre: 'Nueva Ficha', modalidad: 'mensual' });
   assert.equal(creada.ancla, 21, 'alta sin ancla usa el default');
   assert.equal(creada.contacto, '', 'alta sin contacto usa el default');
 
   // Una ficha con datos opcionales NO defaults se conservan al editar.
-  const otra = repo.crearAlumno({ nombre: 'Con Datos', modalidad: 'individual', grupo: 'Viernes', ancla: 7, contacto: '099 123' });
-  const editada = repo.editarAlumno(otra.id, { nombre: 'Con Datos Edit', modalidad: 'individual', grupo: 'Viernes' });
+  const otra = repo.crearAlumno({ nombre: 'Con Datos', modalidad: 'individual', ancla: 7, contacto: '099 123' });
+  const editada = repo.editarAlumno(otra.id, { nombre: 'Con Datos Edit', modalidad: 'individual' });
   assert.equal(editada.ancla, 7, 'ancla existente se conserva si el input no la trae');
   assert.equal(editada.contacto, '099 123', 'contacto existente se conserva si el input no lo trae');
 });
@@ -317,7 +316,7 @@ test('REGRESIÓN al día: texto, punto y chip son coherentes para los cuatro est
 test('REGRESIÓN al día: alta nueva sin deuda aparece "al día" y sobrevive recarga', () => {
   const almacen = almacenMemoria();
   const { repo } = abrir(almacen);
-  const creada = repo.crearAlumno({ nombre: 'Sin Deuda', modalidad: 'mensual', grupo: 'Lunes' });
+  const creada = repo.crearAlumno({ nombre: 'Sin Deuda', modalidad: 'mensual' });
   const mapa = new Map<string, number>(); // nadie con deuda: la nueva no tiene tarifa en Cobros
   const fila = construirVista(repo.listarAlumnos(), mapa, HOY).find((f) => f.id === creada.id)!;
   assert.equal(fila.estadoVence, 'aldia');
