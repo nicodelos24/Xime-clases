@@ -54,3 +54,13 @@ export const OPCIONES_CAMBIOS_SIN_GUARDAR = [
  * descarta los cambios. La UI (propuesta.ts) cierra el aviso sin tocar el sheet.
  */
 export const DECISION_ESCAPE_AVISO = 'seguir';
+export const UMBRAL_MOVIMIENTO_TOQUE = 10; // px: por encima es arrastre, no tap
+export function debeCerrarPorToqueFuera(inicio, fin, cancelado, dentroDelSheet, umbral = UMBRAL_MOVIMIENTO_TOQUE) {
+    if (cancelado || !inicio || !fin)
+        return false;
+    if (dentroDelSheet(inicio) || dentroDelSheet(fin))
+        return false;
+    const dx = fin.x - inicio.x;
+    const dy = fin.y - inicio.y;
+    return Math.hypot(dx, dy) <= umbral;
+}

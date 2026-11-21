@@ -1,18 +1,18 @@
 // Clases v5 · navegación + funcionamiento (auto-marcado, Cancelar clase, WhatsApp)
 // La estética vive en tokens.css/propuesta.css; acá solo se cambian estados,
 // textos y el flujo de cancelación. Sin emoji: solo SVG de icons.js.
-import { horaClase, } from './src/clases.js?v=202611210210';
-import { CLAVE_ESTADO, RepositorioClases, almacenLocalStorage } from './src/repositorio.js?v=202611210210';
-import { alumnosCobrosDemo, datosDemo, fichasDemo } from './src/demo.js?v=202611210210';
-import { resumenCobros } from './src/cobros.js?v=202611210210';
-import { resumenHoy, clasesDelDia, clasesDeLaSemana } from './src/resumen.js?v=202611210210';
-import { registrarToqueFecha, mesDe } from './src/agenda.js?v=202611210210';
-import { destinoDeEnlace } from './src/navegacion.js?v=202611210210';
-import { actualizarBarra, estadoBarraInicial, } from './src/barra-scroll.js?v=202611210210';
-import { ajustarLock, debeBloquearScroll, estiloSheet, } from './src/sheets.js?v=202611210210';
-import { diaCorto, etiquetaDia, etiquetaDiaCompleta, etiquetaMes, parseFecha, lunesDe, diasDelMes, esFechaValida } from './src/fechas.js?v=202611210210';
-import { relojDelDispositivo, hoyLocal } from './src/reloj.js?v=202611210210';
-import { textoCancelacion, destinos, resumenEnvio, linkTexto, } from './src/whatsapp.js?v=202611210210';
+import { horaClase, } from './src/clases.js?v=202611210232';
+import { CLAVE_ESTADO, RepositorioClases, almacenLocalStorage } from './src/repositorio.js?v=202611210232';
+import { alumnosCobrosDemo, datosDemo, fichasDemo } from './src/demo.js?v=202611210232';
+import { resumenCobros } from './src/cobros.js?v=202611210232';
+import { resumenHoy, clasesDelDia, clasesDeLaSemana } from './src/resumen.js?v=202611210232';
+import { registrarToqueFecha, mesDe } from './src/agenda.js?v=202611210232';
+import { destinoDeEnlace } from './src/navegacion.js?v=202611210232';
+import { actualizarBarra, estadoBarraInicial, } from './src/barra-scroll.js?v=202611210232';
+import { ajustarLock, debeBloquearScroll, estiloSheet, debeCerrarPorToqueFuera, } from './src/sheets.js?v=202611210232';
+import { diaCorto, etiquetaDia, etiquetaDiaCompleta, etiquetaMes, parseFecha, lunesDe, diasDelMes, esFechaValida } from './src/fechas.js?v=202611210232';
+import { relojDelDispositivo, hoyLocal } from './src/reloj.js?v=202611210232';
+import { textoCancelacion, destinos, resumenEnvio, linkTexto, } from './src/whatsapp.js?v=202611210232';
 /* ------------------------------------------------- estado persistente (local) */
 const reloj = relojDelDispositivo();
 /** Quién opera la app hoy: único dueño. En Fase 4 sale de la sesión. */
@@ -1228,7 +1228,7 @@ toast.addEventListener('click', () => {
     }
 });
 /* ------------------------------------------------------- alumnos (fichas) */
-import { GRUPOS_DEMO, construirVista, filtrarYOrdenar, puntoEstadoVence, textoEstadoVence, validarAlumno, } from './src/alumnos.js?v=202611210210';
+import { GRUPOS_DEMO, construirVista, filtrarYOrdenar, puntoEstadoVence, textoEstadoVence, validarAlumno, } from './src/alumnos.js?v=202611210232';
 let ordenAlumnos = 'ninguno';
 const filtrosAlumnos = new Set();
 let busquedaAlumno = '';
@@ -1599,23 +1599,8 @@ function cerrarSheetsPorNavegacion() {
     $$('.sheet:not(.cerrando):not(.cobros-panel)').forEach((el) => cerrarCuadro(el));
     $$('dialog.sheet[open]').forEach((el) => cerrarDialogoConAviso(el));
 }
-/** Cierra el sheet cuando el dedo toca fuera de él (o Escape en el teclado). */
-document.addEventListener('pointerdown', (e) => {
-    const destino = e.target;
-    if (!(destino instanceof Element))
-        return;
-    if (destino.closest('.confirmar-cambios'))
-        return; // el aviso tiene sus botones
-    const abierto = document.querySelector('.sheet:not(.cerrando)');
-    if (!abierto)
-        return;
-    const r = abierto.getBoundingClientRect();
-    const dentroPorCoordenadas = e.clientX >= r.left && e.clientX <= r.right
-        && e.clientY >= r.top && e.clientY <= r.bottom;
-    // El toque puede caer en html/body (por encima del ::backdrop): comparar
-    // también por coordenadas evita cerrar al tocar dentro del sheet.
-    if (abierto.contains(destino) || dentroPorCoordenadas)
-        return;
+/** Ejecuta el cierre de un sheet por toque fuera (mismo camino que X/Volver). */
+function cerrarSheetPorFuera(abierto) {
     if (abierto.classList.contains('cobros-panel')) {
         cerrarDialogoConAviso(abierto);
         return;
@@ -1632,6 +1617,55 @@ document.addEventListener('pointerdown', (e) => {
     }
     else
         cerrarCuadro(abierto);
+}
+/**
+ * Cierre por toque fuera. NO se decide en `pointerdown`: eso cerraba apenas
+ * apoyar el dedo fuera, con lo que un arrastre para scrollear cerraba el sheet.
+ * Guardamos el inicio y sólo cerramos en `pointerup` si el mismo puntero
+ * terminó fuera, sin movimiento de arrastre y sin cancelación (Gino d45758fa).
+ */
+let toqueFueraInicio = null;
+function puntoDentroDelSheet(abierto) {
+    return (p) => {
+        const r = abierto.getBoundingClientRect();
+        return p.x >= r.left && p.x <= r.right && p.y >= r.top && p.y <= r.bottom;
+    };
+}
+document.addEventListener('pointerdown', (e) => {
+    const destino = e.target;
+    if (!(destino instanceof Element))
+        return;
+    if (destino.closest('.confirmar-cambios'))
+        return; // el aviso tiene sus botones
+    const abierto = document.querySelector('.sheet:not(.cerrando)');
+    if (!abierto)
+        return;
+    const punto = { x: e.clientX, y: e.clientY };
+    // El toque puede caer en html/body (por encima del ::backdrop): comparar
+    // también por coordenadas evita registrar como "fuera" un toque dentro.
+    if (abierto.contains(destino) || puntoDentroDelSheet(abierto)(punto)) {
+        toqueFueraInicio = null;
+        return;
+    }
+    toqueFueraInicio = { pointerId: e.pointerId, punto };
+}, true);
+document.addEventListener('pointerup', (e) => {
+    const inicio = toqueFueraInicio;
+    toqueFueraInicio = null;
+    if (!inicio || inicio.pointerId !== e.pointerId)
+        return;
+    const abierto = document.querySelector('.sheet:not(.cerrando)');
+    if (!abierto)
+        return;
+    const fin = { x: e.clientX, y: e.clientY };
+    if (debeCerrarPorToqueFuera(inicio.punto, fin, false, puntoDentroDelSheet(abierto))) {
+        cerrarSheetPorFuera(abierto);
+    }
+}, true);
+// El sistema tomó el gesto (scroll, pull-to-refresh…): no es un tap de cierre.
+document.addEventListener('pointercancel', (e) => {
+    if (toqueFueraInicio?.pointerId === e.pointerId)
+        toqueFueraInicio = null;
 }, true);
 // Escape: los <dialog> nativos lo manejan con su propio `cancel` (enganchado
 // en abrirDialogoCobros); los sheets <div> los atiende acá. Si hay un aviso de

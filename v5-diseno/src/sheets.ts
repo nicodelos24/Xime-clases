@@ -64,3 +64,30 @@ export const OPCIONES_CAMBIOS_SIN_GUARDAR: readonly DecisionCierre[] = [
  * descarta los cambios. La UI (propuesta.ts) cierra el aviso sin tocar el sheet.
  */
 export const DECISION_ESCAPE_AVISO: DecisionCierre = 'seguir';
+
+/**
+ * Un gesto de cierre por toque fuera sólo cuenta cuando termina un puntero
+ * válido que empezó y terminó fuera del sheet, casi sin movimiento y sin
+ * cancelación. Así un arrastre (scrollear la página) no cierra el cuadro:
+ * antes se cerraba en `pointerdown`, apenas apoyaba el dedo fuera.
+ *
+ * `inicio`/`fin` son las coordenadas del puntero; `cancelado` marca un
+ * `pointercancel` (el sistema tomó el gesto, p. ej. scroll/pull-to-refresh).
+ */
+export interface PuntoToque { x: number; y: number }
+
+export const UMBRAL_MOVIMIENTO_TOQUE = 10; // px: por encima es arrastre, no tap
+
+export function debeCerrarPorToqueFuera(
+  inicio: PuntoToque | null,
+  fin: PuntoToque | null,
+  cancelado: boolean,
+  dentroDelSheet: (p: PuntoToque) => boolean,
+  umbral = UMBRAL_MOVIMIENTO_TOQUE,
+): boolean {
+  if (cancelado || !inicio || !fin) return false;
+  if (dentroDelSheet(inicio) || dentroDelSheet(fin)) return false;
+  const dx = fin.x - inicio.x;
+  const dy = fin.y - inicio.y;
+  return Math.hypot(dx, dy) <= umbral;
+}

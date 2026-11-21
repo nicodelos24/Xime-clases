@@ -15,7 +15,7 @@ import {
   actualizarBarra, estadoBarraInicial, type EstadoBarra,
 } from './src/barra-scroll.ts';
 import {
-  ajustarLock, debeBloquearScroll, estiloSheet,
+  ajustarLock, debeBloquearScroll, estiloSheet, debeCerrarPorToqueFuera, type PuntoToque,
 } from './src/sheets.ts';
 import { diaCorto, etiquetaDia, etiquetaDiaCompleta, etiquetaMes, sumarDias, parseFecha, lunesDe, diasDelMes, esFechaValida } from './src/fechas.ts';
 import { relojDelDispositivo, hoyLocal, type Reloj } from './src/reloj.ts';
@@ -1602,19 +1602,8 @@ function cerrarSheetsPorNavegacion(): void {
   $$('dialog.sheet[open]').forEach((el) => cerrarDialogoConAviso(el as HTMLDialogElement));
 }
 
-/** Cierra el sheet cuando el dedo toca fuera de él (o Escape en el teclado). */
-document.addEventListener('pointerdown', (e) => {
-  const destino = e.target;
-  if (!(destino instanceof Element)) return;
-  if (destino.closest('.confirmar-cambios')) return; // el aviso tiene sus botones
-  const abierto = document.querySelector('.sheet:not(.cerrando)') as HTMLElement | null;
-  if (!abierto) return;
-  const r = abierto.getBoundingClientRect();
-  const dentroPorCoordenadas = e.clientX >= r.left && e.clientX <= r.right
-    && e.clientY >= r.top && e.clientY <= r.bottom;
-  // El toque puede caer en html/body (por encima del ::backdrop): comparar
-  // también por coordenadas evita cerrar al tocar dentro del sheet.
-  if (abierto.contains(destino) || dentroPorCoordenadas) return;
+/** Ejecuta el cierre de un sheet por toque fuera (mismo camino que X/Volver). */
+function cerrarSheetPorFuera(abierto: HTMLElement): void {
   if (abierto.classList.contains('cobros-panel')) {
     cerrarDialogoConAviso(abierto as HTMLDialogElement);
     return;
@@ -1626,6 +1615,54 @@ document.addEventListener('pointerdown', (e) => {
     if (form) cerrarCuadroConCambios(abierto, () => form.requestSubmit());
     else cerrarCuadro(abierto);
   } else cerrarCuadro(abierto);
+}
+
+/**
+ * Cierre por toque fuera. NO se decide en `pointerdown`: eso cerraba apenas
+ * apoyar el dedo fuera, con lo que un arrastre para scrollear cerraba el sheet.
+ * Guardamos el inicio y sólo cerramos en `pointerup` si el mismo puntero
+ * terminó fuera, sin movimiento de arrastre y sin cancelación (Gino d45758fa).
+ */
+let toqueFueraInicio: { pointerId: number; punto: PuntoToque } | null = null;
+
+function puntoDentroDelSheet(abierto: HTMLElement): (p: PuntoToque) => boolean {
+  return (p) => {
+    const r = abierto.getBoundingClientRect();
+    return p.x >= r.left && p.x <= r.right && p.y >= r.top && p.y <= r.bottom;
+  };
+}
+
+document.addEventListener('pointerdown', (e) => {
+  const destino = e.target;
+  if (!(destino instanceof Element)) return;
+  if (destino.closest('.confirmar-cambios')) return; // el aviso tiene sus botones
+  const abierto = document.querySelector('.sheet:not(.cerrando)') as HTMLElement | null;
+  if (!abierto) return;
+  const punto: PuntoToque = { x: e.clientX, y: e.clientY };
+  // El toque puede caer en html/body (por encima del ::backdrop): comparar
+  // también por coordenadas evita registrar como "fuera" un toque dentro.
+  if (abierto.contains(destino) || puntoDentroDelSheet(abierto)(punto)) {
+    toqueFueraInicio = null;
+    return;
+  }
+  toqueFueraInicio = { pointerId: e.pointerId, punto };
+}, true);
+
+document.addEventListener('pointerup', (e) => {
+  const inicio = toqueFueraInicio;
+  toqueFueraInicio = null;
+  if (!inicio || inicio.pointerId !== e.pointerId) return;
+  const abierto = document.querySelector('.sheet:not(.cerrando)') as HTMLElement | null;
+  if (!abierto) return;
+  const fin: PuntoToque = { x: e.clientX, y: e.clientY };
+  if (debeCerrarPorToqueFuera(inicio.punto, fin, false, puntoDentroDelSheet(abierto))) {
+    cerrarSheetPorFuera(abierto);
+  }
+}, true);
+
+// El sistema tomó el gesto (scroll, pull-to-refresh…): no es un tap de cierre.
+document.addEventListener('pointercancel', (e) => {
+  if (toqueFueraInicio?.pointerId === e.pointerId) toqueFueraInicio = null;
 }, true);
 
 // Escape: los <dialog> nativos lo manejan con su propio `cancel` (enganchado
