@@ -6,7 +6,7 @@ import {
   MARGEN_SHEET, alturaMaximaSheet, estiloSheet, ajustarLock, debeBloquearScroll,
   OPCIONES_CAMBIOS_SIN_GUARDAR, DECISION_ESCAPE_AVISO,
   debeCerrarPorToqueFuera, UMBRAL_MOVIMIENTO_TOQUE, esToqueFuera,
-  type PuntoToque, type RectSheet,
+  debeSuprimirClickTrasCierre, type PuntoToque, type RectSheet,
 } from '../src/sheets.ts';
 
 test('el sheet cabe en el viewport y deja ver la página arriba y la cápsula abajo', () => {
@@ -116,4 +116,16 @@ test('sin coordenadas útiles pero target el backdrop: fuera', () => {
 test('decisión por coordenadas en los bordes del sheet', () => {
   assert.equal(esToqueFuera({ x: 0, y: 477 }, rectFicha, false), false); // borde superior = dentro
   assert.equal(esToqueFuera({ x: 40, y: 476 }, rectFicha, false), true);  // 1px arriba = fuera
+});
+
+// Regresión (subhilo th_e10d071c35a74eb0): el tap de cierre sobre el backdrop
+// generaba un click sintético que atravesaba al dialog ya cerrado y volvía a
+// abrir el sheet de Cobros al caer sobre un cobro-fila. Sólo se suprime el
+// primer click tras el cierre; los clicks normales (con flag limpio) pasan.
+test('se suprime el click sintético posterior al cierre por tap fuera', () => {
+  assert.equal(debeSuprimirClickTrasCierre(true), true);
+});
+
+test('un click normal (sin cierre previo) no se suprime', () => {
+  assert.equal(debeSuprimirClickTrasCierre(false), false);
 });

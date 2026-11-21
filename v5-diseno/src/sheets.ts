@@ -96,6 +96,20 @@ export function debeCerrarPorToqueFuera(
   return Math.hypot(dx, dy) <= umbral;
 }
 
+/**
+ * Un tap de cierre sobre el ::backdrop de un <dialog> modal genera, justo
+ * después del `pointerup` que lo cierra, un `click` sintético. Como el dialog
+ * ya se cerró, ese click ya no tiene al backdrop como target y "atraviesa" a
+ * la UI de debajo: en Cobros caía sobre un `cobro-fila` y volvía a abrir el
+ * sheet (Gino: taps en y≈500/540 no cerraban 3/6). Hay que truncar ESE click.
+ *
+ * La decisión es pura: sólo suprime el primer click después de un cierre por
+ * fuera, y nunca uno que ya venía marcado como consumido.
+ */
+export function debeSuprimirClickTrasCierre(pendiente: boolean): boolean {
+  return pendiente;
+}
+
 /** Rectángulo simple para decidir dentro/fuera sin hit testing del DOM. */
 export interface RectSheet { left: number; right: number; top: number; bottom: number }
 

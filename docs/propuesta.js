@@ -1,18 +1,18 @@
 // Clases v5 · navegación + funcionamiento (auto-marcado, Cancelar clase, WhatsApp)
 // La estética vive en tokens.css/propuesta.css; acá solo se cambian estados,
 // textos y el flujo de cancelación. Sin emoji: solo SVG de icons.js.
-import { horaClase, } from "./src/clases.js?v=202611210258";
-import { CLAVE_ESTADO, RepositorioClases, almacenLocalStorage } from "./src/repositorio.js?v=202611210258";
-import { alumnosCobrosDemo, datosDemo, fichasDemo } from "./src/demo.js?v=202611210258";
-import { resumenCobros } from "./src/cobros.js?v=202611210258";
-import { resumenHoy, clasesDelDia, clasesDeLaSemana } from "./src/resumen.js?v=202611210258";
-import { registrarToqueFecha, mesDe } from "./src/agenda.js?v=202611210258";
-import { destinoDeEnlace } from "./src/navegacion.js?v=202611210258";
-import { actualizarBarra, estadoBarraInicial, } from "./src/barra-scroll.js?v=202611210258";
-import { ajustarLock, debeBloquearScroll, estiloSheet, debeCerrarPorToqueFuera, esToqueFuera, } from "./src/sheets.js?v=202611210258";
-import { diaCorto, etiquetaDia, etiquetaDiaCompleta, etiquetaMes, parseFecha, lunesDe, diasDelMes, esFechaValida } from "./src/fechas.js?v=202611210258";
-import { relojDelDispositivo, hoyLocal } from "./src/reloj.js?v=202611210258";
-import { textoCancelacion, destinos, resumenEnvio, linkTexto, } from "./src/whatsapp.js?v=202611210258";
+import { horaClase, } from "./src/clases.js?v=202611210322";
+import { CLAVE_ESTADO, RepositorioClases, almacenLocalStorage } from "./src/repositorio.js?v=202611210322";
+import { alumnosCobrosDemo, datosDemo, fichasDemo } from "./src/demo.js?v=202611210322";
+import { resumenCobros } from "./src/cobros.js?v=202611210322";
+import { resumenHoy, clasesDelDia, clasesDeLaSemana } from "./src/resumen.js?v=202611210322";
+import { registrarToqueFecha, mesDe } from "./src/agenda.js?v=202611210322";
+import { destinoDeEnlace } from "./src/navegacion.js?v=202611210322";
+import { actualizarBarra, estadoBarraInicial, } from "./src/barra-scroll.js?v=202611210322";
+import { ajustarLock, debeBloquearScroll, estiloSheet, debeCerrarPorToqueFuera, esToqueFuera, debeSuprimirClickTrasCierre, } from "./src/sheets.js?v=202611210322";
+import { diaCorto, etiquetaDia, etiquetaDiaCompleta, etiquetaMes, parseFecha, lunesDe, diasDelMes, esFechaValida } from "./src/fechas.js?v=202611210322";
+import { relojDelDispositivo, hoyLocal } from "./src/reloj.js?v=202611210322";
+import { textoCancelacion, destinos, resumenEnvio, linkTexto, } from "./src/whatsapp.js?v=202611210322";
 /* ------------------------------------------------- estado persistente (local) */
 const reloj = relojDelDispositivo();
 /** Quién opera la app hoy: único dueño. En Fase 4 sale de la sesión. */
@@ -1228,7 +1228,7 @@ toast.addEventListener('click', () => {
     }
 });
 /* ------------------------------------------------------- alumnos (fichas) */
-import { GRUPOS_DEMO, construirVista, filtrarYOrdenar, puntoEstadoVence, textoEstadoVence, validarAlumno, } from "./src/alumnos.js?v=202611210258";
+import { GRUPOS_DEMO, construirVista, filtrarYOrdenar, puntoEstadoVence, textoEstadoVence, validarAlumno, } from "./src/alumnos.js?v=202611210322";
 let ordenAlumnos = 'ninguno';
 const filtrosAlumnos = new Set();
 let busquedaAlumno = '';
@@ -1625,6 +1625,12 @@ function cerrarSheetPorFuera(abierto) {
  * terminó fuera, sin movimiento de arrastre y sin cancelación (Gino d45758fa).
  */
 let toqueFueraInicio = null;
+// Tras cerrar por tap fuera, el navegador despacha un `click` sintético en el
+// mismo punto. Como el <dialog> ya se cerró, ese click atraviesa el backdrop y
+// cae sobre la UI de debajo (en Cobros, un `cobro-fila` que reabría el sheet).
+// Marcamos el cierre para truncar sólo ESE click; se consume en el primero que
+// llegue y se limpia en el próximo pointerdown por si no llegara ninguno.
+let clickTrasCierrePendiente = false;
 function puntoDentroDelSheet(abierto) {
     return (p) => {
         const r = abierto.getBoundingClientRect();
@@ -1633,6 +1639,8 @@ function puntoDentroDelSheet(abierto) {
 }
 document.addEventListener('pointerdown', (e) => {
     const destino = e.target;
+    // Un gesto nuevo descarta cualquier supresión pendiente de un cierre previo.
+    clickTrasCierrePendiente = false;
     if (!(destino instanceof Element))
         return;
     if (destino.closest('.confirmar-cambios'))
@@ -1675,7 +1683,21 @@ document.addEventListener('pointerup', (e) => {
     const fin = { x: e.clientX, y: e.clientY };
     if (debeCerrarPorToqueFuera(inicio.punto, fin, false, puntoDentroDelSheet(abierto), undefined, inicio.maxDesplazamiento)) {
         cerrarSheetPorFuera(abierto);
+        // El click sintético que viene con este tap debe truncarse: si no, cae
+        // sobre la UI que quedó al descubierto y puede reabrir el sheet (Cobros).
+        clickTrasCierrePendiente = true;
     }
+}, true);
+// Truncamos el click sintético posterior al cierre por tap fuera. Es el primer
+// click que llega tras el pointerup, y su target ya no es el dialog cerrado.
+// No tocamos los clicks del aviso de cambios: ese es otro modal y tiene su
+// propio camino (el flag se pone a false apenas se consume).
+document.addEventListener('click', (e) => {
+    if (!debeSuprimirClickTrasCierre(clickTrasCierrePendiente))
+        return;
+    clickTrasCierrePendiente = false;
+    e.preventDefault();
+    e.stopPropagation();
 }, true);
 // El sistema tomó el gesto (scroll, pull-to-refresh…): no es un tap de cierre.
 document.addEventListener('pointercancel', (e) => {

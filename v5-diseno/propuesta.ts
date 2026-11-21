@@ -16,7 +16,7 @@ import {
 } from './src/barra-scroll.ts';
 import {
   ajustarLock, debeBloquearScroll, estiloSheet, debeCerrarPorToqueFuera, esToqueFuera,
-  type PuntoToque,
+  debeSuprimirClickTrasCierre, type PuntoToque,
 } from './src/sheets.ts';
 import { diaCorto, etiquetaDia, etiquetaDiaCompleta, etiquetaMes, sumarDias, parseFecha, lunesDe, diasDelMes, esFechaValida } from './src/fechas.ts';
 import { relojDelDispositivo, hoyLocal, type Reloj } from './src/reloj.ts';
@@ -1626,6 +1626,13 @@ function cerrarSheetPorFuera(abierto: HTMLElement): void {
  */
 let toqueFueraInicio: { pointerId: number; punto: PuntoToque; maxDesplazamiento: number } | null = null;
 
+// Tras cerrar por tap fuera, el navegador despacha un `click` sintético en el
+// mismo punto. Como el <dialog> ya se cerró, ese click atraviesa el backdrop y
+// cae sobre la UI de debajo (en Cobros, un `cobro-fila` que reabría el sheet).
+// Marcamos el cierre para truncar sólo ESE click; se consume en el primero que
+// llegue y se limpia en el próximo pointerdown por si no llegara ninguno.
+let clickTrasCierrePendiente = false;
+
 function puntoDentroDelSheet(abierto: HTMLElement): (p: PuntoToque) => boolean {
   return (p) => {
     const r = abierto.getBoundingClientRect();
@@ -1635,6 +1642,8 @@ function puntoDentroDelSheet(abierto: HTMLElement): (p: PuntoToque) => boolean {
 
 document.addEventListener('pointerdown', (e) => {
   const destino = e.target;
+  // Un gesto nuevo descarta cualquier supresión pendiente de un cierre previo.
+  clickTrasCierrePendiente = false;
   if (!(destino instanceof Element)) return;
   if (destino.closest('.confirmar-cambios')) return; // el aviso tiene sus botones
   const abierto = document.querySelector('.sheet:not(.cerrando)') as HTMLElement | null;
@@ -1675,7 +1684,21 @@ document.addEventListener('pointerup', (e) => {
     inicio.punto, fin, false, puntoDentroDelSheet(abierto), undefined, inicio.maxDesplazamiento,
   )) {
     cerrarSheetPorFuera(abierto);
+    // El click sintético que viene con este tap debe truncarse: si no, cae
+    // sobre la UI que quedó al descubierto y puede reabrir el sheet (Cobros).
+    clickTrasCierrePendiente = true;
   }
+}, true);
+
+// Truncamos el click sintético posterior al cierre por tap fuera. Es el primer
+// click que llega tras el pointerup, y su target ya no es el dialog cerrado.
+// No tocamos los clicks del aviso de cambios: ese es otro modal y tiene su
+// propio camino (el flag se pone a false apenas se consume).
+document.addEventListener('click', (e) => {
+  if (!debeSuprimirClickTrasCierre(clickTrasCierrePendiente)) return;
+  clickTrasCierrePendiente = false;
+  e.preventDefault();
+  e.stopPropagation();
 }, true);
 
 // El sistema tomó el gesto (scroll, pull-to-refresh…): no es un tap de cierre.
