@@ -13,6 +13,14 @@ html, body {
   --sheet-base: calc(14px + env(safe-area-inset-bottom));
   --sheet-safe: env(safe-area-inset-bottom);
 }
+/* El body mide exactamente el viewport menos la zona de barra y el hueco;
+   .marca ocupa su altura natural y .cel (flex:1) ocupa el resto, así el panel
+   cierra siempre 91px antes del borde. min-height permite crecer en vistas largas. */
+body {
+  min-height: calc(100vh - 91px); /* 77px de barra (63 alto + 14 bottom) + 14px de hueco */
+  display: flex;
+  flex-direction: column;
+}
 /* Con un sheet abierto, el dedo desliza el sheet (o su contenido), nunca
    la página: se fija el documento sin perder la posición de scroll. */
 html.con-sheet, body.con-sheet {
@@ -24,7 +32,6 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; width: 0; }
 /* En móvil el contenido llega a los bordes: sin franjas laterales. */
 @media (max-width: 430px) {
   body { padding: 22px 0 0; }
-  .cel { min-height: calc(100vh - 154px); }
 }
 
 .marca, .pie {
@@ -37,7 +44,7 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; width: 0; }
   color: var(--tinta-2);
   text-align: center;
 }
-.marca { padding-top: 18px; padding-bottom: 10px; font-weight: 600; }
+.marca { padding-top: 18px; padding-bottom: 10px; font-weight: 600; flex: 0 0 auto; }
 .pie { padding-top: 14px; padding-bottom: 26px; letter-spacing: .02em; text-transform: none; font-size: 12.5px; }
 
 /* Variante A: no hay hoja única. `.cel` queda como envoltorio invisible:
@@ -52,7 +59,7 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; width: 0; }
   border: 0;
   border-radius: 30px;
   box-shadow: var(--sombra-fuerte);
-  min-height: calc(100vh - 132px);
+  flex: 1 0 auto; min-height: 0;
   padding: 0 0 18px;          /* el panel cierra con sus 4 esquinas; el hueco lo da el fondo exterior */
   overflow: visible;
   position: relative;         /* sin transform/filter/will-change/contain: no rompe el fixed de la nav */
