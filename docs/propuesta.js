@@ -1,18 +1,18 @@
 // Clases v5 · navegación + funcionamiento (auto-marcado, Cancelar clase, WhatsApp)
 // La estética vive en tokens.css/propuesta.css; acá solo se cambian estados,
 // textos y el flujo de cancelación. Sin emoji: solo SVG de icons.js.
-import { horaClase, } from './src/clases.js?v=202611210232';
-import { CLAVE_ESTADO, RepositorioClases, almacenLocalStorage } from './src/repositorio.js?v=202611210232';
-import { alumnosCobrosDemo, datosDemo, fichasDemo } from './src/demo.js?v=202611210232';
-import { resumenCobros } from './src/cobros.js?v=202611210232';
-import { resumenHoy, clasesDelDia, clasesDeLaSemana } from './src/resumen.js?v=202611210232';
-import { registrarToqueFecha, mesDe } from './src/agenda.js?v=202611210232';
-import { destinoDeEnlace } from './src/navegacion.js?v=202611210232';
-import { actualizarBarra, estadoBarraInicial, } from './src/barra-scroll.js?v=202611210232';
-import { ajustarLock, debeBloquearScroll, estiloSheet, debeCerrarPorToqueFuera, } from './src/sheets.js?v=202611210232';
-import { diaCorto, etiquetaDia, etiquetaDiaCompleta, etiquetaMes, parseFecha, lunesDe, diasDelMes, esFechaValida } from './src/fechas.js?v=202611210232';
-import { relojDelDispositivo, hoyLocal } from './src/reloj.js?v=202611210232';
-import { textoCancelacion, destinos, resumenEnvio, linkTexto, } from './src/whatsapp.js?v=202611210232';
+import { horaClase, } from "./src/clases.js?v=202611210258";
+import { CLAVE_ESTADO, RepositorioClases, almacenLocalStorage } from "./src/repositorio.js?v=202611210258";
+import { alumnosCobrosDemo, datosDemo, fichasDemo } from "./src/demo.js?v=202611210258";
+import { resumenCobros } from "./src/cobros.js?v=202611210258";
+import { resumenHoy, clasesDelDia, clasesDeLaSemana } from "./src/resumen.js?v=202611210258";
+import { registrarToqueFecha, mesDe } from "./src/agenda.js?v=202611210258";
+import { destinoDeEnlace } from "./src/navegacion.js?v=202611210258";
+import { actualizarBarra, estadoBarraInicial, } from "./src/barra-scroll.js?v=202611210258";
+import { ajustarLock, debeBloquearScroll, estiloSheet, debeCerrarPorToqueFuera, esToqueFuera, } from "./src/sheets.js?v=202611210258";
+import { diaCorto, etiquetaDia, etiquetaDiaCompleta, etiquetaMes, parseFecha, lunesDe, diasDelMes, esFechaValida } from "./src/fechas.js?v=202611210258";
+import { relojDelDispositivo, hoyLocal } from "./src/reloj.js?v=202611210258";
+import { textoCancelacion, destinos, resumenEnvio, linkTexto, } from "./src/whatsapp.js?v=202611210258";
 /* ------------------------------------------------- estado persistente (local) */
 const reloj = relojDelDispositivo();
 /** Quién opera la app hoy: único dueño. En Fase 4 sale de la sesión. */
@@ -1228,7 +1228,7 @@ toast.addEventListener('click', () => {
     }
 });
 /* ------------------------------------------------------- alumnos (fichas) */
-import { GRUPOS_DEMO, construirVista, filtrarYOrdenar, puntoEstadoVence, textoEstadoVence, validarAlumno, } from './src/alumnos.js?v=202611210232';
+import { GRUPOS_DEMO, construirVista, filtrarYOrdenar, puntoEstadoVence, textoEstadoVence, validarAlumno, } from "./src/alumnos.js?v=202611210258";
 let ordenAlumnos = 'ninguno';
 const filtrosAlumnos = new Set();
 let busquedaAlumno = '';
@@ -1641,13 +1641,28 @@ document.addEventListener('pointerdown', (e) => {
     if (!abierto)
         return;
     const punto = { x: e.clientX, y: e.clientY };
-    // El toque puede caer en html/body (por encima del ::backdrop): comparar
-    // también por coordenadas evita registrar como "fuera" un toque dentro.
-    if (abierto.contains(destino) || puntoDentroDelSheet(abierto)(punto)) {
+    const r = abierto.getBoundingClientRect();
+    // Con un <dialog> modal el ::backdrop reorienta `e.target` al propio dialog:
+    // `abierto.contains(destino)` daba true aunque el dedo estuviera fuera y el
+    // cierre nunca se registraba. Decidimos SOLO por coordenadas (pura aritmética
+    // sobre el rect, sin hit testing que reactive la página). `targetEsElSheet`
+    // se usa únicamente si el navegador no dio coordenadas útiles ((0,0)).
+    const targetEsElSheet = destino === abierto || abierto.contains(destino);
+    if (!esToqueFuera(punto, { left: r.left, right: r.right, top: r.top, bottom: r.bottom }, targetEsElSheet)) {
         toqueFueraInicio = null;
         return;
     }
-    toqueFueraInicio = { pointerId: e.pointerId, punto };
+    toqueFueraInicio = { pointerId: e.pointerId, punto, maxDesplazamiento: 0 };
+}, true);
+// Acumulamos el mayor desplazamiento del gesto: un arrastre que vuelve al
+// origen no debe pasar por tap aunque inicio≈fin.
+document.addEventListener('pointermove', (e) => {
+    const gesto = toqueFueraInicio;
+    if (!gesto || gesto.pointerId !== e.pointerId)
+        return;
+    const dx = e.clientX - gesto.punto.x;
+    const dy = e.clientY - gesto.punto.y;
+    gesto.maxDesplazamiento = Math.max(gesto.maxDesplazamiento, Math.hypot(dx, dy));
 }, true);
 document.addEventListener('pointerup', (e) => {
     const inicio = toqueFueraInicio;
@@ -1658,7 +1673,7 @@ document.addEventListener('pointerup', (e) => {
     if (!abierto)
         return;
     const fin = { x: e.clientX, y: e.clientY };
-    if (debeCerrarPorToqueFuera(inicio.punto, fin, false, puntoDentroDelSheet(abierto))) {
+    if (debeCerrarPorToqueFuera(inicio.punto, fin, false, puntoDentroDelSheet(abierto), undefined, inicio.maxDesplazamiento)) {
         cerrarSheetPorFuera(abierto);
     }
 }, true);

@@ -5,7 +5,8 @@ import { strict as assert } from 'node:assert';
 import {
   MARGEN_SHEET, alturaMaximaSheet, estiloSheet, ajustarLock, debeBloquearScroll,
   OPCIONES_CAMBIOS_SIN_GUARDAR, DECISION_ESCAPE_AVISO,
-  debeCerrarPorToqueFuera, UMBRAL_MOVIMIENTO_TOQUE, type PuntoToque,
+  debeCerrarPorToqueFuera, UMBRAL_MOVIMIENTO_TOQUE, esToqueFuera,
+  type PuntoToque, type RectSheet,
 } from '../src/sheets.ts';
 
 test('el sheet cabe en el viewport y deja ver la página arriba y la cápsula abajo', () => {
@@ -77,7 +78,42 @@ test('sin inicio o sin fin (puntero inválido) no cierra', () => {
   assert.equal(debeCerrarPorToqueFuera(fin, null, false, sheetAbajo), false);
 });
 
+test('un arrastre que vuelve al origen no cuenta como tap', () => {
+  const inicio = { x: 40, y: 422 };
+  // inicio y fin idénticos, pero el dedo se movió 120px en el medio.
+  assert.equal(debeCerrarPorToqueFuera(inicio, inicio, false, sheetAbajo, UMBRAL_MOVIMIENTO_TOQUE, 120), false);
+  // Sin movimiento intermedio sí es tap.
+  assert.equal(debeCerrarPorToqueFuera(inicio, inicio, false, sheetAbajo, UMBRAL_MOVIMIENTO_TOQUE, 0), true);
+});
+
 test('el umbral de movimiento es bajo: un temblor de 1px sigue siendo tap', () => {
   assert.equal(debeCerrarPorToqueFuera({ x: 40, y: 422 }, { x: 41, y: 423 }, false, sheetAbajo), true);
   assert.ok(UMBRAL_MOVIMIENTO_TOQUE <= 10);
+});
+
+// Regresión 4b5e2797: en un <dialog> modal el ::backdrop reorienta `target`
+// al propio dialog, así que `contains(target)` daba "dentro" y no cerraba.
+const rectFicha: RectSheet = { left: 0, right: 390, top: 477, bottom: 830 };
+
+test('tap fuera con target reorientado al dialog SÍ cuenta como fuera', () => {
+  // Coordenadas reales del dedo (422, por encima del sheet top=477), aunque
+  // el event.target sea el propio <dialog> por el ::backdrop.
+  assert.equal(esToqueFuera({ x: 40, y: 422 }, rectFicha, true), true);
+});
+
+test('toque dentro del sheet con target reorientado NO cuenta como fuera', () => {
+  assert.equal(esToqueFuera({ x: 200, y: 600 }, rectFicha, true), false);
+});
+
+test('sin coordenadas útiles y target el dialog: dentro (no cierra)', () => {
+  assert.equal(esToqueFuera({ x: 0, y: 0 }, rectFicha, true), false);
+});
+
+test('sin coordenadas útiles pero target el backdrop: fuera', () => {
+  assert.equal(esToqueFuera({ x: 0, y: 0 }, rectFicha, false), true);
+});
+
+test('decisión por coordenadas en los bordes del sheet', () => {
+  assert.equal(esToqueFuera({ x: 0, y: 477 }, rectFicha, false), false); // borde superior = dentro
+  assert.equal(esToqueFuera({ x: 40, y: 476 }, rectFicha, false), true);  // 1px arriba = fuera
 });

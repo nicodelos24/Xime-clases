@@ -15,7 +15,8 @@ import {
   actualizarBarra, estadoBarraInicial, type EstadoBarra,
 } from './src/barra-scroll.ts';
 import {
-  ajustarLock, debeBloquearScroll, estiloSheet, debeCerrarPorToqueFuera, type PuntoToque,
+  ajustarLock, debeBloquearScroll, estiloSheet, debeCerrarPorToqueFuera, esToqueFuera,
+  type PuntoToque,
 } from './src/sheets.ts';
 import { diaCorto, etiquetaDia, etiquetaDiaCompleta, etiquetaMes, sumarDias, parseFecha, lunesDe, diasDelMes, esFechaValida } from './src/fechas.ts';
 import { relojDelDispositivo, hoyLocal, type Reloj } from './src/reloj.ts';
@@ -1623,7 +1624,7 @@ function cerrarSheetPorFuera(abierto: HTMLElement): void {
  * Guardamos el inicio y sólo cerramos en `pointerup` si el mismo puntero
  * terminó fuera, sin movimiento de arrastre y sin cancelación (Gino d45758fa).
  */
-let toqueFueraInicio: { pointerId: number; punto: PuntoToque } | null = null;
+let toqueFueraInicio: { pointerId: number; punto: PuntoToque; maxDesplazamiento: number } | null = null;
 
 function puntoDentroDelSheet(abierto: HTMLElement): (p: PuntoToque) => boolean {
   return (p) => {
@@ -1639,13 +1640,28 @@ document.addEventListener('pointerdown', (e) => {
   const abierto = document.querySelector('.sheet:not(.cerrando)') as HTMLElement | null;
   if (!abierto) return;
   const punto: PuntoToque = { x: e.clientX, y: e.clientY };
-  // El toque puede caer en html/body (por encima del ::backdrop): comparar
-  // también por coordenadas evita registrar como "fuera" un toque dentro.
-  if (abierto.contains(destino) || puntoDentroDelSheet(abierto)(punto)) {
+  const r = abierto.getBoundingClientRect();
+  // Con un <dialog> modal el ::backdrop reorienta `e.target` al propio dialog:
+  // `abierto.contains(destino)` daba true aunque el dedo estuviera fuera y el
+  // cierre nunca se registraba. Decidimos SOLO por coordenadas (pura aritmética
+  // sobre el rect, sin hit testing que reactive la página). `targetEsElSheet`
+  // se usa únicamente si el navegador no dio coordenadas útiles ((0,0)).
+  const targetEsElSheet = destino === abierto || abierto.contains(destino);
+  if (!esToqueFuera(punto, { left: r.left, right: r.right, top: r.top, bottom: r.bottom }, targetEsElSheet)) {
     toqueFueraInicio = null;
     return;
   }
-  toqueFueraInicio = { pointerId: e.pointerId, punto };
+  toqueFueraInicio = { pointerId: e.pointerId, punto, maxDesplazamiento: 0 };
+}, true);
+
+// Acumulamos el mayor desplazamiento del gesto: un arrastre que vuelve al
+// origen no debe pasar por tap aunque inicio≈fin.
+document.addEventListener('pointermove', (e) => {
+  const gesto = toqueFueraInicio;
+  if (!gesto || gesto.pointerId !== e.pointerId) return;
+  const dx = e.clientX - gesto.punto.x;
+  const dy = e.clientY - gesto.punto.y;
+  gesto.maxDesplazamiento = Math.max(gesto.maxDesplazamiento, Math.hypot(dx, dy));
 }, true);
 
 document.addEventListener('pointerup', (e) => {
@@ -1655,7 +1671,9 @@ document.addEventListener('pointerup', (e) => {
   const abierto = document.querySelector('.sheet:not(.cerrando)') as HTMLElement | null;
   if (!abierto) return;
   const fin: PuntoToque = { x: e.clientX, y: e.clientY };
-  if (debeCerrarPorToqueFuera(inicio.punto, fin, false, puntoDentroDelSheet(abierto))) {
+  if (debeCerrarPorToqueFuera(
+    inicio.punto, fin, false, puntoDentroDelSheet(abierto), undefined, inicio.maxDesplazamiento,
+  )) {
     cerrarSheetPorFuera(abierto);
   }
 }, true);

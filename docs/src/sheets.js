@@ -55,12 +55,36 @@ export const OPCIONES_CAMBIOS_SIN_GUARDAR = [
  */
 export const DECISION_ESCAPE_AVISO = 'seguir';
 export const UMBRAL_MOVIMIENTO_TOQUE = 10; // px: por encima es arrastre, no tap
-export function debeCerrarPorToqueFuera(inicio, fin, cancelado, dentroDelSheet, umbral = UMBRAL_MOVIMIENTO_TOQUE) {
+export function debeCerrarPorToqueFuera(inicio, fin, cancelado, dentroDelSheet, umbral = UMBRAL_MOVIMIENTO_TOQUE, maxDesplazamiento = 0) {
     if (cancelado || !inicio || !fin)
         return false;
     if (dentroDelSheet(inicio) || dentroDelSheet(fin))
         return false;
+    // Un arrastre que vuelve al origen tiene inicio≈fin, pero no es un tap:
+    // el movimiento máximo durante el gesto lo delata (Gino: "vuelve a origen").
+    if (maxDesplazamiento > umbral)
+        return false;
     const dx = fin.x - inicio.x;
     const dy = fin.y - inicio.y;
     return Math.hypot(dx, dy) <= umbral;
+}
+/**
+ * Decide si un `pointerdown` ocurrió fuera del sheet, usando SOLO coordenadas
+ * geométricas. Antes se usaba además `element.contains(target)`, pero con un
+ * `<dialog>` modal el `::backdrop` reorienta `target` al propio dialog: el
+ * `contains` daba true aunque el dedo estuviera fuera y el cierre nunca se
+ * registraba (Gino en 4b5e2797: tap/clic fuera no cerraban ficha/cobros).
+ *
+ * `targetEsElSheet` sólo se consulta cuando el navegador no entregó coordenadas
+ * útiles ((0,0)): en ese caso asumimos "dentro" para no cerrar por un toque
+ * real en el contenido. No se hace `elementFromPoint` ni nada que reactive la
+ * página: es pura aritmética sobre el rect del sheet.
+ */
+export function esToqueFuera(punto, rect, targetEsElSheet) {
+    const coordenadasUtiles = punto.x !== 0 || punto.y !== 0;
+    if (!coordenadasUtiles)
+        return !targetEsElSheet;
+    const dentro = punto.x >= rect.left && punto.x <= rect.right
+        && punto.y >= rect.top && punto.y <= rect.bottom;
+    return !dentro;
 }
