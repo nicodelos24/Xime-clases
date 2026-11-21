@@ -12,12 +12,14 @@ html, body {
      no con 88% de un .cel que crece con el contenido. */
   --sheet-base: calc(14px + env(safe-area-inset-bottom));
   --sheet-safe: env(safe-area-inset-bottom);
+  --margen-panel: 10px;
 }
 /* El body mide exactamente el viewport menos la zona de barra y el hueco;
    .marca ocupa su altura natural y .cel (flex:1) ocupa el resto, así el panel
    cierra siempre 91px antes del borde. min-height permite crecer en vistas largas. */
 body {
   min-height: calc(100vh - 91px); /* 77px de barra (63 alto + 14 bottom) + 14px de hueco */
+  padding-inline: var(--margen-panel);
   display: flex;
   flex-direction: column;
 }
@@ -29,15 +31,14 @@ html.con-sheet, body.con-sheet {
   touch-action: none;
 }
 html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; width: 0; }
-/* En móvil el contenido llega a los bordes: sin franjas laterales. */
+/* En móvil el contenido conserva el margen lateral del panel; solo sube arriba. */
 @media (max-width: 430px) {
-  body { padding: 22px 0 0; }
+  body { padding-top: 22px; }
 }
 
 .marca, .pie {
   max-width: 430px;
   margin: 0 auto;
-  padding: 0 10px;
   font-size: 12px;
   letter-spacing: .08em;
   text-transform: uppercase;
@@ -587,7 +588,7 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; width: 0; }
    la estética ovalada con márgenes laterales y sombra suave (ref. Nico 19/11). */
 .tabbar {
   position: fixed; z-index: 30;
-  left: 0; right: 0; bottom: 14px;
+  left: var(--margen-panel); right: var(--margen-panel); bottom: 14px;
   width: auto; max-width: 390px; margin: 0 auto;
   display: grid; grid-template-columns: repeat(4, 1fr);
   background: #FFFFFF; /* sólido: backdrop-filter crea contexto y rompería el fixed */
