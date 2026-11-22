@@ -61,7 +61,7 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; width: 0; }
   border-radius: 30px;
   box-shadow: var(--sombra-fuerte);
   flex: 1 0 auto; min-height: 0;
-  padding: 0 0 18px;          /* el panel cierra con sus 4 esquinas; el hueco lo da el fondo exterior */
+  padding: 0 0 calc(91px + env(safe-area-inset-bottom)); /* 77px de barra + 14px de hueco: el panel cierra por encima de la cápsula también con scroll largo */
   overflow: visible;
   position: relative;         /* sin transform/filter/will-change/contain: no rompe el fixed de la nav */
   display: flex;
