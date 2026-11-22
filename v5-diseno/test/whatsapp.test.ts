@@ -4,9 +4,19 @@ import { strict as assert } from 'node:assert';
 
 import {
   PLANTILLA_CANCELACION, textoCancelacion, linkTexto, linkAlumno,
-  normalizarTelefono, destinos, resumenEnvio,
+  normalizarTelefono, destinos, resumenEnvio, linkAvisoVencimiento, textoAvisoVencimiento,
 } from '../src/whatsapp.ts';
 import { cancelarClase, crearClase, type Clase } from '../src/clases.ts';
+
+test('aviso de vencimiento (#3): mensaje sugerido y deep link con teléfono normalizado', () => {
+  const aviso = { telefono: '099 123 456', nombre: 'Carla', vencimiento: '2026-12-01' };
+  const texto = textoAvisoVencimiento(aviso);
+  assert.match(texto, /Carla/);
+  assert.match(texto, /01\/12\/2026/);
+  const link = linkAvisoVencimiento(aviso);
+  assert.ok(link.startsWith('https://wa.me/59899123456?text='));
+  assert.equal(decodeURIComponent(link.split('?text=')[1]!), texto);
+});
 
 const t = (s: string) => new Date(s).getTime();
 
