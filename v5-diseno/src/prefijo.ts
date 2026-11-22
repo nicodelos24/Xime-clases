@@ -33,6 +33,8 @@ export function conPrefijo(numero: string, prefijo = PREFIJO_POR_DEFECTO): strin
   const seg = prefijoSeguro(prefijo);
   const digitos = seg.slice(1);
   const soloDigitos = texto.replace(/[^\d]/g, '');
-  if (soloDigitos.startsWith(digitos)) return texto.startsWith('+') ? texto : `+${texto}`;
+  // Ya trae el prefijo: se respeta tal cual (con o sin +). Nico lo pidió así
+  // en el #9: un número con "598 ..." no debe transformarse en "+598 ...".
+  if (soloDigitos.startsWith(digitos)) return texto;
   return `${seg} ${texto}`;
 }

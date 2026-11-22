@@ -23,7 +23,7 @@ test('prefijo: completa números que no lo traen y no duplica el que ya viene', 
   assert.equal(conPrefijo('99 123 456'), '+598 99 123 456');
   assert.equal(conPrefijo('099123456'), '+598 099123456');
   assert.equal(conPrefijo('+598 99 123 456'), '+598 99 123 456');
-  assert.equal(conPrefijo('598 99 123 456'), '+598 99 123 456', 'ya trae el prefijo: se respeta y se normaliza el +');
+  assert.equal(conPrefijo('598 99 123 456'), '598 99 123 456', 'ya trae el prefijo: se deja como está');
   assert.equal(conPrefijo('9 11 2345 6789', '+54'), '+54 9 11 2345 6789');
   assert.equal(conPrefijo('   '), '');
 });
