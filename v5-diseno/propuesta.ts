@@ -19,8 +19,9 @@ import {
   ajustarLock, debeBloquearScroll, estiloSheet, debeCerrarPorToqueFuera, esToqueFuera,
   debeSuprimirClickTrasCierre, type PuntoToque,
 } from './src/sheets.ts';
-import { diaCorto, etiquetaDia, etiquetaDiaCompleta, etiquetaMes, sumarDias, parseFecha, lunesDe, diasDelMes, esFechaValida } from './src/fechas.ts';
+import { diaCorto, etiquetaDia, etiquetaDiaCompleta, etiquetaMes, fechaCorta, sumarDias, parseFecha, lunesDe, diasDelMes, esFechaValida } from './src/fechas.ts';
 import { relojDelDispositivo, hoyLocal, type Reloj } from './src/reloj.ts';
+import { CLAVE_PREFIJO, PREFIJO_POR_DEFECTO, prefijoEsValido, prefijoSeguro, conPrefijo } from './src/prefijo.ts';
 import {
   textoCancelacion, destinos, resumenEnvio, linkTexto, linkAvisoVencimiento, type Destino,
 } from './src/whatsapp.ts';
@@ -1272,7 +1273,7 @@ function filasAlumnos(): FichaVista[] {
 function alumnoSub(a: FichaVista): string {
   const v = textoEstadoVence(a);
   const et = a.modalidad === 'mensual' ? 'et-mensual' : 'et-individual';
-  return `<p class="al-sub">${esc(a.grupo)} · ${v} <span class="etiqueta ${et}">${a.modalidad === 'mensual' ? 'Mensual' : 'Individual'}</span></p><span class="al-fecha">Alta ${esc(a.fechaAlta)}</span>`;
+  return `<p class="al-sub">${esc(a.grupo)} · ${v} <span class="etiqueta ${et}">${a.modalidad === 'mensual' ? 'Mensual' : 'Individual'}</span></p><span class="al-fecha">Alta ${esc(fechaCorta(a.fechaAlta))}</span>`;
 }
 
 function pintarChipsAlumnos(): void {
@@ -1360,8 +1361,8 @@ function abrirFichaConCobro(ficha: AlumnoFicha | null, origen: HTMLElement, alCr
       ? `${textoVence(deuda.dias)} · ${uyu(deuda.alumno.montoUYU)} (vence ${esc(deuda.fecha)}).`
       : 'Sin cobros registrados.';
   const tel = ficha.contacto;
-  const avisoLink = deuda && tel ? linkAvisoVencimiento({ telefono: tel, nombre: ficha.nombre, vencimiento: deuda.fecha }) : null;
-  const linkGenerico = tel ? linkAvisoVencimiento({ telefono: tel, nombre: ficha.nombre, vencimiento: deuda?.fecha ?? hoyLocal(reloj.ahora()) }) : null;
+  const avisoLink = deuda && tel ? linkAvisoVencimiento({ telefono: conPrefijo(tel, prefijoMovil), nombre: ficha.nombre, vencimiento: deuda.fecha }) : null;
+  const linkGenerico = tel ? linkAvisoVencimiento({ telefono: conPrefijo(tel, prefijoMovil), nombre: ficha.nombre, vencimiento: deuda?.fecha ?? hoyLocal(reloj.ahora()) }) : null;
   resumen.innerHTML = `<p>${texto}</p>
     ${linkGenerico ? `<a class="cobros-link" href="${linkGenerico}" target="_blank" rel="noopener">Enviar WhatsApp</a>` : '<p class="al-sub">Sin teléfono cargado: agregalo en la ficha para enviar WhatsApp.</p>'}
     ${avisoLink ? `<a class="cobros-link" href="${avisoLink}" target="_blank" rel="noopener" data-avisar>Avisar por WhatsApp (por vencer)</a>` : ''}
@@ -1389,7 +1390,7 @@ function abrirFicha(ficha: AlumnoFicha | null, origen: HTMLElement, alCrear?: (c
   const hoy = hoyLocal(reloj.ahora());
   const contenido = `<div class="cobros-panel-resumen">
     <div><p class="al-nombre">${esNueva ? 'Nuevo alumno' : esc(ficha!.nombre)}</p>
-    <p class="al-sub">${esNueva ? 'Ficha real · se guarda en este dispositivo' : `Alta ${esc(ficha!.fechaAlta)}`}</p></div>
+    <p class="al-sub">${esNueva ? 'Ficha real · se guarda en este dispositivo' : `Alta ${esc(fechaCorta(ficha!.fechaAlta))}`}</p></div>
     <div class="cobros-panel-dato">${esNueva ? '' : `<span class="ficha-id">ID ${esc(ficha!.id)}</span>`}</div></div>
     <p class="cobros-panel-nota">${esNueva ? 'Completá los datos para dar de alta. Nada se envía ni crea grupos.' : 'Podés corregir nombre, modalidad, día de vencimiento y teléfono. La identidad y la fecha de alta no se cambian.'}</p>
     <form novalidate>
@@ -1529,8 +1530,7 @@ const verCobros = (pagos = repo.listarPagos()) => resumenCobros(alumnosParaCobro
 type FilaCobro = ReturnType<typeof verCobros>['filas'][number];
 
 function fechaBreve(fecha: string) {
-  const { d, m } = parseFecha(fecha);
-  return `${d}/${m}`;
+  return fechaCorta(fecha);
 }
 
 function textoVence(dias: number) {
@@ -1583,8 +1583,8 @@ function nombrePago(pago: Pago) {
 botonHistorial.addEventListener('click', () => {
   const pagos = [...repo.listarPagos()].reverse();
   const dialogo = abrirDialogoCobros('Historial de pagos', 'Cobros', 'reloj', pagos.length ? `<ul class="cobros-panel-lista">${pagos.map((p, i) => `<li>
-    <div><p class="al-nombre">${esc(nombrePago(p))}</p><p class="al-sub">${esc(p.periodo)} · Registrado el ${esc(p.fecha)} por ${esc(p.quien)}</p>
-      ${p.anulado ? `<p class="al-sub">Anulado el ${esc(p.anulado.fecha)} por ${esc(p.anulado.quien)} · ${esc(p.anulado.motivo)}</p>` : ''}</div>
+    <div><p class="al-nombre">${esc(nombrePago(p))}</p><p class="al-sub">${esc(p.periodo)} · Registrado el ${esc(fechaCorta(p.fecha))} por ${esc(p.quien)}</p>
+      ${p.anulado ? `<p class="al-sub">Anulado el ${esc(fechaCorta(p.anulado.fecha))} por ${esc(p.anulado.quien)} · ${esc(p.anulado.motivo)}</p>` : ''}</div>
     <div class="cobros-panel-dato"><strong>${uyu(p.montoUYU)}</strong>
       ${p.anulado ? '<span class="al-sub">Anulado</span>' : `<button type="button" class="cobros-link" data-pago="${i}" aria-label="Ver pago de ${esc(nombrePago(p))}, ${esc(p.periodo)}">Ver pago</button>`}</div>
   </li>`).join('')}</ul>` : '<p class="cobros-panel-nota">Todavía no registraste pagos.</p>', botonHistorial);
@@ -1649,7 +1649,7 @@ function abrirPago(nombre: string, periodo: string, monto: number, origen: HTMLE
   const dialogo = abrirDialogoCobros(accion, 'Mensualidad', pago ? 'alerta' : 'cobros', `<div class="cobros-panel-resumen">
     <div><p class="al-nombre">${esc(nombre)}</p><p class="al-sub">${esc(mes)}</p></div>
     <div class="cobros-panel-dato"><strong>${uyu(pago?.montoUYU ?? monto)}</strong><span class="al-sub">UYU</span></div></div>
-    <p class="cobros-panel-nota">${pago ? `Registrado el ${esc(pago.fecha)} por ${esc(pago.quien)}. Podés corregir la fecha en que pagó/renovió o anular el pago; queda en el historial.` : 'Confirmá cuándo pagó/renovió. La app no mueve dinero.'}</p>
+    <p class="cobros-panel-nota">${pago ? `Registrado el ${esc(fechaCorta(pago.fecha))} por ${esc(pago.quien)}. Podés corregir la fecha en que pagó/renovió o anular el pago; queda en el historial.` : 'Confirmá cuándo pagó/renovió. La app no mueve dinero.'}</p>
     <form>
       ${pago ? `<label class="campo"><span>Fecha del pago (día / mes / año)</span></label>${selectorFecha('pago', pago.fecha)}
       <label class="campo"><span>Motivo de anulación (opcional)</span><input name="motivo" maxlength="160"></label>`
@@ -1705,7 +1705,7 @@ campana.addEventListener('click', () => {
   const fichas = new Map(repo.listarAlumnos().map((f) => [f.id, f]));
   const avisarLink = (f: (typeof avisos)[number]) => {
     const tel = fichas.get(f.alumno.id)?.contacto ?? '';
-    return tel ? linkAvisoVencimiento({ telefono: tel, nombre: f.alumno.nombre, vencimiento: f.fecha }) : null;
+    return tel ? linkAvisoVencimiento({ telefono: conPrefijo(tel, prefijoMovil), nombre: f.alumno.nombre, vencimiento: f.fecha }) : null;
   };
   const dlg = abrirDialogoCobros('Avisos de cobro', 'Mensualidades', 'campana', avisos.length ? `<p class="cobros-panel-nota">Mensualidades sin pagar que vencen hoy o en los próximos 7 días. Avisá por WhatsApp (simulación; el envío real llega con la base de datos).</p>
     <ul class="cobros-panel-lista">${avisos.map((f, i) => `<li>
@@ -2035,6 +2035,38 @@ setInterval(() => {
   }
   reconciliarAlVolver(true);
 }, 30000);
+
+/* ------------------------- configuración: prefijo de móvil (punto 9) ------- */
+/** Prefijo vigente en este dispositivo; se lee una vez al abrir. */
+let prefijoMovil = prefijoSeguro(localStorage.getItem(CLAVE_PREFIJO));
+
+function abrirConfiguracion(origen: HTMLElement): void {
+  const contenido = `<p class="cobros-panel-nota">Se agrega a los números de WhatsApp que no lo traigan. Ejemplo: ${esc(prefijoMovil)} (Uruguay).</p>
+    <form novalidate>
+      <label class="campo"><span>Prefijo de país</span><input name="prefijo" type="text" maxlength="5" inputmode="text" value="${esc(prefijoMovil)}" placeholder="${PREFIJO_POR_DEFECTO}"></label>
+      <p class="cobros-panel-error" role="alert"></p>
+      <div class="sheet-acciones"><button type="button" class="btn-secundario">Volver</button>
+      <button type="submit" class="btn-primario">Guardar prefijo</button></div>
+    </form>`;
+  const dialogo = abrirDialogoCobros('Configuración', 'Ajustes de este dispositivo', 'ajustes', contenido, origen);
+  const form = dialogo.querySelector('form')!;
+  const error = form.querySelector<HTMLElement>('[role="alert"]')!;
+  form.querySelector('.btn-secundario')!.addEventListener('click', () => cerrarDialogoConAviso(dialogo));
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const valor = String(new FormData(form).get('prefijo') ?? '').trim();
+    if (!prefijoEsValido(valor)) {
+      error.textContent = `Prefijo inválido: debe empezar con + (ej. ${PREFIJO_POR_DEFECTO})`;
+      return;
+    }
+    prefijoMovil = valor;
+    localStorage.setItem(CLAVE_PREFIJO, valor);
+    dialogo.close();
+    avisar(`Prefijo guardado: ${valor}`);
+  });
+}
+
+$('#ajustes-btn')?.addEventListener('click', (e) => abrirConfiguracion(e.currentTarget as HTMLElement));
 
 const inicial = location.hash.slice(1);
 if (inicial && document.getElementById(inicial)) irA(inicial);
