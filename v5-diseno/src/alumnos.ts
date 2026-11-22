@@ -31,6 +31,8 @@ export type AlumnoFicha = {
   color: string;
   /** Contacto opcional del contrato (tutor/teléfono). Solo si se completa. */
   contacto: string;
+  /** Estado del primer pago informado al dar de alta (informativo; el ledger manda). */
+  pagado: boolean;
 };
 
 /** Datos que la ficha permite cargar/editar (sin ID, sin fecha de alta).
@@ -43,6 +45,10 @@ export type AlumnoFichaInput = {
   grupo?: string;
   ancla?: number;
   contacto?: string;
+  /** Fecha de registro elegida en el alta (AAAA-MM-DD). En edición se ignora: el alta es inmutable. */
+  fechaAlta?: string;
+  /** Estado del primer pago: true = «pagó», false = «va a pagar». El ledger de pagos es la fuente de verdad. */
+  pagado?: boolean;
 };
 
 /** Grupos existentes de la demo (seleccionables, sin crear grupos nuevos). */
@@ -84,6 +90,15 @@ export function validarAlumno(input: AlumnoFichaInput): Record<string, string> {
   }
   const contacto = texto(input.contacto);
   if (contacto.length > 120) errores.contacto = 'El contacto es demasiado largo (máximo 120 caracteres)';
+  if (input.fechaAlta !== undefined && !/^\d{4}-\d{2}-\d{2}$/.test(input.fechaAlta)) {
+    errores.fechaAlta = 'Fecha de registro inválida';
+  } else if (input.fechaAlta !== undefined) {
+    // Validación de día real (bisiestos, meses cortos) sin depender de Date.
+    const [y, m, d] = input.fechaAlta.split('-').map(Number);
+    const maxDia = [31, y % 4 === 0 && (y % 100 !== 0 || y % 400 === 0) ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31][m - 1] ?? 0;
+    if (m < 1 || m > 12 || d < 1 || d > maxDia) errores.fechaAlta = 'Fecha de registro inválida';
+  }
+  if (input.pagado !== undefined && typeof input.pagado !== 'boolean') errores.pagado = 'Estado de pago inválido';
   return errores;
 }
 
@@ -98,6 +113,7 @@ type CamposNormalizados = {
   grupo: string;
   ancla: number;
   contacto: string;
+  pagado: boolean;
 };
 
 /** Normaliza un input válido a los campos que se guardan (contacto opcional). */
@@ -108,6 +124,7 @@ export function normalizarAlumno(input: AlumnoFichaInput): CamposNormalizados {
     grupo: texto(input.grupo),
     ancla: input.ancla ?? 21,
     contacto: texto(input.contacto),
+    pagado: input.pagado ?? false,
   };
 }
 
@@ -136,7 +153,7 @@ export function crearAlumno(
   return {
     id,
     ...norm,
-    fechaAlta,
+    fechaAlta: input.fechaAlta ?? fechaAlta,
     activo: true,
     color: colorPorId(id),
   };
@@ -161,6 +178,9 @@ export function editarAlumno(alumno: AlumnoFicha, input: AlumnoFichaInput): Alum
     grupo: input.grupo === undefined ? alumno.grupo : texto(input.grupo),
     ancla: input.ancla ?? alumno.ancla,
     contacto: input.contacto === undefined ? alumno.contacto : texto(input.contacto),
+    // Alta y pago inicial se congelan: la edición no reescribe la identidad.
+    fechaAlta: alumno.fechaAlta,
+    pagado: alumno.pagado,
   };
 }
 
@@ -184,6 +204,7 @@ export function normalizarFichaGuardada(dato: Partial<AlumnoFicha> & { tipo?: st
     activo: dato.activo !== false,
     color: typeof dato.color === 'string' ? dato.color : colorPorId(id),
     contacto: typeof dato.contacto === 'string' ? dato.contacto : '',
+    pagado: typeof dato.pagado === 'boolean' ? dato.pagado : false,
   };
 }
 

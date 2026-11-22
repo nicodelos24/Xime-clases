@@ -1334,29 +1334,36 @@ $('#buscar-alumno')?.addEventListener('input', (e) => {
 /** Diálogo de ficha: mismo sheet v5 de Cobros, sin rediseñar. */
 function abrirFicha(ficha: AlumnoFicha | null, origen: HTMLElement): void {
   const esNueva = ficha === null;
+  const hoy = hoyLocal(reloj.ahora());
   const contenido = `<div class="cobros-panel-resumen">
     <div><p class="al-nombre">${esNueva ? 'Nuevo alumno' : esc(ficha!.nombre)}</p>
-    <p class="al-sub">${esNueva ? 'Datos sintéticos de la demo' : `Alta ${esc(ficha!.fechaAlta)}`}</p></div>
+    <p class="al-sub">${esNueva ? 'Ficha real · se guarda en este dispositivo' : `Alta ${esc(ficha!.fechaAlta)}`}</p></div>
     <div class="cobros-panel-dato">${esNueva ? '' : `<span class="ficha-id">ID ${esc(ficha!.id)}</span>`}</div></div>
-    <p class="cobros-panel-nota">${esNueva ? 'Cargá una ficha para probar el alta. No envía nada ni crea grupos.' : 'Podés corregir nombre y modalidad. La identidad y el alta no se cambian.'}</p>
+    <p class="cobros-panel-nota">${esNueva ? 'Completá los datos para dar de alta. Nada se envía ni crea grupos.' : 'Podés corregir nombre, modalidad, día de vencimiento y teléfono. La identidad y la fecha de alta no se cambian.'}</p>
     <form novalidate>
       <label class="campo"><span>Nombre *</span><input name="nombre" required maxlength="80" autocomplete="off" value="${esNueva ? '' : esc(ficha!.nombre)}" placeholder="Nombre y apellido"></label>
+      ${esNueva ? `<p class="campo"><span>Fecha de registro *</span></p>${selectorFecha('alta', hoy)}` : ''}
       <p class="campo"><span>Modalidad *</span></p>
       <div class="ficha-grupo-opciones" role="group" aria-label="Modalidad">
         <button type="button" class="ficha-grupo" data-modalidad="mensual" aria-pressed="false">Mensual</button>
         <button type="button" class="ficha-grupo" data-modalidad="individual" aria-pressed="false">Individual</button>
       </div>
-      <div class="ficha-opcional">
-        <p>Contacto (opcional, apagado por defecto)</p>
-        <label class="campo"><span>Teléfono o tutor</span><input name="contacto" maxlength="120" autocomplete="off" value="${esNueva ? '' : esc(ficha!.contacto)}" placeholder="Solo si el contrato lo contempla"></label>
-      </div>
+      ${esNueva ? `<p class="campo"><span>¿Pagó la primera mensualidad? *</span></p>
+      <div class="ficha-grupo-opciones" role="group" aria-label="Estado del pago">
+        <button type="button" class="ficha-grupo" data-pago="si" aria-pressed="false">Pagó</button>
+        <button type="button" class="ficha-grupo" data-pago="no" aria-pressed="false">Va a pagar</button>
+      </div>` : ''}
+      <label class="campo"><span>Día de vencimiento (1–31)</span><input name="ancla" type="number" min="1" max="31" inputmode="numeric" value="${ficha?.ancla ?? 21}"></label>
+      <label class="campo"><span>Teléfono / WhatsApp</span><input name="contacto" type="tel" maxlength="120" autocomplete="tel" value="${esNueva ? '' : esc(ficha!.contacto)}" placeholder="099 123 456"></label>
       <p class="cobros-panel-error" role="alert"></p>
       <div class="sheet-acciones"><button type="button" class="btn-secundario">Volver</button>
       <button type="submit" class="btn-primario ficha-guardar">${esNueva ? 'Guardar alumno' : 'Guardar cambios'}</button></div>
     </form>`;
   const dialogo = abrirDialogoCobros(esNueva ? 'Nuevo alumno' : 'Editar ficha', 'Alumnos', 'alumnos', contenido, origen);
+  if (esNueva) cablearFecha(dialogo, 'alta');
 
   let modalidad = ficha?.modalidad ?? 'mensual';
+  let pagado = false;
   const pintarSeleccion = () => {
     dialogo.querySelectorAll<HTMLButtonElement>('[data-modalidad]').forEach((b) => {
       const on = b.dataset.modalidad === modalidad;
@@ -1366,6 +1373,12 @@ function abrirFicha(ficha: AlumnoFicha | null, origen: HTMLElement): void {
   };
   dialogo.querySelectorAll<HTMLButtonElement>('[data-modalidad]').forEach((b) => b.addEventListener('click', () => { modalidad = b.dataset.modalidad as AlumnoFichaInput['modalidad']; pintarSeleccion(); }));
   pintarSeleccion();
+  const pintarPago = () => dialogo.querySelectorAll<HTMLButtonElement>('[data-pago]').forEach((b) => {
+    const on = b.dataset.pago === (pagado ? 'si' : 'no');
+    b.classList.toggle('activo', on);
+    b.setAttribute('aria-pressed', String(on));
+  });
+  dialogo.querySelectorAll<HTMLButtonElement>('[data-pago]').forEach((b) => b.addEventListener('click', () => { pagado = b.dataset.pago === 'si'; pintarPago(); }));
 
   const form = dialogo.querySelector('form')!;
   const error = form.querySelector<HTMLElement>('[role="alert"]')!;
@@ -1374,10 +1387,19 @@ function abrirFicha(ficha: AlumnoFicha | null, origen: HTMLElement): void {
     e.preventDefault();
     if (!dialogo.open) return;
     const datos = new FormData(form);
+    const fechaAlta = esNueva ? leerFechaDe(dialogo, 'alta') : ficha!.fechaAlta;
+    if (esNueva && !fechaAlta) {
+      error.textContent = 'Elegí la fecha de registro';
+      return;
+    }
+    const anclaRaw = String(datos.get('ancla') ?? '').trim();
     const input: AlumnoFichaInput = {
       nombre: String(datos.get('nombre') ?? ''),
       modalidad,
       contacto: String(datos.get('contacto') ?? ''),
+      ancla: anclaRaw === '' ? undefined : Number(anclaRaw),
+      fechaAlta: fechaAlta ?? undefined,
+      pagado: esNueva ? pagado : undefined,
     };
     const errores = validarAlumno(input);
     if (Object.keys(errores).length > 0) {

@@ -81,6 +81,7 @@ export function fichasDemo(hoy: string): AlumnoFicha[] {
     activo: true,
     color: colorPorId(a.id),
     contacto: '',
+    pagado: false,
   }));
 }
 

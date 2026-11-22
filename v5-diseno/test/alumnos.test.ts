@@ -97,6 +97,46 @@ test('no se puede persistir: el repositorio lanza y no confirma el alta', () => 
   assert.equal(repo.listarAlumnos().some((a) => a.nombre === 'x'), false);
 });
 
+test('alta completa (#8): fecha de registro elegida, ancla, pago inicial y teléfono persisten', () => {
+  const almacen = almacenMemoria();
+  const { repo } = abrir(almacen);
+  const creada = repo.crearAlumno({
+    nombre: 'Luz Ferreira', modalidad: 'mensual', fechaAlta: '2026-02-01',
+    ancla: 1, pagado: true, contacto: '099 444 333',
+  });
+  assert.equal(creada.fechaAlta, '2026-02-01', 'la fecha elegida manda sobre la de hoy');
+  assert.equal(creada.ancla, 1);
+  assert.equal(creada.pagado, true);
+  assert.equal(creada.contacto, '099 444 333');
+  const { repo: reabierta } = abrir(almacen);
+  const guardada = reabierta.listarAlumnos().find((a) => a.id === creada.id);
+  assert.equal(guardada?.fechaAlta, '2026-02-01');
+  assert.equal(guardada?.pagado, true);
+  assert.equal(guardada?.contacto, '099 444 333');
+});
+
+test('alta completa (#8): rechaza fecha de registro inválida y respeta default de pago', () => {
+  const { repo } = abrir(almacenMemoria());
+  assert.throws(() => repo.crearAlumno({ ...Input, fechaAlta: '2026-02-30' }), /Fecha de registro/i);
+  assert.throws(() => repo.crearAlumno({ ...Input, fechaAlta: '2026-2-1' }), /Fecha de registro/i);
+  const creada = repo.crearAlumno({ ...Input, fechaAlta: '2028-02-29' });
+  assert.equal(creada.fechaAlta, '2028-02-29', 'bisiesto válido');
+  assert.equal(creada.pagado, false, 'default: va a pagar');
+});
+
+test('edición (#8): fecha de alta y pago inicial quedan congelados', () => {
+  const { repo } = abrir(almacenMemoria());
+  const creada = repo.crearAlumno({ ...Input, fechaAlta: '2026-01-15', pagado: true, ancla: 9 });
+  const editada = repo.editarAlumno(creada.id, {
+    nombre: 'Nora Nueva', modalidad: 'individual', ancla: 12,
+    fechaAlta: '2020-01-01', pagado: false,
+  });
+  assert.equal(editada.id, creada.id);
+  assert.equal(editada.fechaAlta, '2026-01-15', 'alta inmutable');
+  assert.equal(editada.pagado, true, 'pago inicial inmutable');
+  assert.equal(editada.ancla, 12, 'el día de vencimiento sí se edita');
+});
+
 /* -------------------------------------------------------------- edición */
 
 test('edición: conserva ID, alta, activo y color; cambia nombre/modalidad y preserva grupo', () => {
