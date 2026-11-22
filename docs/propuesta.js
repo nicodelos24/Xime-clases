@@ -1,18 +1,18 @@
 // Clases v5 · navegación + funcionamiento (auto-marcado, Cancelar clase, WhatsApp)
 // La estética vive en tokens.css/propuesta.css; acá solo se cambian estados,
 // textos y el flujo de cancelación. Sin emoji: solo SVG de icons.js.
-import { horaClase, } from "./src/clases.js?v=202611220100";
-import { CLAVE_ESTADO, RepositorioClases, almacenLocalStorage } from "./src/repositorio.js?v=202611220100";
-import { alumnosCobrosDemo, datosDemo, fichasDemo } from "./src/demo.js?v=202611220100";
-import { resumenCobros } from "./src/cobros.js?v=202611220100";
-import { resumenHoy, clasesDelDia, clasesDeLaSemana } from "./src/resumen.js?v=202611220100";
-import { registrarToqueFecha, mesDe } from "./src/agenda.js?v=202611220100";
-import { destinoDeEnlace } from "./src/navegacion.js?v=202611220100";
-import { actualizarBarra, estadoBarraInicial, } from "./src/barra-scroll.js?v=202611220100";
-import { ajustarLock, debeBloquearScroll, estiloSheet, debeCerrarPorToqueFuera, esToqueFuera, debeSuprimirClickTrasCierre, } from "./src/sheets.js?v=202611220100";
-import { diaCorto, etiquetaDia, etiquetaDiaCompleta, etiquetaMes, parseFecha, lunesDe, diasDelMes, esFechaValida } from "./src/fechas.js?v=202611220100";
-import { relojDelDispositivo, hoyLocal } from "./src/reloj.js?v=202611220100";
-import { textoCancelacion, destinos, resumenEnvio, linkTexto, } from "./src/whatsapp.js?v=202611220100";
+import { horaClase, } from "./src/clases.js?v=202611220110";
+import { CLAVE_ESTADO, RepositorioClases, almacenLocalStorage } from "./src/repositorio.js?v=202611220110";
+import { alumnosCobrosDemo, datosDemo, fichasDemo } from "./src/demo.js?v=202611220110";
+import { resumenCobros } from "./src/cobros.js?v=202611220110";
+import { resumenHoy, clasesDelDia, clasesDeLaSemana } from "./src/resumen.js?v=202611220110";
+import { registrarToqueFecha, mesDe } from "./src/agenda.js?v=202611220110";
+import { destinoDeEnlace } from "./src/navegacion.js?v=202611220110";
+import { actualizarBarra, estadoBarraInicial, debeReaparecerPorQuietud, REAPARECER_TRAS_MS, } from "./src/barra-scroll.js?v=202611220110";
+import { ajustarLock, debeBloquearScroll, estiloSheet, debeCerrarPorToqueFuera, esToqueFuera, debeSuprimirClickTrasCierre, } from "./src/sheets.js?v=202611220110";
+import { diaCorto, etiquetaDia, etiquetaDiaCompleta, etiquetaMes, parseFecha, lunesDe, diasDelMes, esFechaValida } from "./src/fechas.js?v=202611220110";
+import { relojDelDispositivo, hoyLocal } from "./src/reloj.js?v=202611220110";
+import { textoCancelacion, destinos, resumenEnvio, linkTexto, } from "./src/whatsapp.js?v=202611220110";
 /* ------------------------------------------------- estado persistente (local) */
 const reloj = relojDelDispositivo();
 /** Quién opera la app hoy: único dueño. En Fase 4 sale de la sesión. */
@@ -1228,7 +1228,7 @@ toast.addEventListener('click', () => {
     }
 });
 /* ------------------------------------------------------- alumnos (fichas) */
-import { construirVista, filtrarYOrdenar, puntoEstadoVence, textoEstadoVence, validarAlumno, } from "./src/alumnos.js?v=202611220100";
+import { construirVista, filtrarYOrdenar, puntoEstadoVence, textoEstadoVence, validarAlumno, } from "./src/alumnos.js?v=202611220110";
 let ordenAlumnos = 'ninguno';
 const filtrosAlumnos = new Set();
 let busquedaAlumno = '';
@@ -1766,6 +1766,13 @@ const tabbar = document.querySelector('.tabbar');
 if (tabbar) {
     let estado = estadoBarraInicial(window.scrollY);
     let framePendiente = false;
+    let temporizador = null;
+    const cancelarTemporizador = () => {
+        if (temporizador !== null) {
+            clearTimeout(temporizador);
+            temporizador = null;
+        }
+    };
     // El telón crema (body::after) debe desvanecerse con la barra: si no, queda
     // una franja crema flotando cuando la cápsula se desliza fuera de pantalla.
     const aplicar = (ocultar) => {
@@ -1774,8 +1781,26 @@ if (tabbar) {
         estado = { ...estado, oculta: ocultar };
     };
     const recalibrar = () => {
+        cancelarTemporizador();
         estado = estadoBarraInicial(window.scrollY);
         aplicar(false);
+    };
+    // Si la barra quedó oculta, (re)arma el reloj de quietud: cada muestra de
+    // scroll reinicia el temporizador, así sólo vuelve sola tras 3 s sin tocar.
+    // Al vencer, la decisión pura confirma que sigue oculta y la mostramos con
+    // la misma transición (quitar `.oculta`), recalibrando la referencia de
+    // scroll para que un baje subsecuente la oculte sin rebotes.
+    const rearmarSiOculta = () => {
+        cancelarTemporizador();
+        // En Inicio la barra debe estar siempre visible: nunca la ocultamos ni
+        // armamos el temporizador ahí (así no queda un reloj colgando al volver).
+        if (!estado.oculta || document.getElementById('v-hoy')?.classList.contains('activa'))
+            return;
+        temporizador = setTimeout(() => {
+            temporizador = null;
+            if (debeReaparecerPorQuietud(estado, REAPARECER_TRAS_MS))
+                recalibrar();
+        }, REAPARECER_TRAS_MS);
     };
     const muestrear = () => {
         framePendiente = false;
@@ -1790,6 +1815,7 @@ if (tabbar) {
         const limite = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
         estado = actualizarBarra(estado, window.scrollY, limite);
         aplicar(estado.oculta);
+        rearmarSiOculta();
     };
     window.addEventListener('scroll', () => {
         if (framePendiente)
@@ -1800,6 +1826,12 @@ if (tabbar) {
     // Nunca dejar un destino invisible pero enfocable: si el teclado enfoca
     // la barra (Tab), se muestra y se reinicia la referencia de scroll.
     tabbar.addEventListener('focusin', recalibrar);
+    // Con la pestaña en segundo plano los temporizadores se retrasan: al volver,
+    // recalibrar para que el reloj no dispare una reaparición "fantasma".
+    document.addEventListener('visibilitychange', () => {
+        if (!document.hidden)
+            recalibrar();
+    });
     // Al cambiar de vista puede cambiar la altura del contenido y el scroll;
     // recalcular la referencia para no interpretar ese salto como una dirección.
     window.addEventListener('hashchange', recalibrar);

@@ -12,10 +12,12 @@
  *    de leerse como «subida» y la barra NO reaparece sola.
  *  - Histéresis: hace falta más de una muestra de subida sostenida para
  *    volver a mostrar la barra; así un solo sample ruidoso no la devuelve.
+ *  - Reaparición por quietud: si la barra queda oculta y el scroll se detiene,
+ *    vuelve sola tras `REAPARECER_TRAS_MS`, con la misma transición suave.
  *
  * La UI (`propuesta.ts`) se encarga del listener `scroll`, del
- * `requestAnimationFrame` y de aplicar la clase `.oculta`; acá solo se decide
- * el estado, para poder probarlo sin navegador.
+ * `requestAnimationFrame`, del temporizador y de aplicar la clase `.oculta`;
+ * acá solo se decide el estado, para poder probarlo sin navegador.
  */
 /** Desplazamiento mínimo (px) entre muestras para considerar un cambio de dirección. */
 export const UMBRAL_SCROLL = 6;
@@ -23,6 +25,12 @@ export const UMBRAL_SCROLL = 6;
 export const TOPE_SCROLL = 4;
 /** Muestras consecutivas de subida necesarias para reaparecer. */
 export const MUESTRAS_PARA_MOSTRAR = 2;
+/**
+ * Ms sin desplazarse tras los cuales la barra oculta vuelve a aparecer sola.
+ * 3 s se siente natural: da tiempo a leer el contenido sin que parezca que la
+ * barra "desapareció para siempre".
+ */
+export const REAPARECER_TRAS_MS = 3000;
 /** Recorta una posición de scroll al rango real del documento. */
 export function recortarScroll(y, limite = Infinity) {
     const tope = Number.isFinite(limite) ? Math.max(0, limite) : Infinity;
@@ -79,4 +87,15 @@ export function actualizarBarra(estado, scrollActual, limite = Infinity) {
         };
     }
     return { ...estado, ultimoY: y }; // zona muerta: conserva todo
+}
+/**
+ * Decide si, estando la barra oculta y quieto el scroll durante `inactivoMs`,
+ * ya debe reaparecer. La UI llama a esto cuando vence su temporizador; la
+ * decisión pura acá permite probar la regla sin reloj ni navegador.
+ *
+ * - Si la barra ya está visible, no hace nada (nada que reaparecer).
+ * - Recién reaparece al cumplirse el tiempo completo: antes, sigue oculta.
+ */
+export function debeReaparecerPorQuietud(estado, inactivoMs) {
+    return estado.oculta && inactivoMs >= REAPARECER_TRAS_MS;
 }

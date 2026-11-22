@@ -1,10 +1,11 @@
 /// <reference types="node" />
-import { test } from 'node:test';
+import { test, mock } from 'node:test';
 import { strict as assert } from 'node:assert';
 
 import {
   debeOcultarBarra, actualizarBarra, estadoBarraInicial, recortarScroll,
-  UMBRAL_SCROLL, TOPE_SCROLL, MUESTRAS_PARA_MOSTRAR,
+  debeReaparecerPorQuietud,
+  UMBRAL_SCROLL, TOPE_SCROLL, MUESTRAS_PARA_MOSTRAR, REAPARECER_TRAS_MS,
 } from '../src/barra-scroll.ts';
 
 test('bajar oculta la barra', () => {
@@ -76,4 +77,70 @@ test('el rebote elástico del final de la página se recorta y no reaparece la b
     estado = actualizarBarra(estado, 1000 - (i + 1) * 20, limite);
   }
   assert.equal(estado.oculta, false);
+});
+
+test('bajar rápido con ruido no hace reaparecer la barra', () => {
+  let estado = estadoBarraInicial();
+  // Fling hacia abajo: grandes saltos positivos con micro-retrocesos (< umbral).
+  for (const y of [50, 95, 91, 131, 127, 167, 163, 210]) {
+    estado = actualizarBarra(estado, y, 1000);
+  }
+  assert.equal(estado.oculta, true, 'la barra sigue oculta mientras se baja');
+});
+
+test('barra oculta vuelve sola tras el tiempo de quietud', () => {
+  let estado = estadoBarraInicial();
+  estado = actualizarBarra(estado, 200); // bajar → oculta
+  assert.equal(estado.oculta, true);
+  // Antes del tiempo no reaparece; justo en el umbral, sí.
+  assert.equal(debeReaparecerPorQuietud(estado, REAPARECER_TRAS_MS - 1), false);
+  assert.equal(debeReaparecerPorQuietud(estado, REAPARECER_TRAS_MS), true);
+  assert.equal(debeReaparecerPorQuietud(estado, REAPARECER_TRAS_MS + 500), true);
+});
+
+test('barra visible nunca "reaparece" por quietud', () => {
+  const visible = estadoBarraInicial();
+  assert.equal(visible.oculta, false);
+  assert.equal(debeReaparecerPorQuietud(visible, REAPARECER_TRAS_MS * 10), false);
+});
+
+test('tras reaparecer por quietud, volver a bajar la oculta de nuevo (ciclo intacto)', () => {
+  let estado = estadoBarraInicial();
+  estado = actualizarBarra(estado, 200);
+  assert.equal(debeReaparecerPorQuietud(estado, REAPARECER_TRAS_MS), true);
+  // La UI quita .oculta y recalibra; la referencia vuelve a la posición actual.
+  estado = { ...estado, oculta: false, ultimoY: 200, muestrasSubida: 0 };
+  estado = actualizarBarra(estado, 320); // sigue bajando
+  assert.equal(estado.oculta, true, 'al bajar de nuevo se oculta como siempre');
+});
+
+// Regression del temporizador de la UI: al moverse el scroll se rearma, así
+// que un gesto largo que termina con la barra oculta no la devuelve a mitad.
+test('el reloj de quietud se rearma con cada movimiento y no dispara antes', (t) => {
+  const timers = mock.timers;
+  timers.enable({ apis: ['setTimeout'] });
+  let disparos = 0;
+  let estado = estadoBarraInicial();
+  let temporizador: ReturnType<typeof setTimeout> | null = null;
+
+  const muestrear = (andar: number) => {
+    estado = actualizarBarra(estado, andar);
+    // La UI cancela el temporizador anterior y arma uno nuevo en cada muestra.
+    if (temporizador !== null) clearTimeout(temporizador);
+    temporizador = null;
+    if (!estado.oculta) return;
+    temporizador = setTimeout(() => {
+      temporizador = null;
+      if (debeReaparecerPorQuietud(estado, REAPARECER_TRAS_MS)) disparos++;
+    }, REAPARECER_TRAS_MS);
+  };
+
+  muestrear(200); // oculta, arranca el reloj
+  timers.tick(REAPARECER_TRAS_MS - 1);
+  assert.equal(disparos, 0, 'no reaparece antes de los 3 s');
+  muestrear(220); // sigue bajando: reinicia el reloj
+  timers.tick(REAPARECER_TRAS_MS - 1);
+  assert.equal(disparos, 0, 'el movimiento reinició la cuenta');
+  timers.tick(1);
+  assert.equal(disparos, 1, 'vuelve sola al cumplirse el tiempo quieto');
 });

@@ -12,7 +12,8 @@ import { resumenHoy, clasesDelDia, clasesDeLaSemana } from './src/resumen.ts';
 import { registrarToqueFecha, mesDe, type ToqueFecha } from './src/agenda.ts';
 import { destinoDeEnlace } from './src/navegacion.ts';
 import {
-  actualizarBarra, estadoBarraInicial, type EstadoBarra,
+  actualizarBarra, estadoBarraInicial, debeReaparecerPorQuietud,
+  REAPARECER_TRAS_MS, type EstadoBarra,
 } from './src/barra-scroll.ts';
 import {
   ajustarLock, debeBloquearScroll, estiloSheet, debeCerrarPorToqueFuera, esToqueFuera,
@@ -1758,6 +1759,11 @@ const tabbar = document.querySelector('.tabbar') as HTMLElement | null;
 if (tabbar) {
   let estado: EstadoBarra = estadoBarraInicial(window.scrollY);
   let framePendiente = false;
+  let temporizador: ReturnType<typeof setTimeout> | null = null;
+
+  const cancelarTemporizador = () => {
+    if (temporizador !== null) { clearTimeout(temporizador); temporizador = null; }
+  };
 
   // El telón crema (body::after) debe desvanecerse con la barra: si no, queda
   // una franja crema flotando cuando la cápsula se desliza fuera de pantalla.
@@ -1768,8 +1774,25 @@ if (tabbar) {
   };
 
   const recalibrar = () => {
+    cancelarTemporizador();
     estado = estadoBarraInicial(window.scrollY);
     aplicar(false);
+  };
+
+  // Si la barra quedó oculta, (re)arma el reloj de quietud: cada muestra de
+  // scroll reinicia el temporizador, así sólo vuelve sola tras 3 s sin tocar.
+  // Al vencer, la decisión pura confirma que sigue oculta y la mostramos con
+  // la misma transición (quitar `.oculta`), recalibrando la referencia de
+  // scroll para que un baje subsecuente la oculte sin rebotes.
+  const rearmarSiOculta = () => {
+    cancelarTemporizador();
+    // En Inicio la barra debe estar siempre visible: nunca la ocultamos ni
+    // armamos el temporizador ahí (así no queda un reloj colgando al volver).
+    if (!estado.oculta || document.getElementById('v-hoy')?.classList.contains('activa')) return;
+    temporizador = setTimeout(() => {
+      temporizador = null;
+      if (debeReaparecerPorQuietud(estado, REAPARECER_TRAS_MS)) recalibrar();
+    }, REAPARECER_TRAS_MS);
   };
 
   const muestrear = () => {
@@ -1785,6 +1808,7 @@ if (tabbar) {
     const limite = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
     estado = actualizarBarra(estado, window.scrollY, limite);
     aplicar(estado.oculta);
+    rearmarSiOculta();
   };
 
   window.addEventListener('scroll', () => {
@@ -1796,6 +1820,12 @@ if (tabbar) {
   // Nunca dejar un destino invisible pero enfocable: si el teclado enfoca
   // la barra (Tab), se muestra y se reinicia la referencia de scroll.
   tabbar.addEventListener('focusin', recalibrar);
+
+  // Con la pestaña en segundo plano los temporizadores se retrasan: al volver,
+  // recalibrar para que el reloj no dispare una reaparición "fantasma".
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) recalibrar();
+  });
 
   // Al cambiar de vista puede cambiar la altura del contenido y el scroll;
   // recalcular la referencia para no interpretar ese salto como una dirección.
