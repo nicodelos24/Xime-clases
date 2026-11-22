@@ -14,12 +14,14 @@ html, body {
   --sheet-safe: env(safe-area-inset-bottom);
   --margen-panel: 10px;
 }
-/* El body mide exactamente el viewport menos la zona de barra y el hueco;
-   .marca ocupa su altura natural y .cel (flex:1) ocupa el resto, así el panel
-   cierra siempre 91px antes del borde. min-height permite crecer en vistas largas. */
+/* El body mide 100vh de alto total (content box + padding-bottom de 91px):
+   reserva 77px de barra (63 alto + 14 bottom) y 14px de hueco al final del
+   content box. .marca ocupa su altura natural y .cel (flex:1) crece con el
+   contenido en vistas largas, cerrando siempre por encima de la cápsula. */
 body {
-  min-height: calc(100vh - 91px); /* 77px de barra (63 alto + 14 bottom) + 14px de hueco */
+  min-height: 100vh;
   padding-inline: var(--margen-panel);
+  padding-bottom: calc(91px + env(safe-area-inset-bottom));
   display: flex;
   flex-direction: column;
 }
@@ -33,7 +35,7 @@ html.con-sheet, body.con-sheet {
 html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; width: 0; }
 /* En móvil el contenido conserva el margen lateral del panel; solo sube arriba. */
 @media (max-width: 430px) {
-  body { padding: 22px var(--margen-panel) 0; }
+  body { padding: 22px var(--margen-panel) calc(91px + env(safe-area-inset-bottom)); }
 }
 
 .marca, .pie {
@@ -61,7 +63,7 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; width: 0; }
   border-radius: 30px;
   box-shadow: var(--sombra-fuerte);
   flex: 1 0 auto; min-height: 0;
-  padding: 0 0 calc(91px + env(safe-area-inset-bottom)); /* 77px de barra + 14px de hueco: el panel cierra por encima de la cápsula también con scroll largo */
+  padding: 0 0 18px;          /* el panel cierra con sus 4 esquinas; el hueco lo da el fondo exterior */
   overflow: visible;
   position: relative;         /* sin transform/filter/will-change/contain: no rompe el fixed de la nav */
   display: flex;
