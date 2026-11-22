@@ -1118,9 +1118,10 @@ function abrirCancelacion(id: string) {
   abrirSheet(previo);
   sheet = previo;
 
-  // «Cambiar de día» solo revela el sub-cuadro: no es un cambio del sheet.
-  // Se observa el sub-cuadro para que tocar la fecha sí marque dirty.
-  observarCambios(previo.querySelector('.cambiar-dia') as HTMLElement);
+  // Observar todo el sheet: motivo, mensaje y las opciones de WhatsApp
+  // también son cambios sin guardar. Antes se observaba `.cambiar-dia`, que
+  // ya no existe en este sheet y hacía fallar abrirCancelacion (TypeError).
+  observarCambios(previo);
 
   previo.querySelector('.sheet-cerrar')?.addEventListener('click', () => cerrarSheetConCambios());
   previo.querySelector('[data-accion="volver"]')?.addEventListener('click', () => cerrarSheetConCambios());
