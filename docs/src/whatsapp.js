@@ -48,6 +48,18 @@ export function destinos(c, modo, elegidos, texto) {
         return lista.map((alumno) => ({ alumno, link: linkAlumno(alumno, texto) }));
     return lista.map((alumno) => ({ alumno, link: `https://wa.me/${normalizarTelefono(alumno.telefono)}` }));
 }
+/** Plantilla sugerida para avisar que la mensualidad está por vencer. */
+export const PLANTILLA_VENCIMIENTO = 'Hola, tu mensualidad está por vencer. ¿Podés confirmar el pago?';
+/** Mensaje sugerido con el nombre y la fecha de vencimiento (día/mes). */
+export function textoAvisoVencimiento(a, plantilla = PLANTILLA_VENCIMIENTO) {
+    const [y, m, d] = a.vencimiento.split('-').map(Number);
+    return `${(plantilla || PLANTILLA_VENCIMIENTO).trim()}\n${a.nombre} · vence ${String(d).padStart(2, '0')}/${String(m).padStart(2, '0')}/${y}`;
+}
+/** Deep link wa.me con el aviso de «por vencer» ya precargado. */
+export function linkAvisoVencimiento(a, plantilla) {
+    const tel = normalizarTelefono(a.telefono);
+    return `https://wa.me/${tel}?text=${encodeURIComponent(textoAvisoVencimiento(a, plantilla))}`;
+}
 /** Resumen para el toast de la app. */
 export function resumenEnvio(c, modo, cantidad) {
     if (cantidad === 0)

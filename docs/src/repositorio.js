@@ -17,7 +17,7 @@
  */
 import { cancelarClase, crearClase, deshacerCancelacion, deshacerMarcada, marcarDada, reconciliar, registrarMensajeEnviado, reprogramarClase, } from './clases.js?v=202611221000';
 import { hoyLocal } from './reloj.js?v=202611221000';
-import { anularPago, registrarPago } from './cobros.js?v=202611221000';
+import { anularPago, corregirFechaPago, registrarPago } from './cobros.js?v=202611221000';
 import { crearAlumno, editarAlumno, normalizarFichaGuardada, } from './alumnos.js?v=202611221000';
 import { conExcepcion, crearClaseSuelta, crearRutina, generarOcurrencias, generarOcurrenciasEnRango, } from './agendar.js?v=202611221000';
 /**
@@ -151,13 +151,22 @@ export class RepositorioClases {
     listarPagos() {
         return this.cargar().pagos;
     }
+    /**
+     * Registra un pago con FECHA EXPLÍCITA elegida en el formulario (cuándo lo
+     * hizo/renovó la alumna). Sigue vinculado al alumno por ID estable, nunca
+     * por nombre, y la fecha se valida en el dominio antes de guardar.
+     */
     registrarPago(nuevo) {
-        const fecha = hoyLocal(this.reloj.ahora());
+        const fecha = nuevo.fecha ?? hoyLocal(this.reloj.ahora());
         this.actualizarPagos((pagos) => registrarPago(pagos, { ...nuevo, fecha }));
     }
     anularPago(id, motivo, quien) {
         const fecha = hoyLocal(this.reloj.ahora());
         this.actualizarPagos((pagos) => anularPago(pagos, id, { fecha, motivo, quien }));
+    }
+    corregirFechaPago(id, fechaNueva, motivo, quien) {
+        const hoy = hoyLocal(this.reloj.ahora());
+        this.actualizarPagos((pagos) => corregirFechaPago(pagos, id, fechaNueva, motivo, quien, hoy));
     }
     actualizarPagos(transformar) {
         const estado = this.cargar();

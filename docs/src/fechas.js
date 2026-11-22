@@ -102,6 +102,20 @@ export function etiquetaMes(f) {
     const { y, m } = parseFecha(f);
     return `${MESES[m - 1]} ${y}`;
 }
+/**
+ * Fecha visible en DÍA-MES-AÑO (pedido de Nico 22-nov): "21-11-2026".
+ * El ISO "AAAA-MM-DD" sigue siendo el formato interno/de guardado: esta
+ * función SOLO formatea para mostrar; nunca se persiste su salida.
+ */
+export function fechaCorta(f) {
+    const { y, m, d } = parseFecha(f);
+    return `${String(d).padStart(2, '0')}-${String(m).padStart(2, '0')}-${y}`;
+}
+/** "mes AAAA" a partir de un período "AAAA-MM" (para vencimientos visibles). */
+export function etiquetaPeriodo(periodo) {
+    const { y, m } = parseFecha(`${periodo}-01`);
+    return `${MESES[m - 1]} ${y}`;
+}
 /** Lunes de la semana (ISO) de la fecha dada. */
 export function lunesDe(f) {
     return sumarDias(f, -diaSemanaIndex(f));

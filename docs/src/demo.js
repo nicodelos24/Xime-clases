@@ -73,6 +73,7 @@ export function fichasDemo(hoy) {
         activo: true,
         color: colorPorId(a.id),
         contacto: '',
+        pagado: false,
     }));
 }
 export function datosDemo(ahora) {

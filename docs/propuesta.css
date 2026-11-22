@@ -306,6 +306,20 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; width: 0; }
 .clase-nombre { font-size: 14.5px; font-weight: 650; letter-spacing: -.01em; }
 .clase-sub { font-size: 12px; color: var(--tinta-2); margin-top: 1px; }
 
+/* Desplegable informativo de alumnos por clase (punto 1): solo lectura. */
+.clase-alumnos { flex-basis: 100%; font-size: 12px; color: var(--tinta-2); }
+.clase-alumnos summary {
+  cursor: pointer; list-style: none;
+  display: inline-flex; align-items: center; gap: 5px;
+  color: var(--tq-700); font-weight: 650;
+}
+.clase-alumnos summary::-webkit-details-marker { display: none; }
+.clase-alumnos summary::before { content: '▸'; font-size: 10px; }
+.clase-alumnos[open] summary::before { content: '▾'; }
+.clase-alumnos summary:focus-visible { outline: 2px solid var(--tq-600); outline-offset: 2px; }
+.clase-alumnos ul { margin: 6px 0 2px; padding-left: 18px; line-height: 1.55; }
+.clase-alumnos li::marker { color: var(--tq-600); }
+
 .marcar {
   border: 1.5px solid var(--tq-600);
   background: transparent; color: var(--tq-700);

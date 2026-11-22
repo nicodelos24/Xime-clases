@@ -1,4 +1,4 @@
-import { diasDeFecha, diasDelMes, esFechaValida, parseFecha, sumarDias } from './fechas.js?v=202611221000';
+import { diasDeFecha, diasDelMes, esFechaValida, parseFecha } from './fechas.js?v=202611221000';
 export function registrarPago(pagos, nuevo) {
     if (!nuevo.id.trim() || !nuevo.alumnoId.trim() || !nuevo.quien.trim())
         throw new Error('Faltan datos del pago');
@@ -14,6 +14,28 @@ export function registrarPago(pagos, nuevo) {
     }
     return [...pagos, { ...nuevo, anulado: null }];
 }
+/** Corrige la fecha en que se pagó/renovió, dejando rastro de la corrección. */
+export function corregirFechaPago(pagos, id, fechaNueva, motivo, quien, hoy) {
+    if (!esFechaValida(fechaNueva))
+        throw new Error('Fecha de pago inválida');
+    const pago = pagos.find((p) => p.id === id);
+    if (!pago)
+        throw new Error('No se encontró el pago');
+    if (pago.anulado)
+        throw new Error('El pago ya está anulado');
+    if (fechaNueva === pago.fecha)
+        return [...pagos];
+    if (!motivo.trim() || !quien.trim())
+        throw new Error('Ingresá el motivo de la corrección');
+    // El ID y el alumno no cambian: la vinculación sigue siendo la misma; se
+    // anula la versión anterior y se registra la corregida con ese mismo ID.
+    const correccion = {
+        ...pago,
+        fecha: fechaNueva,
+        anulado: { fecha: hoy, motivo: motivo.trim(), quien },
+    };
+    return pagos.map((p) => p === pago ? correccion : p);
+}
 export function anularPago(pagos, id, datos) {
     const pago = pagos.find((p) => p.id === id);
     if (!pago)
@@ -27,27 +49,43 @@ export function anularPago(pagos, id, datos) {
         throw new Error('Fecha de anulación inválida');
     return pagos.map((p) => p === pago ? { ...p, anulado: { ...datos, motivo } } : p);
 }
-// El último día cubierto es el anterior al inicio siguiente (PLAN v1 §3.1).
+/**
+ * Vencimiento de la mensualidad: el MISMO día del mes siguiente al del alta
+ * (regla confirmada por la clienta 22-nov-2026). 1-feb → 1-mar, 1-may → 1-jun.
+ * El `periodo` es el mes de referencia (AAAA-MM), no una fecha de cobro.
+ * Si el día no existe en el mes destino (31, 30, 29 en febrero no bisiesto),
+ * DEFAULT SEGURO: clamp al último día de ese mes, documentado aquí.
+ */
+function mesSiguiente(periodo) {
+    const { y, m } = parseFecha(`${periodo}-01`);
+    return m === 12 ? `${y + 1}-01` : `${y}-${String(m + 1).padStart(2, '0')}`;
+}
+function mesAnterior(periodo) {
+    const { y, m } = parseFecha(`${periodo}-01`);
+    return m === 1 ? `${y - 1}-12` : `${y}-${String(m - 1).padStart(2, '0')}`;
+}
 export function vencimientoDelMes(periodo, ancla) {
     if (!Number.isInteger(ancla) || ancla < 1 || ancla > 31)
         throw new Error('Día ancla inválido');
-    const primero = `${periodo}-01`;
-    const { y, m } = parseFecha(primero);
-    // Ancla 1: el vencimiento de este mes precede al inicio del mes siguiente.
-    return ancla === 1 ? `${periodo}-${diasDelMes(y, m)}` : sumarDias(primero, Math.min(ancla, diasDelMes(y, m)) - 2);
+    const destino = mesSiguiente(periodo);
+    const { y, m } = parseFecha(`${destino}-01`);
+    const dia = Math.min(ancla, diasDelMes(y, m));
+    return `${destino}-${String(dia).padStart(2, '0')}`;
 }
 export function resumenCobros(alumnos, pagos, hoy, diasAviso = 7) {
     const periodo = hoy.slice(0, 7);
-    const siguiente = sumarDias(vencimientoDelMes(periodo, 1), 1).slice(0, 7);
+    // Con la regla del mismo día del mes siguiente, lo que vence ESTE mes es la
+    // mensualidad del mes ANTERIOR; la del mes actual vence el mes que viene.
+    const anterior = mesAnterior(periodo);
     const dia = diasDeFecha(hoy);
     const activos = pagos.filter((p) => !p.anulado);
-    const filas = alumnos.flatMap((alumno) => [periodo, siguiente].map((mes) => {
+    const filas = alumnos.flatMap((alumno) => [anterior, periodo].map((mes) => {
         const fecha = vencimientoDelMes(mes, alumno.ancla);
         return {
             alumno, periodo: mes, fecha, dias: diasDeFecha(fecha) - dia,
             pago: activos.find((p) => p.alumnoId === alumno.id && p.periodo === mes),
         };
-    })).filter((fila) => fila.periodo === periodo || fila.dias <= diasAviso)
+    })).filter((fila) => fila.dias <= diasAviso)
         .sort((a, b) => Number(a.dias < 0) - Number(b.dias < 0) || (a.dias < 0 ? b.dias - a.dias : a.dias - b.dias));
     const pendientes = filas.filter((f) => !f.pago);
     const vencenHoy = pendientes.filter((f) => f.dias === 0);

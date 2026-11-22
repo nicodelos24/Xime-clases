@@ -1,18 +1,19 @@
 // Clases v5 · navegación + funcionamiento (auto-marcado, Cancelar clase, WhatsApp)
 // La estética vive en tokens.css/propuesta.css; acá solo se cambian estados,
 // textos y el flujo de cancelación. Sin emoji: solo SVG de icons.js.
-import { horaClase, } from "./src/clases.js?v=202611221000";
-import { CLAVE_ESTADO, RepositorioClases, almacenLocalStorage } from "./src/repositorio.js?v=202611221000";
-import { alumnosCobrosDemo, datosDemo, fichasDemo } from "./src/demo.js?v=202611221000";
-import { resumenCobros } from "./src/cobros.js?v=202611221000";
-import { resumenHoy, clasesDelDia, clasesDeLaSemana } from "./src/resumen.js?v=202611221000";
-import { registrarToqueFecha, mesDe } from "./src/agenda.js?v=202611221000";
-import { destinoDeEnlace } from "./src/navegacion.js?v=202611221000";
-import { actualizarBarra, estadoBarraInicial, debeReaparecerPorQuietud, REAPARECER_TRAS_MS, } from "./src/barra-scroll.js?v=202611221000";
-import { ajustarLock, debeBloquearScroll, estiloSheet, debeCerrarPorToqueFuera, esToqueFuera, debeSuprimirClickTrasCierre, } from "./src/sheets.js?v=202611221000";
-import { diaCorto, etiquetaDia, etiquetaDiaCompleta, etiquetaMes, parseFecha, lunesDe, diasDelMes, esFechaValida } from "./src/fechas.js?v=202611221000";
-import { relojDelDispositivo, hoyLocal } from "./src/reloj.js?v=202611221000";
-import { textoCancelacion, destinos, resumenEnvio, linkTexto, } from "./src/whatsapp.js?v=202611221000";
+import { horaClase, } from './src/clases.js?v=202611221000';
+import { CLAVE_ESTADO, RepositorioClases, almacenLocalStorage } from './src/repositorio.js?v=202611221000';
+import { alumnosCobrosDemo, datosDemo, fichasDemo } from './src/demo.js?v=202611221000';
+import { resumenCobros } from './src/cobros.js?v=202611221000';
+import { resumenHoy, clasesDelDia, clasesDeLaSemana } from './src/resumen.js?v=202611221000';
+import { registrarToqueFecha, mesDe } from './src/agenda.js?v=202611221000';
+import { destinoDeEnlace } from './src/navegacion.js?v=202611221000';
+import { actualizarBarra, estadoBarraInicial, debeReaparecerPorQuietud, REAPARECER_TRAS_MS, } from './src/barra-scroll.js?v=202611221000';
+import { ajustarLock, debeBloquearScroll, estiloSheet, debeCerrarPorToqueFuera, esToqueFuera, debeSuprimirClickTrasCierre, } from './src/sheets.js?v=202611221000';
+import { diaCorto, etiquetaDia, etiquetaDiaCompleta, etiquetaMes, fechaCorta, parseFecha, lunesDe, diasDelMes, esFechaValida } from './src/fechas.js?v=202611221000';
+import { relojDelDispositivo, hoyLocal } from './src/reloj.js?v=202611221000';
+import { CLAVE_PREFIJO, PREFIJO_POR_DEFECTO, prefijoEsValido, prefijoSeguro, conPrefijo } from './src/prefijo.js?v=202611221000';
+import { textoCancelacion, destinos, resumenEnvio, linkTexto, linkAvisoVencimiento, } from './src/whatsapp.js?v=202611221000';
 /* ------------------------------------------------- estado persistente (local) */
 const reloj = relojDelDispositivo();
 /** Quién opera la app hoy: único dueño. En Fase 4 sale de la sesión. */
@@ -45,6 +46,23 @@ function chipEstado(c) {
         return '<span class="chip chip-cancelada"><svg class="ico" width="13" height="13"><use href="#i-alerta"/></svg>Cancelada</span>';
     }
     return '<button class="chip chip-por chip-por-dar chip-boton" type="button" data-acciones="' + c.id + '" aria-label="Opciones para la clase ' + esc(c.nombre) + ', por dar">Por dar</button>';
+}
+/**
+ * Punto 1: desplegable informativo de alumnos en cada tarjeta de clase.
+ * Solo muestra QUIÉN va; no permite editar la lista ni envía nada. Los nombres
+ * se resuelven desde las fichas por ID estable (si el nombre cambia, se ve el
+ * vigente; si la ficha ya no existe, se conserva el nombre de la clase).
+ */
+function desplegableAlumnos(c) {
+    const alumnos = c.alumnos;
+    if (alumnos.length === 0)
+        return '';
+    const fichas = repo.listarAlumnos();
+    const nombres = alumnos.map((a) => fichas.find((f) => f.id === a.id)?.nombre ?? a.nombre);
+    return `<details class="clase-alumnos">
+    <summary>Ver quiénes van</summary>
+    <ul>${nombres.map((n) => `<li>${esc(n)}</li>`).join('')}</ul>
+  </details>`;
 }
 /** Acción de una fila de clase (20/11): ya no hay botón rojo "Cancelar clase".
  *  El chip de estado (Por dar / Dada) abre el cuadro con las acciones;
@@ -231,6 +249,7 @@ function pintarLinea(fecha) {
           <div class="clase-datos">
             <p class="clase-nombre">${esc(c.nombre)}</p>
             <p class="clase-sub">${c.alumnos.length} alumnos inscriptos${c.estado === 'cancelada' && c.cancelacion ? ` · ${esc(c.cancelacion.motivo)}` : ''}</p>
+            ${desplegableAlumnos(c)}
           </div>
           ${chipEstado(c)}
           ${accionClase(c)}
@@ -413,6 +432,7 @@ function pintarTarjetasDiaMes() {
           <div class="clase-datos">
             <p class="clase-nombre">${esc(c.nombre)}</p>
             <p class="clase-sub">${c.alumnos.length} alumnos inscriptos${c.estado === 'cancelada' && c.cancelacion ? ` · ${esc(c.cancelacion.motivo)}` : ''}</p>
+            ${desplegableAlumnos(c)}
           </div>
           ${chipEstado(c)}
           ${accionClase(c)}
@@ -574,12 +594,16 @@ function abrirAgendar() {
     cuadro.innerHTML = `
     <div class="sheet-head">
       <div>
-        <p class="sheet-eyebrow">Nueva clase</p>
-        <h3 id="agendar-titulo">¿Cómo la agregamos?</h3>
+        <p class="sheet-eyebrow">Calendario</p>
+        <h3 id="agendar-titulo">¿Qué querés agregar?</h3>
       </div>
       <button class="sheet-cerrar" type="button" aria-label="Cerrar"><svg class="ico" width="18" height="18"><use href="#i-mas2"/></svg></button>
     </div>
-    <div class="opciones" role="group" aria-label="Tipo de clase">
+    <div class="opciones" role="group" aria-label="Tipo de alta">
+      <button class="opcion opcion-agendar" type="button" data-mod="alumno">
+        <svg class="ico" width="19" height="19"><use href="#i-alumnos"/></svg>
+        <span><b>Nueva alumna</b><small>Darla de alta y agendarla ese día</small></span>
+      </button>
       <button class="opcion opcion-agendar" type="button" data-mod="semanal">
         <svg class="ico" width="19" height="19"><use href="#i-agenda"/></svg>
         <span><b>Clase semanal</b><small>Una rutina: elegís los días y la hora, se repite sola</small></span>
@@ -592,6 +616,10 @@ function abrirAgendar() {
     $('.cel')?.appendChild(cuadro);
     abrirSheet(cuadro);
     cuadro.querySelector('.sheet-cerrar')?.addEventListener('click', () => cerrarCuadro(cuadro));
+    cuadro.querySelector('[data-mod="alumno"]')?.addEventListener('click', () => {
+        cerrarCuadro(cuadro);
+        abrirFichaAltaParaAgendar(diaMesSeleccionado ?? undefined);
+    });
     cuadro.querySelector('[data-mod="semanal"]')?.addEventListener('click', () => {
         cerrarCuadro(cuadro);
         abrirFormularioSemanal(diaMesSeleccionado ?? undefined);
@@ -1095,9 +1123,10 @@ function abrirCancelacion(id) {
     document.querySelector('.cel')?.appendChild(previo);
     abrirSheet(previo);
     sheet = previo;
-    // «Cambiar de día» solo revela el sub-cuadro: no es un cambio del sheet.
-    // Se observa el sub-cuadro para que tocar la fecha sí marque dirty.
-    observarCambios(previo.querySelector('.cambiar-dia'));
+    // Observar todo el sheet: motivo, mensaje y las opciones de WhatsApp
+    // también son cambios sin guardar. Antes se observaba `.cambiar-dia`, que
+    // ya no existe en este sheet y hacía fallar abrirCancelacion (TypeError).
+    observarCambios(previo);
     previo.querySelector('.sheet-cerrar')?.addEventListener('click', () => cerrarSheetConCambios());
     previo.querySelector('[data-accion="volver"]')?.addEventListener('click', () => cerrarSheetConCambios());
     previo.querySelectorAll('.opcion').forEach((btn) => {
@@ -1228,7 +1257,7 @@ toast.addEventListener('click', () => {
     }
 });
 /* ------------------------------------------------------- alumnos (fichas) */
-import { construirVista, filtrarYOrdenar, puntoEstadoVence, textoEstadoVence, validarAlumno, } from "./src/alumnos.js?v=202611221000";
+import { construirVista, filtrarYOrdenar, puntoEstadoVence, textoEstadoVence, validarAlumno, } from './src/alumnos.js?v=202611221000';
 let ordenAlumnos = 'ninguno';
 const filtrosAlumnos = new Set();
 let busquedaAlumno = '';
@@ -1256,7 +1285,7 @@ function filasAlumnos() {
 function alumnoSub(a) {
     const v = textoEstadoVence(a);
     const et = a.modalidad === 'mensual' ? 'et-mensual' : 'et-individual';
-    return `<p class="al-sub">${esc(a.grupo)} · ${v} <span class="etiqueta ${et}">${a.modalidad === 'mensual' ? 'Mensual' : 'Individual'}</span></p><span class="al-fecha">Alta ${esc(a.fechaAlta)}</span>`;
+    return `<p class="al-sub">${esc(a.grupo)} · ${v} <span class="etiqueta ${et}">${a.modalidad === 'mensual' ? 'Mensual' : 'Individual'}</span></p><span class="al-fecha">Alta ${esc(fechaCorta(a.fechaAlta))}</span>`;
 }
 function pintarChipsAlumnos() {
     $$('#filtros-alumnos [data-orden]').forEach((b) => {
@@ -1292,7 +1321,7 @@ function pintarAlumnos() {
         }).join('')
         : `<p class="pv-vacio">${todas.length === 0 ? 'Todavía no hay alumnos. Tocá «Nuevo alumno» para cargar el primero.' : 'Ningún alumno con estos filtros'}</p>`;
     lista.querySelectorAll('[data-ficha]').forEach((b) => {
-        b.addEventListener('click', () => abrirFicha(repo.listarAlumnos().find((f) => f.id === b.dataset.ficha) ?? null, b));
+        b.addEventListener('click', () => abrirFichaConCobro(repo.listarAlumnos().find((f) => f.id === b.dataset.ficha) ?? null, b));
     });
     pintarChipsAlumnos();
 }
@@ -1327,30 +1356,85 @@ $('#buscar-alumno')?.addEventListener('input', (e) => {
 });
 /* ------------------------------------------- alta / edición de ficha (C) */
 /** Diálogo de ficha: mismo sheet v5 de Cobros, sin rediseñar. */
-function abrirFicha(ficha, origen) {
+function abrirFichaConCobro(ficha, origen, alCrear) {
+    abrirFicha(ficha, origen, alCrear);
+    if (!ficha)
+        return;
+    // #4: al tocar la alumna se ve su estado de cobro y se puede editar el pago
+    // vinculado por ID, sin depender del nombre ni de recordar el período.
+    const dialogo = document.querySelector('dialog.sheet.cobros-panel[open]');
+    if (!dialogo)
+        return;
+    const r = verCobros();
+    const filas = r.filas.filter((f) => f.alumno.id === ficha.id);
+    const deuda = filas.find((f) => !f.pago && f.dias >= 0) ?? filas.find((f) => !f.pago);
+    const pagos = repo.listarPagos().filter((p) => p.alumnoId === ficha.id && !p.anulado);
+    const ultimo = pagos.at(-1);
+    const resumen = document.createElement('div');
+    resumen.className = 'cobros-panel-nota ficha-cobro';
+    const texto = ultimo
+        ? `Último pago: ${esc(ultimo.fecha)} · ${uyu(ultimo.montoUYU)}. Renovación: mismo día del mes siguiente.`
+        : deuda
+            ? `${textoVence(deuda.dias)} · ${uyu(deuda.alumno.montoUYU)} (vence ${esc(deuda.fecha)}).`
+            : 'Sin cobros registrados.';
+    const tel = ficha.contacto;
+    const avisoLink = deuda && tel ? linkAvisoVencimiento({ telefono: conPrefijo(tel, prefijoMovil), nombre: ficha.nombre, vencimiento: deuda.fecha }) : null;
+    const linkGenerico = tel ? linkAvisoVencimiento({ telefono: conPrefijo(tel, prefijoMovil), nombre: ficha.nombre, vencimiento: deuda?.fecha ?? hoyLocal(reloj.ahora()) }) : null;
+    resumen.innerHTML = `<p>${texto}</p>
+    ${linkGenerico ? `<a class="cobros-link" href="${linkGenerico}" target="_blank" rel="noopener">Enviar WhatsApp</a>` : '<p class="al-sub">Sin teléfono cargado: agregalo en la ficha para enviar WhatsApp.</p>'}
+    ${avisoLink ? `<a class="cobros-link" href="${avisoLink}" target="_blank" rel="noopener" data-avisar>Avisar por WhatsApp (por vencer)</a>` : ''}
+    <button type="button" class="cobros-link" data-editar-cobro>${ultimo ? 'Editar fecha del pago' : deuda ? 'Registrar pago' : 'Ver cobros'}</button>
+    <p class="al-sub">Simulación: el envío real llega con la base de datos.</p>`;
+    dialogo.querySelector('form')?.before(resumen);
+    resumen.querySelector('[data-editar-cobro]')?.addEventListener('click', () => {
+        if (ultimo) {
+            // El ID del pago viene del ledger por alumno; nunca del nombre.
+            const fila = filas.find((f) => f.pago?.id === ultimo.id);
+            dialogo.close();
+            abrirPago(ficha.nombre, ultimo.periodo, ultimo.montoUYU, origen, ultimo, fila);
+        }
+        else if (deuda) {
+            dialogo.close();
+            abrirPago(ficha.nombre, deuda.periodo, deuda.alumno.montoUYU, origen, undefined, deuda);
+        }
+        else {
+            dialogo.close();
+            irA('v-cobros');
+        }
+    });
+}
+function abrirFicha(ficha, origen, alCrear) {
     const esNueva = ficha === null;
+    const hoy = hoyLocal(reloj.ahora());
     const contenido = `<div class="cobros-panel-resumen">
     <div><p class="al-nombre">${esNueva ? 'Nuevo alumno' : esc(ficha.nombre)}</p>
-    <p class="al-sub">${esNueva ? 'Datos sintéticos de la demo' : `Alta ${esc(ficha.fechaAlta)}`}</p></div>
+    <p class="al-sub">${esNueva ? 'Ficha real · se guarda en este dispositivo' : `Alta ${esc(fechaCorta(ficha.fechaAlta))}`}</p></div>
     <div class="cobros-panel-dato">${esNueva ? '' : `<span class="ficha-id">ID ${esc(ficha.id)}</span>`}</div></div>
-    <p class="cobros-panel-nota">${esNueva ? 'Cargá una ficha para probar el alta. No envía nada ni crea grupos.' : 'Podés corregir nombre y modalidad. La identidad y el alta no se cambian.'}</p>
+    <p class="cobros-panel-nota">${esNueva ? 'Completá los datos para dar de alta. Nada se envía ni crea grupos.' : 'Podés corregir nombre, modalidad, día de vencimiento y teléfono. La identidad y la fecha de alta no se cambian.'}</p>
     <form novalidate>
       <label class="campo"><span>Nombre *</span><input name="nombre" required maxlength="80" autocomplete="off" value="${esNueva ? '' : esc(ficha.nombre)}" placeholder="Nombre y apellido"></label>
+      ${esNueva ? `<p class="campo"><span>Fecha de registro *</span></p>${selectorFecha('alta', hoy)}` : ''}
       <p class="campo"><span>Modalidad *</span></p>
       <div class="ficha-grupo-opciones" role="group" aria-label="Modalidad">
         <button type="button" class="ficha-grupo" data-modalidad="mensual" aria-pressed="false">Mensual</button>
         <button type="button" class="ficha-grupo" data-modalidad="individual" aria-pressed="false">Individual</button>
       </div>
-      <div class="ficha-opcional">
-        <p>Contacto (opcional, apagado por defecto)</p>
-        <label class="campo"><span>Teléfono o tutor</span><input name="contacto" maxlength="120" autocomplete="off" value="${esNueva ? '' : esc(ficha.contacto)}" placeholder="Solo si el contrato lo contempla"></label>
-      </div>
+      ${esNueva ? `<p class="campo"><span>¿Pagó la primera mensualidad? *</span></p>
+      <div class="ficha-grupo-opciones" role="group" aria-label="Estado del pago">
+        <button type="button" class="ficha-grupo" data-pago="si" aria-pressed="false">Pagó</button>
+        <button type="button" class="ficha-grupo" data-pago="no" aria-pressed="false">Va a pagar</button>
+      </div>` : ''}
+      <label class="campo"><span>Día de vencimiento (1–31)</span><input name="ancla" type="number" min="1" max="31" inputmode="numeric" value="${ficha?.ancla ?? 21}"></label>
+      <label class="campo"><span>Teléfono / WhatsApp</span><input name="contacto" type="tel" maxlength="120" autocomplete="tel" value="${esNueva ? '' : esc(ficha.contacto)}" placeholder="099 123 456"></label>
       <p class="cobros-panel-error" role="alert"></p>
       <div class="sheet-acciones"><button type="button" class="btn-secundario">Volver</button>
       <button type="submit" class="btn-primario ficha-guardar">${esNueva ? 'Guardar alumno' : 'Guardar cambios'}</button></div>
     </form>`;
     const dialogo = abrirDialogoCobros(esNueva ? 'Nuevo alumno' : 'Editar ficha', 'Alumnos', 'alumnos', contenido, origen);
+    if (esNueva)
+        cablearFecha(dialogo, 'alta');
     let modalidad = ficha?.modalidad ?? 'mensual';
+    let pagado = false;
     const pintarSeleccion = () => {
         dialogo.querySelectorAll('[data-modalidad]').forEach((b) => {
             const on = b.dataset.modalidad === modalidad;
@@ -1360,6 +1444,12 @@ function abrirFicha(ficha, origen) {
     };
     dialogo.querySelectorAll('[data-modalidad]').forEach((b) => b.addEventListener('click', () => { modalidad = b.dataset.modalidad; pintarSeleccion(); }));
     pintarSeleccion();
+    const pintarPago = () => dialogo.querySelectorAll('[data-pago]').forEach((b) => {
+        const on = b.dataset.pago === (pagado ? 'si' : 'no');
+        b.classList.toggle('activo', on);
+        b.setAttribute('aria-pressed', String(on));
+    });
+    dialogo.querySelectorAll('[data-pago]').forEach((b) => b.addEventListener('click', () => { pagado = b.dataset.pago === 'si'; pintarPago(); }));
     const form = dialogo.querySelector('form');
     const error = form.querySelector('[role="alert"]');
     form.querySelector('.btn-secundario').addEventListener('click', () => cerrarDialogoConAviso(dialogo));
@@ -1368,19 +1458,29 @@ function abrirFicha(ficha, origen) {
         if (!dialogo.open)
             return;
         const datos = new FormData(form);
+        const fechaAlta = esNueva ? leerFechaDe(dialogo, 'alta') : ficha.fechaAlta;
+        if (esNueva && !fechaAlta) {
+            error.textContent = 'Elegí la fecha de registro';
+            return;
+        }
+        const anclaRaw = String(datos.get('ancla') ?? '').trim();
         const input = {
             nombre: String(datos.get('nombre') ?? ''),
             modalidad,
             contacto: String(datos.get('contacto') ?? ''),
+            ancla: anclaRaw === '' ? undefined : Number(anclaRaw),
+            fechaAlta: fechaAlta ?? undefined,
+            pagado: esNueva ? pagado : undefined,
         };
         const errores = validarAlumno(input);
         if (Object.keys(errores).length > 0) {
             error.textContent = Object.values(errores)[0];
             return;
         }
+        let creada;
         try {
             if (esNueva)
-                repo.crearAlumno(input);
+                creada = repo.crearAlumno(input);
             else
                 repo.editarAlumno(ficha.id, input);
         }
@@ -1389,34 +1489,65 @@ function abrirFicha(ficha, origen) {
             return;
         }
         dialogo.close();
+        if (creada && alCrear)
+            alCrear(creada);
         pintarAlumnos();
         pintarCobros();
         avisar(esNueva ? 'Alumno guardado' : 'Ficha actualizada');
     });
 }
 $('#nuevo-alumno')?.addEventListener('click', (e) => abrirFicha(null, e.currentTarget));
+/**
+ * Punto 7: desde el «Agregar» del calendario también se puede dar de alta una
+ * alumna. Usa la MISMA ficha v5 (sin rediseñar) y, al guardar, agendas una
+ * clase suelta el día elegido con la alumna vinculada por ID estable.
+ * Si el día elegido es anterior a hoy, se agenda hoy: no se inventa pasado.
+ */
+function abrirFichaAltaParaAgendar(fechaElegida) {
+    const hoy = hoyLocal(reloj.ahora());
+    const fecha = fechaElegida && fechaElegida >= hoy ? fechaElegida : hoy;
+    const origen = $('.cel');
+    abrirFicha(null, origen, (creada) => {
+        // La clase guarda el ID de la alumna: nunca el nombre, que puede cambiar.
+        repo.crear({
+            id: nuevoId('suelta'),
+            nombre: creada.nombre,
+            fecha,
+            hora: '15:00',
+            duracionMin: 60,
+            alumnos: [{ id: creada.id, nombre: creada.nombre, telefono: creada.contacto }],
+        });
+        clases = repo.listar();
+        mesSeleccionado = fecha;
+        diaMesSeleccionado = fecha;
+        pintarSemanaDe(fecha);
+        pintarTarjetasDiaMes();
+        avisar(`${creada.nombre} agregada y agendada el ${etiquetaDia(fecha)}`);
+    });
+}
 /* ------------------------------------------------------------- cobros */
 const formatoUYU = new Intl.NumberFormat('es-UY', { useGrouping: 'always' });
 const uyu = (monto) => `$${formatoUYU.format(monto)}`;
 const listaCobros = document.querySelector('#lista-cobros');
 const botonHistorial = document.querySelector('#abrir-historial');
 const campana = document.querySelector('.campana');
+/** Tarifa por defecto para fichas creadas desde la app (demo usa 6500). */
+const MONTO_UYU = 6500;
 /**
- * Alumnos de Cobros: los del contrato demo (tarifa/ancla definida), con el
- * nombre y grupo VIGENTES de la ficha cuando se editaron. Un alumno nuevo no
- * entra acá: no tiene tarifa asignada y el alta no debe crear cargos.
+ * Alumnos de Cobros: TODAS las fichas, vinculadas por ID estable. El nombre y
+ * el grupo vigentes salen de la ficha; el ancla y la tarifa de la demo se
+ * respetan, y una ficha nueva usa su ancla con la tarifa por defecto.
  */
 function alumnosParaCobros() {
-    const fichas = new Map(repo.listarAlumnos().map((a) => [a.id, a]));
-    return alumnosCobrosDemo.map((a) => {
-        const f = fichas.get(a.id);
-        return f ? { ...a, nombre: f.nombre, grupo: f.grupo } : a;
-    });
+    const montos = new Map(alumnosCobrosDemo.map((a) => [a.id, a.montoUYU]));
+    return repo.listarAlumnos().map((f) => ({
+        id: f.id, nombre: f.nombre, grupo: f.grupo,
+        ancla: f.ancla, montoUYU: montos.get(f.id) ?? MONTO_UYU,
+    }));
 }
 const verCobros = (pagos = repo.listarPagos()) => resumenCobros(alumnosParaCobros(), pagos, hoyLocal(reloj.ahora()));
 function fechaBreve(fecha) {
-    const { d, m } = parseFecha(fecha);
-    return `${d}/${m}`;
+    return fechaCorta(fecha);
 }
 function textoVence(dias) {
     if (dias === 0)
@@ -1466,8 +1597,8 @@ function nombrePago(pago) {
 botonHistorial.addEventListener('click', () => {
     const pagos = [...repo.listarPagos()].reverse();
     const dialogo = abrirDialogoCobros('Historial de pagos', 'Cobros', 'reloj', pagos.length ? `<ul class="cobros-panel-lista">${pagos.map((p, i) => `<li>
-    <div><p class="al-nombre">${esc(nombrePago(p))}</p><p class="al-sub">${esc(p.periodo)} · Registrado el ${esc(p.fecha)} por ${esc(p.quien)}</p>
-      ${p.anulado ? `<p class="al-sub">Anulado el ${esc(p.anulado.fecha)} por ${esc(p.anulado.quien)} · ${esc(p.anulado.motivo)}</p>` : ''}</div>
+    <div><p class="al-nombre">${esc(nombrePago(p))}</p><p class="al-sub">${esc(p.periodo)} · Registrado el ${esc(fechaCorta(p.fecha))} por ${esc(p.quien)}</p>
+      ${p.anulado ? `<p class="al-sub">Anulado el ${esc(fechaCorta(p.anulado.fecha))} por ${esc(p.anulado.quien)} · ${esc(p.anulado.motivo)}</p>` : ''}</div>
     <div class="cobros-panel-dato"><strong>${uyu(p.montoUYU)}</strong>
       ${p.anulado ? '<span class="al-sub">Anulado</span>' : `<button type="button" class="cobros-link" data-pago="${i}" aria-label="Ver pago de ${esc(nombrePago(p))}, ${esc(p.periodo)}">Ver pago</button>`}</div>
   </li>`).join('')}</ul>` : '<p class="cobros-panel-nota">Todavía no registraste pagos.</p>', botonHistorial);
@@ -1534,24 +1665,48 @@ function abrirPago(nombre, periodo, monto, origen, pago, fila) {
     const dialogo = abrirDialogoCobros(accion, 'Mensualidad', pago ? 'alerta' : 'cobros', `<div class="cobros-panel-resumen">
     <div><p class="al-nombre">${esc(nombre)}</p><p class="al-sub">${esc(mes)}</p></div>
     <div class="cobros-panel-dato"><strong>${uyu(pago?.montoUYU ?? monto)}</strong><span class="al-sub">UYU</span></div></div>
-    <p class="cobros-panel-nota">${pago ? `Registrado el ${esc(pago.fecha)} por ${esc(pago.quien)}. La anulación queda en el historial.` : 'Confirmá que ya recibiste el pago. La app no mueve dinero.'}</p>
-    <form>${pago ? '<label class="campo"><span>Motivo de anulación</span><input name="motivo" required maxlength="160"></label>' : ''}
+    <p class="cobros-panel-nota">${pago ? `Registrado el ${esc(fechaCorta(pago.fecha))} por ${esc(pago.quien)}. Podés corregir la fecha en que pagó/renovió o anular el pago; queda en el historial.` : 'Confirmá cuándo pagó/renovió. La app no mueve dinero.'}</p>
+    <form>
+      ${pago ? `<label class="campo"><span>Fecha del pago (día / mes / año)</span></label>${selectorFecha('pago', pago.fecha)}
+      <label class="campo"><span>Motivo de anulación (opcional)</span><input name="motivo" maxlength="160"></label>`
+        : `<label class="campo"><span>¿Cuándo pagó/renovió? *</span></label>${selectorFecha('pago', hoyLocal(reloj.ahora()))}`}
       <p class="cobros-panel-error" role="alert"></p>
       <div class="sheet-acciones"><button type="button" class="btn-secundario">Volver</button>
-      <button type="submit" class="btn-primario${pago ? ' cobros-anular' : ''}">${pago ? 'Confirmar anulación' : 'Confirmar pago'}</button></div>
+      ${pago ? '<button type="button" class="btn-secundario cobros-anular">Anular pago</button>' : ''}
+      <button type="submit" class="btn-primario">${pago ? 'Guardar fecha' : 'Confirmar pago'}</button></div>
     </form>`, origen);
+    cablearFecha(dialogo, 'pago');
     const form = dialogo.querySelector('form');
     form.querySelector('.btn-secundario').addEventListener('click', () => cerrarDialogoConAviso(dialogo));
+    form.querySelector('.cobros-anular')?.addEventListener('click', () => {
+        try {
+            repo.anularPago(pago.id, String(new FormData(form).get('motivo') ?? ''), QUIEN);
+            dialogo.close();
+            pintarCobros();
+        }
+        catch (err) {
+            form.querySelector('[role="alert"]').textContent = err instanceof Error ? err.message : 'No se pudo anular';
+        }
+    });
     form.addEventListener('submit', (e) => {
         e.preventDefault();
         if (!dialogo.open)
             return;
+        const fecha = leerFechaDe(dialogo, 'pago');
+        if (!fecha) {
+            form.querySelector('[role="alert"]').textContent = 'Elegí una fecha válida';
+            return;
+        }
         try {
-            if (pago)
-                repo.anularPago(pago.id, String(new FormData(form).get('motivo') ?? ''), QUIEN);
+            if (pago) {
+                // Corregir la fecha del pago conserva el MISMO ID y vínculo por alumno;
+                // el cambio queda registrado, sin inventar otro pago.
+                const motivo = String(new FormData(form).get('motivo') ?? '').trim() || 'Corrección de fecha';
+                repo.corregirFechaPago(pago.id, fecha, motivo, QUIEN);
+            }
             else if (fila) {
                 const id = Array.from(crypto.getRandomValues(new Uint32Array(4)), (n) => n.toString(16).padStart(8, '0')).join('');
-                repo.registrarPago({ id, alumnoId: fila.alumno.id, periodo, montoUYU: monto, quien: QUIEN });
+                repo.registrarPago({ id, alumnoId: fila.alumno.id, periodo, montoUYU: monto, quien: QUIEN, fecha });
             }
         }
         catch (error) {
@@ -1568,12 +1723,19 @@ function abrirPago(nombre, periodo, monto, origen, pago, fila) {
 }
 campana.addEventListener('click', () => {
     const { avisos } = verCobros();
-    abrirDialogoCobros('Avisos de cobro', 'Mensualidades', 'campana', avisos.length ? `<p class="cobros-panel-nota">Mensualidades sin pagar que vencen hoy o en los próximos 7 días.</p>
-    <ul class="cobros-panel-lista">${avisos.map((f) => `<li>
-    <div><p class="al-nombre">${esc(f.alumno.nombre)}</p><p class="al-sub">${esc(f.alumno.grupo)}</p></div>
+    const fichas = new Map(repo.listarAlumnos().map((f) => [f.id, f]));
+    const avisarLink = (f) => {
+        const tel = fichas.get(f.alumno.id)?.contacto ?? '';
+        return tel ? linkAvisoVencimiento({ telefono: conPrefijo(tel, prefijoMovil), nombre: f.alumno.nombre, vencimiento: f.fecha }) : null;
+    };
+    const dlg = abrirDialogoCobros('Avisos de cobro', 'Mensualidades', 'campana', avisos.length ? `<p class="cobros-panel-nota">Mensualidades sin pagar que vencen hoy o en los próximos 7 días. Avisá por WhatsApp (simulación; el envío real llega con la base de datos).</p>
+    <ul class="cobros-panel-lista">${avisos.map((f, i) => `<li>
+    <div><p class="al-nombre">${esc(f.alumno.nombre)}</p><p class="al-sub">${esc(f.alumno.grupo)}</p>
+    ${avisarLink(f) ? `<a class="cobros-link" href="${avisarLink(f)}" target="_blank" rel="noopener" data-avisar="${i}">Avisar por WhatsApp</a>` : '<span class="al-sub">Sin teléfono cargado</span>'}</div>
     <span class="cobros-aviso${f.dias === 0 ? ' cobros-aviso-hoy' : ''}">${textoVence(f.dias)}</span></li>`).join('')}</ul>
     <div class="cobros-panel-pie"><button class="btn-secundario" type="button" data-ver-cobros>Ver Cobros</button></div>`
-        : '<p class="cobros-panel-nota">No hay avisos de vencimientos.</p>', campana).querySelector('[data-ver-cobros]')?.addEventListener('click', (e) => {
+        : '<p class="cobros-panel-nota">No hay avisos de vencimientos.</p>', campana);
+    dlg.querySelector('[data-ver-cobros]')?.addEventListener('click', (e) => {
         e.currentTarget.closest('dialog')?.close();
         irA('v-cobros');
     });
@@ -1904,6 +2066,35 @@ setInterval(() => {
     }
     reconciliarAlVolver(true);
 }, 30000);
+/* ------------------------- configuración: prefijo de móvil (punto 9) ------- */
+/** Prefijo vigente en este dispositivo; se lee una vez al abrir. */
+let prefijoMovil = prefijoSeguro(localStorage.getItem(CLAVE_PREFIJO));
+function abrirConfiguracion(origen) {
+    const contenido = `<p class="cobros-panel-nota">Se agrega a los números de WhatsApp que no lo traigan. Ejemplo: ${esc(prefijoMovil)} (Uruguay).</p>
+    <form novalidate>
+      <label class="campo"><span>Prefijo de país</span><input name="prefijo" type="text" maxlength="5" inputmode="text" value="${esc(prefijoMovil)}" placeholder="${PREFIJO_POR_DEFECTO}"></label>
+      <p class="cobros-panel-error" role="alert"></p>
+      <div class="sheet-acciones"><button type="button" class="btn-secundario">Volver</button>
+      <button type="submit" class="btn-primario">Guardar prefijo</button></div>
+    </form>`;
+    const dialogo = abrirDialogoCobros('Configuración', 'Ajustes de este dispositivo', 'ajustes', contenido, origen);
+    const form = dialogo.querySelector('form');
+    const error = form.querySelector('[role="alert"]');
+    form.querySelector('.btn-secundario').addEventListener('click', () => cerrarDialogoConAviso(dialogo));
+    form.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const valor = String(new FormData(form).get('prefijo') ?? '').trim();
+        if (!prefijoEsValido(valor)) {
+            error.textContent = `Prefijo inválido: debe empezar con + (ej. ${PREFIJO_POR_DEFECTO})`;
+            return;
+        }
+        prefijoMovil = valor;
+        localStorage.setItem(CLAVE_PREFIJO, valor);
+        dialogo.close();
+        avisar(`Prefijo guardado: ${valor}`);
+    });
+}
+$('#ajustes-btn')?.addEventListener('click', (e) => abrirConfiguracion(e.currentTarget));
 const inicial = location.hash.slice(1);
 if (inicial && document.getElementById(inicial))
     irA(inicial);

@@ -51,6 +51,18 @@ export function validarAlumno(input) {
     const contacto = texto(input.contacto);
     if (contacto.length > 120)
         errores.contacto = 'El contacto es demasiado largo (máximo 120 caracteres)';
+    if (input.fechaAlta !== undefined && !/^\d{4}-\d{2}-\d{2}$/.test(input.fechaAlta)) {
+        errores.fechaAlta = 'Fecha de registro inválida';
+    }
+    else if (input.fechaAlta !== undefined) {
+        // Validación de día real (bisiestos, meses cortos) sin depender de Date.
+        const [y, m, d] = input.fechaAlta.split('-').map(Number);
+        const maxDia = [31, y % 4 === 0 && (y % 100 !== 0 || y % 400 === 0) ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31][m - 1] ?? 0;
+        if (m < 1 || m > 12 || d < 1 || d > maxDia)
+            errores.fechaAlta = 'Fecha de registro inválida';
+    }
+    if (input.pagado !== undefined && typeof input.pagado !== 'boolean')
+        errores.pagado = 'Estado de pago inválido';
     return errores;
 }
 export function alumnoEsValido(input) {
@@ -64,6 +76,7 @@ export function normalizarAlumno(input) {
         grupo: texto(input.grupo),
         ancla: input.ancla ?? 21,
         contacto: texto(input.contacto),
+        pagado: input.pagado ?? false,
     };
 }
 const ID_RE = /^al-[a-z0-9]{8,}$/i;
@@ -86,7 +99,7 @@ export function crearAlumno(input, fechaAlta, yaExiste, azar = Math.random) {
     return {
         id,
         ...norm,
-        fechaAlta,
+        fechaAlta: input.fechaAlta ?? fechaAlta,
         activo: true,
         color: colorPorId(id),
     };
@@ -111,6 +124,9 @@ export function editarAlumno(alumno, input) {
         grupo: input.grupo === undefined ? alumno.grupo : texto(input.grupo),
         ancla: input.ancla ?? alumno.ancla,
         contacto: input.contacto === undefined ? alumno.contacto : texto(input.contacto),
+        // Alta y pago inicial se congelan: la edición no reescribe la identidad.
+        fechaAlta: alumno.fechaAlta,
+        pagado: alumno.pagado,
     };
 }
 /**
@@ -135,6 +151,7 @@ export function normalizarFichaGuardada(dato) {
         activo: dato.activo !== false,
         color: typeof dato.color === 'string' ? dato.color : colorPorId(id),
         contacto: typeof dato.contacto === 'string' ? dato.contacto : '',
+        pagado: typeof dato.pagado === 'boolean' ? dato.pagado : false,
     };
 }
 /** Identificador de ID válido (para tests y defensa al leer). */
@@ -203,7 +220,12 @@ export function filtrarYOrdenar(filas, busqueda, filtros, orden) {
         az: (a, b) => a.nombre.localeCompare(b.nombre),
         za: (a, b) => b.nombre.localeCompare(a.nombre),
         recientes: (a, b) => b.alta - a.alta,
+        // Vencimientos ascendente (vencidos primero) y su inverso. En ambos,
+        // "al día" (vence = null) va primero: Infinity en ascendente no lo cambia
+        // (queda al final), y +Infinity en descendente lo pone al tope, que es lo
+        // que pide el chip "Al día primero".
         vence: (a, b) => (a.vence ?? Infinity) - (b.vence ?? Infinity),
+        'vence-inverso': (a, b) => (b.vence ?? Infinity) - (a.vence ?? Infinity),
     };
     return orden === 'ninguno' ? out : [...out].sort(cmp[orden]);
 }
