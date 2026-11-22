@@ -60,7 +60,7 @@ python3 -m http.server 8812 --bind 127.0.0.1
 ```
 
 Y abrir `http://127.0.0.1:8812/index.html#v-hoy`. Verificado: `index.html`
-carga `propuesta.js?v=202611221000`, los 15 imports responden 200 y la consola
+carga `propuesta.js?v=202611221100`, los 15 imports responden 200 y la consola
 queda sin errores. `master` (local y origin) sigue en `ae3aa845`: el experimento
 de inversión de colores quedó aparte en `backup/master-colores-20261122`.
 Publicación en Pages: pendiente del visto bueno visual y de Zaira.
