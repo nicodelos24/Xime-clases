@@ -1,18 +1,18 @@
 // Clases v5 · navegación + funcionamiento (auto-marcado, Cancelar clase, WhatsApp)
 // La estética vive en tokens.css/propuesta.css; acá solo se cambian estados,
 // textos y el flujo de cancelación. Sin emoji: solo SVG de icons.js.
-import { horaClase, } from "./src/clases.js?v=202611212225";
-import { CLAVE_ESTADO, RepositorioClases, almacenLocalStorage } from "./src/repositorio.js?v=202611212225";
-import { alumnosCobrosDemo, datosDemo, fichasDemo } from "./src/demo.js?v=202611212225";
-import { resumenCobros } from "./src/cobros.js?v=202611212225";
-import { resumenHoy, clasesDelDia, clasesDeLaSemana } from "./src/resumen.js?v=202611212225";
-import { registrarToqueFecha, mesDe } from "./src/agenda.js?v=202611212225";
-import { destinoDeEnlace } from "./src/navegacion.js?v=202611212225";
-import { actualizarBarra, estadoBarraInicial, } from "./src/barra-scroll.js?v=202611212225";
-import { ajustarLock, debeBloquearScroll, estiloSheet, debeCerrarPorToqueFuera, esToqueFuera, debeSuprimirClickTrasCierre, } from "./src/sheets.js?v=202611212225";
-import { diaCorto, etiquetaDia, etiquetaDiaCompleta, etiquetaMes, parseFecha, lunesDe, diasDelMes, esFechaValida } from "./src/fechas.js?v=202611212225";
-import { relojDelDispositivo, hoyLocal } from "./src/reloj.js?v=202611212225";
-import { textoCancelacion, destinos, resumenEnvio, linkTexto, } from "./src/whatsapp.js?v=202611212225";
+import { horaClase, } from "./src/clases.js?v=202611220100";
+import { CLAVE_ESTADO, RepositorioClases, almacenLocalStorage } from "./src/repositorio.js?v=202611220100";
+import { alumnosCobrosDemo, datosDemo, fichasDemo } from "./src/demo.js?v=202611220100";
+import { resumenCobros } from "./src/cobros.js?v=202611220100";
+import { resumenHoy, clasesDelDia, clasesDeLaSemana } from "./src/resumen.js?v=202611220100";
+import { registrarToqueFecha, mesDe } from "./src/agenda.js?v=202611220100";
+import { destinoDeEnlace } from "./src/navegacion.js?v=202611220100";
+import { actualizarBarra, estadoBarraInicial, } from "./src/barra-scroll.js?v=202611220100";
+import { ajustarLock, debeBloquearScroll, estiloSheet, debeCerrarPorToqueFuera, esToqueFuera, debeSuprimirClickTrasCierre, } from "./src/sheets.js?v=202611220100";
+import { diaCorto, etiquetaDia, etiquetaDiaCompleta, etiquetaMes, parseFecha, lunesDe, diasDelMes, esFechaValida } from "./src/fechas.js?v=202611220100";
+import { relojDelDispositivo, hoyLocal } from "./src/reloj.js?v=202611220100";
+import { textoCancelacion, destinos, resumenEnvio, linkTexto, } from "./src/whatsapp.js?v=202611220100";
 /* ------------------------------------------------- estado persistente (local) */
 const reloj = relojDelDispositivo();
 /** Quién opera la app hoy: único dueño. En Fase 4 sale de la sesión. */
@@ -1228,7 +1228,7 @@ toast.addEventListener('click', () => {
     }
 });
 /* ------------------------------------------------------- alumnos (fichas) */
-import { construirVista, filtrarYOrdenar, puntoEstadoVence, textoEstadoVence, validarAlumno, } from "./src/alumnos.js?v=202611212225";
+import { construirVista, filtrarYOrdenar, puntoEstadoVence, textoEstadoVence, validarAlumno, } from "./src/alumnos.js?v=202611220100";
 let ordenAlumnos = 'ninguno';
 const filtrosAlumnos = new Set();
 let busquedaAlumno = '';
@@ -1749,6 +1749,10 @@ function irA(id, fijarHash = true) {
     pintarTitulo(id);
     if (fijarHash && history.replaceState)
         history.replaceState(null, '', '#' + id);
+    // replaceState no dispara hashchange: reconfigurar la barra acá al cambiar de vista.
+    window.scrollTo(0, 0);
+    document.querySelector('.tabbar')?.classList.remove('oculta');
+    document.documentElement.classList.remove('barra-oculta');
 }
 tabs.forEach((t) => t.addEventListener('click', (e) => {
     e.preventDefault();
@@ -1775,6 +1779,12 @@ if (tabbar) {
     };
     const muestrear = () => {
         framePendiente = false;
+        // En Inicio Nico quiere la barra siempre visible: la ocultación queda
+        // sólo para vistas con scroll largo.
+        if (document.getElementById('v-hoy')?.classList.contains('activa')) {
+            recalibrar();
+            return;
+        }
         // Recortar contra el scroll máximo real evita que el rebote elástico del
         // final de la página se lea como «subida» y haga reaparecer la barra.
         const limite = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);

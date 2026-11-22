@@ -1739,6 +1739,10 @@ function irA(id: string, fijarHash = true) {
   });
   pintarTitulo(id);
   if (fijarHash && history.replaceState) history.replaceState(null, '', '#' + id);
+  // replaceState no dispara hashchange: reconfigurar la barra acá al cambiar de vista.
+  window.scrollTo(0, 0);
+  document.querySelector('.tabbar')?.classList.remove('oculta');
+  document.documentElement.classList.remove('barra-oculta');
 }
 
 tabs.forEach((t) => t.addEventListener('click', (e) => {
@@ -1770,6 +1774,12 @@ if (tabbar) {
 
   const muestrear = () => {
     framePendiente = false;
+    // En Inicio Nico quiere la barra siempre visible: la ocultación queda
+    // sólo para vistas con scroll largo.
+    if (document.getElementById('v-hoy')?.classList.contains('activa')) {
+      recalibrar();
+      return;
+    }
     // Recortar contra el scroll máximo real evita que el rebote elástico del
     // final de la página se lea como «subida» y haga reaparecer la barra.
     const limite = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
