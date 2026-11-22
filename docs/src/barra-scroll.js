@@ -29,11 +29,11 @@ export const TOPE_SCROLL = 4;
 export const MUESTRAS_PARA_MOSTRAR = 2;
 /**
  * Ms sin desplazarse tras los cuales la barra oculta vuelve a aparecer sola.
- * 500 ms (pedido de Nico, 22-nov): corto para que se note la intención, largo
- * para no parecer un parpadeo. El reloj se rearma en cada evento de scroll, así
- * que mientras se sigue bajando la barra NO reaparece.
+ * 2500 ms (pedido de Nico, 22-nov): dentro del rango 2–3 s, para que se sienta
+ * intencional sin parecer que se olvidó. El reloj se rearma en cada evento de
+ * scroll, así que mientras se sigue bajando la barra NO reaparece.
  */
-export const REAPARECER_TRAS_MS = 500;
+export const REAPARECER_TRAS_MS = 2500;
 /** Recorta una posición de scroll al rango real del documento. */
 export function recortarScroll(y, limite = Infinity) {
     const tope = Number.isFinite(limite) ? Math.max(0, limite) : Infinity;
