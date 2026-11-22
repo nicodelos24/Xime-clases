@@ -80,10 +80,10 @@ test('KPI, filas y avisos coinciden al pagar y al volver a vencer tras anular', 
   verificarTotales(pagados);
   const anulados = anularPago(pagos, pagoHoy.id, { ...anulacion, fecha: hoy });
   assert.deepEqual(resumenCobros(alumnosCobrosDemo, anulados, hoy), impagos);
-  // Al día siguiente la deuda de octubre ya venció (20-nov) y sale del resumen.
+  // Al día siguiente la deuda impaga de a3 queda 1 día atrasada.
   horario.avanzar(24 * 60 * 60 * 1000);
   const manana = resumenCobros(alumnosCobrosDemo, anulados, hoyLocal(horario.ahora()));
-  assert.equal(manana.filas.some((f) => f.alumno.id === 'a3' && f.periodo === '2026-10'), false);
+  assert.equal(manana.filas.find((f) => f.alumno.id === 'a3' && f.periodo === '2026-10')?.dias, -2);
 });
 
 test('avisos hoy, a 7 y a 10 días, incluido el cambio de mes y de año', () => {
