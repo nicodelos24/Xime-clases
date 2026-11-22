@@ -219,6 +219,15 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; width: 0; }
 .aviso-ico { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 9px; background: rgba(138,90,18,.14); flex: none; }
 .aviso p { font-size: 13px; line-height: 1.35; }
 .aviso-sub { color: var(--ambar-suave); opacity: 1; }
+/* Sin vencimientos (0): tarjeta neutra, sin ícono ni color de alerta. */
+.aviso.aviso-vacio { background: var(--bg-alt); border-color: var(--linea); color: var(--tinta-2); }
+.aviso.aviso-vacio .aviso-ico { display: none; }
+.aviso.aviso-vacio .aviso-sub { color: var(--tinta-2); }
+/* Modo oscuro: el texto ámbar original no llegaba a 2:1 sobre el tinte;
+   se usa el pastel ámbar ya presente en la paleta (8.04:1). */
+[data-tema="oscuro"] .aviso:not(.aviso-vacio) { color: var(--ambar-pastel); }
+[data-tema="oscuro"] .aviso:not(.aviso-vacio) .aviso-sub { color: var(--ambar-pastel); }
+[data-tema="oscuro"] .aviso:not(.aviso-vacio) .aviso-ico { color: var(--ambar-pastel); }
 
 /* ---------- Títulos de vista ---------- */
 .agenda-titulo { display: flex; align-items: center; justify-content: space-between; margin: 8px 2px 11px; }
@@ -895,6 +904,9 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; width: 0; }
 [data-tema="oscuro"] .chip-por-dar { background: #26513E; color: #D6F3E2; }
 [data-tema="oscuro"] .chip-dada { background: #2A5A42; color: #D6F3E2; }
 [data-tema="oscuro"] .chip-cancelada { background: #5A3A1C; color: #F6D9B0; }
+/* Modalidad activa en la ficha: --tq-900 no se lee sobre --tq-100 oscuro;
+   el acento turquesa claro de la paleta da 6.55:1. */
+[data-tema="oscuro"] .ficha-grupo.activo { color: var(--tq-600); }
 [data-tema="oscuro"] .marcar-cancelar { background: #3A2418; color: #F0C9A8; border-color: #6B4E2E; }
 
 /* ------------------------------------------------------------------ */
@@ -948,3 +960,11 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; width: 0; }
    Sin pseudo-elemento de relleno: el panel termina con borde inferior
    redondeado y el hueco bajo él lo da el fondo exterior (--bg-fuera).
    El contenido que sigue aparece sin cortes bajo la barra flotante. */
+
+/* Mes a 320px (hallazgo Fina 22-nov): «noviembre 2026» y «Ver semana» se
+   pisaban ~40px. Solo en pantallas muy angostas, el pill baja a su propia
+   línea; en 390/430/1440 la fila queda como antes. */
+@media (max-width: 340px) {
+  #v-mes .agenda-titulo { flex-direction: column; align-items: flex-start; gap: 8px; }
+  #v-mes .agenda-titulo .link-suave { align-self: flex-start; }
+}

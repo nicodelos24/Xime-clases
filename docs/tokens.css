@@ -371,6 +371,11 @@ body {
   --rosa-tinte: #3A2230;
   --verde-tinte: #1E3A2C;
   --ambar-suave-tinte: #3A3020;
+  /* Contraste AA en oscuro (hallazgos Fina 22-nov): los textos de estado
+     se aclaran sobre sus tintes oscuros, sin tocar los colores base claros.
+     lila 7.77:1 y azul 7.56:1 sobre sus tintes; ambar-pastel 8.04:1. */
+  --lila: #C9B6E8;
+  --azul: #A9CCE8;
 }
 [data-tema="oscuro"] body { background: var(--bg-crema) !important; }
 [data-tema="oscuro"] .tabbar {
