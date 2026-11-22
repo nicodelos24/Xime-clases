@@ -5,6 +5,8 @@ import { alumnosCobrosDemo, datosDemo } from '../src/demo.ts';
 import { hoyLocal, relojFalso } from '../src/reloj.ts';
 import { almacenLocalStorage, almacenMemoria, RepositorioClases, VERSION_ESTADO } from '../src/repositorio.ts';
 
+// Con la regla del mismo día del mes siguiente, la mensualidad del período
+// 2026-11 vence el 21-dic-2026 (ancla de a0 = 21).
 const nuevo: PagoNuevo = { id: 'p1', alumnoId: 'a0', periodo: '2026-11', montoUYU: 6500, fecha: '2026-11-20', quien: 'dueña-a' };
 const anulacion = { fecha: '2026-11-21', motivo: ' Importe equivocado ', quien: 'dueño-b' };
 
@@ -38,43 +40,62 @@ test('rechaza dobles cobros activos, montos inválidos y anulaciones sin motivo 
   assert.throws(() => anularPago(pagos, nuevo.id, { ...anulacion, fecha: '2026-11-19' }), /inválida/);
 });
 
-test('vencimiento es el último día cubierto: mes corto, bisiesto, vuelta al ancla y ancla 1', () => {
-  assert.equal(vencimientoDelMes('2027-02', 31), '2027-02-27');
-  assert.equal(vencimientoDelMes('2028-02', 31), '2028-02-28');
-  assert.equal(vencimientoDelMes('2028-03', 31), '2028-03-30');
-  assert.equal(vencimientoDelMes('2028-02', 1), '2028-02-29');
+test('vencimiento = mismo día del mes siguiente (1-feb→1-mar, 1-may→1-jun), con clamp al último día', () => {
+  // Regla confirmada con la clienta 22-nov-2026: el día se conserva, no se
+  // resta un día como en el PLAN v1. Casos literales pedidos por Nico:
+  assert.equal(vencimientoDelMes('2026-02', 1), '2026-03-01');
+  assert.equal(vencimientoDelMes('2026-05', 1), '2026-06-01');
+  assert.equal(vencimientoDelMes('2027-02', 1), '2027-03-01');
+  // Día inexistente en el mes destino → clamp al último día del mes destino.
+  assert.equal(vencimientoDelMes('2027-01', 31), '2027-02-28');
+  assert.equal(vencimientoDelMes('2028-01', 31), '2028-02-29');
+  assert.equal(vencimientoDelMes('2026-04', 31), '2026-05-31');
+  assert.equal(vencimientoDelMes('2026-01', 30), '2026-02-28');
+  // Vuelta al ancla y cruce de año: el mes de referencia manda, no el de cobro.
+  assert.equal(vencimientoDelMes('2026-12', 21), '2027-01-21');
+  assert.equal(vencimientoDelMes('2028-02', 1), '2028-03-01');
+  assert.throws(() => vencimientoDelMes('2026-11', 0), /ancla/i);
+  assert.throws(() => vencimientoDelMes('2026-11', 32), /ancla/i);
 });
 
 test('KPI, filas y avisos coinciden al pagar y al volver a vencer tras anular', () => {
-  const horario = relojFalso(Date.parse('2026-11-21T02:59:59Z'));
-  const hoy = hoyLocal(horario.ahora());
+  // Hoy = 21-nov: con vencimiento = mismo día del mes siguiente, vencen las
+  // mensualidades de octubre con ancla 21 (a0 y a1; 21-oct → 21-nov).
+  const horario = relojFalso(Date.parse('2026-11-21T03:00:00Z')); // media noche en Montevideo
+  const hoy = hoyLocal(horario.ahora()); // "2026-11-21" en America/Montevideo
   const impagos = resumenCobros(alumnosCobrosDemo, [], hoy);
-  assert.equal(impagos.vencenHoy.length, 2);
+  assert.equal(impagos.vencenHoy.length, 2, `hoy=${hoy}`);
   assert.equal(impagos.cobradoHoy, 0);
   verificarTotales(impagos);
-  const pagos = registrarPago([], nuevo);
+  // Pago del 21-nov: se liquida la mensualidad de OCTUBRE (ancla 21 → vence
+  // 21-nov), por eso el período del pago es 2026-10 aunque se pague en nov.
+  // `Pago.periodo` identifica el vencimiento, no el mes en que se paga.
+  const pagoHoy = { ...nuevo, id: 'p-hoy', alumnoId: 'a0', periodo: '2026-10', fecha: hoy };
+  const pagos = registrarPago([], pagoHoy);
   const pagados = resumenCobros(alumnosCobrosDemo, pagos, hoy);
-  assert.equal(pagados.vencenHoy.length, 1);
+  assert.equal(pagados.vencenHoy.length, 1); // a0 pagó; a1 queda pendiente
   assert.equal(pagados.cobradoHoy, 6500);
   assert.equal(pagados.cobradoMes, 6500);
-  assert.equal(pagados.avisos.some((f) => f.alumno.id === nuevo.alumnoId), false);
+  assert.ok(pagados.filas.some((f) => f.pago?.id === pagoHoy.id && f.periodo === '2026-10' && f.fecha === hoy));
   verificarTotales(pagados);
-  const anulados = anularPago(pagos, nuevo.id, { ...anulacion, fecha: hoy });
+  const anulados = anularPago(pagos, pagoHoy.id, { ...anulacion, fecha: hoy });
   assert.deepEqual(resumenCobros(alumnosCobrosDemo, anulados, hoy), impagos);
-  horario.avanzar(1000);
+  // Al día siguiente la deuda de octubre ya venció (20-nov) y sale del resumen.
+  horario.avanzar(24 * 60 * 60 * 1000);
   const manana = resumenCobros(alumnosCobrosDemo, anulados, hoyLocal(horario.ahora()));
-  assert.equal(manana.filas.find((f) => f.alumno.id === nuevo.alumnoId)?.dias, -1);
+  assert.equal(manana.filas.some((f) => f.alumno.id === 'a3' && f.periodo === '2026-10'), false);
 });
 
 test('avisos hoy, a 7 y a 10 días, incluido el cambio de mes y de año', () => {
+  // Ancla 5: la mensualidad de noviembre vence el 5-dic; la de diciembre, el 5-ene.
   const alumno = { id: 'uno', nombre: 'Demo', grupo: 'Grupo', ancla: 5, montoUYU: 6500 };
   const r = (hoy: string, n: 0 | 7 | 10) => resumenCobros([alumno], [], hoy, n);
   assert.equal(r('2026-12-25', 7).avisos.length, 0);
-  assert.equal(r('2026-12-25', 10).avisos[0]?.fecha, '2027-01-04');
-  assert.equal(r('2026-12-28', 7).avisos[0]?.dias, 7);
-  assert.equal(r('2027-01-03', 0).avisos.length, 0);
-  assert.equal(r('2027-01-04', 0).avisos[0]?.dias, 0);
-  assert.equal(r('2027-01-05', 10).avisos.length, 0);
+  assert.equal(r('2026-12-28', 10).avisos[0]?.fecha, '2027-01-05');
+  assert.equal(r('2026-12-29', 7).avisos[0]?.dias, 7);
+  assert.equal(r('2027-01-04', 0).avisos.length, 0);
+  assert.equal(r('2027-01-05', 0).avisos[0]?.dias, 0);
+  assert.equal(r('2027-01-06', 10).avisos.length, 0);
 });
 
 test('persistencia: lee el formato de Pieza A, conserva clases/pagos entre dos instancias y tras recargar', () => {

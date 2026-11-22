@@ -189,7 +189,7 @@ export interface RepositorioDeClases {
   reprogramar(id: string, fechaNueva: string, op: OpcionReprogramar): Clase;
   registrarMensajeEnviado(id: string, canal: CanalMensaje): Clase;
   listarPagos(): readonly Pago[];
-  registrarPago(nuevo: Omit<PagoNuevo, 'fecha'>): void;
+  registrarPago(nuevo: Omit<PagoNuevo, 'fecha'> & { fecha?: string }): void;
   anularPago(id: string, motivo: string, quien: string): void;
   listarAlumnos(): readonly AlumnoFicha[];
   crearAlumno(input: AlumnoFichaInput): AlumnoFicha;
@@ -225,8 +225,13 @@ export class RepositorioClases implements RepositorioDeClases {
     return this.cargar().pagos;
   }
 
-  registrarPago(nuevo: Omit<PagoNuevo, 'fecha'>): void {
-    const fecha = hoyLocal(this.reloj.ahora());
+  /**
+   * Registra un pago con FECHA EXPLÍCITA elegida en el formulario (cuándo lo
+   * hizo/renovó la alumna). Sigue vinculado al alumno por ID estable, nunca
+   * por nombre, y la fecha se valida en el dominio antes de guardar.
+   */
+  registrarPago(nuevo: Omit<PagoNuevo, 'fecha'> & { fecha?: string }): void {
+    const fecha = nuevo.fecha ?? hoyLocal(this.reloj.ahora());
     this.actualizarPagos((pagos) => registrarPago(pagos, { ...nuevo, fecha }));
   }
 
