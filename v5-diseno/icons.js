@@ -16,7 +16,8 @@
     der: '<path d="m9.5 5.5 6.5 6.5-6.5 6.5"/>',
     flor: '<circle cx="12" cy="12" r="2.6"/><path d="M12 9.4c-2.4-1.2-2.4-5.6 0-6.4 2.4.8 2.4 5.2 0 6.4zM14.6 12c1.2-2.4 5.6-2.4 6.4 0-.8 2.4-5.2 2.4-6.4 0zM12 14.6c2.4 1.2 2.4 5.6 0 6.4-2.4-.8-2.4-5.2 0-6.4zM9.4 12c-1.2 2.4-5.6 2.4-6.4 0 .8-2.4 5.2-2.4 6.4 0z"/>',
     mensual: '<circle fill="currentColor" stroke="none" cx="12" cy="12" r="6.5"/>',
-    individual: '<path fill="currentColor" stroke="none" d="M12 4.5 19.5 12 12 19.5 4.5 12z"/>'
+    individual: '<path fill="currentColor" stroke="none" d="M12 4.5 19.5 12 12 19.5 4.5 12z"/>',
+    ajustes: '<circle cx="12" cy="12" r="3"/>&lt;path d="M12 3.2v2M12 18.8v2M4.8 7.6l1.7 1M17.5 15.4l1.7 1M4.8 16.4l1.7-1M17.5 8.6l1.7-1"/>&lt;path d="M10 3.2h4M6.2 5.4 8.4 7M17.6 5.4 15.4 7M6.2 18.6 8.4 17M17.6 18.6 15.4 17"/>'
   };
   var sprite = '<svg xmlns="http://www.w3.org/2000/svg" style="display:none">';
   for (var k in S) sprite += '<symbol id="i-' + k + '" viewBox="0 0 24 24">' + S[k] + '</symbol>';
