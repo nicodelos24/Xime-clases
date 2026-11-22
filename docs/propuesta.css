@@ -14,14 +14,14 @@ html, body {
   --sheet-safe: env(safe-area-inset-bottom);
   --margen-panel: 10px;
 }
-/* El body mide 100vh de alto total (content box + padding-bottom de 91px):
+/* El body mide 100dvh de alto total (content box + padding-bottom de 97px):
    reserva 77px de barra (63 alto + 14 bottom) y 14px de hueco al final del
    content box. .marca ocupa su altura natural y .cel (flex:1) crece con el
    contenido en vistas largas, cerrando siempre por encima de la cápsula. */
 body {
-  min-height: 100vh;
+  min-height: 100dvh;
   padding-inline: var(--margen-panel);
-  padding-bottom: calc(91px + env(safe-area-inset-bottom));
+  padding-bottom: calc(97px + env(safe-area-inset-bottom));
   display: flex;
   flex-direction: column;
 }
@@ -35,7 +35,7 @@ html.con-sheet, body.con-sheet {
 html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; width: 0; }
 /* En móvil el contenido conserva el margen lateral del panel; solo sube arriba. */
 @media (max-width: 430px) {
-  body { padding: 22px var(--margen-panel) calc(91px + env(safe-area-inset-bottom)); }
+  body { padding: 22px var(--margen-panel) calc(97px + env(safe-area-inset-bottom)); }
 }
 
 .marca, .pie {
