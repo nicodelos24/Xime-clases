@@ -283,7 +283,7 @@ export function puntoEstadoVence(f: Pick<FichaVista, 'estadoVence'>): string {
   }
 }
 
-export type OrdenAlumnos = 'ninguno' | 'az' | 'za' | 'recientes' | 'vence';
+export type OrdenAlumnos = 'ninguno' | 'az' | 'za' | 'recientes' | 'vence' | 'vence-inverso';
 
 /** Aplica búsqueda acento-insensible, filtros y orden a la vista. Sin mutar. */
 export function filtrarYOrdenar(
@@ -306,7 +306,12 @@ export function filtrarYOrdenar(
     az: (a, b) => a.nombre.localeCompare(b.nombre),
     za: (a, b) => b.nombre.localeCompare(a.nombre),
     recientes: (a, b) => b.alta - a.alta,
+    // Vencimientos ascendente (vencidos primero) y su inverso. En ambos,
+    // "al día" (vence = null) va primero: Infinity en ascendente no lo cambia
+    // (queda al final), y +Infinity en descendente lo pone al tope, que es lo
+    // que pide el chip "Al día primero".
     vence: (a, b) => (a.vence ?? Infinity) - (b.vence ?? Infinity),
+    'vence-inverso': (a, b) => (b.vence ?? Infinity) - (a.vence ?? Infinity),
   };
   return orden === 'ninguno' ? out : [...out].sort(cmp[orden]);
 }

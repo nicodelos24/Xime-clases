@@ -270,6 +270,20 @@ test('vista: búsqueda acento-insensible, filtros y orden sin mutar la lista', (
   assert.equal(filas[0]!.nombre, repo.listarAlumnos()[0]!.nombre, 'original intacto');
 });
 
+test('REGRESIÓN orden «Al día primero»: al día (vence=null) al tope, luego el que vence más lejos', () => {
+  const { repo } = abrir(almacenMemoria());
+  const filas = construirVista(repo.listarAlumnos(), new Map(), HOY);
+  const ordenadas = filtrarYOrdenar(filas, '', new Set(), 'vence-inverso');
+
+  // Los que están al día van primero.
+  const primerosAlDia = ordenadas.slice(0, filas.filter((f) => f.vence === null).length);
+  assert.ok(primerosAlDia.every((f) => f.vence === null), 'al día primero');
+
+  // Entre los que tienen fecha, orden descendente: el que vence más lejos antes.
+  const conFecha = ordenadas.filter((f) => f.vence !== null).map((f) => f.vence!);
+  assert.deepEqual(conFecha, [...conFecha].sort((a, b) => b - a), 'descendente por fecha');
+});
+
 test('REGRESIÓN filtros de modalidad: se combinan con OR; ambos muestran todos', () => {
   const { repo } = abrir(almacenMemoria());
   const filas = construirVista(repo.listarAlumnos(), new Map(), HOY);
