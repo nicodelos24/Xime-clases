@@ -15,8 +15,8 @@
  * Puro: sin `Date.now()`, sin DOM, sin estado global. El reloj entra por
  * parámetro; los tests usan `relojFalso`.
  */
-import { diasDeFecha, etiquetaDia } from "./fechas.js?v=202611220120";
-import { hoyLocal, minutosLocales, parsearMinutos, formatoHora, partesDe, ZONA, } from "./reloj.js?v=202611220120";
+import { diasDeFecha, etiquetaDia } from './fechas.js?v=202611220521';
+import { hoyLocal, minutosLocales, parsearMinutos, formatoHora, partesDe, ZONA, } from './reloj.js?v=202611220521';
 const pad = (n) => String(n).padStart(2, '0');
 /**
  * Desplazamiento UTC − local en minutos de un día concreto
