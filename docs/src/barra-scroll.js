@@ -14,8 +14,6 @@
  *    volver a mostrar la barra; así un solo sample ruidoso no la devuelve.
  *  - Reaparición por quietud: si la barra queda oculta y el scroll se detiene,
  *    vuelve sola tras `REAPARECER_TRAS_MS`, con la misma transición suave.
- *    El tiempo es corto a propósito (media décima de segundo): se nota que es
- *    intencional, sin dar tiempo a pensar que la barra desapareció para siempre.
  *
  * La UI (`propuesta.ts`) se encarga del listener `scroll`, del
  * `requestAnimationFrame`, del temporizador y de aplicar la clase `.oculta`;
@@ -29,11 +27,10 @@ export const TOPE_SCROLL = 4;
 export const MUESTRAS_PARA_MOSTRAR = 2;
 /**
  * Ms sin desplazarse tras los cuales la barra oculta vuelve a aparecer sola.
- * 500 ms (pedido de Nico, 22-nov): corto para que se note la intención, largo
- * para no parecer un parpadeo. El reloj se rearma en cada evento de scroll, así
- * que mientras se sigue bajando la barra NO reaparece.
+ * 3 s se siente natural: da tiempo a leer el contenido sin que parezca que la
+ * barra "desapareció para siempre".
  */
-export const REAPARECER_TRAS_MS = 500;
+export const REAPARECER_TRAS_MS = 3000;
 /** Recorta una posición de scroll al rango real del documento. */
 export function recortarScroll(y, limite = Infinity) {
     const tope = Number.isFinite(limite) ? Math.max(0, limite) : Infinity;

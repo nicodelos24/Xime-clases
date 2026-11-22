@@ -137,7 +137,7 @@ test('el reloj de quietud se rearma con cada movimiento y no dispara antes', (t)
 
   muestrear(200); // oculta, arranca el reloj
   timers.tick(REAPARECER_TRAS_MS - 1);
-  assert.equal(disparos, 0, 'no reaparece antes del tiempo de quietud');
+  assert.equal(disparos, 0, 'no reaparece antes de los 3 s');
   muestrear(220); // sigue bajando: reinicia el reloj
   timers.tick(REAPARECER_TRAS_MS - 1);
   assert.equal(disparos, 0, 'el movimiento reinició la cuenta');
