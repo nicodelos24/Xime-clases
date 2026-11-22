@@ -22,7 +22,7 @@ import {
 import { diaCorto, etiquetaDia, etiquetaDiaCompleta, etiquetaMes, sumarDias, parseFecha, lunesDe, diasDelMes, esFechaValida } from './src/fechas.ts';
 import { relojDelDispositivo, hoyLocal, type Reloj } from './src/reloj.ts';
 import {
-  textoCancelacion, destinos, resumenEnvio, linkTexto, type Destino,
+  textoCancelacion, destinos, resumenEnvio, linkTexto, linkAvisoVencimiento, type Destino,
 } from './src/whatsapp.ts';
 
 /* ------------------------------------------------- estado persistente (local) */
@@ -1351,7 +1351,14 @@ function abrirFichaConCobro(ficha: AlumnoFicha | null, origen: HTMLElement): voi
     : deuda
       ? `${textoVence(deuda.dias)} · ${uyu(deuda.alumno.montoUYU)} (vence ${esc(deuda.fecha)}).`
       : 'Sin cobros registrados.';
-  resumen.innerHTML = `<p>${texto}</p><button type="button" class="cobros-link" data-editar-cobro>${ultimo ? 'Editar fecha del pago' : deuda ? 'Registrar pago' : 'Ver cobros'}</button>`;
+  const tel = ficha.contacto;
+  const avisoLink = deuda && tel ? linkAvisoVencimiento({ telefono: tel, nombre: ficha.nombre, vencimiento: deuda.fecha }) : null;
+  const linkGenerico = tel ? linkAvisoVencimiento({ telefono: tel, nombre: ficha.nombre, vencimiento: deuda?.fecha ?? hoyLocal(reloj.ahora()) }) : null;
+  resumen.innerHTML = `<p>${texto}</p>
+    ${linkGenerico ? `<a class="cobros-link" href="${linkGenerico}" target="_blank" rel="noopener">Enviar WhatsApp</a>` : '<p class="al-sub">Sin teléfono cargado: agregalo en la ficha para enviar WhatsApp.</p>'}
+    ${avisoLink ? `<a class="cobros-link" href="${avisoLink}" target="_blank" rel="noopener" data-avisar>Avisar por WhatsApp (por vencer)</a>` : ''}
+    <button type="button" class="cobros-link" data-editar-cobro>${ultimo ? 'Editar fecha del pago' : deuda ? 'Registrar pago' : 'Ver cobros'}</button>
+    <p class="al-sub">Simulación: el envío real llega con la base de datos.</p>`;
   dialogo.querySelector('form')?.before(resumen);
   resumen.querySelector('[data-editar-cobro]')?.addEventListener('click', () => {
     if (ultimo) {
@@ -1656,15 +1663,22 @@ function abrirPago(nombre: string, periodo: string, monto: number, origen: HTMLE
 
 campana.addEventListener('click', () => {
   const { avisos } = verCobros();
-  abrirDialogoCobros('Avisos de cobro', 'Mensualidades', 'campana', avisos.length ? `<p class="cobros-panel-nota">Mensualidades sin pagar que vencen hoy o en los próximos 7 días.</p>
-    <ul class="cobros-panel-lista">${avisos.map((f) => `<li>
-    <div><p class="al-nombre">${esc(f.alumno.nombre)}</p><p class="al-sub">${esc(f.alumno.grupo)}</p></div>
+  const fichas = new Map(repo.listarAlumnos().map((f) => [f.id, f]));
+  const avisarLink = (f: (typeof avisos)[number]) => {
+    const tel = fichas.get(f.alumno.id)?.contacto ?? '';
+    return tel ? linkAvisoVencimiento({ telefono: tel, nombre: f.alumno.nombre, vencimiento: f.fecha }) : null;
+  };
+  const dlg = abrirDialogoCobros('Avisos de cobro', 'Mensualidades', 'campana', avisos.length ? `<p class="cobros-panel-nota">Mensualidades sin pagar que vencen hoy o en los próximos 7 días. Avisá por WhatsApp (simulación; el envío real llega con la base de datos).</p>
+    <ul class="cobros-panel-lista">${avisos.map((f, i) => `<li>
+    <div><p class="al-nombre">${esc(f.alumno.nombre)}</p><p class="al-sub">${esc(f.alumno.grupo)}</p>
+    ${avisarLink(f) ? `<a class="cobros-link" href="${avisarLink(f)}" target="_blank" rel="noopener" data-avisar="${i}">Avisar por WhatsApp</a>` : '<span class="al-sub">Sin teléfono cargado</span>'}</div>
     <span class="cobros-aviso${f.dias === 0 ? ' cobros-aviso-hoy' : ''}">${textoVence(f.dias)}</span></li>`).join('')}</ul>
     <div class="cobros-panel-pie"><button class="btn-secundario" type="button" data-ver-cobros>Ver Cobros</button></div>`
-    : '<p class="cobros-panel-nota">No hay avisos de vencimientos.</p>', campana).querySelector('[data-ver-cobros]')?.addEventListener('click', (e) => {
-      (e.currentTarget as HTMLElement).closest('dialog')?.close();
-      irA('v-cobros');
-    });
+    : '<p class="cobros-panel-nota">No hay avisos de vencimientos.</p>', campana);
+  dlg.querySelector('[data-ver-cobros]')?.addEventListener('click', (e) => {
+    (e.currentTarget as HTMLElement).closest('dialog')?.close();
+    irA('v-cobros');
+  });
 });
 
 /* ------------------------------------------------------------- navegación */
