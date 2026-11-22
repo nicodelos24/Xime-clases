@@ -595,12 +595,16 @@ function abrirAgendar() {
   cuadro.innerHTML = `
     <div class="sheet-head">
       <div>
-        <p class="sheet-eyebrow">Nueva clase</p>
-        <h3 id="agendar-titulo">¿Cómo la agregamos?</h3>
+        <p class="sheet-eyebrow">Calendario</p>
+        <h3 id="agendar-titulo">¿Qué querés agregar?</h3>
       </div>
       <button class="sheet-cerrar" type="button" aria-label="Cerrar"><svg class="ico" width="18" height="18"><use href="#i-mas2"/></svg></button>
     </div>
-    <div class="opciones" role="group" aria-label="Tipo de clase">
+    <div class="opciones" role="group" aria-label="Tipo de alta">
+      <button class="opcion opcion-agendar" type="button" data-mod="alumno">
+        <svg class="ico" width="19" height="19"><use href="#i-alumnos"/></svg>
+        <span><b>Nueva alumna</b><small>Darla de alta y agendarla ese día</small></span>
+      </button>
       <button class="opcion opcion-agendar" type="button" data-mod="semanal">
         <svg class="ico" width="19" height="19"><use href="#i-agenda"/></svg>
         <span><b>Clase semanal</b><small>Una rutina: elegís los días y la hora, se repite sola</small></span>
@@ -613,6 +617,10 @@ function abrirAgendar() {
   $('.cel')?.appendChild(cuadro);
   abrirSheet(cuadro);
   cuadro.querySelector('.sheet-cerrar')?.addEventListener('click', () => cerrarCuadro(cuadro));
+  cuadro.querySelector('[data-mod="alumno"]')?.addEventListener('click', () => {
+    cerrarCuadro(cuadro);
+    abrirFichaAltaParaAgendar(diaMesSeleccionado ?? undefined);
+  });
   cuadro.querySelector('[data-mod="semanal"]')?.addEventListener('click', () => {
     cerrarCuadro(cuadro);
     abrirFormularioSemanal(diaMesSeleccionado ?? undefined);
@@ -1332,8 +1340,8 @@ $('#buscar-alumno')?.addEventListener('input', (e) => {
 /* ------------------------------------------- alta / edición de ficha (C) */
 
 /** Diálogo de ficha: mismo sheet v5 de Cobros, sin rediseñar. */
-function abrirFichaConCobro(ficha: AlumnoFicha | null, origen: HTMLElement): void {
-  abrirFicha(ficha, origen);
+function abrirFichaConCobro(ficha: AlumnoFicha | null, origen: HTMLElement, alCrear?: (creada: AlumnoFicha) => void): void {
+  abrirFicha(ficha, origen, alCrear);
   if (!ficha) return;
   // #4: al tocar la alumna se ve su estado de cobro y se puede editar el pago
   // vinculado por ID, sin depender del nombre ni de recordar el período.
@@ -1376,7 +1384,7 @@ function abrirFichaConCobro(ficha: AlumnoFicha | null, origen: HTMLElement): voi
   });
 }
 
-function abrirFicha(ficha: AlumnoFicha | null, origen: HTMLElement): void {
+function abrirFicha(ficha: AlumnoFicha | null, origen: HTMLElement, alCrear?: (creada: AlumnoFicha) => void): void {
   const esNueva = ficha === null;
   const hoy = hoyLocal(reloj.ahora());
   const contenido = `<div class="cobros-panel-resumen">
@@ -1450,14 +1458,16 @@ function abrirFicha(ficha: AlumnoFicha | null, origen: HTMLElement): void {
       error.textContent = Object.values(errores)[0]!;
       return;
     }
+    let creada: AlumnoFicha | undefined;
     try {
-      if (esNueva) repo.crearAlumno(input);
+      if (esNueva) creada = repo.crearAlumno(input);
       else repo.editarAlumno(ficha!.id, input);
     } catch (err) {
       error.textContent = err instanceof Error ? err.message : 'No se pudo guardar la ficha';
       return;
     }
     dialogo.close();
+    if (creada && alCrear) alCrear(creada);
     pintarAlumnos();
     pintarCobros();
     avisar(esNueva ? 'Alumno guardado' : 'Ficha actualizada');
@@ -1465,6 +1475,35 @@ function abrirFicha(ficha: AlumnoFicha | null, origen: HTMLElement): void {
 }
 
 $('#nuevo-alumno')?.addEventListener('click', (e) => abrirFicha(null, e.currentTarget as HTMLElement));
+
+/**
+ * Punto 7: desde el «Agregar» del calendario también se puede dar de alta una
+ * alumna. Usa la MISMA ficha v5 (sin rediseñar) y, al guardar, agendas una
+ * clase suelta el día elegido con la alumna vinculada por ID estable.
+ * Si el día elegido es anterior a hoy, se agenda hoy: no se inventa pasado.
+ */
+function abrirFichaAltaParaAgendar(fechaElegida?: string): void {
+  const hoy = hoyLocal(reloj.ahora());
+  const fecha = fechaElegida && fechaElegida >= hoy ? fechaElegida : hoy;
+  const origen = $('.cel') as HTMLElement;
+  abrirFicha(null, origen, (creada) => {
+    // La clase guarda el ID de la alumna: nunca el nombre, que puede cambiar.
+    repo.crear({
+      id: nuevoId('suelta'),
+      nombre: creada.nombre,
+      fecha,
+      hora: '15:00',
+      duracionMin: 60,
+      alumnos: [{ id: creada.id, nombre: creada.nombre, telefono: creada.contacto }],
+    });
+    clases = repo.listar();
+    mesSeleccionado = fecha;
+    diaMesSeleccionado = fecha;
+    pintarSemanaDe(fecha);
+    pintarTarjetasDiaMes();
+    avisar(`${creada.nombre} agregada y agendada el ${etiquetaDia(fecha)}`);
+  });
+}
 
 /* ------------------------------------------------------------- cobros */
 const formatoUYU = new Intl.NumberFormat('es-UY', { useGrouping: 'always' });
