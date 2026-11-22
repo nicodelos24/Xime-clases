@@ -1373,7 +1373,7 @@ function abrirFichaConCobro(ficha, origen, alCrear) {
     const resumen = document.createElement('div');
     resumen.className = 'cobros-panel-nota ficha-cobro';
     const texto = ultimo
-        ? `Último pago: ${esc(ultimo.fecha)} · ${uyu(ultimo.montoUYU)}. Renovación: mismo día del mes siguiente.`
+        ? `Último pago: ${esc(fechaCorta(ultimo.fecha))} · ${uyu(ultimo.montoUYU)}. Renovación: mismo día del mes siguiente.`
         : deuda
             ? `${textoVence(deuda.dias)} · ${uyu(deuda.alumno.montoUYU)} (vence ${esc(deuda.fecha)}).`
             : 'Sin cobros registrados.';
