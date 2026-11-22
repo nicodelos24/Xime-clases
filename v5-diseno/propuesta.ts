@@ -1570,6 +1570,8 @@ function pintarCobros() {
   for (const [selector, valor] of Object.entries(kpis)) $(`${selector} .kpi-valor`)!.textContent = valor;
   $('#v-cobros .conteo')!.textContent = etiquetaMes(`${r.periodo}-01`).replace(/^./, (letra) => letra.toUpperCase());
   const n = r.vencenHoy.length;
+  // Estado vacío = información neutra, no alerta ámbar (sin vencimientos no hay nada que alertar).
+  $('#v-hoy .aviso')!.classList.toggle('vacio', n === 0);
   $('#v-hoy .aviso strong')!.textContent = n === 1 ? '1 mensualidad vence hoy' : `${n} mensualidades vencen hoy`;
   $('#v-hoy .aviso-sub')!.textContent = n
     ? `${new Intl.ListFormat('es-UY').format(r.vencenHoy.map((f) => f.alumno.nombre))} · Ver en Cobros`

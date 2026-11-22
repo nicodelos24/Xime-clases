@@ -380,3 +380,20 @@ body {
 }
 [data-tema="oscuro"] .marca { color: var(--tinta-2); }
 [data-tema="oscuro"] .hero { box-shadow: var(--sombra-fuerte); }
+
+/* Ronda romper y pulir (22-nov) · hallazgo 2: texto del aviso legible en oscuro.
+   --ambar-suave (#7A5A00) sobre el tinte oscuro daba 2.03:1; --ambar-pastel
+   (#F2C48D, token v5 existente) da 8.04:1 sin cambiar los colores base. */
+[data-tema="oscuro"] .aviso { color: var(--ambar-pastel); }
+[data-tema="oscuro"] .aviso-sub { color: var(--ambar-pastel); }
+[data-tema="oscuro"] .aviso-ico { background: rgba(242,196,141,.16); color: var(--ambar-pastel); }
+/* Estado vacío en oscuro: fondo --bg-alt y borde --linea (tokens v5), no los
+   turquesas claros, que darían 1.74:1 con --tinta-2. */
+[data-tema="oscuro"] .aviso.vacio { background: var(--bg-alt); border-color: var(--linea); }
+[data-tema="oscuro"] .aviso.vacio .aviso-ico { background: var(--tq-100); color: var(--tq-700); }
+
+/* Ronda romper y pulir (22-nov) · hallazgo 3: chips de modalidad legibles en oscuro.
+   --lila / --azul sobre sus tintes oscuros daban 1.78:1 y 1.89:1. */
+[data-tema="oscuro"] .et-mensual { color: #C9B6E8; }   /* sobre --lila-tinte #2E2542: 7.77:1 */
+[data-tema="oscuro"] .et-individual { color: #A8CDEA; } /* sobre --azul-tinte #1E3546: 7.61:1 */
+[data-tema="oscuro"] .ficha-grupo.activo { color: var(--tq-700); } /* #7BE0D6 sobre #1C3A3B: 7.84:1 */

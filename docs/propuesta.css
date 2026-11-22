@@ -217,6 +217,13 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; width: 0; }
   animation: subir var(--t-larga) var(--ease) 310ms both;
 }
 .aviso-ico { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 9px; background: rgba(138,90,18,.14); flex: none; }
+.aviso-ico-ok { display: none; }
+/* Hallazgo 1: sin vencimientos el aviso es información neutra, no una alerta ámbar. */
+.aviso.vacio { background: var(--tq-50); border-color: var(--tq-100); color: var(--tinta-2); }
+.aviso.vacio .aviso-ico { background: var(--tq-100); color: var(--tq-700); }
+.aviso.vacio .aviso-ico-alerta { display: none; }
+.aviso.vacio .aviso-ico-ok { display: block; }
+.aviso.vacio .aviso-sub { color: var(--tinta-2); }
 .aviso p { font-size: 13px; line-height: 1.35; }
 .aviso-sub { color: var(--ambar-suave); opacity: 1; }
 
@@ -353,6 +360,12 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; width: 0; }
 
 /* ---------- Mes ---------- */
 /* Navegación de mes junto al título mes+año: fácil de ver y tocar en el celu. */
+/* Ronda romper y pulir (22-nov) · hallazgo 4: a 320px «noviembre 2026» y
+   «Ver semana» se pisaban ~40px. Solo en pantallas ≤360px el link baja de
+   línea; en 390px+ se conserva la fila única original. */
+@media (max-width: 360px) {
+  #v-mes > .agenda-titulo { flex-wrap: wrap; gap: 8px 0; }
+}
 .mes-titulo-nav { display: flex; align-items: center; gap: 4px; min-width: 0; }
 .mes-titulo-nav h2 { margin: 0; text-align: center; white-space: nowrap; }
 .flecha {
