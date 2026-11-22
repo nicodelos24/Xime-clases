@@ -23,7 +23,7 @@ import {
   type OpcionReprogramar,
 } from './clases.ts';
 import { hoyLocal, type InstanteMs, type Reloj } from './reloj.ts';
-import { anularPago, registrarPago, type Pago, type PagoNuevo } from './cobros.ts';
+import { anularPago, corregirFechaPago, registrarPago, type Pago, type PagoNuevo } from './cobros.ts';
 import {
   crearAlumno, editarAlumno, normalizarFichaGuardada,
   type AlumnoFicha, type AlumnoFichaInput,
@@ -191,6 +191,7 @@ export interface RepositorioDeClases {
   listarPagos(): readonly Pago[];
   registrarPago(nuevo: Omit<PagoNuevo, 'fecha'> & { fecha?: string }): void;
   anularPago(id: string, motivo: string, quien: string): void;
+  corregirFechaPago(id: string, fechaNueva: string, motivo: string, quien: string): void;
   listarAlumnos(): readonly AlumnoFicha[];
   crearAlumno(input: AlumnoFichaInput): AlumnoFicha;
   editarAlumno(id: string, input: AlumnoFichaInput): AlumnoFicha;
@@ -238,6 +239,11 @@ export class RepositorioClases implements RepositorioDeClases {
   anularPago(id: string, motivo: string, quien: string): void {
     const fecha = hoyLocal(this.reloj.ahora());
     this.actualizarPagos((pagos) => anularPago(pagos, id, { fecha, motivo, quien }));
+  }
+
+  corregirFechaPago(id: string, fechaNueva: string, motivo: string, quien: string): void {
+    const hoy = hoyLocal(this.reloj.ahora());
+    this.actualizarPagos((pagos) => corregirFechaPago(pagos, id, fechaNueva, motivo, quien, hoy));
   }
 
   private actualizarPagos(transformar: (pagos: Pago[]) => Pago[]): void {

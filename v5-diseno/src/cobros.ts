@@ -26,6 +26,24 @@ export function registrarPago(pagos: readonly Pago[], nuevo: PagoNuevo): Pago[] 
   return [...pagos, { ...nuevo, anulado: null }];
 }
 
+/** Corrige la fecha en que se pagó/renovió, dejando rastro de la corrección. */
+export function corregirFechaPago(pagos: readonly Pago[], id: string, fechaNueva: string, motivo: string, quien: string, hoy: string): Pago[] {
+  if (!esFechaValida(fechaNueva)) throw new Error('Fecha de pago inválida');
+  const pago = pagos.find((p) => p.id === id);
+  if (!pago) throw new Error('No se encontró el pago');
+  if (pago.anulado) throw new Error('El pago ya está anulado');
+  if (fechaNueva === pago.fecha) return [...pagos];
+  if (!motivo.trim() || !quien.trim()) throw new Error('Ingresá el motivo de la corrección');
+  // El ID y el alumno no cambian: la vinculación sigue siendo la misma; se
+  // anula la versión anterior y se registra la corregida con ese mismo ID.
+  const correccion: Pago = {
+    ...pago,
+    fecha: fechaNueva,
+    anulado: { fecha: hoy, motivo: motivo.trim(), quien },
+  };
+  return pagos.map((p) => p === pago ? correccion : p);
+}
+
 export function anularPago(pagos: readonly Pago[], id: string, datos: Anulacion): Pago[] {
   const pago = pagos.find((p) => p.id === id);
   if (!pago) throw new Error('No se encontró el pago');

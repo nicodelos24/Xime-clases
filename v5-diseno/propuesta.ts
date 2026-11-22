@@ -1300,7 +1300,7 @@ function pintarAlumnos(): void {
       }).join('')
     : `<p class="pv-vacio">${todas.length === 0 ? 'Todavía no hay alumnos. Tocá «Nuevo alumno» para cargar el primero.' : 'Ningún alumno con estos filtros'}</p>`;
   lista.querySelectorAll<HTMLButtonElement>('[data-ficha]').forEach((b) => {
-    b.addEventListener('click', () => abrirFicha(repo.listarAlumnos().find((f) => f.id === b.dataset.ficha) ?? null, b));
+    b.addEventListener('click', () => abrirFichaConCobro(repo.listarAlumnos().find((f) => f.id === b.dataset.ficha) ?? null, b));
   });
   pintarChipsAlumnos();
 }
@@ -1332,6 +1332,43 @@ $('#buscar-alumno')?.addEventListener('input', (e) => {
 /* ------------------------------------------- alta / edición de ficha (C) */
 
 /** Diálogo de ficha: mismo sheet v5 de Cobros, sin rediseñar. */
+function abrirFichaConCobro(ficha: AlumnoFicha | null, origen: HTMLElement): void {
+  abrirFicha(ficha, origen);
+  if (!ficha) return;
+  // #4: al tocar la alumna se ve su estado de cobro y se puede editar el pago
+  // vinculado por ID, sin depender del nombre ni de recordar el período.
+  const dialogo = document.querySelector<HTMLDialogElement>('dialog.sheet.cobros-panel[open]');
+  if (!dialogo) return;
+  const r = verCobros();
+  const filas = r.filas.filter((f) => f.alumno.id === ficha.id);
+  const deuda = filas.find((f) => !f.pago && f.dias >= 0) ?? filas.find((f) => !f.pago);
+  const pagos = repo.listarPagos().filter((p) => p.alumnoId === ficha.id && !p.anulado);
+  const ultimo = pagos.at(-1);
+  const resumen = document.createElement('div');
+  resumen.className = 'cobros-panel-nota ficha-cobro';
+  const texto = ultimo
+    ? `Último pago: ${esc(ultimo.fecha)} · ${uyu(ultimo.montoUYU)}. Renovación: mismo día del mes siguiente.`
+    : deuda
+      ? `${textoVence(deuda.dias)} · ${uyu(deuda.alumno.montoUYU)} (vence ${esc(deuda.fecha)}).`
+      : 'Sin cobros registrados.';
+  resumen.innerHTML = `<p>${texto}</p><button type="button" class="cobros-link" data-editar-cobro>${ultimo ? 'Editar fecha del pago' : deuda ? 'Registrar pago' : 'Ver cobros'}</button>`;
+  dialogo.querySelector('form')?.before(resumen);
+  resumen.querySelector('[data-editar-cobro]')?.addEventListener('click', () => {
+    if (ultimo) {
+      // El ID del pago viene del ledger por alumno; nunca del nombre.
+      const fila = filas.find((f) => f.pago?.id === ultimo.id);
+      dialogo.close();
+      abrirPago(ficha.nombre, ultimo.periodo, ultimo.montoUYU, origen, ultimo, fila);
+    } else if (deuda) {
+      dialogo.close();
+      abrirPago(ficha.nombre, deuda.periodo, deuda.alumno.montoUYU, origen, undefined, deuda);
+    } else {
+      dialogo.close();
+      irA('v-cobros');
+    }
+  });
+}
+
 function abrirFicha(ficha: AlumnoFicha | null, origen: HTMLElement): void {
   const esNueva = ficha === null;
   const hoy = hoyLocal(reloj.ahora());
@@ -1428,17 +1465,19 @@ const uyu = (monto: number) => `$${formatoUYU.format(monto)}`;
 const listaCobros = document.querySelector<HTMLUListElement>('#lista-cobros')!;
 const botonHistorial = document.querySelector<HTMLButtonElement>('#abrir-historial')!;
 const campana = document.querySelector<HTMLButtonElement>('.campana')!;
+/** Tarifa por defecto para fichas creadas desde la app (demo usa 6500). */
+const MONTO_UYU = 6500;
 /**
- * Alumnos de Cobros: los del contrato demo (tarifa/ancla definida), con el
- * nombre y grupo VIGENTES de la ficha cuando se editaron. Un alumno nuevo no
- * entra acá: no tiene tarifa asignada y el alta no debe crear cargos.
+ * Alumnos de Cobros: TODAS las fichas, vinculadas por ID estable. El nombre y
+ * el grupo vigentes salen de la ficha; el ancla y la tarifa de la demo se
+ * respetan, y una ficha nueva usa su ancla con la tarifa por defecto.
  */
 function alumnosParaCobros() {
-  const fichas = new Map(repo.listarAlumnos().map((a) => [a.id, a]));
-  return alumnosCobrosDemo.map((a) => {
-    const f = fichas.get(a.id);
-    return f ? { ...a, nombre: f.nombre, grupo: f.grupo } : a;
-  });
+  const montos = new Map(alumnosCobrosDemo.map((a) => [a.id, a.montoUYU]));
+  return repo.listarAlumnos().map((f) => ({
+    id: f.id, nombre: f.nombre, grupo: f.grupo,
+    ancla: f.ancla, montoUYU: montos.get(f.id) ?? MONTO_UYU,
+  }));
 }
 const verCobros = (pagos = repo.listarPagos()) => resumenCobros(alumnosParaCobros(), pagos, hoyLocal(reloj.ahora()));
 type FilaCobro = ReturnType<typeof verCobros>['filas'][number];
@@ -1558,28 +1597,51 @@ function cerrarDialogoConAviso(dlg: HTMLDialogElement): void {
   else dlg.close();
 }
 
-function abrirPago(nombre: string, periodo: string, monto: number, origen: HTMLButtonElement, pago?: Pago, fila?: FilaCobro) {
+function abrirPago(nombre: string, periodo: string, monto: number, origen: HTMLElement, pago?: Pago, fila?: FilaCobro) {
   const accion = pago ? 'Anular pago' : 'Registrar pago';
   const mes = etiquetaMes(`${periodo}-01`);
   const dialogo = abrirDialogoCobros(accion, 'Mensualidad', pago ? 'alerta' : 'cobros', `<div class="cobros-panel-resumen">
     <div><p class="al-nombre">${esc(nombre)}</p><p class="al-sub">${esc(mes)}</p></div>
     <div class="cobros-panel-dato"><strong>${uyu(pago?.montoUYU ?? monto)}</strong><span class="al-sub">UYU</span></div></div>
-    <p class="cobros-panel-nota">${pago ? `Registrado el ${esc(pago.fecha)} por ${esc(pago.quien)}. La anulación queda en el historial.` : 'Confirmá que ya recibiste el pago. La app no mueve dinero.'}</p>
-    <form>${pago ? '<label class="campo"><span>Motivo de anulación</span><input name="motivo" required maxlength="160"></label>' : ''}
+    <p class="cobros-panel-nota">${pago ? `Registrado el ${esc(pago.fecha)} por ${esc(pago.quien)}. Podés corregir la fecha en que pagó/renovió o anular el pago; queda en el historial.` : 'Confirmá cuándo pagó/renovió. La app no mueve dinero.'}</p>
+    <form>
+      ${pago ? `<label class="campo"><span>Fecha del pago (día / mes / año)</span></label>${selectorFecha('pago', pago.fecha)}
+      <label class="campo"><span>Motivo de anulación (opcional)</span><input name="motivo" maxlength="160"></label>`
+      : `<label class="campo"><span>¿Cuándo pagó/renovió? *</span></label>${selectorFecha('pago', hoyLocal(reloj.ahora()))}`}
       <p class="cobros-panel-error" role="alert"></p>
       <div class="sheet-acciones"><button type="button" class="btn-secundario">Volver</button>
-      <button type="submit" class="btn-primario${pago ? ' cobros-anular' : ''}">${pago ? 'Confirmar anulación' : 'Confirmar pago'}</button></div>
+      ${pago ? '<button type="button" class="btn-secundario cobros-anular">Anular pago</button>' : ''}
+      <button type="submit" class="btn-primario">${pago ? 'Guardar fecha' : 'Confirmar pago'}</button></div>
     </form>`, origen);
+  cablearFecha(dialogo, 'pago');
   const form = dialogo.querySelector('form')!;
   form.querySelector('.btn-secundario')!.addEventListener('click', () => cerrarDialogoConAviso(dialogo));
+  form.querySelector('.cobros-anular')?.addEventListener('click', () => {
+    try {
+      repo.anularPago(pago!.id, String(new FormData(form).get('motivo') ?? ''), QUIEN);
+      dialogo.close();
+      pintarCobros();
+    } catch (err) {
+      form.querySelector('[role="alert"]')!.textContent = err instanceof Error ? err.message : 'No se pudo anular';
+    }
+  });
   form.addEventListener('submit', (e) => {
     e.preventDefault();
     if (!dialogo.open) return;
+    const fecha = leerFechaDe(dialogo, 'pago');
+    if (!fecha) {
+      form.querySelector('[role="alert"]')!.textContent = 'Elegí una fecha válida';
+      return;
+    }
     try {
-      if (pago) repo.anularPago(pago.id, String(new FormData(form).get('motivo') ?? ''), QUIEN);
-      else if (fila) {
+      if (pago) {
+        // Corregir la fecha del pago conserva el MISMO ID y vínculo por alumno;
+        // el cambio queda registrado, sin inventar otro pago.
+        const motivo = String(new FormData(form).get('motivo') ?? '').trim() || 'Corrección de fecha';
+        repo.corregirFechaPago(pago.id, fecha, motivo, QUIEN);
+      } else if (fila) {
         const id = Array.from(crypto.getRandomValues(new Uint32Array(4)), (n) => n.toString(16).padStart(8, '0')).join('');
-        repo.registrarPago({ id, alumnoId: fila.alumno.id, periodo, montoUYU: monto, quien: QUIEN });
+        repo.registrarPago({ id, alumnoId: fila.alumno.id, periodo, montoUYU: monto, quien: QUIEN, fecha });
       }
     } catch (error) {
       form.querySelector('[role="alert"]')!.textContent = error instanceof Error ? error.message : 'No se pudo guardar';

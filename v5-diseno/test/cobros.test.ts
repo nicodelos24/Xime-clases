@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { anularPago, registrarPago, resumenCobros, vencimientoDelMes, type PagoNuevo } from '../src/cobros.ts';
+import { anularPago, corregirFechaPago, registrarPago, resumenCobros, vencimientoDelMes, type PagoNuevo } from '../src/cobros.ts';
 import { alumnosCobrosDemo, datosDemo } from '../src/demo.ts';
 import { hoyLocal, relojFalso } from '../src/reloj.ts';
 import { almacenLocalStorage, almacenMemoria, RepositorioClases, VERSION_ESTADO } from '../src/repositorio.ts';
@@ -56,6 +56,19 @@ test('vencimiento = mismo día del mes siguiente (1-feb→1-mar, 1-may→1-jun),
   assert.equal(vencimientoDelMes('2028-02', 1), '2028-03-01');
   assert.throws(() => vencimientoDelMes('2026-11', 0), /ancla/i);
   assert.throws(() => vencimientoDelMes('2026-11', 32), /ancla/i);
+});
+
+test('corrección de fecha (#4): mismo ID y alumno, fecha corregida y auditoría', () => {
+  const pagos = registrarPago([], nuevo);
+  const corregidos = corregirFechaPago(pagos, nuevo.id, '2026-11-23', 'Corrección de fecha', 'dueña-b', '2026-11-24');
+  assert.equal(corregidos.length, 1, 'no se crea un pago nuevo');
+  assert.equal(corregidos[0]!.id, nuevo.id, 'ID estable');
+  assert.equal(corregidos[0]!.alumnoId, nuevo.alumnoId, 'vinculado al mismo alumno');
+  assert.equal(corregidos[0]!.fecha, '2026-11-23');
+  assert.deepEqual(corregidos[0]!.anulado, { fecha: '2026-11-24', motivo: 'Corrección de fecha', quien: 'dueña-b' });
+  assert.throws(() => corregirFechaPago(pagos, nuevo.id, '2026-02-30', 'x', 'y', '2026-11-24'), /inválida/);
+  assert.throws(() => corregirFechaPago(pagos, 'no-existe', '2026-11-23', 'x', 'y', '2026-11-24'), /encontró/);
+  assert.deepEqual(corregirFechaPago(pagos, nuevo.id, nuevo.fecha, 'x', 'y', '2026-11-24'), pagos, 'misma fecha no cambia nada');
 });
 
 test('KPI, filas y avisos coinciden al pagar y al volver a vencer tras anular', () => {
