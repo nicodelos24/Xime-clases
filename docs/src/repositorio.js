@@ -15,11 +15,11 @@
  *    cancelaciones, reversiones, reprogramaciones y el estado por hora.
  *  - Nunca se borra una clase: el historial de eventos queda en la clase.
  */
-import { cancelarClase, crearClase, deshacerCancelacion, deshacerMarcada, marcarDada, reconciliar, registrarMensajeEnviado, reprogramarClase, } from "./clases.js?v=202611220110";
-import { hoyLocal } from "./reloj.js?v=202611220110";
-import { anularPago, registrarPago } from "./cobros.js?v=202611220110";
-import { crearAlumno, editarAlumno, normalizarFichaGuardada, } from "./alumnos.js?v=202611220110";
-import { conExcepcion, crearClaseSuelta, crearRutina, generarOcurrencias, generarOcurrenciasEnRango, } from "./agendar.js?v=202611220110";
+import { cancelarClase, crearClase, deshacerCancelacion, deshacerMarcada, marcarDada, reconciliar, registrarMensajeEnviado, reprogramarClase, } from "./clases.js?v=202611220120";
+import { hoyLocal } from "./reloj.js?v=202611220120";
+import { anularPago, registrarPago } from "./cobros.js?v=202611220120";
+import { crearAlumno, editarAlumno, normalizarFichaGuardada, } from "./alumnos.js?v=202611220120";
+import { conExcepcion, crearClaseSuelta, crearRutina, generarOcurrencias, generarOcurrenciasEnRango, } from "./agendar.js?v=202611220120";
 /**
  * Versión del formato guardado. v2 agregó `alumnos` (Pieza C); las rutinas
  * semanales (20/11) se guardan como campo ADITIVO `rutinas` SIN subir la

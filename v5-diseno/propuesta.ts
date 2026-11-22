@@ -1780,7 +1780,7 @@ if (tabbar) {
   };
 
   // Si la barra quedó oculta, (re)arma el reloj de quietud: cada muestra de
-  // scroll reinicia el temporizador, así sólo vuelve sola tras 3 s sin tocar.
+  // scroll reinicia el temporizador, así sólo vuelve sola tras ~500 ms sin tocar.
   // Al vencer, la decisión pura confirma que sigue oculta y la mostramos con
   // la misma transición (quitar `.oculta`), recalibrando la referencia de
   // scroll para que un baje subsecuente la oculte sin rebotes.
