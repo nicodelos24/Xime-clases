@@ -19,6 +19,12 @@ por defecto de la app no se tocaron.
 | `v5-9puntos-08-deshacer-390.png` | Tras tocar el toast: «Clase revertida a Programada», evento `revertida` en auditoría. |
 | `v5-9puntos-09-config-prefijo-390.png` | Configuración › prefijo de móvil (+598). |
 | `v5-9puntos-10-avisos-whatsapp-390.png` | Avisos de cobro con link «Avisar por WhatsApp» → `wa.me/598…?text=…`. |
+| `v5-visual-01-configuracion-390.png` | Menú Configuración abierto: prefijo de país +598, «Guardar prefijo». |
+| `v5-visual-02-ficha-fechas-390.png` | Ficha de Carla T.: «Alta 19-11-2026» y «vence 21-11-2026» en día-mes-año. |
+
+Las dos últimas son las que pidió Nova para el visto bueno visual de Nico antes
+de publicar; tomadas sobre el `docs/` publicado (servidor estático en :8813),
+no solo sobre el fuente.
 
 ## Verificación en vivo
 
@@ -35,7 +41,13 @@ que ya no está en ese sheet; lanzaba `TypeError` y la cancelación no se
 confirmaba. Ahora observa el sheet completo. Commiteado en `b8a68e88` y
 regenerado en `docs/propuesta.js` (`8bc0b8b8`).
 
-Checks: `npm run typecheck` limpio; `npm test` 160/160.
+### Fix adicional (22-nov, tarde)
+
+La ficha mostraba el vencimiento de la deuda en ISO (`vence 2026-11-21`) mientras
+el resto ya estaba en día-mes-año. Ahora usa `fechaCorta` y muestra
+`vence 21-11-2026`. Aplica a `v5-diseno/propuesta.ts` y al build
+`docs/propuesta.js`; verificado en el build servido (`:8813`), 0 errores de
+consola. Checks: `npm run typecheck` limpio; `npm test` 160/160.
 
 ## Cómo ver el build exacto (para revisión visual)
 

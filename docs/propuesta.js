@@ -1375,7 +1375,7 @@ function abrirFichaConCobro(ficha, origen, alCrear) {
     const texto = ultimo
         ? `Último pago: ${esc(fechaCorta(ultimo.fecha))} · ${uyu(ultimo.montoUYU)}. Renovación: mismo día del mes siguiente.`
         : deuda
-            ? `${textoVence(deuda.dias)} · ${uyu(deuda.alumno.montoUYU)} (vence ${esc(deuda.fecha)}).`
+            ? `${textoVence(deuda.dias)} · ${uyu(deuda.alumno.montoUYU)} (vence ${esc(fechaCorta(deuda.fecha))}).`
             : 'Sin cobros registrados.';
     const tel = ficha.contacto;
     const avisoLink = deuda && tel ? linkAvisoVencimiento({ telefono: conPrefijo(tel, prefijoMovil), nombre: ficha.nombre, vencimiento: deuda.fecha }) : null;
