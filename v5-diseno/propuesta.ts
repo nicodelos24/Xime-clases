@@ -65,6 +65,23 @@ function chipEstado(c: Clase): string {
   return '<button class="chip chip-por chip-por-dar chip-boton" type="button" data-acciones="' + c.id + '" aria-label="Opciones para la clase ' + esc(c.nombre) + ', por dar">Por dar</button>';
 }
 
+/**
+ * Punto 1: desplegable informativo de alumnos en cada tarjeta de clase.
+ * Solo muestra QUIÉN va; no permite editar la lista ni envía nada. Los nombres
+ * se resuelven desde las fichas por ID estable (si el nombre cambia, se ve el
+ * vigente; si la ficha ya no existe, se conserva el nombre de la clase).
+ */
+function desplegableAlumnos(c: Clase): string {
+  const alumnos = c.alumnos;
+  if (alumnos.length === 0) return '';
+  const fichas = repo.listarAlumnos();
+  const nombres = alumnos.map((a) => fichas.find((f) => f.id === a.id)?.nombre ?? a.nombre);
+  return `<details class="clase-alumnos">
+    <summary>Ver quiénes van</summary>
+    <ul>${nombres.map((n) => `<li>${esc(n)}</li>`).join('')}</ul>
+  </details>`;
+}
+
 /** Acción de una fila de clase (20/11): ya no hay botón rojo "Cancelar clase".
  *  El chip de estado (Por dar / Dada) abre el cuadro con las acciones;
  *  solo Cancelada conserva su "Revertir" porque no hay chip tocable. */
@@ -258,6 +275,7 @@ function pintarLinea(fecha: string | null) {
           <div class="clase-datos">
             <p class="clase-nombre">${esc(c.nombre)}</p>
             <p class="clase-sub">${c.alumnos.length} alumnos inscriptos${c.estado === 'cancelada' && c.cancelacion ? ` · ${esc(c.cancelacion.motivo)}` : ''}</p>
+            ${desplegableAlumnos(c)}
           </div>
           ${chipEstado(c)}
           ${accionClase(c)}
@@ -433,6 +451,7 @@ function pintarTarjetasDiaMes(): void {
           <div class="clase-datos">
             <p class="clase-nombre">${esc(c.nombre)}</p>
             <p class="clase-sub">${c.alumnos.length} alumnos inscriptos${c.estado === 'cancelada' && c.cancelacion ? ` · ${esc(c.cancelacion.motivo)}` : ''}</p>
+            ${desplegableAlumnos(c)}
           </div>
           ${chipEstado(c)}
           ${accionClase(c)}
