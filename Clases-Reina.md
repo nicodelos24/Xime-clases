@@ -242,3 +242,22 @@ horizontal), sheets de historial y de pago 35 px sin solape, ficha de Alumnos
 igual; 0 errores de consola en claro y oscuro. `tsc` limpio, 180/180 tests.
 Commit `a6b7b956`. **No publicado al vivo**: queda para la pasada de
 publicación con aviso a Nova.
+
+## 23-nov · Mes persistido que desincronizaba «Hoy» (rama `fix/v5-mes-persistido`)
+
+Hallazgo «romper y pulir» (Gino/Roma), tarea `task_7212d1c79b964521`. El mes
+abierto es estado de pantalla y sobrevivía a la recarga y a la reentrada en
+`#v-mes`: el calendario se veía en el mes mirado (enero 2027) con «Hoy» en la
+fecha real. Ahora al cargar se ancla al mes de hoy, y al volver de la caché del
+navegador (`pageshow` con `persisted`) también; el día elegido solo se conserva
+si cae en el mes actual.
+
+- `v5-diseno/src/agenda-mes.ts` (puro) + `test/agenda-mes.test.ts` (4 tests):
+  `mesDeHoy`, `diaSeleccionadoAlCargar`, `primerDiaDeMes` (flechas sin `Date`).
+- Base master `ac5b7eea`. Verificado: `tsc` limpio, 184/184 tests; Chrome
+  390×844 claro/oscuro con #v-mes tras navegar a enero 2027 → abre en noviembre
+  2026 con el 23 como hoy, 0 errores de consola. Capturas y detalle en
+  `docs/qa/mes-persistido-20261123/`. `docs/` regenerado con sello 202611231830.
+  Diseño v5 intacto (sin HTML/CSS). Auto-marcado por reloj sigue descartado.
+- Commit `c08a1a3c`. **No publicado al vivo**: espera revisión visual y aviso a
+  Nova con capturas (doble control 23-nov).
