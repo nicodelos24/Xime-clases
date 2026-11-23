@@ -104,6 +104,17 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; width: 0; }
 /* ---------- Vistas ---------- */
 .vistas { flex: 1; display: flex; flex-direction: column; }
 .vista { display: none; padding: 6px 16px 18px; }
+/* Orden visual (23-nov): dentro de una vista la sangría la pone `.vista`, así
+   que todos los bloques comparten el mismo margen. El hero y el aviso traían
+   16px laterales de la hoja base y quedaban corridos 18px adentro respecto de
+   los KPIs, la tira y las listas. Solo se anula el margen horizontal: los
+   espaciados verticales quedan como estaban. */
+.vista .hero, .vista .aviso { margin-inline: 0; }
+/* El título de cada vista también traía 2px laterales propios y la fila de
+   filtros -2px: los dos quedaban corridos respecto del resto de los bloques.
+   Se alinean al mismo margen; el recorte de los chips con scroll horizontal se
+   mantiene con los 2px de padding interno de `.filtros`. */
+.vista > .agenda-titulo { margin-inline: 0; }
 .vista.activa { display: block; animation: entrarVista var(--t-larga) var(--ease) both; }
 
 @keyframes entrarVista {
@@ -486,7 +497,7 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; width: 0; }
 .buscador input { border: none; outline: none; background: transparent; font-size: 14px; color: var(--tinta); width: 100%; }
 
 /* Filtros de Alumnos (Nico 19/11): multi-selección, scroll horizontal suave. */
-.filtros { display:flex; gap:7px; overflow-x:auto; padding:2px 2px 6px; margin:2px -2px 0; scrollbar-width:none; -webkit-overflow-scrolling:touch; }
+.filtros { display:flex; gap:7px; overflow-x:auto; padding:2px 2px 6px; margin:2px 0 0; scrollbar-width:none; -webkit-overflow-scrolling:touch; }
 .filtros::-webkit-scrollbar { display:none; }
 .f-chip {
   border:1px solid var(--borde-crema); background:var(--bg-alt); color:var(--tinta-2);
@@ -602,6 +613,11 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; width: 0; }
 .ficha-cobro .ficha-cobro-estado.vencido { color: var(--rosa); }
 .ficha-cobro .ficha-cobro-estado.pendiente { color: var(--ambar); }
 .ficha-cobro .ficha-cobro-monto { font-weight: 700; color: var(--tinta); }
+/* Contacto de la ficha: el número se ve como dato (no como texto auxiliar) y
+   el enlace de WhatsApp queda debajo, alineado al mismo margen. */
+.ficha-contacto { display: flex; align-items: baseline; gap: 6px; margin-top: 8px; color: var(--tinta); }
+.ficha-contacto-rotulo { color: var(--tinta-2); font-size: 12px; font-weight: 650; letter-spacing: .01em; }
+.ficha-contacto b { font-weight: 700; font-variant-numeric: tabular-nums; }
 [data-tema="oscuro"] .ficha-cobro .ficha-cobro-estado.vencido { color: var(--rosa-pastel); }
 [data-tema="oscuro"] .ficha-cobro .ficha-cobro-estado.pendiente { color: var(--ambar-pastel); }
 .cobros-panel-lista { list-style: none; margin-top: 12px; }

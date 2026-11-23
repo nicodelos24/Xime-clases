@@ -22,6 +22,7 @@ import {
 import { diaCorto, etiquetaDia, etiquetaDiaCompleta, etiquetaMes, fechaCorta, sumarDias, parseFecha, lunesDe, diasDelMes, esFechaValida } from './src/fechas.ts';
 import { relojDelDispositivo, hoyLocal, type Reloj } from './src/reloj.ts';
 import { CLAVE_PREFIJO, PREFIJO_POR_DEFECTO, prefijoEsValido, prefijoSeguro, conPrefijo } from './src/prefijo.ts';
+import { bloqueContacto } from './src/contacto.ts';
 import {
   textoCancelacion, destinos, resumenEnvio, linkTexto, linkAvisoVencimiento, type Destino,
 } from './src/whatsapp.ts';
@@ -1393,11 +1394,17 @@ function abrirFichaConCobro(ficha: AlumnoFicha | null, origen: HTMLElement, alCr
     : deuda
       ? textoCobroFicha(deuda.dias, deuda.alumno.montoUYU, deuda.fecha)
       : 'Sin cobros registrados.';
-  const tel = ficha.contacto;
-  const avisoLink = deuda && tel ? linkAvisoVencimiento({ telefono: conPrefijo(tel, prefijoMovil), nombre: ficha.nombre, vencimiento: deuda.fecha }) : null;
-  const linkGenerico = tel ? linkAvisoVencimiento({ telefono: conPrefijo(tel, prefijoMovil), nombre: ficha.nombre, vencimiento: deuda?.fecha ?? hoyLocal(reloj.ahora()) }) : null;
+  // Contacto (arreglo funcional): el número real se VE en la ficha y el botón
+  // abre wa.me con ESE número. Sin número no se muestra un link falso.
+  const contacto = bloqueContacto(ficha.nombre, ficha.contacto ?? '', prefijoMovil);
+  const avisoLink = deuda && contacto.link
+    ? linkAvisoVencimiento({ telefono: conPrefijo(ficha.contacto, prefijoMovil), nombre: ficha.nombre, vencimiento: deuda.fecha })
+    : null;
   resumen.innerHTML = `<p>${texto}</p>
-    ${linkGenerico ? `<a class="cobros-link" href="${linkGenerico}" target="_blank" rel="noopener">Enviar WhatsApp</a>` : '<p class="al-sub">Sin teléfono cargado: agregalo en la ficha para enviar WhatsApp.</p>'}
+    ${contacto.visible
+      ? `<p class="ficha-contacto"><span class="ficha-contacto-rotulo">WhatsApp</span> <b>${esc(contacto.visible)}</b></p>
+        <a class="cobros-link" href="${contacto.link}" target="_blank" rel="noopener" data-wa>Enviar WhatsApp</a>`
+      : `<p class="al-sub">${esc(contacto.ayuda ?? '')}</p>`}
     ${avisoLink ? `<a class="cobros-link" href="${avisoLink}" target="_blank" rel="noopener" data-avisar>Avisar por WhatsApp (por vencer)</a>` : ''}
     <button type="button" class="cobros-link" data-editar-cobro>${ultimo ? 'Editar fecha del pago' : deuda ? 'Registrar pago' : 'Ver cobros'}</button>
     <p class="al-sub">Simulación: el envío real llega con la base de datos.</p>`;
