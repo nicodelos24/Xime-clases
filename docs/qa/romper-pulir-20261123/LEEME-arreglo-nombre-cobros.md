@@ -43,6 +43,20 @@ Capturas de la ronda anterior (23-nov, mañana), conservadas como evidencia del 
 - `ficha-nombrelargo-390-claro.png` — ficha del alumno a 390 con el nombre largo
 - `vivo-alumnos-320-claro.png` — lista de Alumnos en el vivo a 320 (fichas demo)
 
+## Verificación en el vivo (publicado, sello 202611231320)
+
+Sobre `https://nicodelos24.github.io/Xime-clases/`, nombre sintético de 43 caracteres
+en una ficha demo, Chrome del equipo:
+
+| Viewport / tema | Nombre | Fila del nombre largo | Fila normal |
+| --- | --- | --- | --- |
+| 320 claro | 2 líneas, con «…» | 101px | 84px |
+| 390 claro | 2 líneas | 101px | 64px |
+| 390 oscuro | 2 líneas | 101px | 64px |
+
+Sin desborde horizontal y 0 errores de consola. Capturas: `reina-vivo-cobros-nombrelargo-320-claro.png`,
+`-390-claro.png`, `-390-oscuro.png`.
+
 ## Pruebas
 
 - `npm run typecheck` -> sin errores
