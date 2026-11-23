@@ -7,7 +7,7 @@ import { alumnosCobrosDemo, datosDemo, fichasDemo } from './src/demo.js?v=202611
 import { resumenCobros } from './src/cobros.js?v=202611222310';
 import { resumenHoy, clasesDelDia, clasesDeLaSemana } from './src/resumen.js?v=202611222310';
 import { registrarToqueFecha, mesDe } from './src/agenda.js?v=202611222310';
-import { destinoDeEnlace } from './src/navegacion.js?v=202611222310';
+import { destinoDeEnlace, vistaInicial, vistasActivas } from './src/navegacion.js?v=202611230500';
 import { actualizarBarra, estadoBarraInicial, debeReaparecerPorQuietud, REAPARECER_TRAS_MS, } from './src/barra-scroll.js?v=202611222310';
 import { ajustarLock, debeBloquearScroll, estiloSheet, debeCerrarPorToqueFuera, esToqueFuera, debeSuprimirClickTrasCierre, } from './src/sheets.js?v=202611222310';
 import { diaCorto, etiquetaDia, etiquetaDiaCompleta, etiquetaMes, fechaCorta, parseFecha, lunesDe, diasDelMes, esFechaValida } from './src/fechas.js?v=202611222310';
@@ -1909,10 +1909,11 @@ function irA(id, fijarHash = true) {
     if (!destino)
         return;
     cerrarSheetsPorNavegacion();
-    vistas.forEach((v) => { if (v !== destino)
-        v.classList.remove('activa'); });
+    // Una sola pantalla a la vez, por construcción: el destino se lleva `activa`
+    // y el resto la pierde siempre (no depende de qué clases traiga el HTML).
+    const activas = new Set(vistasActivas(vistas.map((v) => v.id), id));
+    vistas.forEach((v) => v.classList.toggle('activa', activas.has(v.id)));
     void destino.offsetWidth;
-    destino.classList.add('activa');
     const pestaña = id === 'v-mes' ? 'v-semana' : id;
     tabs.forEach((t) => {
         const on = t.getAttribute('href') === '#' + pestaña;
@@ -2109,11 +2110,10 @@ function abrirConfiguracion(origen) {
     });
 }
 $('#ajustes-btn')?.addEventListener('click', (e) => abrirConfiguracion(e.currentTarget));
-const inicial = location.hash.slice(1);
-if (inicial && document.getElementById(inicial))
-    irA(inicial);
-else
-    pintarTitulo('v-hoy');
+const inicial = vistaInicial(location.hash, vistas.map((v) => v.id));
+// Entrada directa (p. ej. abrir con #v-mes): se pinta UNA sola vista. Si el
+// hash no nombra una vista, manda la pantalla por defecto del HTML.
+irA(inicial ?? (vistas.find((v) => v.classList.contains('activa'))?.id ?? 'v-hoy'), false);
 // Exposición mínima para QA (consola / capturas): sin tocar el estado real.
 window.ximeV5 = {
     get clases() { return structuredClone(clases); },
