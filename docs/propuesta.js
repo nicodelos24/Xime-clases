@@ -1,22 +1,22 @@
 // Clases v5 · navegación + funcionamiento (auto-marcado, Cancelar clase, WhatsApp)
 // La estética vive en tokens.css/propuesta.css; acá solo se cambian estados,
 // textos y el flujo de cancelación. Sin emoji: solo SVG de icons.js.
-import { horaClase, } from './src/clases.js?v=202611232224';
-import { CLAVE_ESTADO, RepositorioClases, almacenLocalStorage } from './src/repositorio.js?v=202611232224';
-import { alumnosCobrosDemo, datosDemo, fichasDemo } from './src/demo.js?v=202611232224';
-import { resumenCobros } from './src/cobros.js?v=202611232224';
-import { resumenHoy, clasesDelDia, clasesDeLaSemana } from './src/resumen.js?v=202611232224';
-import { registrarToqueFecha, mesDe } from './src/agenda.js?v=202611232224';
-import { primerDiaDeMes, diaSeleccionadoAlCargar } from './src/agenda-mes.js?v=202611232224';
-import { destinoDeEnlace, vistaInicial, vistasActivas } from './src/navegacion.js?v=202611232224';
-import { pistaDeTira } from './src/scroll-pista.js?v=202611232224';
-import { actualizarBarra, estadoBarraInicial, debeReaparecerPorQuietud, REAPARECER_TRAS_MS, } from './src/barra-scroll.js?v=202611232224';
-import { ajustarLock, debeBloquearScroll, estiloSheet, debeCerrarPorToqueFuera, esToqueFuera, debeSuprimirClickTrasCierre, } from './src/sheets.js?v=202611232224';
-import { diaCorto, mesCorto, etiquetaDia, etiquetaDiaCompleta, etiquetaMes, fechaCorta, sumarDias, parseFecha, lunesDe, diasDelMes, esFechaValida, } from './src/fechas.js?v=202611232224';
-import { relojDelDispositivo, hoyLocal } from './src/reloj.js?v=202611232224';
-import { CLAVE_PREFIJO, PREFIJO_POR_DEFECTO, prefijoEsValido, prefijoSeguro, conPrefijo } from './src/prefijo.js?v=202611232224';
-import { bloqueContacto } from './src/contacto.js?v=202611232224';
-import { textoCancelacion, destinos, resumenEnvio, linkTexto, linkAvisoVencimiento, } from './src/whatsapp.js?v=202611232224';
+import { horaClase, } from './src/clases.js?v=202611240755';
+import { CLAVE_ESTADO, RepositorioClases, almacenLocalStorage } from './src/repositorio.js?v=202611240755';
+import { alumnosCobrosDemo, datosDemo, fichasDemo } from './src/demo.js?v=202611240755';
+import { resumenCobros } from './src/cobros.js?v=202611240755';
+import { resumenHoy, clasesDelDia, clasesDeLaSemana } from './src/resumen.js?v=202611240755';
+import { registrarToqueFecha, mesDe } from './src/agenda.js?v=202611240755';
+import { primerDiaDeMes, diaSeleccionadoAlCargar } from './src/agenda-mes.js?v=202611240755';
+import { destinoDeEnlace, vistaInicial, vistasActivas } from './src/navegacion.js?v=202611240755';
+import { pistaDeTira } from './src/scroll-pista.js?v=202611240755';
+import { actualizarBarra, estadoBarraInicial, debeReaparecerPorQuietud, REAPARECER_TRAS_MS, } from './src/barra-scroll.js?v=202611240755';
+import { ajustarLock, debeBloquearScroll, estiloSheet, debeCerrarPorToqueFuera, esToqueFuera, debeSuprimirClickTrasCierre, } from './src/sheets.js?v=202611240755';
+import { diaCorto, mesCorto, etiquetaDia, etiquetaDiaCompleta, etiquetaMes, fechaCorta, sumarDias, parseFecha, lunesDe, diasDelMes, esFechaValida, } from './src/fechas.js?v=202611240755';
+import { relojDelDispositivo, hoyLocal } from './src/reloj.js?v=202611240755';
+import { CLAVE_PREFIJO, PREFIJO_POR_DEFECTO, prefijoEsValido, prefijoSeguro, conPrefijo } from './src/prefijo.js?v=202611240755';
+import { bloqueContacto } from './src/contacto.js?v=202611240755';
+import { textoCancelacion, destinos, resumenEnvio, linkTexto, linkAvisoVencimiento, } from './src/whatsapp.js?v=202611240755';
 /* ------------------------------------------------- estado persistente (local) */
 const reloj = relojDelDispositivo();
 /** Quién opera la app hoy: único dueño. En Fase 4 sale de la sesión. */
@@ -1430,7 +1430,7 @@ toast.addEventListener('click', () => {
     }
 });
 /* ------------------------------------------------------- alumnos (fichas) */
-import { construirVista, filtrarYOrdenar, puntoEstadoVence, textoEstadoVence, validarAlumno, } from './src/alumnos.js?v=202611232224';
+import { construirVista, filtrarYOrdenar, puntoEstadoVence, textoEstadoVence, validarAlumno, } from './src/alumnos.js?v=202611240755';
 let ordenAlumnos = 'ninguno';
 const filtrosAlumnos = new Set();
 let busquedaAlumno = '';
