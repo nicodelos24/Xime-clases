@@ -1,20 +1,21 @@
 // Clases v5 · navegación + funcionamiento (auto-marcado, Cancelar clase, WhatsApp)
 // La estética vive en tokens.css/propuesta.css; acá solo se cambian estados,
 // textos y el flujo de cancelación. Sin emoji: solo SVG de icons.js.
-import { horaClase, } from './src/clases.js?v=202611230915';
-import { CLAVE_ESTADO, RepositorioClases, almacenLocalStorage } from './src/repositorio.js?v=202611230915';
-import { alumnosCobrosDemo, datosDemo, fichasDemo } from './src/demo.js?v=202611230915';
-import { resumenCobros } from './src/cobros.js?v=202611230915';
-import { resumenHoy, clasesDelDia, clasesDeLaSemana } from './src/resumen.js?v=202611230915';
-import { registrarToqueFecha, mesDe } from './src/agenda.js?v=202611230915';
-import { destinoDeEnlace, vistaInicial, vistasActivas } from './src/navegacion.js?v=202611230915';
-import { actualizarBarra, estadoBarraInicial, debeReaparecerPorQuietud, REAPARECER_TRAS_MS, } from './src/barra-scroll.js?v=202611230915';
-import { ajustarLock, debeBloquearScroll, estiloSheet, debeCerrarPorToqueFuera, esToqueFuera, debeSuprimirClickTrasCierre, } from './src/sheets.js?v=202611230915';
-import { diaCorto, mesCorto, etiquetaDia, etiquetaDiaCompleta, etiquetaMes, fechaCorta, sumarDias, parseFecha, lunesDe, diasDelMes, esFechaValida, } from './src/fechas.js?v=202611230915';
-import { relojDelDispositivo, hoyLocal } from './src/reloj.js?v=202611230915';
-import { CLAVE_PREFIJO, PREFIJO_POR_DEFECTO, prefijoEsValido, prefijoSeguro, conPrefijo } from './src/prefijo.js?v=202611230915';
-import { bloqueContacto } from './src/contacto.js?v=202611230915';
-import { textoCancelacion, destinos, resumenEnvio, linkTexto, linkAvisoVencimiento, } from './src/whatsapp.js?v=202611230915';
+import { horaClase, } from './src/clases.js?v=202611231100';
+import { CLAVE_ESTADO, RepositorioClases, almacenLocalStorage } from './src/repositorio.js?v=202611231100';
+import { alumnosCobrosDemo, datosDemo, fichasDemo } from './src/demo.js?v=202611231100';
+import { resumenCobros } from './src/cobros.js?v=202611231100';
+import { resumenHoy, clasesDelDia, clasesDeLaSemana } from './src/resumen.js?v=202611231100';
+import { registrarToqueFecha, mesDe } from './src/agenda.js?v=202611231100';
+import { destinoDeEnlace, vistaInicial, vistasActivas } from './src/navegacion.js?v=202611231100';
+import { pistaDeTira } from './src/scroll-pista.js?v=202611231100';
+import { actualizarBarra, estadoBarraInicial, debeReaparecerPorQuietud, REAPARECER_TRAS_MS, } from './src/barra-scroll.js?v=202611231100';
+import { ajustarLock, debeBloquearScroll, estiloSheet, debeCerrarPorToqueFuera, esToqueFuera, debeSuprimirClickTrasCierre, } from './src/sheets.js?v=202611231100';
+import { diaCorto, mesCorto, etiquetaDia, etiquetaDiaCompleta, etiquetaMes, fechaCorta, sumarDias, parseFecha, lunesDe, diasDelMes, esFechaValida, } from './src/fechas.js?v=202611231100';
+import { relojDelDispositivo, hoyLocal } from './src/reloj.js?v=202611231100';
+import { CLAVE_PREFIJO, PREFIJO_POR_DEFECTO, prefijoEsValido, prefijoSeguro, conPrefijo } from './src/prefijo.js?v=202611231100';
+import { bloqueContacto } from './src/contacto.js?v=202611231100';
+import { textoCancelacion, destinos, resumenEnvio, linkTexto, linkAvisoVencimiento, } from './src/whatsapp.js?v=202611231100';
 /* ------------------------------------------------- estado persistente (local) */
 const reloj = relojDelDispositivo();
 /** Quién opera la app hoy: único dueño. En Fase 4 sale de la sesión. */
@@ -1358,7 +1359,7 @@ toast.addEventListener('click', () => {
     }
 });
 /* ------------------------------------------------------- alumnos (fichas) */
-import { construirVista, filtrarYOrdenar, puntoEstadoVence, textoEstadoVence, validarAlumno, } from './src/alumnos.js?v=202611230915';
+import { construirVista, filtrarYOrdenar, puntoEstadoVence, textoEstadoVence, validarAlumno, } from './src/alumnos.js?v=202611231100';
 let ordenAlumnos = 'ninguno';
 const filtrosAlumnos = new Set();
 let busquedaAlumno = '';
@@ -2067,6 +2068,10 @@ function irA(id, fijarHash = true) {
             t.removeAttribute('aria-current');
     });
     pintarTitulo(id);
+    // Los chips de Alumnos desbordan a 320 px: recalcular la pista recién cuando
+    // la vista está visible (oculta, `clientWidth` es 0 y todo parece entrar).
+    if (id === 'v-alumnos')
+        actualizarPistaFiltros();
     if (fijarHash && history.replaceState)
         history.replaceState(null, '', '#' + id);
     // replaceState no dispara hashchange: reconfigurar la barra acá al cambiar de vista.
@@ -2157,6 +2162,32 @@ if (tabbar) {
     window.addEventListener('hashchange', recalibrar);
     window.addEventListener('resize', recalibrar, { passive: true });
 }
+/* ---------------------------------------- pista de scroll de los chips */
+// Los chips de Alumnos son más anchos que la pantalla a 320 px y la barra de
+// scroll está oculta por diseño: sin pista, no se notaba que había más chips.
+// El degradado de borde (CSS) se prende según la política pura `pistaDeTira`.
+function actualizarPistaFiltros() {
+    const tira = $('#alumnos-filtros');
+    const filtros = $('#filtros-alumnos');
+    if (!tira || !filtros)
+        return;
+    const pista = pistaDeTira({
+        scrollLeft: filtros.scrollLeft,
+        scrollWidth: filtros.scrollWidth,
+        clientWidth: filtros.clientWidth,
+    });
+    tira.classList.toggle('pista-inicio', pista.inicio);
+    tira.classList.toggle('pista-fin', pista.fin);
+}
+$('#filtros-alumnos')?.addEventListener('scroll', actualizarPistaFiltros, { passive: true });
+window.addEventListener('resize', actualizarPistaFiltros, { passive: true });
+// Con la pestaña en segundo plano el layout cambia de ancho: al volver, recalcular.
+document.addEventListener('visibilitychange', () => {
+    if (!document.hidden)
+        actualizarPistaFiltros();
+});
+// Primer cálculo tras el layout inicial (fuentes y estilos ya aplicados).
+requestAnimationFrame(actualizarPistaFiltros);
 $$('a.link-suave').forEach((a) => a.addEventListener('click', (e) => {
     const destino = destinoDeEnlace(a.getAttribute('href'));
     if (!destino)

@@ -508,6 +508,37 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; width: 0; }
 /* Filtros de Alumnos (Nico 19/11): multi-selección, scroll horizontal suave. */
 .filtros { display:flex; gap:7px; overflow-x:auto; padding:2px 2px 6px; margin:2px 0 0; scrollbar-width:none; -webkit-overflow-scrolling:touch; }
 .filtros::-webkit-scrollbar { display:none; }
+/* Pista de scroll (23-nov): con la barra oculta por diseño, a 320 px no se
+   notaba que había más chips a la derecha. Un degradado del color del fondo,
+   encima de la tira y sin recibir toques, apaga el borde por el que sigue
+   habiendo chips. Se prende/apaga por JS con `.pista-inicio` / `.pista-fin`
+   (política en `src/scroll-pista.ts`): si todo entra, no se ve nada.
+   `--fondo-tira` es el fondo de la app opaco, para que el degradado se
+   desvanezca a transparente en claro y en oscuro. */
+.tira-filtros {
+  position:relative;
+  --fondo-tira: rgba(247, 244, 237, 1);
+  --ancho-pista: 30px;
+}
+[data-tema="oscuro"] .tira-filtros { --fondo-tira: rgba(14, 27, 30, 1); }
+.tira-filtros .pista {
+  position:absolute; top:0; bottom:6px; width:var(--ancho-pista);
+  pointer-events:none; opacity:0;
+  transition:opacity var(--t-rapida) var(--ease);
+}
+.tira-filtros .pista-inicio {
+  left:0; border-radius:999px 0 0 999px;
+  background:linear-gradient(to right, var(--fondo-tira) 15%, transparent);
+}
+.tira-filtros .pista-fin {
+  right:0; border-radius:0 999px 999px 0;
+  background:linear-gradient(to left, var(--fondo-tira) 15%, transparent);
+}
+.tira-filtros.pista-inicio .pista-inicio,
+.tira-filtros.pista-fin .pista-fin { opacity:1; }
+@media (prefers-reduced-motion: reduce) {
+  .tira-filtros .pista { transition:none; }
+}
 .f-chip {
   border:1px solid var(--borde-crema); background:var(--bg-alt); color:var(--tinta-2);
   font-size:12px; font-weight:650; padding:7px 12px; border-radius:999px;

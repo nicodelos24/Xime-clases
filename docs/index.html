@@ -14,8 +14,8 @@
   .vista.activa { display: block; }
 </style>
 <noscript><style>#v-mes, #v-semana, #v-alumnos, #v-cobros { display: none !important; }</style></noscript>
-<link rel="stylesheet" href="tokens.css?v=202611230915">
-<link rel="stylesheet" href="propuesta.css?v=202611230915">
+<link rel="stylesheet" href="tokens.css?v=202611231100">
+<link rel="stylesheet" href="propuesta.css?v=202611231100">
 </head>
 <body>
 <p class="marca">XIME CLASES · V5</p>
@@ -217,16 +217,20 @@
         <svg class="ico" width="17" height="17"><use href="#i-alumnos"/></svg>
         <input type="search" id="buscar-alumno" placeholder="Buscar alumno" aria-label="Buscar alumno">
       </div>
-      <div class="filtros" id="filtros-alumnos" role="group" aria-label="Ordenar y filtrar alumnos">
-        <button class="f-chip activo" data-todos type="button" aria-pressed="true">Todos</button>
-        <button class="f-chip" data-orden="az" type="button" aria-pressed="false">A → Z</button>
-        <button class="f-chip" data-orden="za" type="button" aria-pressed="false">Z → A</button>
-        <button class="f-chip" data-orden="recientes" type="button" aria-pressed="false">Más recientes</button>
-        <button class="f-chip" data-orden="vence" type="button" aria-pressed="false">Vencimiento</button>
-        <button class="f-chip" data-orden="vence-inverso" type="button" aria-pressed="false">Al día primero</button>
-        <button class="f-chip" data-filtro="mensual" type="button" aria-pressed="false">Mensuales</button>
-        <button class="f-chip" data-filtro="individual" type="button" aria-pressed="false">Individuales</button>
-        <button class="f-chip" data-filtro="aldia" type="button" aria-pressed="false">Al día</button>
+      <div class="tira-filtros" id="alumnos-filtros">
+        <div class="filtros" id="filtros-alumnos" role="group" aria-label="Ordenar y filtrar alumnos">
+          <button class="f-chip activo" data-todos type="button" aria-pressed="true">Todos</button>
+          <button class="f-chip" data-orden="az" type="button" aria-pressed="false">A → Z</button>
+          <button class="f-chip" data-orden="za" type="button" aria-pressed="false">Z → A</button>
+          <button class="f-chip" data-orden="recientes" type="button" aria-pressed="false">Más recientes</button>
+          <button class="f-chip" data-orden="vence" type="button" aria-pressed="false">Vencimiento</button>
+          <button class="f-chip" data-orden="vence-inverso" type="button" aria-pressed="false">Al día primero</button>
+          <button class="f-chip" data-filtro="mensual" type="button" aria-pressed="false">Mensuales</button>
+          <button class="f-chip" data-filtro="individual" type="button" aria-pressed="false">Individuales</button>
+          <button class="f-chip" data-filtro="aldia" type="button" aria-pressed="false">Al día</button>
+        </div>
+        <span class="pista pista-inicio" aria-hidden="true"></span>
+        <span class="pista pista-fin" aria-hidden="true"></span>
       </div>
       <ul class="lista-alumnos" id="lista-alumnos"></ul>
     </section>
@@ -299,7 +303,7 @@
     });
   })();
 </script>
-<script src="icons.js?v=202611230915"></script>
-<script type="module" src="propuesta.js?v=202611230915"></script>
+<script src="icons.js?v=202611231100"></script>
+<script type="module" src="propuesta.js?v=202611231100"></script>
 </body>
 </html>

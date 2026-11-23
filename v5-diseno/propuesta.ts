@@ -11,6 +11,7 @@ import { resumenCobros, type Pago } from './src/cobros.ts';
 import { resumenHoy, clasesDelDia, clasesDeLaSemana } from './src/resumen.ts';
 import { registrarToqueFecha, mesDe, type ToqueFecha } from './src/agenda.ts';
 import { destinoDeEnlace, vistaInicial, vistasActivas } from './src/navegacion.ts';
+import { pistaDeTira } from './src/scroll-pista.ts';
 import {
   actualizarBarra, estadoBarraInicial, debeReaparecerPorQuietud,
   REAPARECER_TRAS_MS, type EstadoBarra,
@@ -2058,6 +2059,9 @@ function irA(id: string, fijarHash = true) {
     else t.removeAttribute('aria-current');
   });
   pintarTitulo(id);
+  // Los chips de Alumnos desbordan a 320 px: recalcular la pista recién cuando
+  // la vista está visible (oculta, `clientWidth` es 0 y todo parece entrar).
+  if (id === 'v-alumnos') actualizarPistaFiltros();
   if (fijarHash && history.replaceState) history.replaceState(null, '', '#' + id);
   // replaceState no dispara hashchange: reconfigurar la barra acá al cambiar de vista.
   window.scrollTo(0, 0);
@@ -2151,6 +2155,32 @@ if (tabbar) {
   window.addEventListener('hashchange', recalibrar);
   window.addEventListener('resize', recalibrar, { passive: true });
 }
+
+/* ---------------------------------------- pista de scroll de los chips */
+// Los chips de Alumnos son más anchos que la pantalla a 320 px y la barra de
+// scroll está oculta por diseño: sin pista, no se notaba que había más chips.
+// El degradado de borde (CSS) se prende según la política pura `pistaDeTira`.
+function actualizarPistaFiltros() {
+  const tira = $('#alumnos-filtros');
+  const filtros = $('#filtros-alumnos');
+  if (!tira || !filtros) return;
+  const pista = pistaDeTira({
+    scrollLeft: filtros.scrollLeft,
+    scrollWidth: filtros.scrollWidth,
+    clientWidth: filtros.clientWidth,
+  });
+  tira.classList.toggle('pista-inicio', pista.inicio);
+  tira.classList.toggle('pista-fin', pista.fin);
+}
+
+$('#filtros-alumnos')?.addEventListener('scroll', actualizarPistaFiltros, { passive: true });
+window.addEventListener('resize', actualizarPistaFiltros, { passive: true });
+// Con la pestaña en segundo plano el layout cambia de ancho: al volver, recalcular.
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden) actualizarPistaFiltros();
+});
+// Primer cálculo tras el layout inicial (fuentes y estilos ya aplicados).
+requestAnimationFrame(actualizarPistaFiltros);
 
 $$('a.link-suave').forEach((a) => a.addEventListener('click', (e) => {
   const destino = destinoDeEnlace(a.getAttribute('href'));
