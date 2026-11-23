@@ -16,3 +16,26 @@ export function destinoDeEnlace(href: string | null): string | null {
 export function esEnlaceVerMes(href: string | null): boolean {
   return href === '#v-mes';
 }
+
+/**
+ * Vista que se abre al entrar con un hash (`#v-mes` → `v-mes`), o null si el
+ * hash está vacío o no nombra ninguna vista: en ese caso manda la vista por
+ * defecto del HTML y el título se pinta solo.
+ */
+export function vistaInicial(hash: string, ids: string[]): string | null {
+  const destino = destinoDeEnlace(hash || null);
+  return destino && ids.includes(destino) ? destino : null;
+}
+
+/**
+ * IDs de vista que deben quedar con `activa`: exactamente uno.
+ *
+ * Un destino válido se lleva la clase y la quita de todas las demás, así dos
+ * pantallas no pueden quedar superpuestas aunque una clase vieja haya quedado
+ * pegada en el HTML o un repintado se haya cortado a la mitad. Si el destino
+ * no existe (hash viejo, enlace roto) se cae a la primera vista declarada.
+ */
+export function vistasActivas(ids: string[], destino: string | null): string[] {
+  if (destino && ids.includes(destino)) return [destino];
+  return ids.length > 0 ? [ids[0]] : [];
+}

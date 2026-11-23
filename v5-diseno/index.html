@@ -5,8 +5,17 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Clases v5 · Xime Clases</title>
 <link rel="icon" href="data:,">
-<link rel="stylesheet" href="tokens.css?v=202611222310">
-<link rel="stylesheet" href="propuesta.css?v=202611222310">
+<!-- Una sola pantalla desde el primer pintado: si `propuesta.css` todavía no
+     llegó (o no carga), las cinco secciones quedarían como bloques apilados y
+     se verían dos pantallas pisadas al entrar directo en #v-mes. Esta regla es
+     la misma de `.vista` / `.vista.activa` y aparece antes que la hoja. -->
+<style>
+  .vista { display: none; }
+  .vista.activa { display: block; }
+</style>
+<noscript><style>#v-mes, #v-semana, #v-alumnos, #v-cobros { display: none !important; }</style></noscript>
+<link rel="stylesheet" href="tokens.css?v=202611230500">
+<link rel="stylesheet" href="propuesta.css?v=202611230500">
 </head>
 <body>
 <p class="marca">XIME CLASES · V5</p>
@@ -290,7 +299,7 @@
     });
   })();
 </script>
-<script src="icons.js?v=202611222310"></script>
-<script type="module" src="propuesta.ts?v=202611222310"></script>
+<script src="icons.js?v=202611230500"></script>
+<script type="module" src="propuesta.ts?v=202611230500"></script>
 </body>
 </html>

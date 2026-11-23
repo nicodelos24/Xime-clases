@@ -10,7 +10,7 @@ import { alumnosCobrosDemo, datosDemo, fichasDemo } from './src/demo.ts';
 import { resumenCobros, type Pago } from './src/cobros.ts';
 import { resumenHoy, clasesDelDia, clasesDeLaSemana } from './src/resumen.ts';
 import { registrarToqueFecha, mesDe, type ToqueFecha } from './src/agenda.ts';
-import { destinoDeEnlace } from './src/navegacion.ts';
+import { destinoDeEnlace, vistaInicial, vistasActivas } from './src/navegacion.ts';
 import {
   actualizarBarra, estadoBarraInicial, debeReaparecerPorQuietud,
   REAPARECER_TRAS_MS, type EstadoBarra,
@@ -1900,9 +1900,11 @@ function irA(id: string, fijarHash = true) {
   const destino = document.getElementById(id);
   if (!destino) return;
   cerrarSheetsPorNavegacion();
-  vistas.forEach((v) => { if (v !== destino) v.classList.remove('activa'); });
+  // Una sola pantalla a la vez, por construcción: el destino se lleva `activa`
+  // y el resto la pierde siempre (no depende de qué clases traiga el HTML).
+  const activas = new Set(vistasActivas(vistas.map((v) => v.id), id));
+  vistas.forEach((v) => v.classList.toggle('activa', activas.has(v.id)));
   void destino.offsetWidth;
-  destino.classList.add('activa');
   const pestaña = id === 'v-mes' ? 'v-semana' : id;
   tabs.forEach((t) => {
     const on = t.getAttribute('href') === '#' + pestaña;
@@ -2103,9 +2105,10 @@ function abrirConfiguracion(origen: HTMLElement): void {
 
 $('#ajustes-btn')?.addEventListener('click', (e) => abrirConfiguracion(e.currentTarget as HTMLElement));
 
-const inicial = location.hash.slice(1);
-if (inicial && document.getElementById(inicial)) irA(inicial);
-else pintarTitulo('v-hoy');
+const inicial = vistaInicial(location.hash, vistas.map((v) => v.id));
+// Entrada directa (p. ej. abrir con #v-mes): se pinta UNA sola vista. Si el
+// hash no nombra una vista, manda la pantalla por defecto del HTML.
+irA(inicial ?? (vistas.find((v) => v.classList.contains('activa'))?.id ?? 'v-hoy'), false);
 
 // Exposición mínima para QA (consola / capturas): sin tocar el estado real.
 (window as unknown as Record<string, unknown>).ximeV5 = {
