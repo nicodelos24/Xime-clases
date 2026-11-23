@@ -1304,7 +1304,7 @@ function confirmarCancelacion(c: Clase, motivo: string) {
       toast.dataset.pendientes = JSON.stringify(lista.slice(1).map((d) => d.link));
     }
   } else {
-    avisar(`Clase cancelada (${anterior === 'dada' ? 'estaba dada' : 'programada'}) · Deshacer`, 6000);
+    avisar(`Clase cancelada (${anterior === 'dada' ? 'estaba dada' : 'por dar'}) · Deshacer`, 6000);
   }
   toast.dataset.deshacer = '1';
   toast.dataset.clase = c.id;
