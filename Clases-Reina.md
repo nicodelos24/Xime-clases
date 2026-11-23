@@ -208,7 +208,6 @@ responde al final de la tira; `elementFromPoint` sobre la pista devuelve los
 chips (no intercepta toques). 0 errores de consola en Hoy·Semana·Alumnos·Cobros,
 `tsc` limpio, 180/180 tests. Commits `75cb9a72`. Evidencia en
 `docs/qa/filtros-320-20261123/`.
-
 **Publicado el 23-nov 11:2x** (orden de Roma, autorización general de Nico
 22-nov): `npm test` 180/180 y `tsc` reconfirmados, `docs/` regenerado con
 `build-docs.mjs 202611231100`, `git diff --check` limpio, merge fast-forward de
@@ -219,3 +218,27 @@ pista derecha aparece en reposo, las dos en el medio (260) y solo la izquierda
 al final (524); 0 errores de consola; sin secretos ni datos personales en lo
 subido (grep de claves/teléfonos sobre el diff; los tests usan teléfonos y
 nombres sintéticos).
+
+## 23-nov · Nombre largo en Cobros a 320 px (rama `fix/v5-cobros-nombre-largo`)
+
+Hallazgo de QA (ronda romper y pulir, Gino): en Cobros un nombre de ~68
+caracteres estiraba la fila a 134 px a 320 px y desplazaba el monto. El clamp de
+la tanda 3 vivía solo en `.alumno-fila-btn .al-nombre`.
+
+- `propuesta.css`: un rule único con `line-clamp: 2` + `overflow:hidden` +
+  `overflow-wrap:anywhere` + `line-height:1.22` cubre `.alumno-fila-btn`,
+  `.cobro-fila`, `.cobros-panel-resumen` y `.cobros-panel-lista`. En
+  `.cobro-fila` queda `display:block` solo para `.al-sub`. Solo CSS: no toca TS
+  ni tests, así que `docs/` cambia únicamente en CSS y sellos.
+- `docs/` regenerado con `build-docs.mjs 202611231320`. Capturas y LEEME en
+  `docs/qa/romper-pulir-20261123/` (las de antes, de Gino, copiadas con
+  prefijo `antes-gino-`).
+
+Verificado en Chrome propio (`localhost:8821`, el serve del 8797 y el 8813 son
+de otros agentes): nombre sintético de 67 caracteres; fila de Cobros 101 px a
+320 y 100 px a 390 (antes 134), nombre 35 px = 2 líneas, monto a la derecha sin
+solape, filas normales idénticas (84 px), `scrollX` = viewport (sin scroll
+horizontal), sheets de historial y de pago 35 px sin solape, ficha de Alumnos
+igual; 0 errores de consola en claro y oscuro. `tsc` limpio, 180/180 tests.
+Commit `a6b7b956`. **No publicado al vivo**: queda para la pasada de
+publicación con aviso a Nova.

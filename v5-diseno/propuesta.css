@@ -578,11 +578,19 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; width: 0; }
 .lista-alumnos li > div, .lista-cobros li > div { flex: 1; min-width: 0; }
 .al-nombre { font-size: 14.5px; font-weight: 650; letter-spacing: -.01em; }
 /* Ronda romper y pulir (22-nov) · hallazgo 1: un nombre muy largo ocupaba 3
-   líneas y se cortaba a mitad de palabra. Solo en la fila del listado
+   líneas y se cortaba a mitad de palabra. En la fila del listado
    (`.alumno-fila-btn`): como máximo 2 líneas con «…», sin desbordar ni
    solaparse. No se reserva alto: las 13 filas normales quedan idénticas y
-   solo la fila del nombre largo crece lo que ocupa su segunda línea. */
-.alumno-fila-btn .al-nombre {
+   solo la fila del nombre largo crece lo que ocupa su segunda línea.
+   Hallazgo de QA del 23-nov: Cobros reutiliza `.al-nombre` sin el clamp y un
+   nombre de 68 caracteres estiraba la fila a 134px a 320px, así que el mismo
+   tratamiento vale para Cobros (lista y cabeceras de sus sheets) y para la
+   cabecera de la ficha. Un solo rule con esos ámbitos: el texto de las filas
+   normales, de una línea, no cambia. */
+.alumno-fila-btn .al-nombre,
+.cobro-fila .al-nombre,
+.cobros-panel-resumen .al-nombre,
+.cobros-panel-lista .al-nombre {
   display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2;
   overflow: hidden; overflow-wrap: anywhere; line-height: 1.22;
 }
@@ -616,7 +624,9 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; width: 0; }
   color: inherit; text-align: left; font: inherit; cursor: pointer;
 }
 .cobro-fila > span { flex: 1; min-width: 0; }
-.cobro-fila .al-nombre, .cobro-fila .al-sub { display: block; }
+/* `.al-nombre` ya trae el clamp de 2 lineas + «…» de arriba (display
+   -webkit-box, también block-level): acá solo el auxiliar necesita ser de bloque. */
+.cobro-fila .al-sub { display: block; }
 .cobro-fila .ico { flex: none; color: var(--tinta-2); }
 .cobro-fila .monto { white-space: nowrap; }
 .cobro-fila:focus-visible { outline: 2px solid var(--tq-600); outline-offset: 2px; }
@@ -927,6 +937,13 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; width: 0; }
   transition: border-color var(--t-rapida) var(--ease), background var(--t-rapida) var(--ease);
 }
 .lista-elegir label:hover { background: var(--tq-50); }
+/* Mismo nombre largo que en las filas de Alumnos y Cobros: acá el nombre es
+   un hijo directo del label (no pasa por `.alumno-fila-btn`), así que toma el
+   mismo clamp de 2 líneas + «…» y el label no crece más allá de eso. */
+.lista-elegir .al-nombre {
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2;
+  overflow: hidden; overflow-wrap: anywhere; line-height: 1.22; min-width: 0;
+}
 .lista-elegir input { accent-color: var(--tq-600); width: 17px; height: 17px; flex: none; }
 .lista-elegir .avatar { width: 30px; height: 30px; font-size: 11px; }
 .lista-elegir label:has(input:checked) { border-color: var(--tq-600); background: var(--tq-50); }
