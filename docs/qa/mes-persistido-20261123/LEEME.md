@@ -32,5 +32,17 @@ reloj, así que las dos vistas quedaban contando cosas distintas.
   - Entrada directa a `…?v=…&hash=#v-mes`: noviembre 2026.
   - 0 errores de consola.
 - Capturas: `mes-persistido-fix-claro-390.png`, `mes-persistido-fix-oscuro-390.png`.
-- **No publicado**: pendiente la revisión visual y el aviso a Nova con capturas
-  (doble control 23-nov).
+## Publicación en el vivo (23-nov, 18:15)
+
+- Merge a `master` por fast-forward (`ac5b7eea..4466171f`) y push a `origin`;
+  GitHub Pages sirve `master:/docs`.
+- `docs/` regenerado con `node build-docs.mjs 202611231830` reproduce el árbol
+  commiteado sin diferencias.
+- Vivo sirviendo sello `202611231830`: `propuesta.js` incluye
+  `alinearMesConHoy`, `diaSeleccionadoAlCargar` y `primerDiaDeMes`, y
+  `src/agenda-mes.js` responde en el sitio público.
+- Recorrido en Chrome (390×844) sobre el vivo: entrada directa a `#v-mes` →
+  noviembre 2026 con el 23 marcado; 2 flechas adelante → enero 2027; recarga →
+  vuelve a noviembre 2026 con el 23 marcado, en claro y en oscuro (toggle de la
+  app, `data-tema="oscuro"`). 0 mensajes de consola.
+- Capturas del vivo: `vivo-fix-claro-390.png`, `vivo-fix-oscuro-390.png`.
