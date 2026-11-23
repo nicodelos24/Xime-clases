@@ -7,10 +7,10 @@
  * El estado que el dueño genera encima (cancelaciones, reprogramaciones) sí
  * vive en el repositorio y no se vuelve a sembrar.
  */
-import { crearClase } from './clases.js?v=202611222310';
-import { lunesDe, sumarDias } from './fechas.js?v=202611222310';
-import { hoyLocal } from './reloj.js?v=202611222310';
-import { colorPorId } from './alumnos.js?v=202611222310';
+import { crearClase } from './clases.js?v=202611230637';
+import { lunesDe, sumarDias } from './fechas.js?v=202611230637';
+import { hoyLocal } from './reloj.js?v=202611230637';
+import { colorPorId } from './alumnos.js?v=202611230637';
 function alumnos(nombres, prefijo) {
     return nombres.map(([nombre, telefono], i) => ({ id: `${prefijo}${i}`, nombre, telefono }));
 }
@@ -61,6 +61,9 @@ export const alumnosCobrosDemo = [
  * repartidas en los últimos días respecto de `hoy`.
  */
 export function fichasDemo(hoy) {
+    // Teléfono demo (sintético) por ID: el mismo de la lista de clases, para que
+    // la ficha lo muestre y el botón de WhatsApp tenga destinatario real.
+    const telefonosDemo = new Map([...GRUPO_A, ...GRUPO_B, ...GRUPO_V].map((a) => [a.id, a.telefono]));
     return alumnosCobrosDemo.map((a, i) => ({
         id: a.id,
         nombre: a.nombre,
@@ -72,7 +75,7 @@ export function fichasDemo(hoy) {
         fechaAlta: sumarDias(hoy, -(3 + (i * 2) % 27)),
         activo: true,
         color: colorPorId(a.id),
-        contacto: '',
+        contacto: telefonosDemo.get(a.id) ?? '',
         pagado: false,
     }));
 }

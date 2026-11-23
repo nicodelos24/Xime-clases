@@ -1,19 +1,20 @@
 // Clases v5 · navegación + funcionamiento (auto-marcado, Cancelar clase, WhatsApp)
 // La estética vive en tokens.css/propuesta.css; acá solo se cambian estados,
 // textos y el flujo de cancelación. Sin emoji: solo SVG de icons.js.
-import { horaClase, } from './src/clases.js?v=202611222310';
-import { CLAVE_ESTADO, RepositorioClases, almacenLocalStorage } from './src/repositorio.js?v=202611222310';
-import { alumnosCobrosDemo, datosDemo, fichasDemo } from './src/demo.js?v=202611222310';
-import { resumenCobros } from './src/cobros.js?v=202611222310';
-import { resumenHoy, clasesDelDia, clasesDeLaSemana } from './src/resumen.js?v=202611222310';
-import { registrarToqueFecha, mesDe } from './src/agenda.js?v=202611222310';
-import { destinoDeEnlace, vistaInicial, vistasActivas } from './src/navegacion.js?v=202611230500';
-import { actualizarBarra, estadoBarraInicial, debeReaparecerPorQuietud, REAPARECER_TRAS_MS, } from './src/barra-scroll.js?v=202611222310';
-import { ajustarLock, debeBloquearScroll, estiloSheet, debeCerrarPorToqueFuera, esToqueFuera, debeSuprimirClickTrasCierre, } from './src/sheets.js?v=202611222310';
-import { diaCorto, etiquetaDia, etiquetaDiaCompleta, etiquetaMes, fechaCorta, parseFecha, lunesDe, diasDelMes, esFechaValida } from './src/fechas.js?v=202611222310';
-import { relojDelDispositivo, hoyLocal } from './src/reloj.js?v=202611222310';
-import { CLAVE_PREFIJO, PREFIJO_POR_DEFECTO, prefijoEsValido, prefijoSeguro, conPrefijo } from './src/prefijo.js?v=202611222310';
-import { textoCancelacion, destinos, resumenEnvio, linkTexto, linkAvisoVencimiento, } from './src/whatsapp.js?v=202611222310';
+import { horaClase, } from './src/clases.js?v=202611230637';
+import { CLAVE_ESTADO, RepositorioClases, almacenLocalStorage } from './src/repositorio.js?v=202611230637';
+import { alumnosCobrosDemo, datosDemo, fichasDemo } from './src/demo.js?v=202611230637';
+import { resumenCobros } from './src/cobros.js?v=202611230637';
+import { resumenHoy, clasesDelDia, clasesDeLaSemana } from './src/resumen.js?v=202611230637';
+import { registrarToqueFecha, mesDe } from './src/agenda.js?v=202611230637';
+import { destinoDeEnlace, vistaInicial, vistasActivas } from './src/navegacion.js?v=202611230637';
+import { actualizarBarra, estadoBarraInicial, debeReaparecerPorQuietud, REAPARECER_TRAS_MS, } from './src/barra-scroll.js?v=202611230637';
+import { ajustarLock, debeBloquearScroll, estiloSheet, debeCerrarPorToqueFuera, esToqueFuera, debeSuprimirClickTrasCierre, } from './src/sheets.js?v=202611230637';
+import { diaCorto, etiquetaDia, etiquetaDiaCompleta, etiquetaMes, fechaCorta, parseFecha, lunesDe, diasDelMes, esFechaValida } from './src/fechas.js?v=202611230637';
+import { relojDelDispositivo, hoyLocal } from './src/reloj.js?v=202611230637';
+import { CLAVE_PREFIJO, PREFIJO_POR_DEFECTO, prefijoEsValido, prefijoSeguro, conPrefijo } from './src/prefijo.js?v=202611230637';
+import { bloqueContacto } from './src/contacto.js?v=202611230637';
+import { textoCancelacion, destinos, resumenEnvio, linkTexto, linkAvisoVencimiento, } from './src/whatsapp.js?v=202611230637';
 /* ------------------------------------------------- estado persistente (local) */
 const reloj = relojDelDispositivo();
 /** Quién opera la app hoy: único dueño. En Fase 4 sale de la sesión. */
@@ -1257,7 +1258,7 @@ toast.addEventListener('click', () => {
     }
 });
 /* ------------------------------------------------------- alumnos (fichas) */
-import { construirVista, filtrarYOrdenar, puntoEstadoVence, textoEstadoVence, validarAlumno, } from './src/alumnos.js?v=202611222310';
+import { construirVista, filtrarYOrdenar, puntoEstadoVence, textoEstadoVence, validarAlumno, } from './src/alumnos.js?v=202611230637';
 let ordenAlumnos = 'ninguno';
 const filtrosAlumnos = new Set();
 let busquedaAlumno = '';
@@ -1389,13 +1390,21 @@ function abrirFichaConCobro(ficha, origen, alCrear) {
         : deuda
             ? textoCobroFicha(deuda.dias, deuda.alumno.montoUYU, deuda.fecha)
             : 'Sin cobros registrados.';
-    const tel = ficha.contacto;
-    const avisoLink = deuda && tel ? linkAvisoVencimiento({ telefono: conPrefijo(tel, prefijoMovil), nombre: ficha.nombre, vencimiento: deuda.fecha }) : null;
-    const linkGenerico = tel ? linkAvisoVencimiento({ telefono: conPrefijo(tel, prefijoMovil), nombre: ficha.nombre, vencimiento: deuda?.fecha ?? hoyLocal(reloj.ahora()) }) : null;
+    // Contacto (arreglo funcional): el número real se VE en la ficha y el botón
+    // abre wa.me con ESE número. Sin número no se muestra un link falso.
+    const contacto = bloqueContacto(ficha.nombre, ficha.contacto ?? '', prefijoMovil);
+    const avisoLink = deuda && contacto.link
+        ? linkAvisoVencimiento({ telefono: conPrefijo(ficha.contacto, prefijoMovil), nombre: ficha.nombre, vencimiento: deuda.fecha })
+        : null;
     resumen.innerHTML = `<p>${texto}</p>
-    ${linkGenerico ? `<a class="cobros-link" href="${linkGenerico}" target="_blank" rel="noopener">Enviar WhatsApp</a>` : '<p class="al-sub">Sin teléfono cargado: agregalo en la ficha para enviar WhatsApp.</p>'}
-    ${avisoLink ? `<a class="cobros-link" href="${avisoLink}" target="_blank" rel="noopener" data-avisar>Avisar por WhatsApp (por vencer)</a>` : ''}
-    <button type="button" class="cobros-link" data-editar-cobro>${ultimo ? 'Editar fecha del pago' : deuda ? 'Registrar pago' : 'Ver cobros'}</button>
+    ${contacto.visible
+        ? `<p class="ficha-contacto"><span class="ficha-contacto-rotulo">WhatsApp</span> <b>${esc(contacto.visible)}</b></p>`
+        : `<p class="al-sub">${esc(contacto.ayuda ?? '')}</p>`}
+    <div class="ficha-acciones">
+      ${contacto.link ? `<a class="cobros-link ficha-accion ficha-accion-wa" href="${contacto.link}" target="_blank" rel="noopener" data-wa>Enviar WhatsApp</a>` : ''}
+      ${avisoLink ? `<a class="cobros-link ficha-accion" href="${avisoLink}" target="_blank" rel="noopener" data-avisar>Avisar por WhatsApp (por vencer)</a>` : ''}
+      <button type="button" class="cobros-link ficha-accion" data-editar-cobro>${ultimo ? 'Editar fecha del pago' : deuda ? 'Registrar pago' : 'Ver cobros'}</button>
+    </div>
     <p class="al-sub">Simulación: el envío real llega con la base de datos.</p>`;
     dialogo.querySelector('form')?.before(resumen);
     resumen.querySelector('[data-editar-cobro]')?.addEventListener('click', () => {
