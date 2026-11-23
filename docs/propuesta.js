@@ -1,21 +1,22 @@
 // Clases v5 · navegación + funcionamiento (auto-marcado, Cancelar clase, WhatsApp)
 // La estética vive en tokens.css/propuesta.css; acá solo se cambian estados,
 // textos y el flujo de cancelación. Sin emoji: solo SVG de icons.js.
-import { horaClase, } from './src/clases.js?v=202611231320';
-import { CLAVE_ESTADO, RepositorioClases, almacenLocalStorage } from './src/repositorio.js?v=202611231320';
-import { alumnosCobrosDemo, datosDemo, fichasDemo } from './src/demo.js?v=202611231320';
-import { resumenCobros } from './src/cobros.js?v=202611231320';
-import { resumenHoy, clasesDelDia, clasesDeLaSemana } from './src/resumen.js?v=202611231320';
-import { registrarToqueFecha, mesDe } from './src/agenda.js?v=202611231320';
-import { destinoDeEnlace, vistaInicial, vistasActivas } from './src/navegacion.js?v=202611231320';
-import { pistaDeTira } from './src/scroll-pista.js?v=202611231320';
-import { actualizarBarra, estadoBarraInicial, debeReaparecerPorQuietud, REAPARECER_TRAS_MS, } from './src/barra-scroll.js?v=202611231320';
-import { ajustarLock, debeBloquearScroll, estiloSheet, debeCerrarPorToqueFuera, esToqueFuera, debeSuprimirClickTrasCierre, } from './src/sheets.js?v=202611231320';
-import { diaCorto, mesCorto, etiquetaDia, etiquetaDiaCompleta, etiquetaMes, fechaCorta, sumarDias, parseFecha, lunesDe, diasDelMes, esFechaValida, } from './src/fechas.js?v=202611231320';
-import { relojDelDispositivo, hoyLocal } from './src/reloj.js?v=202611231320';
-import { CLAVE_PREFIJO, PREFIJO_POR_DEFECTO, prefijoEsValido, prefijoSeguro, conPrefijo } from './src/prefijo.js?v=202611231320';
-import { bloqueContacto } from './src/contacto.js?v=202611231320';
-import { textoCancelacion, destinos, resumenEnvio, linkTexto, linkAvisoVencimiento, } from './src/whatsapp.js?v=202611231320';
+import { horaClase, } from './src/clases.js?v=202611231830';
+import { CLAVE_ESTADO, RepositorioClases, almacenLocalStorage } from './src/repositorio.js?v=202611231830';
+import { alumnosCobrosDemo, datosDemo, fichasDemo } from './src/demo.js?v=202611231830';
+import { resumenCobros } from './src/cobros.js?v=202611231830';
+import { resumenHoy, clasesDelDia, clasesDeLaSemana } from './src/resumen.js?v=202611231830';
+import { registrarToqueFecha, mesDe } from './src/agenda.js?v=202611231830';
+import { primerDiaDeMes, diaSeleccionadoAlCargar } from './src/agenda-mes.js?v=202611231830';
+import { destinoDeEnlace, vistaInicial, vistasActivas } from './src/navegacion.js?v=202611231830';
+import { pistaDeTira } from './src/scroll-pista.js?v=202611231830';
+import { actualizarBarra, estadoBarraInicial, debeReaparecerPorQuietud, REAPARECER_TRAS_MS, } from './src/barra-scroll.js?v=202611231830';
+import { ajustarLock, debeBloquearScroll, estiloSheet, debeCerrarPorToqueFuera, esToqueFuera, debeSuprimirClickTrasCierre, } from './src/sheets.js?v=202611231830';
+import { diaCorto, mesCorto, etiquetaDia, etiquetaDiaCompleta, etiquetaMes, fechaCorta, sumarDias, parseFecha, lunesDe, diasDelMes, esFechaValida, } from './src/fechas.js?v=202611231830';
+import { relojDelDispositivo, hoyLocal } from './src/reloj.js?v=202611231830';
+import { CLAVE_PREFIJO, PREFIJO_POR_DEFECTO, prefijoEsValido, prefijoSeguro, conPrefijo } from './src/prefijo.js?v=202611231830';
+import { bloqueContacto } from './src/contacto.js?v=202611231830';
+import { textoCancelacion, destinos, resumenEnvio, linkTexto, linkAvisoVencimiento, } from './src/whatsapp.js?v=202611231830';
 /* ------------------------------------------------- estado persistente (local) */
 const reloj = relojDelDispositivo();
 /** Quién opera la app hoy: único dueño. En Fase 4 sale de la sesión. */
@@ -398,11 +399,7 @@ function pintarMes() {
 }
 /** Mueve el almanaque al mes anterior/siguiente (flechas v5). */
 function moverMes(delta) {
-    const actual = mesAbierto() + '-01';
-    const { y, m } = parseFecha(actual);
-    const nuevo = new Date(Date.UTC(y, m - 1 + delta, 1));
-    const primero = `${String(nuevo.getUTCFullYear()).padStart(4, '0')}-${String(nuevo.getUTCMonth() + 1).padStart(2, '0')}-01`;
-    mesSeleccionado = primero;
+    mesSeleccionado = primerDiaDeMes(mesAbierto() + '-01', delta);
     diaMesSeleccionado = null;
     ultimoToque = null;
     pintarMes();
@@ -1359,7 +1356,7 @@ toast.addEventListener('click', () => {
     }
 });
 /* ------------------------------------------------------- alumnos (fichas) */
-import { construirVista, filtrarYOrdenar, puntoEstadoVence, textoEstadoVence, validarAlumno, } from './src/alumnos.js?v=202611231320';
+import { construirVista, filtrarYOrdenar, puntoEstadoVence, textoEstadoVence, validarAlumno, } from './src/alumnos.js?v=202611231830';
 let ordenAlumnos = 'ninguno';
 const filtrosAlumnos = new Set();
 let busquedaAlumno = '';
@@ -2224,6 +2221,22 @@ function refrescar() {
 }
 // Al abrir se generan las ocurrencias que falten. NO se marca nada por hora:
 // «Dada» es siempre una marca manual de la dueña (decisión de Nico, 21/11).
+//
+// El mes abierto es estado de pantalla y arranca en la fecha REAL: si se
+// conservara el mes que se estaba mirando (p. ej. enero 2027) al volver a
+// abrir en #v-mes, el calendario se vería en ese mes con «Hoy» en la fecha
+// real y parecería que la app perdió el día. Solo se conserva el día elegido
+// cuando cae en el mes de hoy (regla en `src/agenda-mes.ts`).
+const hoyAlAbrir = hoyLocal(reloj.ahora());
+mesSeleccionado = mesDe(hoyAlAbrir) + '-01';
+diaMesSeleccionado = diaSeleccionadoAlCargar(diaMesSeleccionado, hoyAlAbrir);
+/** Vuelve el almanaque al mes de hoy; lo usa la entrada real a la app. */
+function alinearMesConHoy() {
+    const hoy = hoyLocal(reloj.ahora());
+    mesSeleccionado = mesDe(hoy) + '-01';
+    diaMesSeleccionado = diaSeleccionadoAlCargar(diaMesSeleccionado, hoy);
+    pintarMes();
+}
 clases = repo.reconciliar();
 refrescar();
 pintarCobros();
@@ -2239,12 +2252,18 @@ function reconciliarAlVolver() {
 }
 // Vuelta de segundo plano: reconciliar YA (sin esperar al cron de 30 s), con
 // el reloj real, tanto al hacer visible la pestaña como al restaurar la página
-// desde la caché del navegador (pageshow, típico en móvil).
+// desde la caché del navegador (pageshow, típico en móvil). Si la página viene
+// de la caché, el mes en memoria es del día en que se miró: vuelve al real.
+const alVolver = (e) => {
+    if (e?.persisted)
+        alinearMesConHoy();
+    reconciliarAlVolver();
+};
 document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'visible')
-        reconciliarAlVolver();
+        alVolver();
 });
-window.addEventListener('pageshow', () => reconciliarAlVolver());
+window.addEventListener('pageshow', (e) => alVolver(e));
 // El cron local avanza solo mientras la app está abierta (plan §2.1).
 setInterval(() => {
     const hoy = hoyLocal(reloj.ahora());
