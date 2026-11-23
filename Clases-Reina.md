@@ -182,3 +182,30 @@ commits en `feat/v5-lote-cambios` (`34c3a229`, `f1d9f56d`). Pendiente de
 publicación: el sello `?v=` y `docs/` no se tocaron; subir al vivo es un paso
 aparte con aviso previo a Nova.
 
+
+## 23-nov · Pista de scroll en los filtros de Alumnos a 320 px (rama `fix/v5-filtros-alumnos-320`)
+
+Hallazgo de QA (Gino, ronda «romper y pulir»): a 320 px `#filtros-alumnos`
+mide 792 px sobre 268 visibles y, con la barra de scroll oculta por diseño,
+nada indicaba que hubiera más chips a la derecha. No rompe funcionalidad.
+
+- `v5-diseno/src/scroll-pista.ts` (+ 5 tests): `pistaDeTira` decide qué borde
+  insinuar según `scrollLeft/scrollWidth/clientWidth`; tolerancia de 1 px para
+  sub-píxeles y rebote elástico; sin desborde real no hay pista.
+- `propuesta.css`: envoltorio `.tira-filtros` con dos degradados del color del
+  fondo (`--fondo-tira` por tema, claro y oscuro), `pointer-events:none`.
+  Chips, orden, tamaño y radios intactos: no es un rediseño.
+- `index.html`: chips dentro de `#filtros-alumnos` como estaban, envueltos con
+  los dos `<span class="pista">`; `propuesta.ts` los prende al abrir Alumnos,
+  al hacer scroll, en resize y al volver a la pestaña.
+- `v5-diseno/build-docs.mjs`: deja en script la regeneración de `docs/` del
+  §7.3 (copias + transpilado + imports con sello), para no repetirla a mano.
+
+Verificado en Chrome: 320 px inicio → solo borde derecho; medio → los dos;
+final → solo izquierdo; 390 px también desborda (338 visibles) y muestra el
+derecho; oscuro toma `rgba(14,27,30,1)`. Rueda horizontal 0→524 y «Al día»
+responde al final de la tira; `elementFromPoint` sobre la pista devuelve los
+chips (no intercepta toques). 0 errores de consola en Hoy·Semana·Alumnos·Cobros,
+`tsc` limpio, 180/180 tests. Commits `75cb9a72`. `docs/` regenerado con sello
+`?v=202611231100` — **sin publicar**: subir a Pages es paso aparte con aviso a
+Nova. Evidencia en `docs/qa/filtros-320-20261123/`.
