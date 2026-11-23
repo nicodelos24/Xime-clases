@@ -10,6 +10,7 @@ import { alumnosCobrosDemo, datosDemo, fichasDemo } from './src/demo.ts';
 import { resumenCobros, type Pago } from './src/cobros.ts';
 import { resumenHoy, clasesDelDia, clasesDeLaSemana } from './src/resumen.ts';
 import { registrarToqueFecha, mesDe, type ToqueFecha } from './src/agenda.ts';
+import { primerDiaDeMes, diaSeleccionadoAlCargar } from './src/agenda-mes.ts';
 import { destinoDeEnlace, vistaInicial, vistasActivas } from './src/navegacion.ts';
 import { pistaDeTira } from './src/scroll-pista.ts';
 import {
@@ -421,11 +422,7 @@ function pintarMes() {
 
 /** Mueve el almanaque al mes anterior/siguiente (flechas v5). */
 function moverMes(delta: number): void {
-  const actual = mesAbierto() + '-01';
-  const { y, m } = parseFecha(actual);
-  const nuevo = new Date(Date.UTC(y, m - 1 + delta, 1));
-  const primero = `${String(nuevo.getUTCFullYear()).padStart(4, '0')}-${String(nuevo.getUTCMonth() + 1).padStart(2, '0')}-01`;
-  mesSeleccionado = primero;
+  mesSeleccionado = primerDiaDeMes(mesAbierto() + '-01', delta);
   diaMesSeleccionado = null;
   ultimoToque = null;
   pintarMes();
@@ -2215,6 +2212,24 @@ function refrescar() {
 
 // Al abrir se generan las ocurrencias que falten. NO se marca nada por hora:
 // «Dada» es siempre una marca manual de la dueña (decisión de Nico, 21/11).
+//
+// El mes abierto es estado de pantalla y arranca en la fecha REAL: si se
+// conservara el mes que se estaba mirando (p. ej. enero 2027) al volver a
+// abrir en #v-mes, el calendario se vería en ese mes con «Hoy» en la fecha
+// real y parecería que la app perdió el día. Solo se conserva el día elegido
+// cuando cae en el mes de hoy (regla en `src/agenda-mes.ts`).
+const hoyAlAbrir = hoyLocal(reloj.ahora());
+mesSeleccionado = mesDe(hoyAlAbrir) + '-01';
+diaMesSeleccionado = diaSeleccionadoAlCargar(diaMesSeleccionado, hoyAlAbrir);
+
+/** Vuelve el almanaque al mes de hoy; lo usa la entrada real a la app. */
+function alinearMesConHoy(): void {
+  const hoy = hoyLocal(reloj.ahora());
+  mesSeleccionado = mesDe(hoy) + '-01';
+  diaMesSeleccionado = diaSeleccionadoAlCargar(diaMesSeleccionado, hoy);
+  pintarMes();
+}
+
 clases = repo.reconciliar();
 refrescar();
 pintarCobros();
@@ -2231,11 +2246,16 @@ function reconciliarAlVolver(): void {
 
 // Vuelta de segundo plano: reconciliar YA (sin esperar al cron de 30 s), con
 // el reloj real, tanto al hacer visible la pestaña como al restaurar la página
-// desde la caché del navegador (pageshow, típico en móvil).
+// desde la caché del navegador (pageshow, típico en móvil). Si la página viene
+// de la caché, el mes en memoria es del día en que se miró: vuelve al real.
+const alVolver = (e?: PageTransitionEvent) => {
+  if (e?.persisted) alinearMesConHoy();
+  reconciliarAlVolver();
+};
 document.addEventListener('visibilitychange', () => {
-  if (document.visibilityState === 'visible') reconciliarAlVolver();
+  if (document.visibilityState === 'visible') alVolver();
 });
-window.addEventListener('pageshow', () => reconciliarAlVolver());
+window.addEventListener('pageshow', (e) => alVolver(e));
 
 // El cron local avanza solo mientras la app está abierta (plan §2.1).
 setInterval(() => {
