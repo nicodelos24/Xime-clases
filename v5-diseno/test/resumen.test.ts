@@ -5,7 +5,11 @@ import { strict as assert } from 'node:assert';
 import {
   resumenHoy, tieneClases, clasesDelDia, clasesDeLaSemana,
 } from '../src/resumen.ts';
-import { cancelarClase, crearClase, reconciliar, type Clase } from '../src/clases.ts';
+import { cancelarClase, crearClase, marcarDada, type Clase } from '../src/clases.ts';
+
+/** Marca a mano (como la dueña); el reloj ya no marca nada solo (23/11). */
+const marcar = (cs: Clase[], quien = 'Xime') =>
+  cs.map((c) => (c.estado === 'programada' ? marcarDada(c, { quien, ahora: t(ISO_1830) }) : c));
 import { relojFalso } from '../src/reloj.ts';
 
 const t = (s: string) => new Date(s).getTime();
@@ -18,7 +22,7 @@ const base = (): Clase[] => [
 ];
 
 test('el resumen de Hoy se arma con las clases del día, ordenadas por hora', () => {
-  const clases = reconciliar(base(), t(ISO_1830)); // 18:30 → las dos de hoy pasaron
+  const clases = marcar(base()); // las dos de hoy ya se dictaron
   const r = resumenHoy(clases, '2026-11-18');
   assert.equal(r.fecha, '2026-11-18');
   assert.equal(r.clases.length, 2);
@@ -30,7 +34,7 @@ test('el resumen de Hoy se arma con las clases del día, ordenadas por hora', ()
 });
 
 test('antes de la hora: "2 clases grupales por dar" y anillo 0/2', () => {
-  const clases = reconciliar(base(), t('2026-11-18T14:00:00.000Z')); // 11:00
+  const clases = base(); // nada marcado todavía
   const r = resumenHoy(clases, '2026-11-18');
   assert.equal(r.porDar, 2);
   assert.equal(r.frase, '2 clases grupales por dar');
@@ -46,7 +50,7 @@ test('una sola clase pendiente usa el singular', () => {
 });
 
 test('una cancelada no cuenta en el anillo ni como "por dar"', () => {
-  const clases = reconciliar(base(), t(ISO_1830));
+  const clases = marcar(base());
   const conCancelada = clases.map((c) =>
     c.id === 'c2' ? cancelarClase(c, { motivo: 'Lluvia', quien: 'Xime', ahora: t(ISO_1830) }) : c,
   );

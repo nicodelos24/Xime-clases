@@ -279,6 +279,15 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; width: 0; }
   transition: transform var(--t-rapida) var(--ease), background var(--t-rapida) var(--ease), color var(--t-rapida) var(--ease), border-color var(--t-rapida) var(--ease);
 }
 .tira-dia span { font-size: 10.5px; color: var(--tinta-2); letter-spacing: .05em; }
+/* Punto 3 (23-nov): la tira muestra la fecha real — «LU nov» arriba y el día
+   abajo. En pantallas chicas (≤360px) el mes se oculta: con 7 columnas de
+   ~33px «LU nov» no entra y se partía en dos líneas. El número sigue grande y
+   el título de la vista ya dice el rango de fechas completo. */
+.tira-dia span { display: inline-flex; gap: 2px; align-items: baseline; }
+.tira-dia span em { font-style: normal; opacity: .8; }
+@media (max-width: 360px) {
+  .tira-dia span em { display: none; }
+}
 .tira-dia b { font-size: 15px; font-weight: 650; }
 .tira-dia:hover { transform: translateY(-2px); }
 .tira-dia:active { transform: scale(.95); }

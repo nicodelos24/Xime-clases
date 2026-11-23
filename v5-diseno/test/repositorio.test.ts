@@ -32,11 +32,13 @@ test('sin nada guardado siembra la demo anclada a hoy y la persiste', () => {
   assert.equal(deHoy[0].nombre, 'Grupo Jueves');
   assert.equal(deHoy[0].estado, 'programada', 'a las 10:00 la clase de las 16:00 aún no pasó');
 
-  // Lunes a miércoles ya pasaron: el estado derivado por hora quedó guardado.
+  // Lunes a miércoles ya pasaron: la demo se siembra dada. Hoy toca marcarla
+  // a mano: abrir la app NO marca por reloj (decisión de Nico, 21/11).
   assert.deepEqual(
     clases.filter((c) => ['c-lun', 'c-mar-a', 'c-mar-b', 'c-mie'].includes(c.id)).map((c) => c.estado),
     ['dada', 'dada', 'dada', 'dada'],
   );
+  assert.equal(deHoy[0].marcadaEn, null, 'hoy todavía no está marcada');
 
   const guardado = JSON.parse(almacen.leer() as string);
   assert.equal(guardado.version, VERSION_ESTADO);
@@ -118,15 +120,23 @@ test('reprogramar una clase cancelada conserva la cancelación tras el refresh',
   assert.equal(evento?.tipo === 'reprogramada' && evento.cancelacionAnterior?.quien, 'Xime');
 });
 
-test('el estado derivado por hora sobrevive: una semana después todo sigue dado', () => {
+test('una semana después: lo dado sigue dado y nada se re-marca solo', () => {
   const almacen = almacenMemoria();
-  abrir(almacen, JUEVES_10).repo.reconciliar();
+  const primera = abrir(almacen, JUEVES_10).repo.reconciliar();
+  const estados = new Map(primera.map((c) => [c.id, c.estado]));
+  assert.equal(estados.get('c-jue'), 'programada', 'la de hoy arranca Por dar');
 
   const otra = abrir(almacen, t('2026-11-26T13:00:00.000Z')); // jueves siguiente 10:00
   const clases = otra.repo.reconciliar();
-  const viejas = clases.filter((c) => c.fecha < '2026-11-23');
-  assert.equal(viejas.length, 8);
-  assert.ok(viejas.every((c) => c.estado === 'dada'), 'nada vuelve a Programada');
+  const viejas = clases.filter((c) => c.fecha < '2026-11-19');
+  assert.equal(viejas.length, 4);
+  assert.ok(viejas.every((c) => c.estado === 'dada'), 'lo ya dictado sigue Dada');
+  // Lo que quedó «Por dar» NO se marca solo al volver días después.
+  assert.deepEqual(
+    clases.map((c) => [c.id, c.estado]),
+    [...estados.entries()],
+    'ninguna clase cambia de estado por el paso del tiempo',
+  );
 });
 
 test('datos corruptos o de otra versión: siembra de nuevo y la app abre', () => {
@@ -210,6 +220,44 @@ test('crearRutina genera ocurrencias y sobrevive F5 sin duplicar', () => {
   const guardado = JSON.parse(almacen.leer() as string);
   assert.equal(guardado.version, VERSION_ESTADO);
   assert.equal(guardado.rutinas.length, 1, 'la plantilla quedó guardada');
+});
+
+test('dar de baja una rutina cancela solo sus futuras por dar y no borra historial', () => {
+  const almacen = almacenMemoria();
+  const { repo } = abrir(almacen, JUEVES_10);
+  repo.reconciliar();
+  repo.crearRutina({
+    id: 'rut-baja', nombre: 'Grupo Baja', dias: [0, 3], desde: '2026-11-16', hora: '15:00',
+  });
+  const occ = repo.listar().filter((c) => c.rutinaId === 'rut-baja')
+    .sort((a, b) => a.fecha.localeCompare(b.fecha));
+  assert.ok(occ.length >= 4);
+  // Una de hoy ya dictada (marca manual) y una futura movida a mano.
+  const pasada = occ.find((c) => c.fecha === '2026-11-19')!;
+  repo.marcarDada(pasada.id, { quien: 'Xime', ahora: t('2026-11-19T21:00:00.000Z') });
+  const futura = occ.find((c) => c.fecha > '2026-11-20')!;
+  repo.reprogramar(futura.id, '2026-12-01', { quien: 'Xime', ahora: t('2026-11-19T13:00:00.000Z') });
+
+  const futurasPorDar = occ.filter((c) => c.fecha >= '2026-11-19' && c.id !== pasada.id
+    && c.id !== futura.id).length;
+  const res = repo.eliminarRutina('rut-baja', {
+    motivo: 'Rutina dada de baja', quien: 'Xime', ahora: t('2026-11-19T13:00:00.000Z'),
+  });
+  assert.equal(res.canceladas, futurasPorDar, 'cancela exactamente las futuras por dar');
+  assert.equal(repo.listarRutinas().length, 0, 'la plantilla desaparece');
+
+  const despues = repo.listar();
+  assert.equal(despues.find((c) => c.id === pasada.id)?.estado, 'dada', 'lo dictado queda Dada');
+  assert.equal(despues.find((c) => c.id === futura.id)?.fecha, '2026-12-01', 'la movida no se toca');
+  assert.ok(
+    despues.filter((c) => c.rutinaId === 'rut-baja' && c.id !== pasada.id && c.id !== futura.id)
+      .every((c) => c.estado === 'cancelada'),
+    'las futuras quedan Canceladas, no borradas',
+  );
+  // Y no se regeneran: la plantilla ya no existe.
+  const luego = abrir(almacen, JUEVES_10);
+  luego.repo.reconciliar();
+  assert.equal(luego.repo.listar().filter((c) => c.rutinaId === 'rut-baja').length, occ.length);
 });
 
 test('navegar adelante y reabrir sigue mostrando ocurrencias (sin corte fijo)', () => {
@@ -334,17 +382,24 @@ test('fallo del guardado: crearSuelta no anuncia éxito (lanza)', () => {
   assert.equal(repo.listar().some((c) => c.id === 'suelta-x'), false, 'el estado en memoria no avanzó');
 });
 
-test('auto-marcado al fin de duración en el repositorio (incluso al volver)', () => {
+test('volver a la app con la clase terminada NO la marca (auto-marcado descartado)', () => {
   const almacen = almacenMemoria();
   const { repo } = abrir(almacen, JUEVES_10);
   const clases = repo.reconciliar(); // jueves 10:00: la clase de hoy (16:00) sigue por dar
   const deHoy = clases.find((c) => c.fecha === '2026-11-19');
   assert.equal(deHoy?.estado, 'programada');
 
-  // Vuelve a las 17:30 local (20:30 UTC): la clase 16:00–17:00 ya terminó.
+  // Vuelve a las 17:30 local (20:30 UTC): la clase 16:00–17:00 ya terminó,
+  // pero sigue «Por dar» hasta que la dueña la marque.
   const luego = abrir(almacen, t('2026-11-19T20:30:00.000Z'));
   const alVolver = luego.repo.reconciliar().find((c) => c.id === deHoy?.id);
-  assert.equal(alVolver?.estado, 'dada', 'se marcó al terminar, no al empezar');
+  assert.equal(alVolver?.estado, 'programada', 'no se marca por reloj');
+  assert.equal(alVolver?.marcadaEn, null);
+
+  // La marca manual sí se guarda y sobrevive a otro «abrir».
+  luego.repo.marcarDada(deHoy!.id, { quien: 'Xime', ahora: luego.reloj.ahora() });
+  const otraVez = abrir(almacen, t('2026-11-20T13:00:00.000Z'));
+  assert.equal(otraVez.repo.reconciliar().find((c) => c.id === deHoy?.id)?.estado, 'dada');
 });
 
 test('un build v2 anterior lee el estado del v3 SIN resembrar ni perder datos', () => {

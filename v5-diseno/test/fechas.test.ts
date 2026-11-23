@@ -4,8 +4,18 @@ import { strict as assert } from 'node:assert';
 
 import {
   sumarDias, diasDeFecha, fechaDesdeDias, diaSemanaIndex, lunesDe,
-  diaCorto, diaLargo, etiquetaDia, etiquetaMes, esFechaValida, diasDelMes,
+  diaCorto, mesCorto, diaLargo, etiquetaDia, etiquetaDiaCorta, etiquetaMes, esFechaValida, diasDelMes,
 } from '../src/fechas.ts';
+
+test('fecha concreta para la tira semanal y para cambiar de día (punto 3)', () => {
+  // La tira pasó de «LU» suelto a día + mes: la dueña ve la fecha real.
+  assert.equal(mesCorto('2026-11-23'), 'nov');
+  assert.equal(mesCorto('2026-01-05'), 'ene');
+  assert.equal(mesCorto('2026-12-31'), 'dic');
+  // «Hacia:» al mover una clase: día de la semana + fecha, sin año.
+  assert.equal(etiquetaDiaCorta('2026-11-30'), 'lunes 30/11');
+  assert.equal(etiquetaDiaCorta('2026-03-05'), 'jueves 5/03');
+});
 
 test('sumar días cruzando fin de mes y año', () => {
   assert.equal(sumarDias('2026-11-29', 3), '2026-12-02');
