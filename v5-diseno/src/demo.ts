@@ -69,6 +69,11 @@ export const alumnosCobrosDemo: AlumnoCobro[] = ([
  * repartidas en los últimos días respecto de `hoy`.
  */
 export function fichasDemo(hoy: string): AlumnoFicha[] {
+  // Teléfono demo (sintético) por ID: el mismo de la lista de clases, para que
+  // la ficha lo muestre y el botón de WhatsApp tenga destinatario real.
+  const telefonosDemo = new Map<string, string>(
+    [...GRUPO_A, ...GRUPO_B, ...GRUPO_V].map((a) => [a.id, a.telefono]),
+  );
   return alumnosCobrosDemo.map((a, i) => ({
     id: a.id,
     nombre: a.nombre,
@@ -80,7 +85,7 @@ export function fichasDemo(hoy: string): AlumnoFicha[] {
     fechaAlta: sumarDias(hoy, -(3 + (i * 2) % 27)),
     activo: true,
     color: colorPorId(a.id),
-    contacto: '',
+    contacto: telefonosDemo.get(a.id) ?? '',
     pagado: false,
   }));
 }
