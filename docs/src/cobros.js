@@ -1,4 +1,4 @@
-import { diasDeFecha, diasDelMes, esFechaValida, parseFecha } from './fechas.js?v=202611231830';
+import { diasDeFecha, diasDelMes, esFechaValida, parseFecha } from './fechas.js?v=202611232224';
 export function registrarPago(pagos, nuevo) {
     if (!nuevo.id.trim() || !nuevo.alumnoId.trim() || !nuevo.quien.trim())
         throw new Error('Faltan datos del pago');

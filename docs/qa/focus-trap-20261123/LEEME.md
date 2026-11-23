@@ -34,20 +34,28 @@ worktree `.worktrees/v5-focus-trap`. Verificado por Reina (desarrollo).
   - El aviso «Cambios sin guardar» recibe el foco adentro al abrirse y, al
     elegir «Seguir editando», el foco queda en el panel de fondo.
   - 0 errores de consola en toda la sesión.
-- `npm run typecheck`: 0 errores.
-- `npm test`: 180/180 en verde (aclaración: el criterio decía 184/184; el
-  total en `master` es 180, no se quitó ningún test).
+- Tras el merge con el fix del mes (43c9b834), 23-nov: typecheck 0 errores;
+  tests 184/184 (180 anteriores + 4 del mes, sin quitar ninguno);
+  `git diff --check` limpio; recorrido Tab/Escape repetido en claro y oscuro
+  sobre el merge, más el arranque del calendario en noviembre 2026 con el 23
+  como hoy. Ambos fixes coexisten sin interferirse (el trap se engancha al
+  abrir el panel y `alinearMesConHoy` corre al cargar/pageshow).
 
 ## Capturas (390×844)
 
 - `ficha-nueva-390-claro.png` — panel «Nuevo alumno» abierto, claro.
-- `ficha-nueva-tab-vuelta-390-claro.png` — tras Tab desde «Guardar alumno»:
-  foco de vuelta dentro del panel.
+- `ficha-nueva-tab-vuelta-390-claro-v2.png` — Tab/Shift+Tab de vuelta, con el
+  foco VISIBLE sobre «Cerrar» (la primera versión era byte-idéntica a la de
+  panel abierto; se rehizo el 23-nov con el foco en «Cerrar», claro).
+- `ficha-nueva-tab-vuelta-390-oscuro-v2.png` — idem, en oscuro.
 - `ficha-nueva-390-oscuro.png` — panel abierto, oscuro.
 - `alumnos-390-oscuro-tras-cierre.png` — tras Escape: foco en «Nuevo alumno»,
   oscuro.
+- `calendario-nov2026-hoy23-390.png` — tras integrar el fix del mes: el
+  almanaque arranca en noviembre 2026 con el 23 marcado como hoy y la
+  navegación Tab/Escape del panel intacta (verificado local con sello
+  202611232224; el vivo se valida después del push).
 
-## Pendiente (fuera de esta tarea)
+## Pendiente
 
-- Revisión visual y aviso a Nova antes de publicar al vivo (doble control de
-  publicación del 23-nov). NO se publicó nada.
+- Publicación al vivo con sello nuevo (la de esta rama al master).
