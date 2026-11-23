@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import { strict as assert } from 'node:assert';
 
 import {
-  crearClase, marcarSiPasada, reconciliar, cancelarClase, deshacerCancelacion,
+  crearClase, marcarSiPasada, marcarDada, reconciliar, cancelarClase, deshacerCancelacion,
   reprogramarClase, registrarMensajeEnviado, horaClase, etiquetaEstado, finClase,
   instanteInicio, instanteFin, finPasado, type Clase,
 } from '../src/clases.ts';
@@ -93,22 +93,28 @@ test('el auto-marcado es idempotente: no re-marcia ni toca canceladas', () => {
   assert.equal(sigue.estado, 'cancelada', 'una cancelada jamás se vuelve dada');
 });
 
-test('reconciliar al abrir la app: re-alinea todo con el reloj actual', () => {
+test('abrir la app NO marca nada por reloj: todo sigue Por dar hasta la marca manual', () => {
   const reloj = relojFalso(t('2026-11-18T14:00:00.000Z')); // 11:00 en Uruguay
   const clases = [
-    claseBase(), // 15:00 del 18 → aún no
+    claseBase(), // 15:00 del 18
     crearClase({ id: 'c2', nombre: 'Grupo Martes B', fecha: '2026-11-18', hora: '09:00' }), // ya pasó
     crearClase({ id: 'c3', nombre: 'Grupo Viernes', fecha: '2026-11-20', hora: '15:00' }), // futuro
   ];
 
-  const alAbrir = reconciliar(clases, reloj.ahora());
-  assert.deepEqual(alAbrir.map((c) => c.estado), ['programada', 'dada', 'programada']);
+  // Decisión de Nico (21/11): el auto-marcado está DESCARTADO.
+  const alAbrir = reconciliar(clases);
+  assert.deepEqual(alAbrir.map((c) => c.estado), ['programada', 'programada', 'programada']);
+  assert.deepEqual(alAbrir, clases, 'reconciliar no toca ninguna clase');
 
-  // El dueño abre la app más tarde: se re-alinea sola, sin tocar nada.
+  // Abrir la app más tarde tampoco: la clase de las 9:00 ya terminó y sigue Por dar.
   reloj.fijar(t('2026-11-18T21:30:00.000Z')); // 18:30
-  const luego = reconciliar(alAbrir, reloj.ahora());
-  assert.deepEqual(luego.map((c) => c.estado), ['dada', 'dada', 'programada']);
-  assert.equal(luego[0].marcadaEn, t('2026-11-18T21:30:00.000Z'));
+  const luego = reconciliar(alAbrir);
+  assert.deepEqual(luego.map((c) => c.estado), ['programada', 'programada', 'programada']);
+
+  // Y la marca manual sí funciona y sobrevive a un nuevo «abrir».
+  const aMano = marcarDada(clases[1], { quien: 'Xime', ahora: reloj.ahora() });
+  assert.equal(aMano.estado, 'dada');
+  assert.equal(reconciliar([aMano])[0].estado, 'dada');
 });
 
 test('cancelar clase: queda Cancelada, con motivo y quién, sin deuda ni prórroga', () => {
@@ -159,7 +165,7 @@ test('la auditoría registra qué salió por WhatsApp', () => {
 
 test('la cancelada no es borrable: sigue en la lista con su registro', () => {
   const c = cancelarClase(claseBase(), { motivo: 'Lluvia', quien: 'Xime', ahora: t(ISO_1830) });
-  const lista = reconciliar([c], t('2026-11-25T21:30:00.000Z'));
+  const lista = reconciliar([c]);
   assert.equal(lista.length, 1);
   assert.equal(lista[0].estado, 'cancelada');
   assert.equal(lista[0].cancelacion?.motivo, 'Lluvia');
@@ -178,7 +184,7 @@ test('punto 2: cambiar de día reprograma a Programada y limpia el marcado', () 
   assert.equal(movida.minutos, 900, 'conserva la hora');
   assert.equal(movida.marcadaEn, null);
   // La reconciliación con el reloj actual NO la marca de nuevo (el día es futuro).
-  assert.equal(reconciliar([movida], t(ISO_1830))[0].estado, 'programada');
+  assert.equal(reconciliar([movida])[0].estado, 'programada');
   assert.throws(() => reprogramarClase(dada, '30/11/2026', { quien: 'dueño', ahora: t(ISO_1830) }), /Fecha inválida/);
   assert.throws(() => reprogramarClase(dada, '2026-11-25', { quien: '', ahora: t(ISO_1830) }), /quién/);
 });

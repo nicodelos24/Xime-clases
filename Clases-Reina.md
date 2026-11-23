@@ -141,3 +141,44 @@ permanece en el mes/día destino y persiste tras F5. Verificado en Chrome
 vacío de otro mes, F5, 0 errores. typecheck 0, 118/118 tests,
 `git diff --check` limpio, cache-bust `?v=202611201755`, `origin/master`
 revalidado en `9ca26108`.
+
+## 23-nov · Lote de cambios de Nico (rama `feat/v5-lote-cambios`)
+
+Lo que pidió Nico y cómo quedó (diseño v5 intacto: solo texto, un pill y una
+media query ≤360px; sin BD, sin barra inferior).
+
+1. **Clases semanales.** El auto-marcado por reloj quedó **descartado**
+   (decisión de Nico, 21/11) y ya no hay código que lo haga: `reconciliar()`
+   no toca estados, el repositorio solo genera ocurrencias, y la demo se
+   siembra «dada» para lo ya dictado. «Dada» es siempre manual (chip «Por dar»
+   → «Marcar dada», con Deshacer). Se agregó lo que faltaba de verdad: las
+   rutinas configuradas se listan en el cuadro de «Clase semanal» (días, hora,
+   desde) y se pueden **dar de baja**, cancelando en una sola escritura sus
+   ocurrencias futuras «Por dar» y conservando dadas, canceladas y movidas
+   (`repo.eliminarRutina`).
+2. **Clase suelta.** Ya existía; verificado de punta a punta en Chrome (alta,
+   fecha exacta, hora, persiste tras F5).
+3. **Cambiar de día con fecha concreta.** La tira semanal pasó de «LU 23» a
+   «LU nov / 23» y el título dice el rango real («Esta semana · 23 nov–29 nov»,
+   «Semana del 7 dic–13 dic») con «Volver a hoy» cuando se mira otra semana.
+   Hueco real encontrado y corregido: el «Hacia:» del cuadro de cambio solo se
+   actualizaba al cambiar mes/año, no el día → se movía a ciegas.
+4. **Día del mes / doble toque.** Ya funcionaba: un toque selecciona el día y
+   muestra sus clases, doble toque abre la semana (verificado en nov y dic).
+5. **Chip «Por dar».** Ya abría Marcar dada / Cancelar / Cambiar de día. Se
+   corrigió el aviso de cancelar, que decía el estado interno «(programada)».
+6. **Grupos (alcance mínimo, 1 grupo).** La ficha tiene «Grupo (opcional)» con
+   sugerencias de los grupos reales (etiquetas de fichas + nombres de clases,
+   sin el prefijo «Grupo »); escribir uno nuevo lo crea, repetirlo agrupa. Es
+   solo una etiqueta: no crea salones ni envía nada.
+7. **Avisos.** Se sacó el texto «simulación; el envío real llega con la base de
+   datos» (falso: los links `wa.me` son reales y el envío lo confirma la
+   dueña). La campana lista los 3 vencimientos con su link.
+
+Verificado: `tsc` limpio, **175/175** pruebas, recorrido en Chrome local a
+390 px y 320 px (rutina alta y baja, clase suelta, cambiar día, mes → semana,
+chip Por dar + cancelar, grupos en ficha, avisos), 0 errores de consola. Dos
+commits en `feat/v5-lote-cambios` (`34c3a229`, `f1d9f56d`). Pendiente de
+publicación: el sello `?v=` y `docs/` no se tocaron; subir al vivo es un paso
+aparte con aviso previo a Nova.
+

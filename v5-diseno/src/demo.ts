@@ -59,8 +59,10 @@ export const alumnosCobrosDemo: AlumnoCobro[] = ([
 
 /**
  * La semana demo (lunes a sábado) que contiene el día de `ahora`.
- * Los días pasados quedan "dada" por la reconciliación; hoy y los próximos,
- * "programada". Es determinista para un `ahora` dado (tests con reloj falso).
+ * Desde el 23/11 el estado NO sale del reloj (auto-marcado descartado): los
+ * días anteriores a hoy se siembran ya «dada» con su marca manual, y hoy en
+ * adelante quedan «Por dar» hasta que la dueña las marque. Determinista para
+ * un `ahora` dado (tests con reloj falso).
  */
 /**
  * Fichas demo (Pieza C). Los IDs son EXACTAMENTE los de `alumnosCobrosDemo`:
@@ -92,14 +94,22 @@ export function fichasDemo(hoy: string): AlumnoFicha[] {
 
 export function datosDemo(ahora: InstanteMs): Clase[] {
   const lunes = lunesDe(hoyLocal(ahora));
+  const hoy = hoyLocal(ahora);
+  const siembra = (spec: Parameters<typeof crearClase>[0]): Clase => {
+    const c = crearClase(spec);
+    // Serie de demo ya dictada: se siembra dada (antes lo hacía el reloj).
+    return c.fecha < hoy
+      ? { ...c, estado: 'dada', marcadaEn: ahora, eventos: [] }
+      : c;
+  };
   return [
-    crearClase({ id: 'c-lun', nombre: 'Grupo Lunes', fecha: lunes, hora: '15:00', alumnos: GRUPO_A.slice(0, 8) }),
-    crearClase({ id: 'c-mar-a', nombre: 'Grupo Martes A', fecha: sumarDias(lunes, 1), hora: '15:00', alumnos: GRUPO_A }),
-    crearClase({ id: 'c-mar-b', nombre: 'Grupo Martes B', fecha: sumarDias(lunes, 1), hora: '17:30', alumnos: GRUPO_B }),
-    crearClase({ id: 'c-mie', nombre: 'Grupo Miércoles', fecha: sumarDias(lunes, 2), hora: '10:00', alumnos: GRUPO_B.slice(0, 6) }),
-    crearClase({ id: 'c-jue', nombre: 'Grupo Jueves', fecha: sumarDias(lunes, 3), hora: '16:00', alumnos: GRUPO_V.slice(0, 7) }),
-    crearClase({ id: 'c-vie', nombre: 'Grupo Viernes', fecha: sumarDias(lunes, 4), hora: '15:00', alumnos: GRUPO_V }),
-    crearClase({ id: 'c-vie-b', nombre: 'Grupo Viernes B', fecha: sumarDias(lunes, 4), hora: '18:00', alumnos: GRUPO_A.slice(2, 9) }),
-    crearClase({ id: 'c-sab', nombre: 'Grupo Sábado', fecha: sumarDias(lunes, 5), hora: '11:00', alumnos: GRUPO_B.slice(1, 6) }),
+    siembra({ id: 'c-lun', nombre: 'Grupo Lunes', fecha: lunes, hora: '15:00', alumnos: GRUPO_A.slice(0, 8) }),
+    siembra({ id: 'c-mar-a', nombre: 'Grupo Martes A', fecha: sumarDias(lunes, 1), hora: '15:00', alumnos: GRUPO_A }),
+    siembra({ id: 'c-mar-b', nombre: 'Grupo Martes B', fecha: sumarDias(lunes, 1), hora: '17:30', alumnos: GRUPO_B }),
+    siembra({ id: 'c-mie', nombre: 'Grupo Miércoles', fecha: sumarDias(lunes, 2), hora: '10:00', alumnos: GRUPO_B.slice(0, 6) }),
+    siembra({ id: 'c-jue', nombre: 'Grupo Jueves', fecha: sumarDias(lunes, 3), hora: '16:00', alumnos: GRUPO_V.slice(0, 7) }),
+    siembra({ id: 'c-vie', nombre: 'Grupo Viernes', fecha: sumarDias(lunes, 4), hora: '15:00', alumnos: GRUPO_V }),
+    siembra({ id: 'c-vie-b', nombre: 'Grupo Viernes B', fecha: sumarDias(lunes, 4), hora: '18:00', alumnos: GRUPO_A.slice(2, 9) }),
+    siembra({ id: 'c-sab', nombre: 'Grupo Sábado', fecha: sumarDias(lunes, 5), hora: '11:00', alumnos: GRUPO_B.slice(1, 6) }),
   ];
 }
