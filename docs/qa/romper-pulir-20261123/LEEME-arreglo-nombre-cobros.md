@@ -37,6 +37,12 @@ queda dentro de la fila y el sheet de pago no necesita scroll a 320px. Consola: 
 - `reina-historial-nombrelargo-390-oscuro.png` (historial, `.cobros-panel-lista`)
 - `reina-ficha-nombrelargo-390-claro.png` (cabecera de la ficha del alumno)
 
+Capturas de la ronda anterior (23-nov, mañana), conservadas como evidencia del estado del vivo:
+
+- `lista-nombrelargo-390-claro.png` — lista de Alumnos a 390 con el nombre largo (sin clamp, 3 líneas)
+- `ficha-nombrelargo-390-claro.png` — ficha del alumno a 390 con el nombre largo
+- `vivo-alumnos-320-claro.png` — lista de Alumnos en el vivo a 320 (fichas demo)
+
 ## Pruebas
 
 - `npm run typecheck` -> sin errores
