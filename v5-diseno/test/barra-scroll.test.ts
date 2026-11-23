@@ -8,8 +8,8 @@ import {
   UMBRAL_SCROLL, TOPE_SCROLL, MUESTRAS_PARA_MOSTRAR, REAPARECER_TRAS_MS,
 } from '../src/barra-scroll.ts';
 
-test('la barra reaparece a los 2 s exactos de quietud', () => {
-  assert.equal(REAPARECER_TRAS_MS, 2000);
+test('la barra reaparece al segundo y medio exacto de quietud', () => {
+  assert.equal(REAPARECER_TRAS_MS, 1500);
 });
 
 test('bajar oculta la barra', () => {

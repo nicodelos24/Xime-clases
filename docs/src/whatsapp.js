@@ -9,7 +9,7 @@
  *    texto en el grupo de la clase); "individual" = link por alumno elegido.
  *  - Números: solo se normalizan al formato del deep link; jamás se inventan.
  */
-import { etiquetaDia, horaClase } from './clases.js?v=202611221200';
+import { etiquetaDia, horaClase } from './clases.js?v=202611222310';
 /** Plantilla por defecto configurable por el dueño (plan §2.2). */
 export const PLANTILLA_CANCELACION = 'Hola, la clase de hoy se canceló. La reprogramamos.';
 /** Normaliza un teléfono uruguayo a "59899123456" (sin + ni espacios). */
