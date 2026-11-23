@@ -52,6 +52,8 @@ function avisar(txt: string, ms = 2200) {
   toast.classList.add('ver');
   clearTimeout(tm);
   tm = setTimeout(() => toast.classList.remove('ver'), ms);
+  // Ancla de foco: los avisos marcan dónde quedó el foco al cerrar un sheet,
+  // sin robarlo si el usuario ya está navegando (tabindex="-1", sin focus()).
 }
 
 function esc(s: string): string {
@@ -476,10 +478,10 @@ function pintarTarjetasDiaMes(): void {
   const delDia = clasesDelDia(clases, fecha);
   const cabecera = document.createElement('div');
   cabecera.className = 'dia-tarjetas-head';
-  cabecera.innerHTML = `<p>${esc(etiquetaDia(fecha))}</p><span class="dia-acciones-head"><button class="dia-agendar" type="button" aria-label="Agendar clase el ${esc(etiquetaDiaCompleta(fecha))}">Agendar acá<svg class="ico" width="13" height="13" aria-hidden="true"><use href="#i-mas2"/></svg></button><button class="dia-ver-semana" type="button">Ver semana<svg class="ico" width="13" height="13" aria-hidden="true"><use href="#i-agenda"/></svg></button></span>`;
+  cabecera.innerHTML = `<p>${esc(etiquetaDia(fecha))}</p><span class="dia-acciones-head"><button class="dia-agendar" id="dia-agendar" type="button" aria-label="Agendar clase el ${esc(etiquetaDiaCompleta(fecha))}">Agendar acá<svg class="ico" width="13" height="13" aria-hidden="true"><use href="#i-mas2"/></svg></button><button class="dia-ver-semana" type="button">Ver semana<svg class="ico" width="13" height="13" aria-hidden="true"><use href="#i-agenda"/></svg></button></span>`;
   cabecera.querySelector('.dia-ver-semana')?.addEventListener('click', () => abrirSemanaDe(fecha));
   // Desde un día de otro mes (incluso vacío), agendar una suelta ahí mismo.
-  cabecera.querySelector('.dia-agendar')?.addEventListener('click', () => abrirFormularioSuelta(fecha));
+  cabecera.querySelector('.dia-agendar')?.addEventListener('click', (e) => abrirFormularioSuelta(fecha, e.currentTarget as HTMLElement));
   caja.appendChild(cabecera);
   if (delDia.length === 0) {
     const vacio = document.createElement('p');
@@ -570,6 +572,64 @@ function retirarSheet(el: HTMLElement): void {
 }
 
 /**
+ * Tabulables de un contenedor, en orden de documento, para el focus trap:
+ * botones, inputs, selects, textareas, links y cualquier [tabindex] >= 0,
+ * sin los deshabilitados ni los ocultos (menos los de un <dialog> abierto,
+ * que no tienen ancestro visible por el top layer).
+ */
+const SELECTOR_TABULABLE = 'a[href], button:not([disabled]), input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
+function tabulablesDe(raiz: ParentNode): HTMLElement[] {
+  return [...raiz.querySelectorAll<HTMLElement>(SELECTOR_TABULABLE)]
+    .filter((el) => !el.closest('[hidden]') && (el.closest('dialog[open]') || el.offsetParent !== null || el === document.activeElement));
+}
+
+/**
+ * Pone el foco en el primer tabulable del sheet (o en el sheet mismo si no
+ * tiene ninguno). Lo usa el focus trap al dar la vuelta.
+ */
+function enfocarPrimero(sheet: HTMLElement): void {
+  const dentro = tabulablesDe(sheet);
+  (dentro[0] ?? sheet).focus();
+}
+
+/**
+ * Focus trap de un sheet abierto: mientras el foco esté dentro, Tab y
+ * Shift+Tab dan la vuelta dentro del sheet en vez de salir al documento.
+ * Con un <dialog> con showModal() el navegador ya atrapa el Tab del teclado
+ * (top layer), pero no lo hace cuando el foco sale por código (p. ej. un
+ * autofocus afuera) ni en sheets que no son dialog: este trap cubre ambos.
+ * Se identifica el Tab por la tecla y no por el target: con un dialog modal
+ * las teclas recaen en el dialog, no en el control enfocado.
+ *
+ * Devuelve la función de limpieza (se llama al cerrar el sheet).
+ */
+function atraparTab(sheet: HTMLElement): () => void {
+  const enRango = (el: Element | null): el is HTMLElement =>
+    el instanceof HTMLElement && sheet.contains(el);
+
+  const onKeyDown = (e: KeyboardEvent) => {
+    if (e.key !== 'Tab' || !sheet.isConnected) return;
+    const activo = document.activeElement;
+    if (!enRango(activo)) return; // foco afuera (p. ej. en otro modal apilado): no se toca
+    const dentro = tabulablesDe(sheet);
+    if (dentro.length === 0) return;
+    const actual = dentro.indexOf(activo);
+    if (e.shiftKey) {
+      if (actual <= 0) { // primero o foco fuera de la lista: ir al último
+        e.preventDefault();
+        dentro[dentro.length - 1]!.focus();
+      }
+    } else if (actual === dentro.length - 1) { // último: volver al primero
+      e.preventDefault();
+      enfocarPrimero(sheet);
+    }
+  };
+  sheet.addEventListener('keydown', onKeyDown);
+  return () => sheet.removeEventListener('keydown', onKeyDown);
+}
+
+/**
  * Marca un formulario como sucio cuando cambia cualquiera de sus controles.
  * `input`/`change`/`click` cubren textos, selects, chips y checkboxes.
  */
@@ -617,7 +677,11 @@ function confirmarCierreConCambios(el: HTMLElement, guardar: () => void, descart
       </div>
     </div>`;
   document.body.appendChild(caja);
-  const cerrarCuadroConfirm = () => { if (caja.open) caja.close(); caja.remove(); liberarSiNoHaySheets(); };
+  // Diálogo modal accesible: también es un sheet del sistema (Gino, accesibilidad 23-nov).
+  caja.setAttribute('role', 'dialog');
+  caja.setAttribute('aria-modal', 'true');
+  const soltarTrapCaja = atraparTab(caja);
+  const cerrarCuadroConfirm = () => { soltarTrapCaja(); if (caja.open) caja.close(); caja.remove(); liberarSiNoHaySheets(); };
   const descartarYValidar = () => { cerrarCuadroConfirm(); descartar(); };
   // Escape sobre el aviso significa "Seguir editando": no descarta cambios.
   caja.addEventListener('cancel', (e) => { e.preventDefault(); cerrarCuadroConfirm(); });
@@ -640,15 +704,18 @@ function confirmarCierreConCambios(el: HTMLElement, guardar: () => void, descart
  */
 function cerrarCuadroConCambios(el: HTMLElement, guardar: () => void): void {
   if (el.dataset.dirty === '1') {
-    confirmarCierreConCambios(el, guardar, () => retirarSheet(el));
+    confirmarCierreConCambios(el, guardar, () => cerrarCuadro(el));
     return;
   }
-  retirarSheet(el);
+  cerrarCuadro(el);
 }
 
 /** Cierra el sheet activo (genérico, lo usan todos los cuadros). */
 function cerrarCuadro(el: HTMLElement) {
+  const origen = el.dataset.disparador;
+  const control = origen ? document.getElementById(origen) : null;
   retirarSheet(el);
+  if (control && document.contains(control)) control.focus();
 }
 
 /** Abre el primer cuadro del FAB: elegir «Clase semanal» o «Clase suelta». */
@@ -656,6 +723,7 @@ function abrirAgendar() {
   cerrarSheet();
   const cuadro = document.createElement('div');
   cuadro.className = 'sheet';
+  cuadro.dataset.disparador = 'abrir-agenda';
   cuadro.setAttribute('role', 'dialog');
   cuadro.setAttribute('aria-modal', 'true');
   cuadro.setAttribute('aria-labelledby', 'agendar-titulo');
@@ -747,6 +815,7 @@ function abrirFormularioSemanal(fechaDesdeDia?: string) {
   const inicio = propuesta && propuesta >= hoy ? propuesta : hoy;
   const cuadro = document.createElement('div');
   cuadro.className = 'sheet';
+  cuadro.dataset.disparador = 'abrir-agenda';
   cuadro.setAttribute('role', 'dialog');
   cuadro.setAttribute('aria-modal', 'true');
   cuadro.setAttribute('aria-labelledby', 'semanal-titulo');
@@ -888,11 +957,13 @@ function cablearBajaRutinas(cuadro: HTMLElement): void {
   });
 }
 
-function abrirFormularioSuelta(fechaDesdeDia?: string) {
+function abrirFormularioSuelta(fechaDesdeDia?: string, origen?: HTMLElement) {
   // Prioridad: día tocado «Agendar acá» > día seleccionado en el mes > hoy.
   const inicial = fechaDesdeDia ?? diaMesSeleccionado ?? hoyLocal(reloj.ahora());
   const cuadro = document.createElement('div');
   cuadro.className = 'sheet';
+  if (origen?.id) cuadro.dataset.disparador = origen.id;
+  else cuadro.dataset.disparador = 'abrir-agenda';
   cuadro.setAttribute('role', 'dialog');
   cuadro.setAttribute('aria-modal', 'true');
   cuadro.setAttribute('aria-labelledby', 'suelta-titulo');
@@ -977,7 +1048,7 @@ function cerrarSheet() {
   const s = sheet;
   sheet = null;
   claseEnSheet = null;
-  retirarSheet(s);
+  cerrarCuadro(s);
 }
 
 /** Cierre de las acciones de Por dar / Dada con aviso si se tocó la fecha. */
@@ -1010,6 +1081,7 @@ function abrirAcciones(id: string) {
   cerrarSheet();
   const previo = document.createElement('div');
   previo.className = 'sheet';
+  previo.dataset.disparador = `clase-acciones-${id}`;
   previo.setAttribute('role', 'dialog');
   previo.setAttribute('aria-modal', 'true');
   previo.setAttribute('aria-label', `Opciones para ${c.nombre}`);
@@ -1154,6 +1226,7 @@ function abrirCancelacion(id: string) {
 
   const previo = document.createElement('div');
   previo.className = 'sheet';
+  previo.dataset.disparador = `clase-acciones-${id}`;
   previo.setAttribute('role', 'dialog');
   previo.setAttribute('aria-modal', 'true');
   previo.setAttribute('aria-label', `Cancelar ${c.nombre}`);
@@ -1782,6 +1855,11 @@ botonHistorial.addEventListener('click', () => {
 function abrirDialogoCobros(titulo: string, contexto: string, icono: string, contenido: string, origen: HTMLElement) {
   const dialogo = document.createElement('dialog');
   dialogo.className = 'sheet cobros-panel';
+  // Diálogo modal accesible: role + aria-modal + título etiquetado (Gino,
+  // accesibilidad 23-nov). El foco ya lo atrapa el top layer del <dialog>;
+  // el trap de Tab cubre el caso de foco movido por código fuera de la lista.
+  dialogo.setAttribute('role', 'dialog');
+  dialogo.setAttribute('aria-modal', 'true');
   dialogo.setAttribute('aria-labelledby', 'cobros-panel-titulo');
   dialogo.innerHTML = `<div class="sheet-head cobros-panel-head">
     <span class="cobros-panel-icono"><svg class="ico" width="21" height="21" aria-hidden="true"><use href="#i-${icono}"/></svg></span>
@@ -1790,6 +1868,7 @@ function abrirDialogoCobros(titulo: string, contexto: string, icono: string, con
   $('.cel')!.appendChild(dialogo);
   abrirSheet(dialogo);
   dialogo.showModal();
+  const soltarTrap = atraparTab(dialogo);
 
   observarCambios(dialogo); // cubre el-form y los chips de modalidad/grupo
   const form = dialogo.querySelector('form') as HTMLFormElement | null;
@@ -1810,9 +1889,11 @@ function abrirDialogoCobros(titulo: string, contexto: string, icono: string, con
   dialogo.addEventListener('cancel', (e) => { e.preventDefault(); cerrarConAviso(); });
   dialogo.addEventListener('close', () => {
     dialogo.dataset.lockLiberado = '1';
+    soltarTrap();
     dialogo.remove();
     liberarSiNoHaySheets();
     if (!document.querySelector('.cobros-panel[open]') && origen.isConnected) origen.focus();
+    else if (!document.querySelector('.cobros-panel[open]')) toast.focus(); // origen fuera del DOM: el toast como ancla accesible
   });
   return dialogo;
 }
