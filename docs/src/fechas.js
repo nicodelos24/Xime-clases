@@ -83,6 +83,17 @@ const LARGOS = ['lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado',
 export function diaLargo(f) {
     return LARGOS[diaSemanaIndex(f)];
 }
+/** Mes abreviado ("nov") de una fecha, para la tira semanal. */
+const MESES_CORTOS = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'set', 'oct', 'nov', 'dic'];
+export function mesCorto(f) {
+    const { m } = parseFecha(f);
+    return MESES_CORTOS[m - 1];
+}
+/** "sábado 21/11" — día de semana con la fecha concreta, sin año. */
+export function etiquetaDiaCorta(f) {
+    const { d, m } = parseFecha(f);
+    return `${diaLargo(f)} ${d}/${String(m).padStart(2, '0')}`;
+}
 const MESES = [
     'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
     'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre',

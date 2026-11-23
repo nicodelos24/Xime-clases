@@ -1,12 +1,16 @@
 /**
- * Dominio de la clase grupal (v5): estado, auto-marcado por hora y cancelación.
+ * Dominio de la clase grupal (v5): estado, marca de «dada» y cancelación.
  *
- * Reglas (v5/PLAN.md §2, actualizado 20/11):
- *  - Programada → (terminó la duración) → Dada (automática) → o Cancelada (manual).
- *    Una clase sigue «Por dar» mientras se está dictando, incluso al cruzar
- *    la medianoche; recién se marca Dada al inicio + duración (zona Montevideo).
- *  - El auto-marcado corre con el reloj `America/Montevideo`, inyectado.
- *    Una clase jamás se marca dada antes de su fecha y hora.
+ * Reglas (v5/PLAN.md §2, actualizado 23/11):
+ *  - Programada → Dada (MANUAL: la dueña toca «Por dar» y elige «Marcar dada»)
+ *    o Cancelada (manual).
+ *  - El auto-marcado por reloj está DESCARTADO por decisión de Nico (21/11):
+ *    una clase NUNCA pasa a Dada por el solo paso de la hora, ni al abrir la
+ *    app, ni al volver del segundo plano, ni por el cron. El reloj se sigue
+ *    usando para generar las ocurrencias de las rutinas y para fechar la
+ *    auditoría, nunca para cambiar el estado de una clase.
+ *  - `marcarSiPasada` se conserva exportada como referencia del prototipo
+ *    anterior pero NO debe usarse desde la app ni desde el repositorio.
  *  - Cancelar una clase ya dada permite revertir a Programada (con motivo).
  *  - La clase cancelada no genera deuda ni prórroga; queda registrada para
  *    auditoría (fecha, hora, motivo, quién canceló, mensajes enviados sí/no).
@@ -15,8 +19,8 @@
  * Puro: sin `Date.now()`, sin DOM, sin estado global. El reloj entra por
  * parámetro; los tests usan `relojFalso`.
  */
-import { diasDeFecha, etiquetaDia } from './fechas.js?v=202611230637';
-import { hoyLocal, minutosLocales, parsearMinutos, formatoHora, partesDe, ZONA, } from './reloj.js?v=202611230637';
+import { diasDeFecha, etiquetaDia } from './fechas.js?v=202611230915';
+import { hoyLocal, minutosLocales, parsearMinutos, formatoHora, partesDe, ZONA, } from './reloj.js?v=202611230915';
 const pad = (n) => String(n).padStart(2, '0');
 /**
  * Desplazamiento UTC − local en minutos de un día concreto
@@ -86,10 +90,11 @@ export function finPasado(c, ahora) {
     return instanteFin(c) <= ahora;
 }
 /**
- * Auto-marcado (20/11, decisión de Nico): la clase sigue «Por dar» DURANTE
- * todo el horario, incluso si cruza la medianoche, y pasa a «Dada» sola
- * recién al TERMINAR (inicio + duración). Idempotente: no re-marcia clases
- * dadas ni canceladas. Se usa tanto al abrir/volver como con la app abierta.
+ * Auto-marcado por reloj: DESCARTADO por decisión de Nico (21/11/2026).
+ *
+ * Se conserva la función como referencia documental del prototipo anterior
+ * (y por los tests que describen esa regla vieja), pero NO se llama desde el
+ * repositorio ni desde la app: la clase pasa a «Dada» solo a mano.
  */
 export function marcarSiPasada(c, ahora) {
     if (c.estado !== 'programada')
@@ -98,9 +103,15 @@ export function marcarSiPasada(c, ahora) {
         return c;
     return { ...c, estado: 'dada', marcadaEn: ahora };
 }
-/** Reconcilia toda la colección (lo que corre al abrir la app o con el cron). */
-export function reconciliar(clases, ahora) {
-    return clases.map((c) => marcarSiPasada(c, ahora));
+/**
+ * Alineado con el reloj SIN cambiar estados (23/11): las ocurrencias de las
+ * rutinas se generan aparte (`agendar.ts`), y el estado de cada clase es el
+ * que la dueña dejó. Devuelve las clases tal cual: existe para que abrir la
+ * app, volver del segundo plano y el cron tengan UN camino único y auditable,
+ * sin auto-marcado ni efectos sobre las marcas manuales.
+ */
+export function reconciliar(clases) {
+    return clases;
 }
 /**
  * Marca dada una clase programada a pedido del dueño, aunque su hora no haya

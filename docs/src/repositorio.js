@@ -15,11 +15,11 @@
  *    cancelaciones, reversiones, reprogramaciones y el estado por hora.
  *  - Nunca se borra una clase: el historial de eventos queda en la clase.
  */
-import { cancelarClase, crearClase, deshacerCancelacion, deshacerMarcada, marcarDada, reconciliar, registrarMensajeEnviado, reprogramarClase, } from './clases.js?v=202611230637';
-import { hoyLocal } from './reloj.js?v=202611230637';
-import { anularPago, corregirFechaPago, registrarPago } from './cobros.js?v=202611230637';
-import { crearAlumno, editarAlumno, normalizarFichaGuardada, } from './alumnos.js?v=202611230637';
-import { conExcepcion, crearClaseSuelta, crearRutina, generarOcurrencias, generarOcurrenciasEnRango, } from './agendar.js?v=202611230637';
+import { cancelarClase, crearClase, deshacerCancelacion, deshacerMarcada, marcarDada, reconciliar, registrarMensajeEnviado, reprogramarClase, } from './clases.js?v=202611230915';
+import { hoyLocal } from './reloj.js?v=202611230915';
+import { anularPago, corregirFechaPago, registrarPago } from './cobros.js?v=202611230915';
+import { crearAlumno, editarAlumno, normalizarFichaGuardada, } from './alumnos.js?v=202611230915';
+import { conExcepcion, crearClaseSuelta, crearRutina, generarOcurrencias, generarOcurrenciasEnRango, } from './agendar.js?v=202611230915';
 /**
  * Versión del formato guardado. v2 agregó `alumnos` (Pieza C); las rutinas
  * semanales (20/11) se guardan como campo ADITIVO `rutinas` SIN subir la
@@ -239,6 +239,39 @@ export class RepositorioClases {
         return this.cargar().rutinas;
     }
     /**
+     * Baja de una rutina semanal (punto 1): se borra la plantilla y se cancelan
+     * de una sola vez sus ocurrencias FUTURAS que siguen «Por dar». Las clases
+     * dadas, canceladas o ya movidas no se tocan: son historial, y una ocurrencia
+     * movida vive en otra fecha (por eso lleva excepción «movida»).
+     * Todo en UNA escritura: si falla el disco no se anuncia éxito.
+     */
+    eliminarRutina(id, op) {
+        const estado = this.cargar();
+        const rutina = estado.rutinas.find((r) => r.id === id);
+        if (!rutina)
+            throw new Error(`No existe la rutina ${id}`);
+        const hoy = hoyLocal(op.ahora);
+        let canceladas = 0;
+        const clases = estado.clases.map((c) => {
+            const esFuturaPorDar = c.rutinaId === id
+                && c.estado === 'programada'
+                && c.fecha >= hoy
+                && rutina.excepciones[c.fechaRutina ?? c.fecha] === undefined;
+            if (!esFuturaPorDar)
+                return c;
+            canceladas += 1;
+            return cancelarClase(c, { ...op, motivo: `Rutina «${rutina.nombre}» dada de baja` });
+        });
+        const nuevo = {
+            ...estado,
+            rutinas: estado.rutinas.filter((r) => r.id !== id),
+            clases,
+        };
+        this.persistir(nuevo, true);
+        this.estado = nuevo;
+        return { rutina, canceladas };
+    }
+    /**
      * Asegura que existan las ocurrencias de todas las rutinas hasta la fecha
      * que se está mirando (mes/semana lejana incluida). No toca ninguna marca:
      * `reconciliar` sigue siendo el ÚNICO lugar que cambia Por dar → Dada, y
@@ -266,17 +299,17 @@ export class RepositorioClases {
     }
     /**
      * Al abrir/volver (y en el cron): (1) genera ocurrencias nuevas de las
-     * rutinas para el horizonte móvil y (2) auto-marca por fin de duración.
-     * No toca canceladas, dadas ni historial; solo guarda si algo cambió.
+     * rutinas para el horizonte móvil. NO cambia el estado de ninguna clase:
+     * el auto-marcado por reloj está descartado (decisión de Nico, 21/11) y
+     * «Dada» se marca a mano. Solo guarda si aparecieron ocurrencias.
      */
     reconciliar(ahora = this.reloj.ahora()) {
         const estado = this.cargar();
         const conOcurrencias = this.materializar(estado, ahora);
-        const despues = reconciliar(conOcurrencias.clases, ahora);
+        const despues = conOcurrencias.clases;
         const cambioOcurrencias = despues.length !== estado.clases.length
             || conOcurrencias.clases.some((c, i) => c !== estado.clases[i]);
-        const cambioMarcas = despues.some((c, i) => c !== conOcurrencias.clases[i]);
-        if (!cambioOcurrencias && !cambioMarcas)
+        if (!cambioOcurrencias)
             return despues;
         const nuevo = { ...conOcurrencias, clases: despues };
         this.persistir(nuevo);
@@ -418,7 +451,7 @@ export class RepositorioClases {
         const estado = {
             version: VERSION_ESTADO,
             guardadoEn: new Date(ahora).toISOString(),
-            clases: reconciliar(this.sembrar(ahora), ahora),
+            clases: reconciliar(this.sembrar(ahora)),
             pagos: [],
             alumnos: this.sembrarAlumnos(hoyLocal(ahora)),
             rutinas: [],

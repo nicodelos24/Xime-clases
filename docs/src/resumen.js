@@ -1,4 +1,4 @@
-import { lunesDe, sumarDias } from './fechas.js?v=202611230637';
+import { lunesDe, sumarDias } from './fechas.js?v=202611230915';
 const plural = (n, uno, muchos) => (n === 1 ? uno : muchos);
 /** Resumen de un día concreto (ya reconciliado). */
 export function resumenHoy(clases, fecha) {
@@ -40,9 +40,10 @@ export function clasesDeLaSemana(clases, fecha) {
     });
 }
 /**
- * Reconciliación de arranque: el cron local avanza solo mientras la app
- * está abierta; al abrirla se recorren las clases con el reloj actual y
- * se marcan las que quedaron con la hora pasada (plan §2.1).
+ * Reconciliación de arranque: corre la función inyectada con el reloj de la
+ * app. Desde el 23/11 el reconciliador del dominio NO marca nada (el
+ * auto-marcado por reloj está descartado): sirve para dejar un único camino
+ * al abrir la app, tocar el cron y volver del segundo plano.
  */
 export function alAbrir(clases, reconciliar, reloj) {
     return reconciliar(clases, reloj.ahora());

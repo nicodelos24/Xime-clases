@@ -1,20 +1,20 @@
 // Clases v5 · navegación + funcionamiento (auto-marcado, Cancelar clase, WhatsApp)
 // La estética vive en tokens.css/propuesta.css; acá solo se cambian estados,
 // textos y el flujo de cancelación. Sin emoji: solo SVG de icons.js.
-import { horaClase, } from './src/clases.js?v=202611230637';
-import { CLAVE_ESTADO, RepositorioClases, almacenLocalStorage } from './src/repositorio.js?v=202611230637';
-import { alumnosCobrosDemo, datosDemo, fichasDemo } from './src/demo.js?v=202611230637';
-import { resumenCobros } from './src/cobros.js?v=202611230637';
-import { resumenHoy, clasesDelDia, clasesDeLaSemana } from './src/resumen.js?v=202611230637';
-import { registrarToqueFecha, mesDe } from './src/agenda.js?v=202611230637';
-import { destinoDeEnlace, vistaInicial, vistasActivas } from './src/navegacion.js?v=202611230637';
-import { actualizarBarra, estadoBarraInicial, debeReaparecerPorQuietud, REAPARECER_TRAS_MS, } from './src/barra-scroll.js?v=202611230637';
-import { ajustarLock, debeBloquearScroll, estiloSheet, debeCerrarPorToqueFuera, esToqueFuera, debeSuprimirClickTrasCierre, } from './src/sheets.js?v=202611230637';
-import { diaCorto, etiquetaDia, etiquetaDiaCompleta, etiquetaMes, fechaCorta, parseFecha, lunesDe, diasDelMes, esFechaValida } from './src/fechas.js?v=202611230637';
-import { relojDelDispositivo, hoyLocal } from './src/reloj.js?v=202611230637';
-import { CLAVE_PREFIJO, PREFIJO_POR_DEFECTO, prefijoEsValido, prefijoSeguro, conPrefijo } from './src/prefijo.js?v=202611230637';
-import { bloqueContacto } from './src/contacto.js?v=202611230637';
-import { textoCancelacion, destinos, resumenEnvio, linkTexto, linkAvisoVencimiento, } from './src/whatsapp.js?v=202611230637';
+import { horaClase, } from './src/clases.js?v=202611230915';
+import { CLAVE_ESTADO, RepositorioClases, almacenLocalStorage } from './src/repositorio.js?v=202611230915';
+import { alumnosCobrosDemo, datosDemo, fichasDemo } from './src/demo.js?v=202611230915';
+import { resumenCobros } from './src/cobros.js?v=202611230915';
+import { resumenHoy, clasesDelDia, clasesDeLaSemana } from './src/resumen.js?v=202611230915';
+import { registrarToqueFecha, mesDe } from './src/agenda.js?v=202611230915';
+import { destinoDeEnlace, vistaInicial, vistasActivas } from './src/navegacion.js?v=202611230915';
+import { actualizarBarra, estadoBarraInicial, debeReaparecerPorQuietud, REAPARECER_TRAS_MS, } from './src/barra-scroll.js?v=202611230915';
+import { ajustarLock, debeBloquearScroll, estiloSheet, debeCerrarPorToqueFuera, esToqueFuera, debeSuprimirClickTrasCierre, } from './src/sheets.js?v=202611230915';
+import { diaCorto, mesCorto, etiquetaDia, etiquetaDiaCompleta, etiquetaMes, fechaCorta, sumarDias, parseFecha, lunesDe, diasDelMes, esFechaValida, } from './src/fechas.js?v=202611230915';
+import { relojDelDispositivo, hoyLocal } from './src/reloj.js?v=202611230915';
+import { CLAVE_PREFIJO, PREFIJO_POR_DEFECTO, prefijoEsValido, prefijoSeguro, conPrefijo } from './src/prefijo.js?v=202611230915';
+import { bloqueContacto } from './src/contacto.js?v=202611230915';
+import { textoCancelacion, destinos, resumenEnvio, linkTexto, linkAvisoVencimiento, } from './src/whatsapp.js?v=202611230915';
 /* ------------------------------------------------- estado persistente (local) */
 const reloj = relojDelDispositivo();
 /** Quién opera la app hoy: único dueño. En Fase 4 sale de la sesión. */
@@ -148,7 +148,7 @@ function pintarSemana() {
             const activo = d.fecha === anclado ? ' activo' : '';
             const tiene = d.clases.length > 0 ? ' tiene' : '';
             return `<button class="tira-dia${tiene}${activo}" type="button" data-fecha="${d.fecha}">
-          <span>${diaCorto(d.fecha)}</span><b>${dia.d}</b></button>`;
+          <span><i>${diaCorto(d.fecha)}</i><em>${mesCorto(d.fecha)}</em></span><b>${dia.d}</b></button>`;
         })
             .join('');
         tira.querySelectorAll('.tira-dia').forEach((b) => {
@@ -164,12 +164,52 @@ function pintarSemana() {
         });
     }
     pintarLinea(anclado);
-    const h2 = $('#v-semana .agenda-titulo h2');
-    if (h2)
-        h2.textContent = 'Esta semana';
+    pintarTituloSemana(lunes);
     const link = $('#v-semana .link-suave .link-txt');
     if (link)
         link.textContent = 'Ver mes';
+}
+/**
+ * Título de la vista Clases (punto 3: cambiar de día con fecha real). Muestra
+ * el rango concreto de la semana que se está mirando y aclara cuando no es la
+ * de hoy, para que mover una clase nunca quede en un «lun mar mié» ambiguo.
+ */
+function pintarTituloSemana(lunes) {
+    const h2 = $('#v-semana .agenda-titulo h2');
+    if (!h2)
+        return;
+    const domingo = sumarDias(lunes, 6);
+    const corto = (f) => `${parseFecha(f).d} ${MESES_CORTOS[parseFecha(f).m - 1]}`;
+    const rango = `${corto(lunes)}–${corto(domingo)}`;
+    const propia = lunes === lunesDe(hoyLocal(reloj.ahora()));
+    h2.textContent = propia ? `Esta semana · ${rango}` : `Semana del ${rango}`;
+    const detalle = `Del ${etiquetaDiaCompleta(lunes)} al ${etiquetaDiaCompleta(domingo)}`;
+    h2.title = detalle;
+    h2.setAttribute('aria-label', detalle);
+    const volver = $('#v-semana .agenda-titulo .semana-hoy');
+    if (propia) {
+        volver?.remove();
+        return;
+    }
+    if (!volver) {
+        const boton = document.createElement('button');
+        boton.type = 'button';
+        boton.className = 'link-suave semana-hoy';
+        boton.setAttribute('aria-label', 'Volver a la semana de hoy');
+        boton.innerHTML = '<span class="link-txt">Volver a hoy</span>';
+        boton.addEventListener('click', () => {
+            const ahora = hoyLocal(reloj.ahora());
+            diaSemanaAnclado = null;
+            pintarSemanaDe(ahora);
+            pintarSemana();
+        });
+        const fila = $('#v-semana .agenda-titulo');
+        const verMes = fila?.querySelector('.link-suave');
+        if (verMes)
+            fila?.insertBefore(boton, verMes);
+        else
+            fila?.appendChild(boton);
+    }
 }
 /** Lunes de la semana que contiene `f` (o la semana de hoy). */
 function semanaActual(f) {
@@ -184,6 +224,7 @@ function pintarSemanaDe(f) {
     asegurarOcurrencias(f);
     diaSemanaAnclado = f;
     const lunes = lunesDe(f);
+    pintarTituloSemana(lunes);
     const dias = clasesDeLaSemana(clases, lunes);
     const tira = $('.tira');
     if (!tira)
@@ -194,7 +235,7 @@ function pintarSemanaDe(f) {
         const activo = d.fecha === f ? ' activo' : '';
         const tiene = d.clases.length > 0 ? ' tiene' : '';
         return `<button class="tira-dia${tiene}${activo}" type="button" data-fecha="${d.fecha}">
-        <span>${diaCorto(d.fecha)}</span><b>${dia.d}</b></button>`;
+        <span><i>${diaCorto(d.fecha)}</i><em>${mesCorto(d.fecha)}</em></span><b>${dia.d}</b></button>`;
     })
         .join('');
     tira.querySelectorAll('.tira-dia').forEach((b) => {
@@ -453,6 +494,8 @@ function nuevoId(prefijo) {
 const NOMBRES_DIAS = [
     ['Lun', 0], ['Mar', 1], ['Mié', 2], ['Jue', 3], ['Vie', 4], ['Sáb', 5], ['Dom', 6],
 ];
+/** Mes abreviado para el título de la semana («17 nov–23 nov»). */
+const MESES_CORTOS = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'set', 'oct', 'nov', 'dic'];
 /* ------------------------------------- sheets: lock, medición y cierre limpio */
 /** Profundidad de sheets abiertos. Al volver a 0 se devuelve el scroll al body. */
 let profundidadSheets = 0;
@@ -707,7 +750,8 @@ function abrirFormularioSemanal(fechaDesdeDia) {
         <button class="btn-secundario" type="button" data-accion="volver">Volver</button>
         <button class="btn-primario" type="submit">Guardar rutina</button>
       </div>
-    </form>`;
+    </form>
+    ${rutinasExistentesHtml()}`;
     $('.cel')?.appendChild(cuadro);
     abrirSheet(cuadro);
     const form = cuadro.querySelector('form');
@@ -782,9 +826,59 @@ function abrirFormularioSemanal(fechaDesdeDia) {
         }
         cerrarCuadro(cuadro);
         refrescar();
-        avisar(`Rutina guardada · ${esc(nombre)} empieza el ${esc(etiquetaDia(desde))}`);
+        avisar(`Rutina guardada · ${nombre} empieza el ${etiquetaDia(desde)}`);
     });
     cuadro.querySelector('[name="nombre"]')?.focus();
+    cablearBajaRutinas(cuadro);
+}
+/**
+ * Punto 1: las rutinas ya configuradas, a la vista y con baja. Antes la única
+ * forma de «desconfigurar» una semana era cancelar clase por clase. Muestra
+ * días + hora reales de cada plantilla y, al dar de baja, dice cuántas clases
+ * futuras quedaron canceladas (las dadas y las movidas no se tocan).
+ */
+function rutinasExistentesHtml() {
+    const rutinas = repo.listarRutinas();
+    if (rutinas.length === 0)
+        return '';
+    const filas = rutinas.map((r) => {
+        const dias = r.dias.map((d) => NOMBRES_DIAS[d]?.[0] ?? '').join(' ');
+        return `<li class="rutina-fila" data-rutina="${esc(r.id)}">
+      <div><p class="al-nombre">${esc(r.nombre)}</p>
+      <p class="al-sub">${esc(dias)} · ${esc(r.hora)} · desde ${esc(etiquetaDia(r.desde))}</p></div>
+      <button class="cobros-link" type="button" data-baja-rutina="${esc(r.id)}">Dar de baja</button>
+    </li>`;
+    }).join('');
+    return `<div class="rutinas-config">
+    <p class="sheet-paso">Tus clases semanales</p>
+    <ul class="cobros-panel-lista">${filas}</ul>
+    <p class="al-sub">Dar de baja una rutina cancela sus clases futuras que sigan por dar. Las ya dadas quedan en el historial.</p>
+  </div>`;
+}
+function cablearBajaRutinas(cuadro) {
+    cuadro.querySelectorAll('[data-baja-rutina]').forEach((b) => {
+        b.addEventListener('click', () => {
+            const id = b.dataset.bajaRutina;
+            const rutina = repo.listarRutinas().find((r) => r.id === id);
+            if (!rutina)
+                return;
+            const seguir = confirm(`¿Dar de baja «${rutina.nombre}»? Se cancelan sus clases futuras que sigan por dar.`);
+            if (!seguir)
+                return;
+            let res;
+            try {
+                res = repo.eliminarRutina(id, { motivo: 'Rutina dada de baja', quien: QUIEN, ahora: reloj.ahora() });
+            }
+            catch (err) {
+                avisar(err instanceof Error ? err.message : 'No se pudo dar de baja la rutina', 3500);
+                return;
+            }
+            clases = repo.listar();
+            refrescar();
+            cuadro.querySelector('.rutinas-config')?.remove();
+            avisar(`Rutina dada de baja · ${res.canceladas} clase${res.canceladas === 1 ? '' : 's'} futura${res.canceladas === 1 ? '' : 's'} cancelada${res.canceladas === 1 ? '' : 's'}`);
+        });
+    });
 }
 function abrirFormularioSuelta(fechaDesdeDia) {
     // Prioridad: día tocado «Agendar acá» > día seleccionado en el mes > hoy.
@@ -866,7 +960,7 @@ function abrirFormularioSuelta(fechaDesdeDia) {
         pintarSemanaDe(fecha);
         cerrarCuadro(cuadro);
         refrescar();
-        avisar(`Clase guardada · ${esc(nombre)} el ${esc(etiquetaDia(fecha))}`);
+        avisar(`Clase guardada · ${nombre} el ${etiquetaDia(fecha)}`);
     });
     actualizarResumen();
     cuadro.querySelector('[name="nombre"]')?.focus();
@@ -1008,11 +1102,17 @@ function abrirAcciones(id) {
         principales.hidden = false;
     });
     const resumenDestino = caja.querySelector('[data-resumen-destino] strong');
-    cablearFecha(caja, 'destino', () => {
+    const pintarDestino = () => {
         const elegida = leerFechaDe(caja, 'destino');
         if (resumenDestino)
             resumenDestino.textContent = elegida ? etiquetaDiaCompleta(elegida) : 'fecha inválida';
-    });
+    };
+    cablearFecha(caja, 'destino', pintarDestino);
+    // Punto 3: cambiar SOLO el día también tiene que actualizar el «Hacia».
+    // Antes se actualizaba únicamente al cambiar mes/año, y la dueña movía una
+    // clase a ciegas: el resumen seguía mostrando la fecha vieja.
+    caja.querySelectorAll('[data-fecha="destino"] select').forEach((s) => s.addEventListener('change', pintarDestino));
+    pintarDestino();
     caja.querySelector('[data-accion="confirmar-cambio"]')?.addEventListener('click', () => {
         errorCambio.textContent = '';
         const nuevaFecha = leerFechaDe(caja, 'destino');
@@ -1201,7 +1301,7 @@ function confirmarCancelacion(c, motivo) {
         }
     }
     else {
-        avisar(`Clase cancelada (${anterior === 'dada' ? 'estaba dada' : 'programada'}) · Deshacer`, 6000);
+        avisar(`Clase cancelada (${anterior === 'dada' ? 'estaba dada' : 'por dar'}) · Deshacer`, 6000);
     }
     toast.dataset.deshacer = '1';
     toast.dataset.clase = c.id;
@@ -1258,7 +1358,7 @@ toast.addEventListener('click', () => {
     }
 });
 /* ------------------------------------------------------- alumnos (fichas) */
-import { construirVista, filtrarYOrdenar, puntoEstadoVence, textoEstadoVence, validarAlumno, } from './src/alumnos.js?v=202611230637';
+import { construirVista, filtrarYOrdenar, puntoEstadoVence, textoEstadoVence, validarAlumno, } from './src/alumnos.js?v=202611230915';
 let ordenAlumnos = 'ninguno';
 const filtrosAlumnos = new Set();
 let busquedaAlumno = '';
@@ -1405,7 +1505,7 @@ function abrirFichaConCobro(ficha, origen, alCrear) {
       ${avisoLink ? `<a class="cobros-link ficha-accion" href="${avisoLink}" target="_blank" rel="noopener" data-avisar>Avisar por WhatsApp (por vencer)</a>` : ''}
       <button type="button" class="cobros-link ficha-accion" data-editar-cobro>${ultimo ? 'Editar fecha del pago' : deuda ? 'Registrar pago' : 'Ver cobros'}</button>
     </div>
-    <p class="al-sub">Simulación: el envío real llega con la base de datos.</p>`;
+    <p class="al-sub">${contacto.link ? 'Los links abren WhatsApp con el mensaje escrito; el envío lo confirmás vos.' : ''}</p>`;
     dialogo.querySelector('form')?.before(resumen);
     resumen.querySelector('[data-editar-cobro]')?.addEventListener('click', () => {
         if (ultimo) {
@@ -1427,6 +1527,7 @@ function abrirFichaConCobro(ficha, origen, alCrear) {
 function abrirFicha(ficha, origen, alCrear) {
     const esNueva = ficha === null;
     const hoy = hoyLocal(reloj.ahora());
+    const listaGrupos = listaGruposHtml();
     const contenido = `<div class="cobros-panel-resumen">
     <div><p class="al-nombre">${esNueva ? 'Nuevo alumno' : esc(ficha.nombre)}</p>
     <p class="al-sub">${esNueva ? 'Ficha real · se guarda en este dispositivo' : `Alta ${esc(fechaCorta(ficha.fechaAlta))}`}</p></div>
@@ -1446,6 +1547,10 @@ function abrirFicha(ficha, origen, alCrear) {
         <button type="button" class="ficha-grupo" data-pago="no" aria-pressed="false">Va a pagar</button>
       </div>` : ''}
       <label class="campo"><span>Día de vencimiento (1–31)</span><input name="ancla" type="number" min="1" max="31" inputmode="numeric" value="${ficha?.ancla ?? 21}"></label>
+      <label class="campo"><span>Grupo (opcional)</span><input name="grupo" list="${listaGrupos.id}" maxlength="40" autocomplete="off" value="${esNueva ? '' : esc(ficha.grupo)}" placeholder="Ej.: Martes A">
+        <small class="campo-ayuda">Solo una etiqueta para agrupar alumnas. No crea grupos ni manda mensajes.</small>
+      </label>
+      ${listaGrupos.html}
       <label class="campo"><span>Teléfono / WhatsApp</span><input name="contacto" type="tel" maxlength="120" autocomplete="tel" value="${esNueva ? '' : esc(ficha.contacto)}" placeholder="099 123 456"></label>
       <p class="cobros-panel-error" role="alert"></p>
       <div class="sheet-acciones"><button type="button" class="btn-secundario">Volver</button>
@@ -1492,6 +1597,7 @@ function abrirFicha(ficha, origen, alCrear) {
             ancla: anclaRaw === '' ? undefined : Number(anclaRaw),
             fechaAlta: fechaAlta ?? undefined,
             pagado: esNueva ? pagado : undefined,
+            grupo: String(datos.get('grupo') ?? ''),
         };
         const errores = validarAlumno(input);
         if (Object.keys(errores).length > 0) {
@@ -1518,6 +1624,34 @@ function abrirFicha(ficha, origen, alCrear) {
     });
 }
 $('#nuevo-alumno')?.addEventListener('click', (e) => abrirFicha(null, e.currentTarget));
+/**
+ * Grupos reales (punto 6, alcance mínimo del plan: pocos grupos, sin crear
+ * «salones»): la etiqueta `grupo` de cada ficha MÁS el nombre de las clases,
+ * que es como Xime nombra sus grupos. Se ofrece como sugerencia con un
+ * `<datalist>`: escribir un grupo nuevo lo crea (es solo una etiqueta), y
+ * repetir uno existente agrupa sin duplicar. Nada se envía ni se comparte.
+ */
+function gruposConocidos() {
+    // Las fichas guardan el grupo sin el prefijo «Grupo » («Martes A»): se
+    // normaliza igual acá para que el datalist no ofrezca valores que después
+    // se guardan distintos de lo que se ve.
+    const sinPrefijo = (s) => s.trim().replace(/^Grupo\s+/i, '').trim();
+    const deFichas = repo.listarAlumnos().map((f) => sinPrefijo(f.grupo)).filter(Boolean);
+    const deClases = clases.map((c) => sinPrefijo(c.nombre))
+        .filter((n) => n.length > 0 && n.length <= 40 && !/^\d/.test(n));
+    return [...new Set([...deFichas, ...deClases])].sort((a, b) => a.localeCompare(b, 'es'));
+}
+/**
+ * `<datalist>` de grupos, para reusar la etiqueta sin tipear de nuevo.
+ * Devuelve el HTML y el id que el input debe referenciar en `list`.
+ */
+let idListaGrupos = 0;
+function listaGruposHtml() {
+    idListaGrupos += 1;
+    const id = `lista-grupos-${idListaGrupos}`;
+    const opciones = gruposConocidos().map((g) => `<option value="${esc(g)}"></option>`).join('');
+    return { html: `<datalist id="${id}">${opciones}</datalist>`, id };
+}
 /**
  * Punto 7: desde el «Agregar» del calendario también se puede dar de alta una
  * alumna. Usa la MISMA ficha v5 (sin rediseñar) y, al guardar, agendas una
@@ -1751,7 +1885,7 @@ campana.addEventListener('click', () => {
         const tel = fichas.get(f.alumno.id)?.contacto ?? '';
         return tel ? linkAvisoVencimiento({ telefono: conPrefijo(tel, prefijoMovil), nombre: f.alumno.nombre, vencimiento: f.fecha }) : null;
     };
-    const dlg = abrirDialogoCobros('Avisos de cobro', 'Mensualidades', 'campana', avisos.length ? `<p class="cobros-panel-nota">Mensualidades sin pagar que vencen hoy o en los próximos 7 días. Avisá por WhatsApp (simulación; el envío real llega con la base de datos).</p>
+    const dlg = abrirDialogoCobros('Avisos de cobro', 'Mensualidades', 'campana', avisos.length ? `<p class="cobros-panel-nota">Mensualidades sin pagar que vencen hoy o en los próximos 7 días. «Avisar por WhatsApp» abre el chat con el mensaje ya escrito: el envío lo confirmás vos en WhatsApp.</p>
     <ul class="cobros-panel-lista">${avisos.map((f, i) => `<li>
     <div><p class="al-nombre">${esc(f.alumno.nombre)}</p><p class="al-sub">${esc(f.alumno.grupo)}</p>
     ${avisarLink(f) ? `<a class="cobros-link" href="${avisarLink(f)}" target="_blank" rel="noopener" data-avisar="${i}">Avisar por WhatsApp</a>` : '<span class="al-sub">Sin teléfono cargado</span>'}</div>
@@ -2057,20 +2191,20 @@ function refrescar() {
     pintarMes();
     pintarAlumnos();
 }
-// Re-alineado al abrir: las clases cuya hora pasó quedan Dadas (y se guarda).
+// Al abrir se generan las ocurrencias que falten. NO se marca nada por hora:
+// «Dada» es siempre una marca manual de la dueña (decisión de Nico, 21/11).
 clases = repo.reconciliar();
 refrescar();
 pintarCobros();
 let diaCobros = hoyLocal(reloj.ahora());
-/** Reconcilia con el reloj REAL y repinta solo si cambió algún estado. */
-function reconciliarAlVolver(avisarCambio = false) {
-    const antes = clases.map((c) => c.estado).join(',');
+/** Reconcilia con el reloj REAL: desde el 23/11 no cambia estados (el
+ *  auto-marcado está descartado), pero sigue generando ocurrencias nuevas y
+ *  repinta si aparecieron clases. Nunca avisa «se marcaron por la hora». */
+function reconciliarAlVolver() {
+    const antes = clases.length;
     clases = repo.reconciliar();
-    if (clases.map((c) => c.estado).join(',') !== antes) {
+    if (clases.length !== antes)
         refrescar();
-        if (avisarCambio)
-            avisar('Se marcaron clases dadas por la hora');
-    }
 }
 // Vuelta de segundo plano: reconciliar YA (sin esperar al cron de 30 s), con
 // el reloj real, tanto al hacer visible la pestaña como al restaurar la página
@@ -2088,7 +2222,7 @@ setInterval(() => {
         pintarCobros();
         pintarAlumnos();
     }
-    reconciliarAlVolver(true);
+    reconciliarAlVolver();
 }, 30000);
 /* ------------------------- configuración: prefijo de móvil (punto 9) ------- */
 /** Prefijo vigente en este dispositivo; se lee una vez al abrir. */
