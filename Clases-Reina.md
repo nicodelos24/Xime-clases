@@ -206,6 +206,16 @@ final → solo izquierdo; 390 px también desborda (338 visibles) y muestra el
 derecho; oscuro toma `rgba(14,27,30,1)`. Rueda horizontal 0→524 y «Al día»
 responde al final de la tira; `elementFromPoint` sobre la pista devuelve los
 chips (no intercepta toques). 0 errores de consola en Hoy·Semana·Alumnos·Cobros,
-`tsc` limpio, 180/180 tests. Commits `75cb9a72`. `docs/` regenerado con sello
-`?v=202611231100` — **sin publicar**: subir a Pages es paso aparte con aviso a
-Nova. Evidencia en `docs/qa/filtros-320-20261123/`.
+`tsc` limpio, 180/180 tests. Commits `75cb9a72`. Evidencia en
+`docs/qa/filtros-320-20261123/`.
+
+**Publicado el 23-nov 11:2x** (orden de Roma, autorización general de Nico
+22-nov): `npm test` 180/180 y `tsc` reconfirmados, `docs/` regenerado con
+`build-docs.mjs 202611231100`, `git diff --check` limpio, merge fast-forward de
+`fix/v5-filtros-alumnos-320` sobre master `ac0c3b11` → `ffb9c11a` y push a
+`origin/master`. Verificado en el vivo: HTTP 200 con `?v=202611231100` en
+tokens/propuesta/icons/propuesta.js y en `src/scroll-pista.js`; a 320 px la
+pista derecha aparece en reposo, las dos en el medio (260) y solo la izquierda
+al final (524); 0 errores de consola; sin secretos ni datos personales en lo
+subido (grep de claves/teléfonos sobre el diff; los tests usan teléfonos y
+nombres sintéticos).
