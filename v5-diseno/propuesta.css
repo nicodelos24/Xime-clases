@@ -618,6 +618,21 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; width: 0; }
 .ficha-contacto { display: flex; align-items: baseline; gap: 6px; margin-top: 8px; color: var(--tinta); }
 .ficha-contacto-rotulo { color: var(--tinta-2); font-size: 12px; font-weight: 650; letter-spacing: .01em; }
 .ficha-contacto b { font-weight: 700; font-variant-numeric: tabular-nums; }
+/* Acciones de la ficha (hallazgo de Lino, 23-nov): los tres enlaces quedaban
+   inline, dos en el mismo renglón y el botón pisando la línea anterior, y se
+   leían como una frase corrida. Cada acción tiene su renglón, área táctil de
+   44px y la principal (Enviar WhatsApp) con el acento de la base aprobada;
+   las dos secundarias quedan en --tinta-2 con un filete que las separa del
+   número. Sin emoji, sin cambio de estilo fuera de la ficha. */
+.ficha-acciones { display: flex; flex-direction: column; margin-top: 10px; }
+.ficha-acciones .ficha-accion {
+  display: flex; align-items: center; width: 100%; min-height: 44px;
+  padding: 0; text-align: left; border-radius: 0;
+}
+.ficha-acciones .ficha-accion + .ficha-accion { border-top: 1px solid var(--linea); }
+.ficha-accion-wa { color: var(--tq-700); }
+.ficha-acciones .ficha-accion:not(.ficha-accion-wa) { color: var(--tinta-2); font-weight: 650; }
+.ficha-acciones .ficha-accion:focus-visible { outline: 2px solid var(--tq-600); outline-offset: 2px; }
 [data-tema="oscuro"] .ficha-cobro .ficha-cobro-estado.vencido { color: var(--rosa-pastel); }
 [data-tema="oscuro"] .ficha-cobro .ficha-cobro-estado.pendiente { color: var(--ambar-pastel); }
 .cobros-panel-lista { list-style: none; margin-top: 12px; }

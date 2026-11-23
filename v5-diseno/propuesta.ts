@@ -1402,11 +1402,13 @@ function abrirFichaConCobro(ficha: AlumnoFicha | null, origen: HTMLElement, alCr
     : null;
   resumen.innerHTML = `<p>${texto}</p>
     ${contacto.visible
-      ? `<p class="ficha-contacto"><span class="ficha-contacto-rotulo">WhatsApp</span> <b>${esc(contacto.visible)}</b></p>
-        <a class="cobros-link" href="${contacto.link}" target="_blank" rel="noopener" data-wa>Enviar WhatsApp</a>`
+      ? `<p class="ficha-contacto"><span class="ficha-contacto-rotulo">WhatsApp</span> <b>${esc(contacto.visible)}</b></p>`
       : `<p class="al-sub">${esc(contacto.ayuda ?? '')}</p>`}
-    ${avisoLink ? `<a class="cobros-link" href="${avisoLink}" target="_blank" rel="noopener" data-avisar>Avisar por WhatsApp (por vencer)</a>` : ''}
-    <button type="button" class="cobros-link" data-editar-cobro>${ultimo ? 'Editar fecha del pago' : deuda ? 'Registrar pago' : 'Ver cobros'}</button>
+    <div class="ficha-acciones">
+      ${contacto.link ? `<a class="cobros-link ficha-accion ficha-accion-wa" href="${contacto.link}" target="_blank" rel="noopener" data-wa>Enviar WhatsApp</a>` : ''}
+      ${avisoLink ? `<a class="cobros-link ficha-accion" href="${avisoLink}" target="_blank" rel="noopener" data-avisar>Avisar por WhatsApp (por vencer)</a>` : ''}
+      <button type="button" class="cobros-link ficha-accion" data-editar-cobro>${ultimo ? 'Editar fecha del pago' : deuda ? 'Registrar pago' : 'Ver cobros'}</button>
+    </div>
     <p class="al-sub">Simulación: el envío real llega con la base de datos.</p>`;
   dialogo.querySelector('form')?.before(resumen);
   resumen.querySelector('[data-editar-cobro]')?.addEventListener('click', () => {
