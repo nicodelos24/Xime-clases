@@ -16,6 +16,9 @@ rule único que cubre:
 - `.cobros-panel-lista .al-nombre` (historial de pagos, avisos de vencimiento,
   lista de rutinas semanales)
 
+- `.lista-elegir .al-nombre` (lista de alumnos al agendar una clase suelta, ya
+  existente en la rama; ahí el nombre es hijo directo del `label`)
+
 En `.cobro-fila` se quita `.al-nombre` del `display: block` (el clamp ya es
 block-level) y queda solo el `.al-sub`.
 
@@ -33,6 +36,7 @@ Con el nombre sintético de 67 caracteres en la primera fila de Cobros:
 | Historial de pagos (sheet) | 320 | — | 35 px | `$6.500` al lado, sin solape | no | 320 |
 | Sheet de pago (resumen) | 320 | — | 35 px | monto a la derecha, sin solape | no | 320 |
 | Alumnos (fila y ficha) | 320 / 390 | 120 / 96 px | 35 px | — | no | 320 / 390 |
+| Agendar › Cancelar clase › Individual (`.lista-elegir`) | 320 / 390 | — | 35 px (66 caracteres) | — | no | 320 / 390 |
 
 Fila normal (nombre corto): 84 px, idéntica a antes. 0 errores y 0 warnings de
 consola. Claro y oscuro.
@@ -46,6 +50,8 @@ consola. Claro y oscuro.
 - `cobros-historial-nombrelargo-320-fix.png`
 - `cobros-sheet-pago-nombrelargo-320.png`
 - `alumnos-ficha-nombrelargo-390-fix.png`
+- `agendar-lista-nombrelargo-320-fix.png`
+- `agendar-lista-nombrelargo-390-fix.png`
 
 Las fotos del hallazgo original (Gino) siguen en el repo:
 `cobros-nombrelargo-320-centrado.png`, `cobros-nombrelargo-320-claro.png`.
