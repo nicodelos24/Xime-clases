@@ -1,19 +1,19 @@
 // Clases v5 · navegación + funcionamiento (auto-marcado, Cancelar clase, WhatsApp)
 // La estética vive en tokens.css/propuesta.css; acá solo se cambian estados,
 // textos y el flujo de cancelación. Sin emoji: solo SVG de icons.js.
-import { horaClase, } from './src/clases.js?v=202611221000';
-import { CLAVE_ESTADO, RepositorioClases, almacenLocalStorage } from './src/repositorio.js?v=202611221000';
-import { alumnosCobrosDemo, datosDemo, fichasDemo } from './src/demo.js?v=202611221000';
-import { resumenCobros } from './src/cobros.js?v=202611221000';
-import { resumenHoy, clasesDelDia, clasesDeLaSemana } from './src/resumen.js?v=202611221000';
-import { registrarToqueFecha, mesDe } from './src/agenda.js?v=202611221000';
-import { destinoDeEnlace } from './src/navegacion.js?v=202611221000';
-import { actualizarBarra, estadoBarraInicial, debeReaparecerPorQuietud, REAPARECER_TRAS_MS, } from './src/barra-scroll.js?v=202611221000';
-import { ajustarLock, debeBloquearScroll, estiloSheet, debeCerrarPorToqueFuera, esToqueFuera, debeSuprimirClickTrasCierre, } from './src/sheets.js?v=202611221000';
-import { diaCorto, etiquetaDia, etiquetaDiaCompleta, etiquetaMes, fechaCorta, parseFecha, lunesDe, diasDelMes, esFechaValida } from './src/fechas.js?v=202611221000';
-import { relojDelDispositivo, hoyLocal } from './src/reloj.js?v=202611221000';
-import { CLAVE_PREFIJO, PREFIJO_POR_DEFECTO, prefijoEsValido, prefijoSeguro, conPrefijo } from './src/prefijo.js?v=202611221000';
-import { textoCancelacion, destinos, resumenEnvio, linkTexto, linkAvisoVencimiento, } from './src/whatsapp.js?v=202611221000';
+import { horaClase, } from './src/clases.js?v=202611222310';
+import { CLAVE_ESTADO, RepositorioClases, almacenLocalStorage } from './src/repositorio.js?v=202611222310';
+import { alumnosCobrosDemo, datosDemo, fichasDemo } from './src/demo.js?v=202611222310';
+import { resumenCobros } from './src/cobros.js?v=202611222310';
+import { resumenHoy, clasesDelDia, clasesDeLaSemana } from './src/resumen.js?v=202611222310';
+import { registrarToqueFecha, mesDe } from './src/agenda.js?v=202611222310';
+import { destinoDeEnlace } from './src/navegacion.js?v=202611222310';
+import { actualizarBarra, estadoBarraInicial, debeReaparecerPorQuietud, REAPARECER_TRAS_MS, } from './src/barra-scroll.js?v=202611222310';
+import { ajustarLock, debeBloquearScroll, estiloSheet, debeCerrarPorToqueFuera, esToqueFuera, debeSuprimirClickTrasCierre, } from './src/sheets.js?v=202611222310';
+import { diaCorto, etiquetaDia, etiquetaDiaCompleta, etiquetaMes, fechaCorta, parseFecha, lunesDe, diasDelMes, esFechaValida } from './src/fechas.js?v=202611222310';
+import { relojDelDispositivo, hoyLocal } from './src/reloj.js?v=202611222310';
+import { CLAVE_PREFIJO, PREFIJO_POR_DEFECTO, prefijoEsValido, prefijoSeguro, conPrefijo } from './src/prefijo.js?v=202611222310';
+import { textoCancelacion, destinos, resumenEnvio, linkTexto, linkAvisoVencimiento, } from './src/whatsapp.js?v=202611222310';
 /* ------------------------------------------------- estado persistente (local) */
 const reloj = relojDelDispositivo();
 /** Quién opera la app hoy: único dueño. En Fase 4 sale de la sesión. */
@@ -1257,7 +1257,7 @@ toast.addEventListener('click', () => {
     }
 });
 /* ------------------------------------------------------- alumnos (fichas) */
-import { construirVista, filtrarYOrdenar, puntoEstadoVence, textoEstadoVence, validarAlumno, } from './src/alumnos.js?v=202611221000';
+import { construirVista, filtrarYOrdenar, puntoEstadoVence, textoEstadoVence, validarAlumno, } from './src/alumnos.js?v=202611222310';
 let ordenAlumnos = 'ninguno';
 const filtrosAlumnos = new Set();
 let busquedaAlumno = '';
@@ -1356,6 +1356,18 @@ $('#buscar-alumno')?.addEventListener('input', (e) => {
 });
 /* ------------------------------------------- alta / edición de ficha (C) */
 /** Diálogo de ficha: mismo sheet v5 de Cobros, sin rediseñar. */
+/**
+ * Texto del dato de cobro de la ficha, ya marcado para leerlo con jerarquía:
+ * el estado («Venció hace 13 días», acento rosa si ya venció y ámbar mientras
+ * está por vencer) y el importe quedan en su propio span; el paréntesis del
+ * vencimiento sigue siendo auxiliar. Solo cambia la forma de pintar, no los
+ * datos ni las reglas de Cobros (romper y pulir 22-nov).
+ */
+function textoCobroFicha(dias, montoUYU, fecha) {
+    const estado = textoVence(dias);
+    const clase = dias < 0 ? 'vencido' : 'pendiente';
+    return `<span class="ficha-cobro-estado ${clase}">${esc(estado)}</span> · <span class="ficha-cobro-monto">${uyu(montoUYU)}</span> (vence ${esc(fechaCorta(fecha))}).`;
+}
 function abrirFichaConCobro(ficha, origen, alCrear) {
     abrirFicha(ficha, origen, alCrear);
     if (!ficha)
@@ -1375,7 +1387,7 @@ function abrirFichaConCobro(ficha, origen, alCrear) {
     const texto = ultimo
         ? `Último pago: ${esc(fechaCorta(ultimo.fecha))} · ${uyu(ultimo.montoUYU)}. Renovación: mismo día del mes siguiente.`
         : deuda
-            ? `${textoVence(deuda.dias)} · ${uyu(deuda.alumno.montoUYU)} (vence ${esc(fechaCorta(deuda.fecha))}).`
+            ? textoCobroFicha(deuda.dias, deuda.alumno.montoUYU, deuda.fecha)
             : 'Sin cobros registrados.';
     const tel = ficha.contacto;
     const avisoLink = deuda && tel ? linkAvisoVencimiento({ telefono: conPrefijo(tel, prefijoMovil), nombre: ficha.nombre, vencimiento: deuda.fecha }) : null;
@@ -1567,8 +1579,8 @@ function pintarCobros() {
         $(`${selector} .kpi-valor`).textContent = valor;
     $('#v-cobros .conteo').textContent = etiquetaMes(`${r.periodo}-01`).replace(/^./, (letra) => letra.toUpperCase());
     const n = r.vencenHoy.length;
-    // Sin vencimientos la tarjeta es neutra: no mostramos icono ni tono de alerta.
-    $('#v-hoy .aviso').classList.toggle('aviso-vacio', n === 0);
+    // Estado vacío = información neutra, no alerta ámbar (sin vencimientos no hay nada que alertar).
+    $('#v-hoy .aviso').classList.toggle('vacio', n === 0);
     $('#v-hoy .aviso strong').textContent = n === 1 ? '1 mensualidad vence hoy' : `${n} mensualidades vencen hoy`;
     $('#v-hoy .aviso-sub').textContent = n
         ? `${new Intl.ListFormat('es-UY').format(r.vencenHoy.map((f) => f.alumno.nombre))} · Ver en Cobros`

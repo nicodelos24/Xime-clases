@@ -217,17 +217,15 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; width: 0; }
   animation: subir var(--t-larga) var(--ease) 310ms both;
 }
 .aviso-ico { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 9px; background: rgba(138,90,18,.14); flex: none; }
+.aviso-ico-ok { display: none; }
+/* Hallazgo 1: sin vencimientos el aviso es información neutra, no una alerta ámbar. */
+.aviso.vacio { background: var(--tq-50); border-color: var(--tq-100); color: var(--tinta-2); }
+.aviso.vacio .aviso-ico { background: var(--tq-100); color: var(--tq-700); }
+.aviso.vacio .aviso-ico-alerta { display: none; }
+.aviso.vacio .aviso-ico-ok { display: block; }
+.aviso.vacio .aviso-sub { color: var(--tinta-2); }
 .aviso p { font-size: 13px; line-height: 1.35; }
 .aviso-sub { color: var(--ambar-suave); opacity: 1; }
-/* Sin vencimientos (0): tarjeta neutra, sin ícono ni color de alerta. */
-.aviso.aviso-vacio { background: var(--bg-alt); border-color: var(--linea); color: var(--tinta-2); }
-.aviso.aviso-vacio .aviso-ico { display: none; }
-.aviso.aviso-vacio .aviso-sub { color: var(--tinta-2); }
-/* Modo oscuro: el texto ámbar original no llegaba a 2:1 sobre el tinte;
-   se usa el pastel ámbar ya presente en la paleta (8.04:1). */
-[data-tema="oscuro"] .aviso:not(.aviso-vacio) { color: var(--ambar-pastel); }
-[data-tema="oscuro"] .aviso:not(.aviso-vacio) .aviso-sub { color: var(--ambar-pastel); }
-[data-tema="oscuro"] .aviso:not(.aviso-vacio) .aviso-ico { color: var(--ambar-pastel); }
 
 /* ---------- Títulos de vista ---------- */
 .agenda-titulo { display: flex; align-items: center; justify-content: space-between; margin: 8px 2px 11px; }
@@ -247,6 +245,17 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; width: 0; }
 .link-suave:focus-visible { outline: 2px solid var(--tq-600); outline-offset: 2px; }
 .link-suave .ico { flex: none; }
 .conteo { font-size: 12.5px; color: var(--tinta-2); }
+/* Ronda romper y pulir (22-nov) · hallazgo 2: a 320px el contador «13 alumnos»
+   se partía en dos líneas (caja 50×30) entre «Alumnos» y «+ Nuevo alumno»,
+   con 0px de aire contra el botón. Solo ≤360px (390px conserva su fila
+   original): el contador no se parte y el título reserva su ancho; para
+   liberar el espacio sin comprimir ni achicar el botón, se oculta su icono
+   decorativo «+» (el texto «Nuevo alumno», el padding y el alto no cambian). */
+@media (max-width: 360px) {
+  #v-alumnos .conteo { font-size: 11.5px; letter-spacing: -.01em; white-space: nowrap; }
+  #v-alumnos #nuevo-alumno { flex: none; margin-left: 6px; }
+  #v-alumnos #nuevo-alumno .ico { display: none; }
+}
 
 /* ---------- Tira de días ---------- */
 .tira { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
@@ -362,6 +371,12 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; width: 0; }
 
 /* ---------- Mes ---------- */
 /* Navegación de mes junto al título mes+año: fácil de ver y tocar en el celu. */
+/* Ronda romper y pulir (22-nov) · hallazgo 4: a 320px «noviembre 2026» y
+   «Ver semana» se pisaban ~40px. Solo en pantallas ≤360px el link baja de
+   línea; en 390px+ se conserva la fila única original. */
+@media (max-width: 360px) {
+  #v-mes > .agenda-titulo { flex-wrap: wrap; gap: 8px 0; }
+}
 .mes-titulo-nav { display: flex; align-items: center; gap: 4px; min-width: 0; }
 .mes-titulo-nav h2 { margin: 0; text-align: center; white-space: nowrap; }
 .flecha {
@@ -511,7 +526,15 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; width: 0; }
 .avatar-6 { background: var(--ambar-tinte); color: var(--ambar); }
 .lista-alumnos li > div, .lista-cobros li > div { flex: 1; min-width: 0; }
 .al-nombre { font-size: 14.5px; font-weight: 650; letter-spacing: -.01em; }
-.al-sub { font-size: 12px; color: var(--tinta-2); margin-top: 1px; }
+/* Ronda romper y pulir (22-nov) · hallazgo 1: un nombre muy largo ocupaba 3
+   líneas y se cortaba a mitad de palabra. Solo en la fila del listado
+   (`.alumno-fila-btn`): como máximo 2 líneas con «…», sin desbordar ni
+   solaparse. No se reserva alto: las 13 filas normales quedan idénticas y
+   solo la fila del nombre largo crece lo que ocupa su segunda línea. */
+.alumno-fila-btn .al-nombre {
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2;
+  overflow: hidden; overflow-wrap: anywhere; line-height: 1.22;
+}
 .punto { width: 10px; height: 10px; border-radius: 50%; flex: none; }
 .punto-rosa  { background: var(--rosa-pastel); }
 .punto-verde { background: var(--verde-pastel); }
@@ -569,6 +592,18 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; width: 0; }
 .cobros-panel-dato { text-align: right; white-space: nowrap; }
 .cobros-panel-dato > .al-sub { display: block; }
 .cobros-panel-nota, .cobros-panel-error:not(:empty) { margin-top: 12px; color: var(--tinta-2); font-size: 13px; }
+/* Ronda romper y pulir (22-nov) · hallazgo 3: en la ficha de edición el dato
+   de cobro se leía igual (13px/400/--tinta-2) que el texto auxiliar. Solo el
+   estado y el importe dentro de `.ficha-cobro` toman peso y acento de la
+   paleta v5; el resto del párrafo y el texto de simulación quedan igual.
+   Contraste: rosa 7.55:1 y ámbar 5.91:1 sobre --bg-alt; en oscuro
+   rosa-pastel 8.17:1 y ámbar-pastel 9.61:1 (AA en los cuatro casos). */
+.ficha-cobro .ficha-cobro-estado { font-weight: 650; }
+.ficha-cobro .ficha-cobro-estado.vencido { color: var(--rosa); }
+.ficha-cobro .ficha-cobro-estado.pendiente { color: var(--ambar); }
+.ficha-cobro .ficha-cobro-monto { font-weight: 700; color: var(--tinta); }
+[data-tema="oscuro"] .ficha-cobro .ficha-cobro-estado.vencido { color: var(--rosa-pastel); }
+[data-tema="oscuro"] .ficha-cobro .ficha-cobro-estado.pendiente { color: var(--ambar-pastel); }
 .cobros-panel-lista { list-style: none; margin-top: 12px; }
 .cobros-panel-lista > li { border-top: 1px solid var(--linea); padding: 10px 0; }
 .cobros-panel-pie { margin-top: 12px; text-align: right; }
@@ -904,9 +939,6 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; width: 0; }
 [data-tema="oscuro"] .chip-por-dar { background: #26513E; color: #D6F3E2; }
 [data-tema="oscuro"] .chip-dada { background: #2A5A42; color: #D6F3E2; }
 [data-tema="oscuro"] .chip-cancelada { background: #5A3A1C; color: #F6D9B0; }
-/* Modalidad activa en la ficha: --tq-900 no se lee sobre --tq-100 oscuro;
-   el acento turquesa claro de la paleta da 6.55:1. */
-[data-tema="oscuro"] .ficha-grupo.activo { color: var(--tq-600); }
 [data-tema="oscuro"] .marcar-cancelar { background: #3A2418; color: #F0C9A8; border-color: #6B4E2E; }
 
 /* ------------------------------------------------------------------ */
@@ -960,11 +992,3 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; width: 0; }
    Sin pseudo-elemento de relleno: el panel termina con borde inferior
    redondeado y el hueco bajo él lo da el fondo exterior (--bg-fuera).
    El contenido que sigue aparece sin cortes bajo la barra flotante. */
-
-/* Mes a 320px (hallazgo Fina 22-nov): «noviembre 2026» y «Ver semana» se
-   pisaban ~40px. Solo en pantallas muy angostas, el pill baja a su propia
-   línea; en 390/430/1440 la fila queda como antes. */
-@media (max-width: 340px) {
-  #v-mes .agenda-titulo { flex-direction: column; align-items: flex-start; gap: 8px; }
-  #v-mes .agenda-titulo .link-suave { align-self: flex-start; }
-}

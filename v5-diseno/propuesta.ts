@@ -1361,6 +1361,19 @@ $('#buscar-alumno')?.addEventListener('input', (e) => {
 /* ------------------------------------------- alta / edición de ficha (C) */
 
 /** Diálogo de ficha: mismo sheet v5 de Cobros, sin rediseñar. */
+/**
+ * Texto del dato de cobro de la ficha, ya marcado para leerlo con jerarquía:
+ * el estado («Venció hace 13 días», acento rosa si ya venció y ámbar mientras
+ * está por vencer) y el importe quedan en su propio span; el paréntesis del
+ * vencimiento sigue siendo auxiliar. Solo cambia la forma de pintar, no los
+ * datos ni las reglas de Cobros (romper y pulir 22-nov).
+ */
+function textoCobroFicha(dias: number, montoUYU: number, fecha: string): string {
+  const estado = textoVence(dias);
+  const clase = dias < 0 ? 'vencido' : 'pendiente';
+  return `<span class="ficha-cobro-estado ${clase}">${esc(estado)}</span> · <span class="ficha-cobro-monto">${uyu(montoUYU)}</span> (vence ${esc(fechaCorta(fecha))}).`;
+}
+
 function abrirFichaConCobro(ficha: AlumnoFicha | null, origen: HTMLElement, alCrear?: (creada: AlumnoFicha) => void): void {
   abrirFicha(ficha, origen, alCrear);
   if (!ficha) return;
@@ -1378,7 +1391,7 @@ function abrirFichaConCobro(ficha: AlumnoFicha | null, origen: HTMLElement, alCr
   const texto = ultimo
     ? `Último pago: ${esc(fechaCorta(ultimo.fecha))} · ${uyu(ultimo.montoUYU)}. Renovación: mismo día del mes siguiente.`
     : deuda
-      ? `${textoVence(deuda.dias)} · ${uyu(deuda.alumno.montoUYU)} (vence ${esc(fechaCorta(deuda.fecha))}).`
+      ? textoCobroFicha(deuda.dias, deuda.alumno.montoUYU, deuda.fecha)
       : 'Sin cobros registrados.';
   const tel = ficha.contacto;
   const avisoLink = deuda && tel ? linkAvisoVencimiento({ telefono: conPrefijo(tel, prefijoMovil), nombre: ficha.nombre, vencimiento: deuda.fecha }) : null;
@@ -1570,8 +1583,8 @@ function pintarCobros() {
   for (const [selector, valor] of Object.entries(kpis)) $(`${selector} .kpi-valor`)!.textContent = valor;
   $('#v-cobros .conteo')!.textContent = etiquetaMes(`${r.periodo}-01`).replace(/^./, (letra) => letra.toUpperCase());
   const n = r.vencenHoy.length;
-  // Sin vencimientos la tarjeta es neutra: no mostramos icono ni tono de alerta.
-  $('#v-hoy .aviso')!.classList.toggle('aviso-vacio', n === 0);
+  // Estado vacío = información neutra, no alerta ámbar (sin vencimientos no hay nada que alertar).
+  $('#v-hoy .aviso')!.classList.toggle('vacio', n === 0);
   $('#v-hoy .aviso strong')!.textContent = n === 1 ? '1 mensualidad vence hoy' : `${n} mensualidades vencen hoy`;
   $('#v-hoy .aviso-sub')!.textContent = n
     ? `${new Intl.ListFormat('es-UY').format(r.vencenHoy.map((f) => f.alumno.nombre))} · Ver en Cobros`
