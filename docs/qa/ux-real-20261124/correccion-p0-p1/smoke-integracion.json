@@ -1,0 +1,66 @@
+{
+  "ok": true,
+  "alumnos": 13,
+  "estadoTrasTap": "Por dar",
+  "cancelacionPersistida": true,
+  "f5": {
+    "conAcciones": [
+      {
+        "ms": 0,
+        "hojasVivas": 0
+      },
+      {
+        "ms": 250,
+        "hojasVivas": 0
+      },
+      {
+        "ms": 350,
+        "hojasVivas": 0
+      }
+    ],
+    "trasCerrarAcciones": [
+      {
+        "ms": 0,
+        "hojasVivas": 0
+      },
+      {
+        "ms": 250,
+        "hojasVivas": 0
+      },
+      {
+        "ms": 350,
+        "hojasVivas": 0
+      }
+    ],
+    "trasDescartar": [
+      {
+        "ms": 0,
+        "hojasVivas": 0
+      },
+      {
+        "ms": 250,
+        "hojasVivas": 0
+      },
+      {
+        "ms": 350,
+        "hojasVivas": 0
+      }
+    ],
+    "trasCancelar": [
+      {
+        "ms": 0,
+        "hojasVivas": 0
+      },
+      {
+        "ms": 250,
+        "hojasVivas": 0
+      },
+      {
+        "ms": 350,
+        "hojasVivas": 0
+      }
+    ],
+    "hojasVivas": 0,
+    "hojasTrasRecarga": []
+  }
+}

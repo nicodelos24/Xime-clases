@@ -1,0 +1,31 @@
+{
+ "publicado-actual .sheet > .sheet-agarre": {
+  "tras50": 1,
+  "tras140": 0
+ },
+ "publicado-actual .sheet > .sheet-head": {
+  "tras50": 1,
+  "tras140": 0
+ },
+ "parche-grip-head .sheet > .sheet-agarre": {
+  "tras50": 1,
+  "tras140": 0
+ },
+ "parche-grip-head .sheet > .sheet-head": {
+  "tras50": 1,
+  "tras140": 0
+ },
+ "largoTouch": {
+  "durante": 1,
+  "despues": 1,
+  "toast": ""
+ },
+ "toqueTouch": {
+  "sheets": 0,
+  "toast": "Clase marcada dada · Deshacer",
+  "cls": "chip chip-dada chip-boton"
+ },
+ "arrastreSobreTarjeta": {
+  "toast": "Clase marcada dada · Deshacer"
+ }
+}

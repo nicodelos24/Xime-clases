@@ -1249,8 +1249,10 @@ function abrirAcciones(id: string) {
   previo.setAttribute('aria-modal', 'true');
   previo.setAttribute('aria-label', `Opciones para ${c.nombre}`);
   const disparador = document.querySelector<HTMLElement>(`[data-acciones="${id}"]`);
+  // Mouse/tactil pueden dejar BODY como foco; el chip real es el retorno.
+  // Teclado conserva el control enfocado desde el que nacio el menu.
   const retorno = document.activeElement instanceof HTMLElement ? document.activeElement : null;
-  const origenFoco = retorno?.isConnected ? retorno : disparador;
+  const origenFoco = retorno?.closest('button, a, [role="button"]') ? retorno : disparador;
   if (origenFoco) {
     origenFoco.id = `clase-acciones-${id}`;
     previo.dataset.retornoFoco = origenFoco.id;

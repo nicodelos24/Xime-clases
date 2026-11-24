@@ -1,0 +1,31 @@
+{
+  "ok": true,
+  "url": "http://localhost:8893/index.html",
+  "gestos": {
+    "agarre50": 1,
+    "agarre140": 0,
+    "cabecera50": 1,
+    "cabecera140": 0
+  },
+  "scrollContenido": 21,
+  "focoEscape": "c-mar-a",
+  "eventos": [
+    "pointerdown:touch",
+    "pointerup:touch",
+    "pointerdown:mouse",
+    "pointerup:mouse",
+    "pointerdown:touch",
+    "pointerup:touch",
+    "pointerdown:touch",
+    "pointerup:touch",
+    "pointerdown:mouse",
+    "pointerup:mouse",
+    "pointerdown:touch",
+    "pointerup:touch",
+    "pointerdown:touch",
+    "pointercancel:touch",
+    "pointerdown:mouse",
+    "pointerup:mouse"
+  ],
+  "errores": []
+}

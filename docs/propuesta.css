@@ -255,6 +255,9 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; width: 0; }
    turquesa oscuro existente (10.01:1), no el turquesa luminoso del tema. */
 [data-tema="oscuro"] .link-suave { color: var(--tq-900); }
 [data-tema="oscuro"] .link-suave:hover { color: var(--tq-900); }
+/* La etiqueta pequeña de la tira usa --tq-900 (9.36:1 sobre blanco); en
+   oscuro se mantiene el gris suave del tema sobre el pill claro v5. */
+[data-tema="oscuro"] .tira-dia span { color: var(--tinta-2); }
 
 .link-suave:active { transform: scale(.96); }
 .link-suave:focus-visible { outline: 2px solid var(--tq-600); outline-offset: 2px; }
@@ -395,9 +398,10 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; width: 0; }
   transition: transform var(--t-rapida) var(--ease), box-shadow var(--t-rapida) var(--ease), background var(--t-rapida) var(--ease);
   animation: aparecer var(--t-media) var(--ease) 220ms both;
 }
+/* El acento v5 luminoso no admite blanco pequeño; el extremo oscuro existente
+   conserva la identidad y da 10.01:1. El hover comparte ese fondo. */
+.fab { background: var(--tq-600); }
 [data-tema="oscuro"] .fab {
-  /* El acento v5 claro no admite blanco pequeño; el extremo oscuro existente
-     conserva la identidad y da 10.01:1. */
   background: var(--tq-900);
 }
 .fab:hover { transform: translateY(-3px); background: var(--tq-700); box-shadow: 0 14px 30px rgba(8,69,74,.36); }
@@ -565,6 +569,12 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; width: 0; }
   /* Mismo acento, tinta lo bastante oscura para AA (10.73:1). */
   background:var(--tq-600); border-color:var(--tq-600); color:var(--tq-900);
 }
+/* Texto activo pequeño sobre acento: el blanco da 5.22:1 en claro; oscuro
+   conserva el acento y usa su extremo oscuro (10.73:1). */
+button[data-orden-cobro].activo {
+  background: var(--tq-600); color: #fff;
+}
+[data-tema="oscuro"] button[data-orden-cobro].activo { color: var(--tq-900); }
 .f-chip:focus-visible { outline:2px solid var(--tq-600); outline-offset:2px; }
 .al-sub { display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
 .etiqueta { font-size:10.5px; font-weight:700; padding:2px 7px; border-radius:999px; }
@@ -593,13 +603,14 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; width: 0; }
 .avatar-4 { background: var(--azul-tinte); color: var(--azul); }
 .avatar-5 { background: var(--verde-tinte); color: var(--verde); }
 .avatar-6 { background: var(--ambar-tinte); color: var(--ambar); }
-[data-tema="oscuro"] .avatar-2 { color: var(--rosa-pastel); }
+/* Pastel de cada paleta sobre su tinte oscuro; el avatar base queda aparte. */
 [data-tema="oscuro"] .avatar-2 { color: var(--rosa-pastel); }
 [data-tema="oscuro"] .avatar-3 { color: #C9B6E8; }
 [data-tema="oscuro"] .avatar-4 { color: #A8CDEA; }
 [data-tema="oscuro"] .avatar-5 { color: var(--verde-pastel); }
-[data-tema="oscuro"] .avatar-6 { color: var(--ambar-pastel); }
-[data-tema="oscuro"] .avatar { color: var(--tq-200); }
+[data-tema="oscuro"] .avatar-6 { color: var(--ambar); }
+/* El avatar sin paleta es el único que usa el acento base del tema. */
+html[data-tema="oscuro"] .avatar:not(.avatar-2):not(.avatar-3):not(.avatar-4):not(.avatar-5):not(.avatar-6) { color: var(--tq-200); }
 .lista-alumnos li > div, .lista-cobros li > div { flex: 1; min-width: 0; }
 .al-nombre { font-size: 14.5px; font-weight: 650; letter-spacing: -.01em; }
 /* Ronda romper y pulir (22-nov) · hallazgo 1: un nombre muy largo ocupaba 3
@@ -816,7 +827,9 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; width: 0; }
 .cobro-importe .pagado { color: var(--verde); }
 [data-tema="oscuro"] .cobro-fila .cobro-vence { background: var(--bg-alt); color: var(--tinta-2); }
 [data-tema="oscuro"] .cobro-fila .cobro-vence.vencido { background: var(--rosa-tinte); color: var(--rosa-pastel); }
-[data-tema="oscuro"] .cobro-fila .cobro-vence.pronto { background: var(--ambar-tinte); color: var(--ambar-pastel); }
+/* Conserva el tinte ámbar v5. --tq-900 existente da 7.64:1; el pastel sobre
+   ese fondo claro sólo alcanzaría 1.32:1. */
+html[data-tema="oscuro"] .cobro-fila .cobro-vence.pronto { background: var(--ambar-tinte); color: var(--tq-900); }
 [data-tema="oscuro"] .cobro-importe b { color: var(--tinta); }
 [data-tema="oscuro"] .cobro-importe .pagado { color: var(--verde); }
 /* A 390/360 px: el nombre no parte la fila y el grupo desaparece antes que el monto. */
@@ -833,8 +846,10 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; width: 0; }
 
 /* Cobros: la fila completa abre el detalle, sin un botón repetido por alumno. */
 .cobros-contexto { display: flex; align-items: center; gap: 9px; }
-#abrir-historial { cursor: pointer; font-family: inherit; min-height: 44px; background: var(--tq-100); }
-#abrir-historial:hover { background: var(--tq-200); }
+#abrir-historial { cursor: pointer; font-family: inherit; min-height: 44px; background: var(--tq-50); color: var(--tq-900); }
+/* En oscuro el botón conserva su tinte v5; el extremo oscuro existente da
+   10.01:1 sobre --tq-50 (6.98:1 sobre --tq-100). */
+[data-tema="oscuro"] #abrir-historial { color: var(--tq-900); }
 #lista-cobros > li { padding: 0; }
 .cobro-fila {
   display: flex; align-items: center; gap: 9px; width: 100%; min-width: 0;
@@ -879,11 +894,10 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; width: 0; }
    rosa-pastel 8.17:1 y ámbar-pastel 9.61:1 (AA en los cuatro casos). */
 .ficha-cobro .ficha-cobro-estado { font-weight: 650; }
 .ficha-cobro .ficha-cobro-estado.vencido { color: var(--rosa); }
-.ficha-cobro .ficha-cobro-estado.vencido { color: var(--rosa); }
 .ficha-cobro .ficha-cobro-estado.pendiente { color: var(--ambar); }
 .ficha-cobro .ficha-cobro-monto { font-weight: 700; color: var(--tinta); }
 [data-tema="oscuro"] .ficha-cobro-estado.vencido { color: var(--rosa-pastel); }
-[data-tema="oscuro"] .ficha-cobro-estado.pendiente { color: var(--ambar-pastel); }
+[data-tema="oscuro"] .ficha-cobro .ficha-cobro-estado.pendiente { color: var(--ambar-pastel); }
 /* Contacto de la ficha: el número se ve como dato (no como texto auxiliar) y
    el enlace de WhatsApp queda debajo, alineado al mismo margen. */
 .ficha-contacto { display: flex; align-items: baseline; gap: 6px; margin-top: 8px; color: var(--tinta); }
@@ -912,7 +926,7 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; width: 0; }
 .ficha-accion-wa { color: var(--tq-700); }
 .ficha-acciones .ficha-accion:not(.ficha-accion-wa) { color: var(--tinta-2); font-weight: 650; }
 .ficha-acciones .ficha-accion:focus-visible { outline: 2px solid var(--tq-600); outline-offset: 2px; }
-[data-tema="oscuro"] .ficha-cobro .ficha-cobro-estado.vencido { color: var(--rosa-pastel); }
+[data-tema="oscuro"] .ficha-cobro-estado.vencido { color: var(--rosa-pastel); }
 [data-tema="oscuro"] .ficha-cobro .ficha-cobro-estado.pendiente { color: var(--ambar-pastel); }
 .cobros-panel-lista { list-style: none; margin-top: 12px; }
 .cobros-panel-lista > li { border-top: 1px solid var(--linea); padding: 10px 0; }

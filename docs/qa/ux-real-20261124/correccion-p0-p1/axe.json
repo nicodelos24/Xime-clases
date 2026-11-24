@@ -1,0 +1,98 @@
+{
+ "320-claro": {
+  "tema": "claro",
+  "v-hoy": {
+   "region .marca": 1
+  },
+  "v-semana": {
+   "region .marca": 1
+  },
+  "v-alumnos": {
+   "region .marca": 1
+  },
+  "v-cobros": {
+   "region .marca": 1
+  },
+  "ficha": {}
+ },
+ "320-oscuro": {
+  "tema": "oscuro",
+  "v-hoy": {
+   "region .marca": 1
+  },
+  "v-semana": {
+   "region .marca": 1
+  },
+  "v-alumnos": {
+   "region .marca": 1
+  },
+  "v-cobros": {
+   "region .marca": 1
+  },
+  "ficha": {}
+ },
+ "390-claro": {
+  "tema": "claro",
+  "v-hoy": {
+   "region .marca": 1
+  },
+  "v-semana": {
+   "region .marca": 1
+  },
+  "v-alumnos": {
+   "region .marca": 1
+  },
+  "v-cobros": {
+   "region .marca": 1
+  },
+  "ficha": {}
+ },
+ "390-oscuro": {
+  "tema": "oscuro",
+  "v-hoy": {
+   "region .marca": 1
+  },
+  "v-semana": {
+   "region .marca": 1
+  },
+  "v-alumnos": {
+   "region .marca": 1
+  },
+  "v-cobros": {
+   "region .marca": 1
+  },
+  "ficha": {}
+ },
+ "1440-claro": {
+  "tema": "claro",
+  "v-hoy": {
+   "region .marca": 1
+  },
+  "v-semana": {
+   "region .marca": 1
+  },
+  "v-alumnos": {
+   "region .marca": 1
+  },
+  "v-cobros": {
+   "region .marca": 1
+  },
+  "ficha": {}
+ },
+ "1440-oscuro": {
+  "tema": "oscuro",
+  "v-hoy": {
+   "region .marca": 1
+  },
+  "v-semana": {
+   "region .marca": 1
+  },
+  "v-alumnos": {
+   "region .marca": 1
+  },
+  "v-cobros": {
+   "region .marca": 1
+  },
+  "ficha": {}
+ }
+}
