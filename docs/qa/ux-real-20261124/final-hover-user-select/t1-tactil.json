@@ -1,0 +1,126 @@
+{
+ "sha": "da831ae5",
+ "casos": [
+  {
+   "modo": "tactil",
+   "zona": ".sheet > .sheet-agarre",
+   "reducedMotion": true,
+   "abiertos_antes": 1,
+   "tras50": 1,
+   "tras140": 0,
+   "pointercancel": 0,
+   "ok": true,
+   "errores": []
+  },
+  {
+   "modo": "tactil",
+   "zona": ".sheet > .sheet-agarre",
+   "reducedMotion": false,
+   "abiertos_antes": 1,
+   "tras50": 1,
+   "tras140": 0,
+   "pointercancel": 0,
+   "ok": true,
+   "errores": []
+  },
+  {
+   "modo": "tactil",
+   "zona": ".sheet > .sheet-head",
+   "reducedMotion": true,
+   "abiertos_antes": 1,
+   "tras50": 1,
+   "tras140": 0,
+   "pointercancel": 0,
+   "ok": true,
+   "errores": []
+  },
+  {
+   "modo": "tactil",
+   "zona": ".sheet > .sheet-head",
+   "reducedMotion": false,
+   "abiertos_antes": 1,
+   "tras50": 1,
+   "tras140": 0,
+   "pointercancel": 0,
+   "ok": true,
+   "errores": []
+  },
+  {
+   "modo": "mouse",
+   "zona": ".sheet > .sheet-agarre",
+   "reducedMotion": true,
+   "abiertos_antes": 1,
+   "tras50": 1,
+   "tras140": 0,
+   "pointercancel": 0,
+   "ok": true,
+   "errores": []
+  },
+  {
+   "modo": "mouse",
+   "zona": ".sheet > .sheet-agarre",
+   "reducedMotion": false,
+   "abiertos_antes": 1,
+   "tras50": 1,
+   "tras140": 0,
+   "pointercancel": 0,
+   "ok": true,
+   "errores": []
+  },
+  {
+   "modo": "mouse",
+   "zona": ".sheet > .sheet-head",
+   "reducedMotion": true,
+   "abiertos_antes": 1,
+   "tras50": 1,
+   "tras140": 0,
+   "pointercancel": 0,
+   "ok": true,
+   "errores": []
+  },
+  {
+   "modo": "mouse",
+   "zona": ".sheet > .sheet-head",
+   "reducedMotion": false,
+   "abiertos_antes": 1,
+   "tras50": 1,
+   "tras140": 0,
+   "pointercancel": 0,
+   "ok": true,
+   "errores": []
+  },
+  {
+   "w": [
+    320,
+    568
+   ],
+   "info": {
+    "cls": "sheet cobros-panel",
+    "sh": 1142,
+    "ch": 455,
+    "top": 0
+   },
+   "scrollTop_despues": 157,
+   "sheetsTrasScroll": 1,
+   "pointercancelEnScroll": 1,
+   "ok": true
+  },
+  {
+   "w": [
+    390,
+    844
+   ],
+   "info": {
+    "cls": "sheet cobros-panel",
+    "sh": 1064,
+    "ch": 731,
+    "top": 0
+   },
+   "scrollTop_despues": 160,
+   "sheetsTrasScroll": 1,
+   "pointercancelEnScroll": 1,
+   "ok": true
+  }
+ ],
+ "todoOk": true
+}

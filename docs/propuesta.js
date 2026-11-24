@@ -1,24 +1,24 @@
 // Clases v5 · navegación + funcionamiento (auto-marcado, Cancelar clase, WhatsApp)
 // La estética vive en tokens.css/propuesta.css; acá solo se cambian estados,
 // textos y el flujo de cancelación. Sin emoji: solo SVG de icons.js.
-import { horaClase, } from './src/clases.js?v=202611240745';
-import { CLAVE_ESTADO, RepositorioClases, almacenLocalStorage } from './src/repositorio.js?v=202611240745';
-import { alumnosCobrosDemo, datosDemo, fichasDemo } from './src/demo.js?v=202611240745';
-import { resumenCobros, filtrarCobros, ordenarCobros } from './src/cobros.js?v=202611240745';
-import { construirVista, filtrarYOrdenar, puntoEstadoVence, textoEstadoVence, validarAlumno, iniciales, colorPorId, esFotoValida, } from './src/alumnos.js?v=202611240745';
-import { resumenHoy, clasesDelDia, clasesDeLaSemana } from './src/resumen.js?v=202611240745';
-import { registrarToqueFecha, mesDe } from './src/agenda.js?v=202611240745';
-import { primerDiaDeMes, diaSeleccionadoAlCargar } from './src/agenda-mes.js?v=202611240745';
-import { decisionDeGesto, decisionDeAperturaDeMenu, DURACION_TOQUE_LARGO, UMBRAL_MOVIMIENTO_GESTO } from './src/toque-clase.js?v=202611240745';
-import { destinoDeEnlace, vistaInicial, vistasActivas } from './src/navegacion.js?v=202611240745';
-import { pistaDeTira } from './src/scroll-pista.js?v=202611240745';
-import { actualizarBarra, estadoBarraInicial, debeReaparecerPorQuietud, REAPARECER_TRAS_MS, } from './src/barra-scroll.js?v=202611240745';
-import { ajustarLock, debeBloquearScroll, estiloSheet, debeCerrarPorToqueFuera, esToqueFuera, debeSuprimirClickTrasCierre, decisionCierreSheetsPorNavegacion, debeCerrarPorDeslizar, FRANJA_CIERRE, } from './src/sheets.js?v=202611240745';
-import { diaCorto, mesCorto, etiquetaDia, etiquetaDiaCompleta, etiquetaMes, fechaCorta, sumarDias, parseFecha, lunesDe, diasDelMes, esFechaValida, } from './src/fechas.js?v=202611240745';
-import { relojDelDispositivo, hoyLocal } from './src/reloj.js?v=202611240745';
-import { CLAVE_PREFIJO, PREFIJO_POR_DEFECTO, prefijoEsValido, prefijoSeguro, conPrefijo } from './src/prefijo.js?v=202611240745';
-import { bloqueContacto } from './src/contacto.js?v=202611240745';
-import { textoCancelacion, destinos, resumenEnvio, linkTexto, linkAvisoVencimiento, } from './src/whatsapp.js?v=202611240745';
+import { horaClase, } from './src/clases.js?v=202611240800';
+import { CLAVE_ESTADO, RepositorioClases, almacenLocalStorage } from './src/repositorio.js?v=202611240800';
+import { alumnosCobrosDemo, datosDemo, fichasDemo } from './src/demo.js?v=202611240800';
+import { resumenCobros, filtrarCobros, ordenarCobros } from './src/cobros.js?v=202611240800';
+import { construirVista, filtrarYOrdenar, puntoEstadoVence, textoEstadoVence, validarAlumno, iniciales, colorPorId, esFotoValida, } from './src/alumnos.js?v=202611240800';
+import { resumenHoy, clasesDelDia, clasesDeLaSemana } from './src/resumen.js?v=202611240800';
+import { registrarToqueFecha, mesDe } from './src/agenda.js?v=202611240800';
+import { primerDiaDeMes, diaSeleccionadoAlCargar } from './src/agenda-mes.js?v=202611240800';
+import { decisionDeGesto, decisionDeAperturaDeMenu, DURACION_TOQUE_LARGO, UMBRAL_MOVIMIENTO_GESTO } from './src/toque-clase.js?v=202611240800';
+import { destinoDeEnlace, vistaInicial, vistasActivas } from './src/navegacion.js?v=202611240800';
+import { pistaDeTira } from './src/scroll-pista.js?v=202611240800';
+import { actualizarBarra, estadoBarraInicial, debeReaparecerPorQuietud, REAPARECER_TRAS_MS, } from './src/barra-scroll.js?v=202611240800';
+import { ajustarLock, debeBloquearScroll, estiloSheet, debeCerrarPorToqueFuera, esToqueFuera, debeSuprimirClickTrasCierre, decisionCierreSheetsPorNavegacion, debeCerrarPorDeslizar, FRANJA_CIERRE, } from './src/sheets.js?v=202611240800';
+import { diaCorto, mesCorto, etiquetaDia, etiquetaDiaCompleta, etiquetaMes, fechaCorta, sumarDias, parseFecha, lunesDe, diasDelMes, esFechaValida, } from './src/fechas.js?v=202611240800';
+import { relojDelDispositivo, hoyLocal } from './src/reloj.js?v=202611240800';
+import { CLAVE_PREFIJO, PREFIJO_POR_DEFECTO, prefijoEsValido, prefijoSeguro, conPrefijo } from './src/prefijo.js?v=202611240800';
+import { bloqueContacto } from './src/contacto.js?v=202611240800';
+import { textoCancelacion, destinos, resumenEnvio, linkTexto, linkAvisoVencimiento, } from './src/whatsapp.js?v=202611240800';
 /* ------------------------------------------------- estado persistente (local) */
 const reloj = relojDelDispositivo();
 /** Quién opera la app hoy: único dueño. En Fase 4 sale de la sesión. */
@@ -41,7 +41,7 @@ function avisar(txt, ms = 2200) {
     // sin robarlo si el usuario ya está navegando (tabindex="-1", sin focus()).
 }
 function esc(s) {
-    return s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '<', '>': '>', '"': '&quot;', '\'': '&#39;' })[c]);
+    return s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', '\'': '&#39;' })[c]);
 }
 /** Chip de estado de una clase (SVG, sin emoji). */
 function chipEstado(c) {

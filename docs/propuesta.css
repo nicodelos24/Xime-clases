@@ -405,6 +405,7 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; width: 0; }
   background: var(--tq-900);
 }
 .fab:hover { transform: translateY(-3px); background: var(--tq-700); box-shadow: 0 14px 30px rgba(8,69,74,.36); }
+[data-tema="oscuro"] .fab:hover { background: var(--tq-900); }
 .fab:active { transform: scale(.96); }
 
 /* ---------- Mes ---------- */
@@ -663,6 +664,7 @@ html[data-tema="oscuro"] .avatar:not(.avatar-2):not(.avatar-3):not(.avatar-4):no
 .foto-alumno-acciones .ficha-accion + .ficha-accion { border-top: 1px solid var(--linea); }
 .foto-alumno-acciones .ficha-accion:last-child { padding-bottom: 11px; }
 .foto-alumno-acciones .ficha-accion:hover { background: var(--tq-50); }
+[data-tema="oscuro"] .foto-alumno-acciones .ficha-accion:hover { background: var(--tq-100); }
 .foto-alumno-acciones .ficha-accion:active { transform: scale(.97); }
 .foto-alumno-acciones .ficha-accion:focus-visible { outline: 2px solid var(--tq-600); outline-offset: 2px; }
 [data-tema="oscuro"] .foto-alumno-acciones .ficha-accion { color: var(--tq-700); }
@@ -703,7 +705,7 @@ html[data-tema="oscuro"] .avatar:not(.avatar-2):not(.avatar-3):not(.avatar-4):no
 /* La cabecera y el agarre son zona de arrastre propio: `pan-y` en el sheet
    hacía que Chrome tomara el gesto y emitiera pointercancel antes del cierre.
    El resto del cuadro conserva `pan-y` para scrollear su contenido. */
-.sheet-agarre, .sheet-head { touch-action: none; }
+.sheet-agarre, .sheet-head { touch-action: none; user-select: none; }
 
 /* ---- Cobros: filtros y orden (B6) ---- */
 .filtros .f-chip .n {

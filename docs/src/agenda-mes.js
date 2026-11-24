@@ -12,7 +12,7 @@
  * elegido solo se conserva si cae en ese mismo mes (no se selecciona solo un
  * día de otro mes). Puro: sin DOM, sin reloj y sin almacenamiento.
  */
-import { mesDe } from './agenda.js?v=202611240745';
+import { mesDe } from './agenda.js?v=202611240800';
 /** El mes de la fecha real, en "AAAA-MM" (lo que devuelve `mesDe`). */
 export function mesDeHoy(hoy) {
     return mesDe(hoy);

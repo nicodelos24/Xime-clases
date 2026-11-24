@@ -1,4 +1,4 @@
-import { diasDeFecha, diasDelMes, esFechaValida, parseFecha } from './fechas.js?v=202611240745';
+import { diasDeFecha, diasDelMes, esFechaValida, parseFecha } from './fechas.js?v=202611240800';
 function textoNoVacio(valor) {
     return typeof valor === 'string' && valor.trim().length > 0;
 }

@@ -1,0 +1,32 @@
+[
+ {
+  "zona": ".sheet > .sheet-agarre",
+  "intentos": [
+   {
+    "dy": 50,
+    "abiertos": 1,
+    "eventos": []
+   },
+   {
+    "dy": 140,
+    "abiertos": 0,
+    "eventos": []
+   }
+  ]
+ },
+ {
+  "zona": ".sheet > .sheet-head",
+  "intentos": [
+   {
+    "dy": 50,
+    "abiertos": 1,
+    "eventos": []
+   },
+   {
+    "dy": 140,
+    "abiertos": 0,
+    "eventos": []
+   }
+  ]
+ }
+]

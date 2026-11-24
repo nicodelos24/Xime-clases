@@ -26,7 +26,9 @@ export function iniciales(nombre) {
     const partes = nombre.trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '').split(/\s+/).filter(Boolean);
     if (partes.length === 0)
         return '?';
-    return (partes[0][0] + (partes[1]?.[0] ?? '')).toUpperCase();
+    // Sólo letras: un nombre hostil no puede convertir las iniciales en HTML.
+    const ini = (partes[0][0] + (partes[1]?.[0] ?? '')).toUpperCase().replace(/[^A-Z]/g, '');
+    return ini || '?';
 }
 function texto(valor) {
     return typeof valor === 'string' ? valor.trim() : '';

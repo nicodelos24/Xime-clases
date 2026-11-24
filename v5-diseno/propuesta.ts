@@ -64,7 +64,7 @@ function avisar(txt: string, ms = 2200) {
 }
 
 function esc(s: string): string {
-  return s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '<', '>': '>', '"': '&quot;', '\'': '&#39;' })[c] as string);
+  return s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', '\'': '&#39;' })[c] as string);
 }
 
 /** Chip de estado de una clase (SVG, sin emoji). */

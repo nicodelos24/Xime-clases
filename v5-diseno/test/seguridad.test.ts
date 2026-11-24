@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { createRequire } from 'node:module';
-import { COLORES, normalizarFichaGuardada, colorPorId } from '../src/alumnos.ts';
+import { COLORES, normalizarFichaGuardada, colorPorId, iniciales } from '../src/alumnos.ts';
 import { normalizarPagoGuardado, registrarPago, resumenCobros } from '../src/cobros.ts';
 import { almacenMemoria, almacenLocalStorage, CLAVE_ESTADO, CLAVE_RUTINAS, RepositorioClases, type Almacen } from '../src/repositorio.ts';
 import { relojFalso } from '../src/reloj.ts';
@@ -22,6 +22,27 @@ const domDeAtributos = (ficha: NonNullable<ReturnType<typeof normalizarFichaGuar
   + `<input value="${ficha.id}">`
   + `<span class="avatar ${ficha.color}">${ficha.nombre.slice(0, 2)}</span>`,
 );
+
+test('SEG-01: las iniciales sólo contienen letras A-Z, nunca HTML de un nombre hostil', () => {
+  assert.equal(iniciales('Nora Pérez'), 'NP', 'un nombre normal no cambia');
+  assert.equal(iniciales('  ana  '), 'A', 'una sola palabra sigue igual');
+  assert.equal(iniciales(''), '?', 'vacío sigue siendo ?');
+  // Un nombre hostil no puede convertir las iniciales en marcado ni en un
+  // atributo class inyectado: cualquier carácter no A-Z se descarta.
+  assert.equal(iniciales('<img src=x onerror=alert(1)>'), 'S', 'angle brackets y signos no superviven: sólo queda la S de src');
+  assert.equal(iniciales('"><script>'), '?', 'sin letras utilizables devuelve ?');
+  assert.equal(iniciales('123 456'), '?', 'sólo dígitos devuelve ?');
+  assert.equal(iniciales('Álvaro Ñandú'), 'AN', 'acentos y ñ se normalizan a letras');
+});
+
+test('SEG-01: esc() escapa > como &gt; para cerrar la inyección en texto/atributos', () => {
+  // `esc` es privada de propuesta.ts (módulo de UI con efectos en DOM). Se
+  // verifica en el fuente que el mapa de escapado cubre también '>' — sin él,
+  // un nombre con '>' puede cerrar prematuramente un elemento/atributo.
+  const fs = createRequire(import.meta.url)('node:fs') as typeof import('node:fs');
+  const fuente = fs.readFileSync(new URL('../propuesta.ts', import.meta.url), 'utf8');
+  assert.match(fuente, /['"]>['"]:\s*['"]&gt;['"]/, "esc() debe mapear '>' a '&gt;'");
+});
 
 test('SEG-01: los atributos de ID/color no crean nodos ni eventos inyectados', () => {
   const ficha = normalizarFichaGuardada({ id: payload, nombre: 'Alumna', fechaAlta: '2026-11-01', color: 'avatar' });
