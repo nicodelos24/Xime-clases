@@ -1,0 +1,24 @@
+{
+  "ok": true,
+  "url": "http://127.0.0.1:8897/index.html",
+  "crudos": 6,
+  "idsCrudos": [
+    null,
+    null,
+    "pago-texto",
+    "pago-periodo",
+    "pago-headless-001",
+    "pago-headless-001"
+  ],
+  "filas": 1,
+  "etiquetas": [
+    "Ver ficha de Alumna Pagos, deuda $6.500, Vence hoy"
+  ],
+  "kpis": [
+    "$1.234",
+    "1"
+  ],
+  "errores": [],
+  "fuente": "Emma aa5f8ca6 · fixtures/inv-pagos.json",
+  "nota": "los 6 pagos corruptos se siembran en localStorage; el repositorio los normaliza al cargar"
+}
