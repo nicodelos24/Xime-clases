@@ -346,9 +346,12 @@ test('REGRESIÓN ancla: los defaults (21 / contacto vacío) se aplican SOLO al c
 test('REGRESIÓN al día: vence hoy (días=0) NO es "al día" y no lo oculta el chip', () => {
   const { repo } = abrir(almacenMemoria());
   const fichas = repo.listarAlumnos();
-  // Mapa de Cobros: a3 vence hoy (0), a2 en 6 días, a10 vencido (-4); el resto sin entrada = al día.
-  const mapa = new Map<string, number>([['a3', 0], ['a2', 6], ['a10', -4]]);
+  // Mapa de Cobros: a3 vence hoy (0), a0 en 6 días, a10 vencido (-4); el resto sin entrada = al día.
+  const mapa = new Map<string, number>([['a3', 0], ['a0', 6], ['a10', -4]]);
   const filas = construirVista(fichas, mapa, HOY);
+  // a2 es individual: NO toma el vencimiento mensual (deuda sale de sus clases).
+  assert.ok(filas.filter((f) => f.modalidad === 'individual')
+    .every((f) => f.vence === null && f.estadoVence === 'aldia'));
 
   const hoyFila = filas.find((f) => f.id === 'a3')!;
   assert.equal(hoyFila.estadoVence, 'hoy');
@@ -356,7 +359,7 @@ test('REGRESIÓN al día: vence hoy (días=0) NO es "al día" y no lo oculta el 
   assert.equal(textoEstadoVence(hoyFila), 'vence hoy');
   assert.equal(puntoEstadoVence(hoyFila), 'punto-ambar');
 
-  const alDia = filas.find((f) => f.id === 'a0')!; // sin entrada en el mapa
+  const alDia = filas.find((f) => f.id === 'a1')!; // sin entrada en el mapa
   assert.equal(alDia.estadoVence, 'aldia');
   assert.equal(alDia.vence, null);
   assert.equal(textoEstadoVence(alDia), 'al día');
@@ -366,20 +369,20 @@ test('REGRESIÓN al día: vence hoy (días=0) NO es "al día" y no lo oculta el 
   const filtradas = filtrarYOrdenar(filas, '', new Set(['aldia']), 'ninguno');
   assert.ok(filtradas.every((f) => f.estadoVence === 'aldia'));
   assert.equal(filtradas.some((f) => f.id === 'a3'), false, 'vence hoy NO se oculta como al día');
-  assert.equal(filtradas.some((f) => f.id === 'a2'), false, 'pendiente NO se oculta como al día');
+  assert.equal(filtradas.some((f) => f.id === 'a0'), false, 'pendiente NO se oculta como al día');
   assert.equal(filtradas.some((f) => f.id === 'a10'), false, 'vencido NO se oculta como al día');
-  assert.equal(filtradas.some((f) => f.id === 'a0'), true, 'al día SÍ se muestra con el chip');
+  assert.equal(filtradas.some((f) => f.id === 'a1'), true, 'al día SÍ se muestra con el chip');
 });
 
 test('REGRESIÓN al día: texto, punto y chip son coherentes para los cuatro estados', () => {
   const { repo } = abrir(almacenMemoria());
-  const mapa = new Map<string, number>([['a3', 0], ['a2', 6], ['a10', -4]]);
+  const mapa = new Map<string, number>([['a3', 0], ['a0', 6], ['a10', -4]]);
   const filas = construirVista(repo.listarAlumnos(), mapa, HOY);
   const esperado: Record<string, { texto: string; punto: string }> = {
     a3: { texto: 'vence hoy', punto: 'punto-ambar' },
-    a2: { texto: 'vence en 6 días', punto: 'punto-ambar' },
+    a0: { texto: 'vence en 6 días', punto: 'punto-ambar' },
     a10: { texto: 'vencido', punto: 'punto-rosa' },
-    a0: { texto: 'al día', punto: 'punto-verde' },
+    a1: { texto: 'al día', punto: 'punto-verde' },
   };
   for (const [id, exp] of Object.entries(esperado)) {
     const f = filas.find((x) => x.id === id)!;

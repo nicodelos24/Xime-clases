@@ -1,5 +1,6 @@
 import { diasDeFecha, diasDelMes, esFechaValida, parseFecha } from './fechas.ts';
 import type { Clase } from './clases.ts';
+import { precio, type AlumnoTarifa } from './tarifas.ts';
 
 /** Concepto del cobro. Los pagos históricos sin este campo son mensualidades. */
 export type ConceptoPago = 'mensualidad' | 'clase-individual';
@@ -242,15 +243,40 @@ export function cobrosIndividuales(
   const activos = pagos.filter((p) => !p.anulado && p.concepto === 'clase-individual');
   return clases
     .filter((c) => c.estado === 'dada')
-    .flatMap<CobroIndividual | null>((clase) => clase.alumnos.map((a) => {
-      const alumno = porId.get(a.id);
-      if (!alumno || !alumno.individual) return null;
-      const pago = activos.find((p) => p.alumnoId === alumno.id && p.claseId === clase.id);
-      return { alumno, clase, fecha: clase.fecha, ...(pago ? { pago } : {}) };
-    }))
+    .flatMap<CobroIndividual | null>((clase) => {
+      const participantes = new Set<string>();
+      return clase.alumnos.flatMap((a) => {
+        if (participantes.has(a.id)) return [];
+        participantes.add(a.id);
+        const alumno = porId.get(a.id);
+        if (!alumno || !alumno.individual) return [null];
+        const pago = activos.find((p) => p.alumnoId === alumno.id && p.claseId === clase.id);
+        return [{ alumno, clase, fecha: clase.fecha, ...(pago ? { pago } : {}) }];
+      });
+    })
     .filter((f): f is CobroIndividual => f !== null)
     .filter((f) => f.fecha <= hoy)
     .sort((a, b) => a.fecha.localeCompare(b.fecha) || a.alumno.nombre.localeCompare(b.alumno.nombre, 'es'));
+}
+
+/** Resumen de una individual con la MISMA fuente que la lista de Cobros. */
+export type DeudaIndividual = {
+  clases: number;
+  montoUYU: number;
+  sinTarifa: boolean;
+};
+
+export function deudaIndividual(
+  alumno: AlumnoTarifa & { id: string },
+  cobros: readonly CobroIndividual[],
+): DeudaIndividual {
+  const pendientes = cobros.filter((f) => f.alumno.id === alumno.id && !f.pago);
+  const tarifa = precio(alumno, 'clase-individual', pendientes.at(-1)?.fecha ?? '');
+  return {
+    clases: pendientes.length,
+    montoUYU: tarifa === null ? 0 : tarifa * pendientes.length,
+    sinTarifa: pendientes.length > 0 && tarifa === null,
+  };
 }
 
 /**

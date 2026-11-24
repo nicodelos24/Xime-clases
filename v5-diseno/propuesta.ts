@@ -8,8 +8,8 @@ import type { DiaSemana } from './src/agendar.ts';
 import { CLAVE_ESTADO, RepositorioClases, almacenLocalStorage, type RepositorioDeClases } from './src/repositorio.ts';
 import { alumnosCobrosDemo, datosDemo, fichasDemo } from './src/demo.ts';
 import {
-  resumenCobros, cobrosIndividuales, filtrarCobros, ordenarCobros,
-  type EstadoCobro, type OrdenCobro, type Pago,
+  resumenCobros, cobrosIndividuales, deudaIndividual as deudaInd, filtrarCobros, ordenarCobros,
+  type EstadoCobro, type OrdenCobro, type Pago, type AlumnoCobro, type DeudaIndividual,
 } from './src/cobros.ts';
 import { precioPrecargado, precio } from './src/tarifas.ts';
 import {
@@ -1679,7 +1679,12 @@ function avatarAlumno(nombre: string, id: string, foto: string | undefined, tama
 }
 
 function filasAlumnos(): FichaVista[] {
-  return construirVista(repo.listarAlumnos(), vencimientosDeCobros(), hoyLocal(reloj.ahora()));
+  const deudas = new Map<string, DeudaIndividual>();
+  for (const alumno of repo.listarAlumnos().filter((f) => f.modalidad === 'individual')) {
+    const fila = { ...alumno, montoUYU: precio(alumno, 'clase-individual', hoyLocal(reloj.ahora())) ?? 0 };
+    deudas.set(alumno.id, deudaInd(alumno, cobrosIndividuales([fila], repo.listarPagos(), clases, hoyLocal(reloj.ahora()))));
+  }
+  return construirVista(repo.listarAlumnos(), vencimientosDeCobros(), hoyLocal(reloj.ahora()), deudas);
 }
 
 function alumnoSub(a: FichaVista): string {
@@ -1889,6 +1894,12 @@ function cablearFotoFicha(dialogo: HTMLDialogElement, ficha: AlumnoFicha | null,
   dialogo.querySelector('[data-quitar-foto]')?.addEventListener('click', () => onFoto(''));
 }
 
+/** Importe en UYU para resúmenes; sin cero ficticio cuando falta la tarifa. */
+function importeIndividual(f: CobroIndividualVista): string {
+  if (f.pago) return uyu(f.pago.montoUYU);
+  return f.alumno.montoUYU > 0 ? uyu(f.alumno.montoUYU) : 'Falta cargar la tarifa';
+}
+
 function abrirFichaConCobro(ficha: AlumnoFicha | null, origen: HTMLElement, alCrear?: (creada: AlumnoFicha) => void): void {
   abrirFicha(ficha, origen, alCrear);
   if (!ficha) return;
@@ -1896,18 +1907,30 @@ function abrirFichaConCobro(ficha: AlumnoFicha | null, origen: HTMLElement, alCr
   // vinculado por ID, sin depender del nombre ni de recordar el período.
   const dialogo = document.querySelector<HTMLDialogElement>('dialog.sheet.cobros-panel[open]');
   if (!dialogo) return;
+  const individuales = verCobrosIndividuales().filter((f) => f.alumno.id === ficha.id);
+  const individualPendiente = individuales.find((f) => !f.pago);
+  const deudaIndividual = ficha.modalidad === 'individual'
+    ? deudaInd(ficha, verCobrosIndividuales())
+    : null;
   const r = verCobros();
-  const filas = r.filas.filter((f) => f.alumno.id === ficha.id);
+  // Una individual NUNCA toma el vencimiento ni el KPI de mensualidad.
+  const filas = ficha.modalidad === 'individual' ? [] : r.filas.filter((f) => f.alumno.id === ficha.id);
   const deuda = filas.find((f) => !f.pago && f.dias >= 0) ?? filas.find((f) => !f.pago);
   const pagos = repo.listarPagos().filter((p) => p.alumnoId === ficha.id && !p.anulado);
   const ultimo = pagos.at(-1);
   const resumen = document.createElement('div');
   resumen.className = 'cobros-panel-nota ficha-cobro';
-  const texto = ultimo
-    ? `Último pago: ${esc(fechaCorta(ultimo.fecha))} · ${uyu(ultimo.montoUYU)}. Renovación: mismo día del mes siguiente.`
-    : deuda
-      ? textoCobroFicha(deuda.dias, deuda.alumno.montoUYU, deuda.fecha)
-      : 'Sin cobros registrados.';
+  const texto = individualPendiente
+    ? deudaIndividual?.sinTarifa
+      ? `<span class="ficha-cobro-monto">Falta cargar la tarifa</span>. ${uyu(0)} no es una deuda: cargá el importe al registrar el pago.`
+      : `<span class="ficha-cobro-estado vencido">${deudaIndividual!.clases} ${deudaIndividual!.clases === 1 ? 'clase individual pendiente' : 'clases individuales pendientes'}</span> · <span class="ficha-cobro-monto">${uyu(deudaIndividual!.montoUYU)}</span>.`
+    : ultimo && ficha.modalidad === 'individual'
+      ? `Último pago individual: ${esc(fechaCorta(ultimo.fecha))} · ${uyu(ultimo.montoUYU)}.`
+      : ultimo
+        ? `Último pago: ${esc(fechaCorta(ultimo.fecha))} · ${uyu(ultimo.montoUYU)}. Renovación: mismo día del mes siguiente.`
+        : deuda
+          ? textoCobroFicha(deuda.dias, deuda.alumno.montoUYU, deuda.fecha)
+          : 'Sin cobros registrados.';
   // Contacto (arreglo funcional): el número real se VE en la ficha y el botón
   // abre wa.me con ESE número. Sin número no se muestra un link falso.
   const contacto = bloqueContacto(ficha.nombre, ficha.contacto ?? '', prefijoMovil);
@@ -1917,30 +1940,42 @@ function abrirFichaConCobro(ficha: AlumnoFicha | null, origen: HTMLElement, alCr
   // Cabecera con chips (rediseño 23-nov, A4/B8): alumno + deuda + vencimiento
   // a la vista, cada dato en su chip. Deuda solo si la hay; sin deuda, el
   // chip dice «Al día». Sin inventar datos.
-  const chipDeuda = deuda
-    ? `<span class="ficha-chip ficha-chip-deuda">${uyu(deuda.alumno.montoUYU)}</span>`
-    : `<span class="ficha-chip ficha-chip-ok">Al día</span>`;
-  const chipVence = deuda
-    ? `<span class="ficha-chip ficha-chip-vence">${esc(textoVence(deuda.dias))}</span>`
-    : '';
+  const chipDeuda = individualPendiente
+    ? deudaIndividual?.sinTarifa
+      ? '<span class="ficha-chip ficha-chip-deuda">Falta cargar la tarifa</span>'
+      : `<span class="ficha-chip ficha-chip-deuda">${uyu(deudaIndividual!.montoUYU)}</span>`
+    : deuda
+      ? `<span class="ficha-chip ficha-chip-deuda">${uyu(deuda.alumno.montoUYU)}</span>`
+      : '<span class="ficha-chip ficha-chip-ok">Al día</span>';
+  const chipVence = individualPendiente
+    ? `<span class="ficha-chip ficha-chip-vence">${deudaIndividual!.clases} ${deudaIndividual!.clases === 1 ? 'clase' : 'clases'}</span>`
+    : deuda
+      ? `<span class="ficha-chip ficha-chip-vence">${esc(textoVence(deuda.dias))}</span>`
+      : '';
+  const ayudaCobro = ficha.modalidad === 'individual'
+    ? 'Cada clase dada sin pago genera un cobro individual. Reservar, programar o cancelar no genera deuda.'
+    : 'La mensualidad vence el mismo día del mes siguiente al alta. Si pagó después, corregí la fecha del pago: queda registrado con su motivo.';
   resumen.innerHTML = `<div class="ficha-chips">
       <span class="ficha-chip ficha-chip-alumno">${avatarAlumno(ficha.nombre, ficha.id, ficha.foto, 22)}${esc(ficha.nombre)}</span>
       ${chipDeuda}${chipVence}
     </div>
-    <p>${texto}${deuda ? '' : ''}${ultimo || deuda ? burbujaAyuda('La mensualidad vence el mismo día del mes siguiente al alta. Si pagó después, corregí la fecha del pago: queda registrado con su motivo.') : ''}</p>
+    <p>${texto}${ultimo || deuda || individualPendiente ? burbujaAyuda(ayudaCobro) : ''}</p>
     ${contacto.visible
       ? `<p class="ficha-contacto"><span class="ficha-contacto-rotulo">WhatsApp</span> <b>${esc(contacto.visible)}</b></p>`
       : `<p class="al-sub">${esc(contacto.ayuda ?? '')}</p>`}
     <div class="ficha-acciones">
       ${contacto.link ? `<a class="cobros-link ficha-accion ficha-accion-wa" href="${contacto.link}" target="_blank" rel="noopener" data-wa><svg class="ico ficha-wa-ico" width="16" height="16" aria-hidden="true"><use href="#i-wa"/></svg>Enviar WhatsApp</a>` : ''}
       ${avisoLink ? `<a class="cobros-link ficha-accion" href="${avisoLink}" target="_blank" rel="noopener" data-avisar>Avisar por WhatsApp (por vencer)</a>` : ''}
-      <button type="button" class="cobros-link ficha-accion" data-editar-cobro>${ultimo ? 'Editar fecha del pago' : deuda ? 'Registrar pago' : 'Ver cobros'}</button>
+      <button type="button" class="cobros-link ficha-accion" data-editar-cobro>${individualPendiente ? 'Registrar pago individual' : ultimo ? 'Editar fecha del pago' : deuda ? 'Registrar pago' : 'Ver cobros'}</button>
     </div>
     ${contacto.link ? `<p class="ficha-accion-ayuda">${burbujaAyuda('Los links abren WhatsApp con el mensaje escrito; el envío lo confirmás vos.')}</p>` : ''}`;
   dialogo.querySelector('form')?.before(resumen);
   cablearAyudas(resumen);
   resumen.querySelector('[data-editar-cobro]')?.addEventListener('click', () => {
-    if (ultimo) {
+    if (individualPendiente) {
+      dialogo.close();
+      abrirPagoIndividual(individualPendiente, origen);
+    } else if (ultimo) {
       // El ID del pago viene del ledger por alumno; nunca del nombre.
       const fila = filas.find((f) => f.pago?.id === ultimo.id);
       dialogo.close();
@@ -2149,6 +2184,7 @@ const campana = document.querySelector<HTMLButtonElement>('.campana')!;
 function alumnosParaCobros() {
   return repo.listarAlumnos().map((f) => ({
     id: f.id, nombre: f.nombre, grupo: f.grupo, ancla: f.ancla,
+    tarifaUYU: f.tarifaUYU,
     montoUYU: precio(f, f.modalidad === 'individual' ? 'clase-individual' : 'mensualidad', hoyLocal(reloj.ahora())) ?? 0,
     individual: f.modalidad === 'individual',
   }));
@@ -2157,7 +2193,9 @@ const verCobros = () => resumenCobros(alumnosParaCobros(), repo.listarPagos(), h
 type FilaCobro = ReturnType<typeof verCobros>['filas'][number];
 
 /** Clases individuales ya dadas, pendientes de cobro. Reservar no genera deuda. */
-const verCobrosIndividuales = () => cobrosIndividuales(alumnosParaCobros(), repo.listarPagos(), clases, hoyLocal(reloj.ahora()));
+const verCobrosIndividuales = () => cobrosIndividuales(
+  alumnosParaCobros().filter((a) => a.individual), repo.listarPagos(), clases, hoyLocal(reloj.ahora()),
+);
 type CobroIndividualVista = ReturnType<typeof verCobrosIndividuales>[number];
 
 /* Estado del filtro y del orden de Cobros (rediseño 23-nov, B6).
@@ -2205,16 +2243,18 @@ function pintarCobros() {
     ...individualesVisibles.map((f) => {
       const fichaFila = repo.listarAlumnos().find((a) => a.id === f.alumno.id);
       const avatar = avatarAlumno(f.alumno.nombre, fichaFila?.id ?? f.alumno.id, fichaFila?.foto, 32);
-      const monto = precio(f.alumno, 'clase-individual', f.fecha) ?? f.alumno.montoUYU;
+      const monto = f.pago ? f.pago.montoUYU : precioPrecargado(f.alumno, 'clase-individual', f.fecha);
+      const sinTarifa = !f.pago && f.alumno.montoUYU <= 0;
+      const importe = f.pago ? uyu(monto) : sinTarifa ? 'Falta cargar la tarifa' : uyu(monto);
       return `<li>
     <button type="button" class="cobro-fila" data-clase-cobro="${esc(`${f.alumno.id}|${f.clase.id}`)}" aria-haspopup="dialog"
-      aria-label="${f.pago ? 'Ver ficha de' : 'Ver ficha de'} ${esc(f.alumno.nombre)}, ${f.pago ? `pagado el ${fechaBreve(f.pago.fecha)}, ${uyu(f.pago.montoUYU)}` : `clase del ${fechaBreve(f.fecha)}, ${uyu(monto)}`}">
+      aria-label="${f.pago ? 'Ver ficha de' : 'Ver ficha de'} ${esc(f.alumno.nombre)}, ${f.pago ? `pagado el ${fechaBreve(f.pago.fecha)}, ${uyu(f.pago.montoUYU)}` : `clase del ${fechaBreve(f.fecha)}, ${importe}`}">
       ${avatar}
       <span class="cobro-row">
         <span class="al-nombre">${esc(f.alumno.nombre)}</span>
         <span class="cobro-meta">Clase individual · ${esc(fechaCorta(f.fecha))}</span>
       </span>
-      <span class="cobro-importe"><b>${uyu(f.pago ? f.pago.montoUYU : monto)}</b><small class="${f.pago ? 'pagado' : ''}">${f.pago ? 'Pagado' : 'Debe'}</small></span>
+      <span class="cobro-importe"><b class="${sinTarifa ? 'cobro-sin-tarifa' : ''}">${importe}</b><small class="${f.pago ? 'pagado' : ''}">${f.pago ? 'Pagado' : 'Debe'}</small></span>
       <svg class="ico" width="13" height="13" aria-hidden="true"><use href="#i-der"/></svg>
     </button>
   </li>`;
@@ -2412,14 +2452,16 @@ function abrirPagoIndividual(cobro: CobroIndividualVista, origen: HTMLElement): 
   const { alumno, clase } = cobro;
   const pago = cobro.pago;
   const tarifaInicial = importeInicialIndividual(alumno, clase, pago);
+  const faltaTarifa = !pago && tarifaInicial <= 0;
   const tarifaEntrada = tarifaInicial ? String(tarifaInicial) : '';
+  const importeResumen = faltaTarifa ? 'Falta cargar la tarifa' : uyu(tarifaInicial);
   const dialogo = abrirDialogoCobros(
     pago ? 'Anular pago' : 'Registrar pago', 'Clase individual', pago ? 'alerta' : 'cobros',
     `<div class="cobros-panel-resumen">
       <div><p class="al-nombre">${esc(alumno.nombre)}</p><p class="al-sub">Clase individual · ${esc(fechaCorta(clase.fecha))}</p></div>
-      <div class="cobros-panel-dato"><strong>${uyu(tarifaInicial)}</strong><span class="al-sub">UYU</span></div>
+      <div class="cobros-panel-dato"><strong class="${faltaTarifa ? 'cobro-sin-tarifa' : ''}">${importeResumen}</strong><span class="al-sub">UYU</span></div>
     </div>
-    <p class="cobros-panel-nota">${pago ? `Registrado el ${esc(fechaCorta(pago.fecha))} por ${esc(pago.quien)}. El importe de este pago no se reescribe.` : 'La reserva no crea deuda: acá se cobra la clase que ya diste. Corregí la Tarifa en UYU si hace falta: se guarda en la ficha para las próximas clases.'}</p>
+    <p class="cobros-panel-nota">${pago ? `Registrado el ${esc(fechaCorta(pago.fecha))} por ${esc(pago.quien)}. El importe de este pago no se reescribe.` : faltaTarifa ? 'Falta cargar la tarifa de esta clase. Ingresá el importe en UYU; se guarda en la ficha para las próximas clases. No se usa ningún precio de ejemplo.' : 'La reserva no crea deuda: acá se cobra la clase que ya diste. Corregí la Tarifa en UYU si hace falta: se guarda en la ficha para las próximas clases.'}</p>
     <form>
       ${pago ? `<label class="campo"><span>Fecha del pago (día / mes / año)</span></label>${selectorFecha('pago', pago.fecha)}`
         : `<label class="campo"><span>Tarifa en UYU *</span><input name="tarifaUYU" type="number" min="1" step="1" inputmode="numeric" required value="${tarifaEntrada}"></label>
@@ -2470,6 +2512,7 @@ function abrirPagoIndividual(cobro: CobroIndividualVista, origen: HTMLElement): 
     }
     dialogo.close();
     pintarCobros();
+    pintarAlumnos();
     origen.focus();
   });
 }
