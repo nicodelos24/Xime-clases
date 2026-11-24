@@ -599,6 +599,72 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; width: 0; }
 .punto-verde { background: var(--verde-pastel); }
 .punto-ambar { background: var(--ambar-pastel); }
 
+/* Rediseño 23-nov: estilos de la pieza 2 (ficha + Cobros), sobre tokens v5.
+   Nada fuera de la ficha y de Cobros; sin emoji, sin ids nuevos de color. */
+
+/* ---- Cobros: filtros y orden (B6) ---- */
+.filtros .f-chip .n {
+  opacity: .65; font-variant-numeric: tabular-nums; font-weight: 800; margin-left: 2px;
+}
+.cobros-vacio {
+  padding: 14px; color: var(--tinta-2); font-size: 13px; text-align: center;
+}
+
+/* ---- Ficha del alumno: cabecera con chips (A4/B8) ---- */
+.ficha-chips {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 7px;
+  margin-bottom: 10px;
+}
+.ficha-chip {
+  display: inline-flex; align-items: center; gap: 7px;
+  min-height: 30px; padding: 4px 11px; border-radius: 999px;
+  background: var(--bg); border: 1px solid var(--linea);
+  font-size: 12.5px; font-weight: 700; color: var(--tinta);
+  white-space: nowrap; max-width: 100%;
+}
+.ficha-chip-alumno { overflow: hidden; }
+.ficha-chip-alumno .avatar { width: 22px; height: 22px; font-size: 10px; flex: none; }
+.ficha-chip-alumno:not(:has(.avatar)) { font-weight: 650; }
+.ficha-chip-deuda {
+  background: var(--bg-alt); color: var(--rosa); border-color: var(--linea);
+  font-variant-numeric: tabular-nums;
+}
+[data-tema="oscuro"] .ficha-chip-deuda { color: var(--rosa-pastel); }
+.ficha-chip-vence {
+  background: var(--bg-alt); color: var(--tinta-2);
+}
+.ficha-chip-vence:not(:empty) { font-weight: 650; }
+.ficha-chip-ok { color: var(--verde); background: var(--verde-tinte); border-color: transparent; }
+
+/* ---- Burbujas «?» con ayuda accesible (A1) ---- */
+.ayuda { display: inline-flex; align-items: center; gap: 2px; }
+.ayuda-btn {
+  display: inline-grid; place-items: center; width: 30px; height: 30px;
+  padding: 0; border: 0; background: transparent; border-radius: 999px;
+  color: var(--tq-700); cursor: pointer; flex: none;
+  transition: background var(--t-rapida) var(--ease), transform var(--t-rapida) var(--ease);
+}
+[data-tema="oscuro"] .ayuda-btn { color: var(--tq-300); }
+.ayuda-btn:hover { background: var(--tq-100); }
+.ayuda-btn:active { transform: scale(.9); }
+.ayuda-btn:focus-visible { outline: 2px solid var(--tq-600); outline-offset: 2px; }
+.ayuda-texto {
+  display: block; width: 100%; margin-top: 6px;
+  color: var(--tinta-2); font-size: 12.5px; line-height: 1.45;
+}
+.ayuda-btn[aria-expanded="true"] { background: var(--tq-100); }
+
+/* ---- WhatsApp con ícono SVG (A3): patrón .btn-wa de Ropa V2 ---- */
+.ficha-accion-wa {
+  display: inline-flex; align-items: center; gap: 8px;
+  color: var(--tq-700); font-weight: 700;
+}
+[data-tema="oscuro"] .ficha-accion-wa { color: var(--tq-300); }
+.ficha-wa-ico { flex: none; }
+/* el símbolo i-wa trae su fill inline; el trazo base de .ico no lo toca */
+.ficha-wa-ico { fill: currentColor; stroke: none; }
+.ayuda-btn .ico { stroke-width: 2.2; }
+
 /* ---------- Cobros ---------- */
 .kpis-cobros { grid-template-columns: repeat(2, 1fr); }
 .lista-cobros li {
@@ -679,7 +745,13 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; width: 0; }
   display: flex; align-items: center; width: 100%; min-height: 44px;
   padding: 0; text-align: left; border-radius: 0;
 }
+/* Rediseño 23-nov (Fina, 320/390): cada acción con su aire, separadas por
+   filete, sin pegarse al número ni al borde inferior. La principal (WA) en
+   acento, las dos secundarias en --tinta-2. Área táctil ≥ 44px. */
+.ficha-acciones .ficha-accion { padding: 11px 0; }
+.ficha-acciones .ficha-accion:first-child { padding-top: 4px; }
 .ficha-acciones .ficha-accion + .ficha-accion { border-top: 1px solid var(--linea); }
+.ficha-acciones .ficha-accion:last-child { padding-bottom: 2px; }
 .ficha-accion-wa { color: var(--tq-700); }
 .ficha-acciones .ficha-accion:not(.ficha-accion-wa) { color: var(--tinta-2); font-weight: 650; }
 .ficha-acciones .ficha-accion:focus-visible { outline: 2px solid var(--tq-600); outline-offset: 2px; }

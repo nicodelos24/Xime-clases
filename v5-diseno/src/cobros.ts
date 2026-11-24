@@ -54,6 +54,57 @@ export function anularPago(pagos: readonly Pago[], id: string, datos: Anulacion)
   return pagos.map((p) => p === pago ? { ...p, anulado: { ...datos, motivo } } : p);
 }
 
+/**
+ * Filtrado y orden de la lista de Cobros (rediseño 23-nov, B6/B8).
+ * Pure: recibe las filas de `resumenCobros` y devuelve las visibles. Sin DOM,
+ * sin reloj; las reglas de vencimientos siguen en `resumenCobros`.
+ *
+ * Estados: «Deben» incluye lo vencido, lo que vence hoy y lo por vencer (la
+ * ventana de la campana: hasta `diasAviso`); «Vencido» y «Por vencer» la
+ * acotan; «Pagado» es lo liquidado del período. Se devuelven TODAS las filas
+ * sin filtrar cuando no hay estado: la lista base no cambia.
+ */
+export type EstadoCobro = 'todos' | 'deben' | 'vencido' | 'porvencer' | 'pagado';
+export type OrdenCobro = 'vencimiento' | 'alumno';
+
+/** La forma mínima que usan filtro y orden; `resumenCobros` la cumple. */
+export type FilaFiltrable = {
+  dias: number;
+  alumno: { nombre: string };
+  pago?: { id: string } | null;
+};
+
+export function filtrarCobros<T extends FilaFiltrable>(
+  filas: readonly T[],
+  estado: EstadoCobro,
+  diasAviso: 0 | 7 | 10 = 7,
+): T[] {
+  if (estado === 'todos') return [...filas];
+  const out = filas.filter((f) => {
+    if (estado === 'pagado') return f.pago != null;
+    if (f.pago) return false;
+    if (estado === 'deben') return f.dias <= diasAviso;
+    if (estado === 'vencido') return f.dias < 0;
+    return f.dias >= 0 && f.dias <= diasAviso;
+  });
+  return out;
+}
+
+/**
+ * Orden elegido: por vencimiento (vencidos primero, el más atrasado arriba;
+ * luego hoy y lo por vencer por días) o por alumno (A→Z). El orden no depende
+ * del pago: la fila dice el vencimiento del período.
+ */
+export function ordenarCobros<T extends FilaFiltrable>(filas: readonly T[], orden: OrdenCobro): T[] {
+  if (orden === 'alumno') return [...filas].sort((a, b) => a.alumno.nombre.localeCompare(b.alumno.nombre, 'es'));
+  return [...filas].sort((a, b) => {
+    const va = a.dias < 0 ? 0 : 1;
+    const vb = b.dias < 0 ? 0 : 1;
+    if (va !== vb) return va - vb;
+    return a.dias < 0 ? b.dias - a.dias : a.dias - b.dias;
+  });
+}
+
 export type AlumnoCobro = { id: string; nombre: string; grupo: string; ancla: number; montoUYU: number };
 
 /**

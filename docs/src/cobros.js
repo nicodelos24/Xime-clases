@@ -1,4 +1,4 @@
-import { diasDeFecha, diasDelMes, esFechaValida, parseFecha } from './fechas.js?v=202611240755';
+import { diasDeFecha, diasDelMes, esFechaValida, parseFecha } from './fechas.js?v=202611232227';
 export function registrarPago(pagos, nuevo) {
     if (!nuevo.id.trim() || !nuevo.alumnoId.trim() || !nuevo.quien.trim())
         throw new Error('Faltan datos del pago');
@@ -48,6 +48,38 @@ export function anularPago(pagos, id, datos) {
     if (!esFechaValida(datos.fecha) || datos.fecha < pago.fecha)
         throw new Error('Fecha de anulación inválida');
     return pagos.map((p) => p === pago ? { ...p, anulado: { ...datos, motivo } } : p);
+}
+export function filtrarCobros(filas, estado, diasAviso = 7) {
+    if (estado === 'todos')
+        return [...filas];
+    const out = filas.filter((f) => {
+        if (estado === 'pagado')
+            return f.pago != null;
+        if (f.pago)
+            return false;
+        if (estado === 'deben')
+            return f.dias <= diasAviso;
+        if (estado === 'vencido')
+            return f.dias < 0;
+        return f.dias >= 0 && f.dias <= diasAviso;
+    });
+    return out;
+}
+/**
+ * Orden elegido: por vencimiento (vencidos primero, el más atrasado arriba;
+ * luego hoy y lo por vencer por días) o por alumno (A→Z). El orden no depende
+ * del pago: la fila dice el vencimiento del período.
+ */
+export function ordenarCobros(filas, orden) {
+    if (orden === 'alumno')
+        return [...filas].sort((a, b) => a.alumno.nombre.localeCompare(b.alumno.nombre, 'es'));
+    return [...filas].sort((a, b) => {
+        const va = a.dias < 0 ? 0 : 1;
+        const vb = b.dias < 0 ? 0 : 1;
+        if (va !== vb)
+            return va - vb;
+        return a.dias < 0 ? b.dias - a.dias : a.dias - b.dias;
+    });
 }
 /**
  * Vencimiento de la mensualidad: el MISMO día del mes siguiente al del alta

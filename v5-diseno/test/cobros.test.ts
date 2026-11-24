@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { anularPago, corregirFechaPago, registrarPago, resumenCobros, vencimientoDelMes, type PagoNuevo } from '../src/cobros.ts';
+import { anularPago, corregirFechaPago, registrarPago, resumenCobros, vencimientoDelMes, filtrarCobros, ordenarCobros, type EstadoCobro, type OrdenCobro, type PagoNuevo } from '../src/cobros.ts';
 import { alumnosCobrosDemo, datosDemo } from '../src/demo.ts';
 import { hoyLocal, relojFalso } from '../src/reloj.ts';
 import { almacenLocalStorage, almacenMemoria, RepositorioClases, VERSION_ESTADO } from '../src/repositorio.ts';
@@ -147,4 +147,48 @@ test('si el navegador no puede guardar no confirma el pago ni modifica el ledger
   lleno = true;
   assert.throws(() => repo.anularPago(nuevo.id, anulacion.motivo, anulacion.quien), /No se pudo guardar/);
   assert.equal(repo.listarPagos()[0]?.anulado, null);
+});
+
+/* Rediseño 23-nov (B6): filtro y orden de la lista de Cobros. Pure sobre las
+   filas de `resumenCobros`; la lista sin filtro queda igual que siempre. */
+
+type FilaPrueba = { dias: number; pago: { id: string } | null; alumno: { nombre: string; montoUYU: number } };
+const fila = (dias: number, nombre: string, pago = false): FilaPrueba => ({
+  dias, pago: pago ? { id: 'p' } : null, alumno: { nombre, montoUYU: 6500 },
+});
+const datos: FilaPrueba[] = [
+  fila(-13, 'Carla vencida'), fila(-1, 'Beto ayer'), fila(0, 'Ana hoy'),
+  fila(3, 'Diego pronto'), fila(9, 'Eva lejos'), fila(0, 'Zuni pagada', true),
+];
+
+test('filtro Cobros: todos devuelve todo; deben = vencidos+hoy+por vencer (7 días)', () => {
+  assert.equal(filtrarCobros(datos, 'todos' as EstadoCobro).length, 6);
+  const deben = filtrarCobros(datos, 'deben' as EstadoCobro);
+  assert.deepEqual(deben.map((f) => f.alumno.nombre), ['Carla vencida', 'Beto ayer', 'Ana hoy', 'Diego pronto']);
+  assert.ok(filtrarCobros(datos, 'deben' as EstadoCobro).every((f) => !f.pago), 'pagadas fuera');
+  const vencido = filtrarCobros(datos, 'vencido' as EstadoCobro);
+  assert.deepEqual(vencido.map((f) => f.dias), [-13, -1]);
+  const porvencer = filtrarCobros(datos, 'porvencer' as EstadoCobro);
+  assert.deepEqual(porvencer.map((f) => f.dias), [0, 3]);
+  const pagado = filtrarCobros(datos, 'pagado' as EstadoCobro);
+  assert.deepEqual(pagado.map((f) => f.alumno.nombre), ['Zuni pagada']);
+  // Con diasAviso 0, «por vencer» es solo lo que vence hoy.
+  assert.deepEqual(filtrarCobros(datos, 'porvencer' as EstadoCobro, 0).map((f) => f.dias), [0]);
+});
+
+test('filtro Cobros no muta la lista original y «deben» con aviso 7 coincide con la ventana de la campana', () => {
+  const original = [...datos];
+  filtrarCobros(datos, 'deben' as EstadoCobro);
+  filtrarCobros(datos, 'vencido' as EstadoCobro);
+  ordenarCobros(datos, 'alumno' as OrdenCobro);
+  assert.deepEqual(datos, original);
+});
+
+test('orden Cobros: vencimiento (vencidos primero, luego por días) o alumno (A→Z)', () => {
+  const porVence = ordenarCobros(datos, 'vencimiento' as OrdenCobro);
+  // Vencidos primero (más atrasado arriba), luego hoy, luego por días; una
+  // fila pagada de hoy queda entre las de hoy: el orden no depende del pago.
+  assert.deepEqual(porVence.map((f) => f.alumno.nombre), ['Beto ayer', 'Carla vencida', 'Ana hoy', 'Zuni pagada', 'Diego pronto', 'Eva lejos']);
+  const porAlumno = ordenarCobros(datos, 'alumno' as OrdenCobro);
+  assert.deepEqual(porAlumno.map((f) => f.alumno.nombre), ['Ana hoy', 'Beto ayer', 'Carla vencida', 'Diego pronto', 'Eva lejos', 'Zuni pagada']);
 });

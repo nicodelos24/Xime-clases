@@ -7,7 +7,8 @@ import {
 import type { DiaSemana } from './src/agendar.ts';
 import { CLAVE_ESTADO, RepositorioClases, almacenLocalStorage, type RepositorioDeClases } from './src/repositorio.ts';
 import { alumnosCobrosDemo, datosDemo, fichasDemo } from './src/demo.ts';
-import { resumenCobros, type Pago } from './src/cobros.ts';
+import { resumenCobros, filtrarCobros, ordenarCobros, type EstadoCobro, type OrdenCobro, type Pago } from './src/cobros.ts';
+import { iniciales } from './src/alumnos.ts';
 import { resumenHoy, clasesDelDia, clasesDeLaSemana } from './src/resumen.ts';
 import { registrarToqueFecha, mesDe, type ToqueFecha } from './src/agenda.ts';
 import { primerDiaDeMes, diaSeleccionadoAlCargar } from './src/agenda-mes.ts';
@@ -905,6 +906,7 @@ function abrirFormularioSemanal(fechaDesdeDia?: string) {
   });
   (cuadro.querySelector('[name="nombre"]') as HTMLElement)?.focus();
   cablearBajaRutinas(cuadro);
+  cablearAyudas(cuadro);
 }
 
 /**
@@ -927,7 +929,7 @@ function rutinasExistentesHtml(): string {
   return `<div class="rutinas-config">
     <p class="sheet-paso">Tus clases semanales</p>
     <ul class="cobros-panel-lista">${filas}</ul>
-    <p class="al-sub">Dar de baja una rutina cancela sus clases futuras que sigan por dar. Las ya dadas quedan en el historial.</p>
+    <p class="al-sub">Dar de baja una rutina cancela sus clases futuras que sigan por dar. Las ya dadas quedan en el historial.${burbujaAyuda('Dar de baja una rutina cancela sus clases futuras que sigan por dar. Las ya dadas quedan en el historial.')}</p>
   </div>`;
 }
 
@@ -1546,6 +1548,37 @@ function textoCobroFicha(dias: number, montoUYU: number, fecha: string): string 
   return `<span class="ficha-cobro-estado ${clase}">${esc(estado)}</span> · <span class="ficha-cobro-monto">${uyu(montoUYU)}</span> (vence ${esc(fechaCorta(fecha))}).`;
 }
 
+/**
+ * Burbuja «?» con ayuda accesible (rediseño 23-nov, A1): reemplaza los textos
+ * informativos corridos de la ficha. Un botón real (foco + área táctil) que
+ * abre y cierra su texto, sin tooltip nativo (no hay hover en celular) y sin
+ * depender de title. Cero emoji. Solo un «?» visible: lo demás es aria.
+ */
+function burbujaAyuda(texto: string): string {
+  const id = `ayuda-${Math.random().toString(36).slice(2, 8)}`;
+  return `<span class="ayuda">
+    <button type="button" class="ayuda-btn" aria-expanded="false" aria-controls="${id}" aria-label="Ayuda: más información sobre este dato">
+      <svg class="ico" width="14" height="14" aria-hidden="true"><use href="#i-ayuda"/></svg>
+    </button>
+    <span class="ayuda-texto" id="${id}" role="note" hidden>${esc(texto)}</span>
+  </span>`;
+}
+
+/** Cablea todas las burbujas de un contenedor (toggle + foco visible). */
+function cablearAyudas(raiz: ParentNode): void {
+  raiz.querySelectorAll<HTMLButtonElement>('.ayuda-btn').forEach((b) => {
+    if (b.dataset.ayudaOk) return;
+    b.dataset.ayudaOk = '1';
+    b.addEventListener('click', () => {
+      const texto = b.parentElement?.querySelector<HTMLElement>('.ayuda-texto');
+      if (!texto) return;
+      const abierto = !texto.hidden;
+      texto.hidden = abierto;
+      b.setAttribute('aria-expanded', String(!abierto));
+    });
+  });
+}
+
 function abrirFichaConCobro(ficha: AlumnoFicha | null, origen: HTMLElement, alCrear?: (creada: AlumnoFicha) => void): void {
   abrirFicha(ficha, origen, alCrear);
   if (!ficha) return;
@@ -1571,17 +1604,31 @@ function abrirFichaConCobro(ficha: AlumnoFicha | null, origen: HTMLElement, alCr
   const avisoLink = deuda && contacto.link
     ? linkAvisoVencimiento({ telefono: conPrefijo(ficha.contacto, prefijoMovil), nombre: ficha.nombre, vencimiento: deuda.fecha })
     : null;
-  resumen.innerHTML = `<p>${texto}</p>
+  // Cabecera con chips (rediseño 23-nov, A4/B8): alumno + deuda + vencimiento
+  // a la vista, cada dato en su chip. Deuda solo si la hay; sin deuda, el
+  // chip dice «Al día». Sin inventar datos.
+  const chipDeuda = deuda
+    ? `<span class="ficha-chip ficha-chip-deuda">${uyu(deuda.alumno.montoUYU)}</span>`
+    : `<span class="ficha-chip ficha-chip-ok">Al día</span>`;
+  const chipVence = deuda
+    ? `<span class="ficha-chip ficha-chip-vence">${esc(textoVence(deuda.dias))}</span>`
+    : '';
+  resumen.innerHTML = `<div class="ficha-chips">
+      <span class="ficha-chip ficha-chip-alumno"><span class="avatar ${ficha.color} ${esc(iniciales(ficha.nombre))}">${esc(iniciales(ficha.nombre))}</span>${esc(ficha.nombre)}</span>
+      ${chipDeuda}${chipVence}
+    </div>
+    <p>${texto}${deuda ? '' : ''}${ultimo || deuda ? burbujaAyuda('La mensualidad vence el mismo día del mes siguiente al alta. Si pagó después, corregí la fecha del pago: queda registrado con su motivo.') : ''}</p>
     ${contacto.visible
       ? `<p class="ficha-contacto"><span class="ficha-contacto-rotulo">WhatsApp</span> <b>${esc(contacto.visible)}</b></p>`
       : `<p class="al-sub">${esc(contacto.ayuda ?? '')}</p>`}
     <div class="ficha-acciones">
-      ${contacto.link ? `<a class="cobros-link ficha-accion ficha-accion-wa" href="${contacto.link}" target="_blank" rel="noopener" data-wa>Enviar WhatsApp</a>` : ''}
+      ${contacto.link ? `<a class="cobros-link ficha-accion ficha-accion-wa" href="${contacto.link}" target="_blank" rel="noopener" data-wa><svg class="ico ficha-wa-ico" width="16" height="16" aria-hidden="true"><use href="#i-wa"/></svg>Enviar WhatsApp</a>` : ''}
       ${avisoLink ? `<a class="cobros-link ficha-accion" href="${avisoLink}" target="_blank" rel="noopener" data-avisar>Avisar por WhatsApp (por vencer)</a>` : ''}
       <button type="button" class="cobros-link ficha-accion" data-editar-cobro>${ultimo ? 'Editar fecha del pago' : deuda ? 'Registrar pago' : 'Ver cobros'}</button>
     </div>
     <p class="al-sub">${contacto.link ? 'Los links abren WhatsApp con el mensaje escrito; el envío lo confirmás vos.' : ''}</p>`;
   dialogo.querySelector('form')?.before(resumen);
+  cablearAyudas(resumen);
   resumen.querySelector('[data-editar-cobro]')?.addEventListener('click', () => {
     if (ultimo) {
       // El ID del pago viene del ledger por alumno; nunca del nombre.
@@ -1606,7 +1653,7 @@ function abrirFicha(ficha: AlumnoFicha | null, origen: HTMLElement, alCrear?: (c
     <div><p class="al-nombre">${esNueva ? 'Nuevo alumno' : esc(ficha!.nombre)}</p>
     <p class="al-sub">${esNueva ? 'Ficha real · se guarda en este dispositivo' : `Alta ${esc(fechaCorta(ficha!.fechaAlta))}`}</p></div>
     <div class="cobros-panel-dato">${esNueva ? '' : `<span class="ficha-id">ID ${esc(ficha!.id)}</span>`}</div></div>
-    <p class="cobros-panel-nota">${esNueva ? 'Completá los datos para dar de alta. Nada se envía ni crea grupos.' : 'Podés corregir nombre, modalidad, día de vencimiento y teléfono. La identidad y la fecha de alta no se cambian.'}</p>
+    <p class="cobros-panel-nota">${esNueva ? 'Completá los datos para dar de alta. Nada se envía ni crea grupos.' : burbujaAyuda('Podés corregir nombre, modalidad, día de vencimiento y teléfono. La identidad y la fecha de alta no se cambian.')}</p>
     <form novalidate>
       <label class="campo"><span>Nombre *</span><input name="nombre" required maxlength="80" autocomplete="off" value="${esNueva ? '' : esc(ficha!.nombre)}" placeholder="Nombre y apellido"></label>
       ${esNueva ? `<p class="campo"><span>Fecha de registro *</span></p>${selectorFecha('alta', hoy)}` : ''}
@@ -1621,9 +1668,7 @@ function abrirFicha(ficha: AlumnoFicha | null, origen: HTMLElement, alCrear?: (c
         <button type="button" class="ficha-grupo" data-pago="no" aria-pressed="false">Va a pagar</button>
       </div>` : ''}
       <label class="campo"><span>Día de vencimiento (1–31)</span><input name="ancla" type="number" min="1" max="31" inputmode="numeric" value="${ficha?.ancla ?? 21}"></label>
-      <label class="campo"><span>Grupo (opcional)</span><input name="grupo" list="${listaGrupos.id}" maxlength="40" autocomplete="off" value="${esNueva ? '' : esc(ficha!.grupo)}" placeholder="Ej.: Martes A">
-        <small class="campo-ayuda">Solo una etiqueta para agrupar alumnas. No crea grupos ni manda mensajes.</small>
-      </label>
+      <label class="campo"><span>Grupo (opcional)${burbujaAyuda('Solo una etiqueta para agrupar alumnas. No crea grupos ni manda mensajes.')}</span><input name="grupo" list="${listaGrupos.id}" maxlength="40" autocomplete="off" value="${esNueva ? '' : esc(ficha!.grupo)}" placeholder="Ej.: Martes A"></label>
       ${listaGrupos.html}
       <label class="campo"><span>Teléfono / WhatsApp</span><input name="contacto" type="tel" maxlength="120" autocomplete="tel" value="${esNueva ? '' : esc(ficha!.contacto)}" placeholder="099 123 456"></label>
       <p class="cobros-panel-error" role="alert"></p>
@@ -1632,6 +1677,7 @@ function abrirFicha(ficha: AlumnoFicha | null, origen: HTMLElement, alCrear?: (c
     </form>`;
   const dialogo = abrirDialogoCobros(esNueva ? 'Nuevo alumno' : 'Editar ficha', 'Alumnos', 'alumnos', contenido, origen);
   if (esNueva) cablearFecha(dialogo, 'alta');
+  cablearAyudas(dialogo);
 
   let modalidad = ficha?.modalidad ?? 'mensual';
   let pagado = false;
@@ -1778,6 +1824,11 @@ function alumnosParaCobros() {
 const verCobros = (pagos = repo.listarPagos()) => resumenCobros(alumnosParaCobros(), pagos, hoyLocal(reloj.ahora()));
 type FilaCobro = ReturnType<typeof verCobros>['filas'][number];
 
+/* Estado del filtro y del orden de Cobros (rediseño 23-nov, B6).
+   En memoria, como los de Alumnos: no se guardan en localStorage. */
+let estadoCobros: EstadoCobro = 'todos';
+let ordenCobros: OrdenCobro = 'vencimiento';
+
 function fechaBreve(fecha: string) {
   return fechaCorta(fecha);
 }
@@ -1809,8 +1860,8 @@ function pintarCobros() {
   campana.setAttribute('aria-label', avisos === 1 ? '1 aviso de cobro' : `${avisos} avisos de cobro`);
   campana.querySelector<HTMLElement>('.campana-punto')!.hidden = avisos === 0;
 
-  listaCobros.innerHTML = r.filas.map((f, indice) => `<li>
-    <button type="button" class="cobro-fila" data-fila="${indice}" aria-haspopup="dialog"
+  listaCobros.innerHTML = ordenarCobros(filtrarCobros(r.filas, estadoCobros), ordenCobros).map((f, indice) => `<li>
+    <button type="button" class="cobro-fila" data-fila="${f.alumno.id}|${f.periodo}" aria-haspopup="dialog"
       aria-label="${f.pago ? 'Ver pago' : 'Registrar pago'} de ${esc(f.alumno.nombre)}, ${f.periodo}">
       <span><span class="al-nombre">${esc(f.alumno.nombre)}</span>
       <span class="al-sub">${f.pago ? `Pagado el ${fechaBreve(f.pago.fecha)}` : textoVence(f.dias)} · ${esc(f.alumno.grupo)}</span></span>
@@ -1818,11 +1869,60 @@ function pintarCobros() {
       <svg class="ico" width="13" height="13" aria-hidden="true"><use href="#i-der"/></svg>
     </button>
   </li>`).join('');
-  listaCobros.querySelectorAll<HTMLButtonElement>('[data-fila]').forEach((b, i) => {
-    const fila = r.filas[i];
-    b.addEventListener('click', () => abrirPago(fila.alumno.nombre, fila.periodo, fila.alumno.montoUYU, b, fila.pago, fila));
+  // data-fila por ID+período (nunca por índice): con filtros u orden la fila
+  // del DOM no coincide con el índice de `r.filas`.
+  const filasVisibles = ordenarCobros(filtrarCobros(r.filas, estadoCobros), ordenCobros);
+  listaCobros.querySelectorAll<HTMLButtonElement>('[data-fila]').forEach((b) => {
+    const [id, periodo] = (b.dataset.fila ?? '').split('|');
+    const fila = filasVisibles.find((f) => f.alumno.id === id && f.periodo === periodo);
+    if (!fila) return;
+    b.addEventListener('click', () => {
+      // Rediseño 23-nov (B7): el tap en un cobro abre primero la FICHA del
+      // alumno (con su resumen de cobro y sus acciones); desde ahí se llega
+      // a registrar/corregir el pago con «Editar fecha del pago» o
+      // «Registrar pago», que ya hace `abrirFichaConCobro`.
+      const ficha = repo.listarAlumnos().find((f) => f.id === fila.alumno.id) ?? null;
+      abrirFichaConCobro(ficha, b);
+    });
   });
+  const visibles = filasVisibles.length;
+  const total = r.filas.length;
+  const filtroActivo = estadoCobros !== 'todos';
+  if (visibles === 0 && total > 0 && filtroActivo) {
+    listaCobros.innerHTML = `<li><p class="cobros-vacio">Nada con este filtro</p></li>`;
+  } else if (total === 0) {
+    listaCobros.innerHTML = `<li><p class="cobros-vacio">Todavía no hay alumnos que cobrar</p></li>`;
+  }
+  // Chips: marca el estado y el orden elegidos; «Todos» activo solo si no hay
+  // filtro. El texto del chip muestra cuántas filas hay con el filtro.
+  $$('#filtros-cobros [data-estado]').forEach((b) => {
+    const on = (b as HTMLElement).dataset.estado === estadoCobros;
+    b.classList.toggle('activo', on);
+    b.setAttribute('aria-pressed', String(on));
+  });
+  $$('#filtros-cobros [data-orden-cobro]').forEach((b) => {
+    const on = (b as HTMLElement).dataset.ordenCobro === ordenCobros;
+    b.classList.toggle('activo', on);
+    b.setAttribute('aria-pressed', String(on));
+  });
+  const bTodos = $('#filtros-cobros [data-todos]');
+  bTodos?.classList.toggle('activo', !filtroActivo);
+  bTodos?.setAttribute('aria-pressed', String(!filtroActivo));
+  const debo = r.filas.filter((f) => !f.pago && f.dias <= 7).length;
+  const chipDeben = $('#filtros-cobros [data-estado="deben"] .n');
+  if (chipDeben) chipDeben.textContent = debo ? String(debo) : '';
 }
+
+/* Filtro y orden de Cobros (rediseño 23-nov, B6): mismos chips que Alumnos,
+   con «Todos» que limpia. El orden es un par de chips exclusivos. */
+$('#filtros-cobros')?.addEventListener('click', (e) => {
+  const b = (e.target as HTMLElement).closest('.f-chip') as HTMLElement | null;
+  if (!b) return;
+  if (b.hasAttribute('data-todos')) estadoCobros = 'todos';
+  else if (b.dataset.estado) estadoCobros = b.dataset.estado as EstadoCobro;
+  else if (b.dataset.ordenCobro) ordenCobros = b.dataset.ordenCobro as OrdenCobro;
+  pintarCobros();
+});
 
 function nombrePago(pago: Pago) {
   // Coherencia por ID: si se editó la ficha, Cobros muestra el nombre vigente.
@@ -1908,7 +2008,7 @@ function abrirPago(nombre: string, periodo: string, monto: number, origen: HTMLE
   const dialogo = abrirDialogoCobros(accion, 'Mensualidad', pago ? 'alerta' : 'cobros', `<div class="cobros-panel-resumen">
     <div><p class="al-nombre">${esc(nombre)}</p><p class="al-sub">${esc(mes)}</p></div>
     <div class="cobros-panel-dato"><strong>${uyu(pago?.montoUYU ?? monto)}</strong><span class="al-sub">UYU</span></div></div>
-    <p class="cobros-panel-nota">${pago ? `Registrado el ${esc(fechaCorta(pago.fecha))} por ${esc(pago.quien)}. Podés corregir la fecha en que pagó/renovió o anular el pago; queda en el historial.` : 'Confirmá cuándo pagó/renovió. La app no mueve dinero.'}</p>
+    <p class="cobros-panel-nota">${pago ? burbujaAyuda(`Registrado el ${esc(fechaCorta(pago.fecha))} por ${esc(pago.quien)}. Podés corregir la fecha en que pagó/renovió o anular el pago; queda en el historial.`) : 'Confirmá cuándo pagó/renovió. La app no mueve dinero.'}</p>
     <form>
       ${pago ? `<label class="campo"><span>Fecha del pago (día / mes / año)</span></label>${selectorFecha('pago', pago.fecha)}
       <label class="campo"><span>Motivo de anulación (opcional)</span><input name="motivo" maxlength="160"></label>`
@@ -1919,6 +2019,7 @@ function abrirPago(nombre: string, periodo: string, monto: number, origen: HTMLE
       <button type="submit" class="btn-primario">${pago ? 'Guardar fecha' : 'Confirmar pago'}</button></div>
     </form>`, origen);
   cablearFecha(dialogo, 'pago');
+  cablearAyudas(dialogo);
   const form = dialogo.querySelector('form')!;
   form.querySelector('.btn-secundario')!.addEventListener('click', () => cerrarDialogoConAviso(dialogo));
   form.querySelector('.cobros-anular')?.addEventListener('click', () => {
@@ -1966,7 +2067,7 @@ campana.addEventListener('click', () => {
     const tel = fichas.get(f.alumno.id)?.contacto ?? '';
     return tel ? linkAvisoVencimiento({ telefono: conPrefijo(tel, prefijoMovil), nombre: f.alumno.nombre, vencimiento: f.fecha }) : null;
   };
-  const dlg = abrirDialogoCobros('Avisos de cobro', 'Mensualidades', 'campana', avisos.length ? `<p class="cobros-panel-nota">Mensualidades sin pagar que vencen hoy o en los próximos 7 días. «Avisar por WhatsApp» abre el chat con el mensaje ya escrito: el envío lo confirmás vos en WhatsApp.</p>
+  const dlg = abrirDialogoCobros('Avisos de cobro', 'Mensualidades', 'campana', avisos.length ? `<p class="cobros-panel-nota">${burbujaAyuda('Mensualidades sin pagar que vencen hoy o en los próximos 7 días. «Avisar por WhatsApp» abre el chat con el mensaje ya escrito: el envío lo confirmás vos en WhatsApp.')}</p>
     <ul class="cobros-panel-lista">${avisos.map((f, i) => `<li>
     <div><p class="al-nombre">${esc(f.alumno.nombre)}</p><p class="al-sub">${esc(f.alumno.grupo)}</p>
     ${avisarLink(f) ? `<a class="cobros-link" href="${avisarLink(f)}" target="_blank" rel="noopener" data-avisar="${i}">Avisar por WhatsApp</a>` : '<span class="al-sub">Sin teléfono cargado</span>'}</div>
@@ -1977,6 +2078,7 @@ campana.addEventListener('click', () => {
     (e.currentTarget as HTMLElement).closest('dialog')?.close();
     irA('v-cobros');
   });
+  cablearAyudas(dlg);
 });
 
 /* ------------------------------------------------------------- navegación */
@@ -2257,6 +2359,26 @@ window.addEventListener('resize', actualizarPistaFiltros, { passive: true });
 document.addEventListener('visibilitychange', () => {
   if (!document.hidden) actualizarPistaFiltros();
 });
+
+/* La tira de Cobros (B6) usa la misma pista de scroll que la de Alumnos. */
+function actualizarPistaCobros() {
+  const tira = $('#cobros-filtros');
+  const filtros = $('#filtros-cobros');
+  if (!tira || !filtros) return;
+  const pista = pistaDeTira({
+    scrollLeft: filtros.scrollLeft,
+    scrollWidth: filtros.scrollWidth,
+    clientWidth: filtros.clientWidth,
+  });
+  tira.classList.toggle('pista-inicio', pista.inicio);
+  tira.classList.toggle('pista-fin', pista.fin);
+}
+$('#filtros-cobros')?.addEventListener('scroll', actualizarPistaCobros, { passive: true });
+window.addEventListener('resize', actualizarPistaCobros, { passive: true });
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden) actualizarPistaCobros();
+});
+actualizarPistaCobros();
 // Primer cálculo tras el layout inicial (fuentes y estilos ya aplicados).
 requestAnimationFrame(actualizarPistaFiltros);
 

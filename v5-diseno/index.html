@@ -14,8 +14,8 @@
   .vista.activa { display: block; }
 </style>
 <noscript><style>#v-mes, #v-semana, #v-alumnos, #v-cobros { display: none !important; }</style></noscript>
-<link rel="stylesheet" href="tokens.css?v=202611240755">
-<link rel="stylesheet" href="propuesta.css?v=202611240755">
+<link rel="stylesheet" href="tokens.css?v=202611232227">
+<link rel="stylesheet" href="propuesta.css?v=202611232227">
 </head>
 <body>
 <p class="marca">XIME CLASES · V5</p>
@@ -258,6 +258,15 @@
           <p class="kpi-titulo">Vencen hoy</p>
         </article>
       </div>
+      <div class="filtros" id="filtros-cobros" role="group" aria-label="Filtrar y ordenar cobros">
+        <button class="f-chip activo" data-todos type="button" aria-pressed="true">Todos</button>
+        <button class="f-chip" data-estado="deben" type="button" aria-pressed="false">Deben <span class="n"></span></button>
+        <button class="f-chip" data-estado="vencido" type="button" aria-pressed="false">Vencido</button>
+        <button class="f-chip" data-estado="porvencer" type="button" aria-pressed="false">Por vencer</button>
+        <button class="f-chip" data-estado="pagado" type="button" aria-pressed="false">Pagado</button>
+        <button class="f-chip" data-orden-cobro="vencimiento" type="button" aria-pressed="false">Vencimiento</button>
+        <button class="f-chip" data-orden-cobro="alumno" type="button" aria-pressed="false">Alumno</button>
+      </div>
       <ul class="lista-cobros" id="lista-cobros"></ul>
     </section>
   </main>
@@ -303,7 +312,7 @@
     });
   })();
 </script>
-<script src="icons.js?v=202611240755"></script>
-<script type="module" src="propuesta.ts?v=202611240755"></script>
+<script src="icons.js?v=202611232227"></script>
+<script type="module" src="propuesta.ts?v=202611232227"></script>
 </body>
 </html>
