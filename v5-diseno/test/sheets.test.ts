@@ -6,7 +6,8 @@ import {
   MARGEN_SHEET, alturaMaximaSheet, estiloSheet, ajustarLock, debeBloquearScroll,
   OPCIONES_CAMBIOS_SIN_GUARDAR, DECISION_ESCAPE_AVISO,
   debeCerrarPorToqueFuera, UMBRAL_MOVIMIENTO_TOQUE, esToqueFuera,
-  debeSuprimirClickTrasCierre, type PuntoToque, type RectSheet,
+  debeSuprimirClickTrasCierre, debeCerrarPorDeslizar, UMBRAL_ARRASTRE_CIERRE, FRANJA_CIERRE,
+  deslizarRechazado, type PuntoToque, type RectSheet,
 } from '../src/sheets.ts';
 
 test('el sheet cabe en el viewport y deja ver la página arriba y la cápsula abajo', () => {
@@ -128,4 +129,39 @@ test('se suprime el click sintético posterior al cierre por tap fuera', () => {
 
 test('un click normal (sin cierre previo) no se suprime', () => {
   assert.equal(debeSuprimirClickTrasCierre(false), false);
+});
+
+// --- Deslizar hacia abajo para cerrar (pedido de Nico, igual que Ropa) ---
+const UMBRAL = UMBRAL_ARRASTRE_CIERRE;
+
+test('deslizar más que el umbral hacia abajo cierra', () => {
+  assert.equal(debeCerrarPorDeslizar(UMBRAL + 1, UMBRAL + 1, false), true);
+  assert.equal(debeCerrarPorDeslizar(UMBRAL, UMBRAL + 10, false), true);
+});
+
+test('un temblor o un toque estático no cierran', () => {
+  assert.equal(debeCerrarPorDeslizar(0, 0, false), false);
+  assert.equal(debeCerrarPorDeslizar(1, 1, false), false);
+  assert.equal(debeCerrarPorDeslizar(UMBRAL - 1, UMBRAL - 1, false), false);
+});
+
+test('terminar más arriba de lo que bajó nunca cierra (vuelta al origen)', () => {
+  assert.equal(debeCerrarPorDeslizar(10, UMBRAL + 20, false), false);
+});
+
+test('hacia arriba nunca cierra', () => {
+  assert.equal(debeCerrarPorDeslizar(-5, 0, false), false);
+});
+
+test('el sistema tomó el gesto (pointercancel): no cierra', () => {
+  assert.equal(debeCerrarPorDeslizar(UMBRAL + 5, UMBRAL + 5, true), false);
+});
+
+test('el rechazo del gesto vuelve el cuadro a su lugar (sin cierre parcial)', () => {
+  assert.equal(deslizarRechazado(), 0);
+});
+
+test('la franja de nacimiento deja ver el contenido y no muerde el toque corto', () => {
+  // La cabecera del sheet mide ~56px; 64 deja aire pero no llega al contenido.
+  assert.ok(FRANJA_CIERRE >= 48 && FRANJA_CIERRE <= 80);
 });

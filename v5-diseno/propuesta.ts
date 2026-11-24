@@ -20,7 +20,7 @@ import {
 } from './src/barra-scroll.ts';
 import {
   ajustarLock, debeBloquearScroll, estiloSheet, debeCerrarPorToqueFuera, esToqueFuera,
-  debeSuprimirClickTrasCierre, type PuntoToque,
+  debeSuprimirClickTrasCierre, debeCerrarPorDeslizar, FRANJA_CIERRE, type PuntoToque,
 } from './src/sheets.ts';
 import {
   diaCorto, mesCorto, etiquetaDia, etiquetaDiaCompleta, etiquetaDiaCorta, etiquetaMes,
@@ -2203,7 +2203,71 @@ document.addEventListener('click', (e) => {
 // El sistema tomó el gesto (scroll, pull-to-refresh…): no es un tap de cierre.
 document.addEventListener('pointercancel', (e) => {
   if (toqueFueraInicio?.pointerId === e.pointerId) toqueFueraInicio = null;
+  if (deslizarInicio?.pointerId === e.pointerId) soltarDeslizar();
 }, true);
+
+/* ------------------------------------------------------------ deslizar abajo */
+/**
+ * Cierre por deslizamiento (igual que Ropa): el dedo nace en la franja
+ * superior del sheet (cabecera + aire), baja y al pasar el umbral el cuadro
+ * se cierra con la animación ya existente (`cerrando` → `bajarSheet`). Mientras
+ * arrastra, el cuadro sigue al dedo sin animación; si no llega al umbral,
+ * vuelve a su lugar. Mouse y dedo: los eventos de puntero cubren ambos.
+ */
+let deslizarInicio: { pointerId: number; y0: number; y1: number; maxBajo: number; sheet: HTMLElement } | null = null;
+
+document.addEventListener('pointerdown', (e) => {
+  const abierto = document.querySelector('.sheet:not(.cerrando)') as HTMLElement | null;
+  if (!abierto || !(e.target instanceof Element) || !abierto.contains(e.target)) return;
+  const r = abierto.getBoundingClientRect();
+  // La franja de nacimiento: cerca del borde superior del cuadro.
+  if (e.clientY < r.top || e.clientY > r.top + FRANJA_CIERRE) return;
+  // No robar el gesto a botones/campos de la cabecera (X, links, inputs).
+  if ((e.target as Element).closest('button, a, input, select, textarea, [role="button"]')) return;
+  // El contenido interno puede scrollear: sólo si el cuadro no tiene más
+  // contenido por ver bajo el dedo le robamos el gesto vertical.
+  const cScroll = abierto.querySelector('form, .opciones, .lista-cobros-panel') as HTMLElement | null;
+  if (cScroll && cScroll.scrollHeight > cScroll.clientHeight + 4 && cScroll.scrollTop > 2) return;
+  deslizarInicio = { pointerId: e.pointerId, y0: e.clientY, y1: e.clientY, maxBajo: 0, sheet: abierto };
+}, true);
+
+document.addEventListener('pointermove', (e) => {
+  const g = deslizarInicio;
+  if (!g || g.pointerId !== e.pointerId) return;
+  const dy = e.clientY - g.y0;
+  g.y1 = e.clientY;
+  if (dy > g.maxBajo) g.maxBajo = dy;
+  if (dy > 0) {
+    // Sigue al dedo: sin transición ni animación de entrada mientras arrastra.
+    g.sheet.style.animation = 'none';
+    g.sheet.style.transition = 'none';
+    g.sheet.style.transform = `translateY(${Math.max(0, dy)}px)`;
+  }
+}, true);
+
+document.addEventListener('pointerup', (e) => {
+  const g = deslizarInicio;
+  if (!g || g.pointerId !== e.pointerId) return;
+  const dy = e.clientY - g.y0;
+  const cerrar = debeCerrarPorDeslizar(dy, g.maxBajo, false);
+  deslizarInicio = null;
+  if (cerrar) {
+    g.sheet.style.animation = '';
+    g.sheet.style.transition = '';
+    g.sheet.style.transform = '';
+    cerrarSheetPorFuera(g.sheet);
+  } else soltarDeslizar();
+});
+
+/** Devuelve el cuadro a su lugar con la animación de siempre. */
+function soltarDeslizar(): void {
+  const g = deslizarInicio;
+  deslizarInicio = null;
+  if (!g) return;
+  g.sheet.style.animation = '';
+  g.sheet.style.transition = '';
+  g.sheet.style.transform = '';
+}
 
 // Escape: los <dialog> nativos lo manejan con su propio `cancel` (enganchado
 // en abrirDialogoCobros); los sheets <div> los atiende acá. Si hay un aviso de

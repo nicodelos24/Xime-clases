@@ -110,6 +110,43 @@ export function debeSuprimirClickTrasCierre(pendiente: boolean): boolean {
   return pendiente;
 }
 
+/**
+ * Deslizar hacia abajo para cerrar (igual que Ropa): el dedo nace en la franja
+ * superior del sheet (cabecera + aire), baja una distancia neta y al pasar el
+ * umbral el gesto es de cierre. Un temblor o un arrastre hacia arriba no
+ * cierran; el toque corto queda para la X y los botones.
+ */
+export const UMBRAL_ARRASTRE_CIERRE = 80; // px: netos hacia abajo, no acumulados
+
+/** La franja desde donde el gesto es válido: alto de cabecera + aire. */
+export const FRANJA_CIERRE = 64; // px desde el borde superior del sheet
+
+/**
+ * Decide si un gesto de arrastre (nacido en el sheet, con rect conocido)
+ * cierra por deslizamiento. `dy` es el desplazamiento neto del puntero
+ * (positivo = hacia abajo); un arrastre que terminó hacia arriba nunca cierra
+ * aunque haya pasado por abajo. `cancelado` descarta gestos que el sistema
+ * tomó (scroll/pull-to-refresh).
+ */
+export function debeCerrarPorDeslizar(
+  dy: number,
+  maxBajo: number,
+  cancelado: boolean,
+  umbral = UMBRAL_ARRASTRE_CIERRE,
+): boolean {
+  if (cancelado) return false;
+  if (dy <= 0 || maxBajo < dy) return false; // hacia arriba o inconsistente
+  return dy >= umbral;
+}
+
+/**
+ * Y si no cerró, cuánto debe volver: siempre a su lugar (sin cierre parcial
+ * a medias) para que el sheet no quede abierto con el dedo a mitad de camino.
+ */
+export function deslizarRechazado(): 0 {
+  return 0;
+}
+
 /** Rectángulo simple para decidir dentro/fuera sin hit testing del DOM. */
 export interface RectSheet { left: number; right: number; top: number; bottom: number }
 
