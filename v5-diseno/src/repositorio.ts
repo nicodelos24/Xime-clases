@@ -73,7 +73,7 @@ export type Almacen = {
   escribir(texto: string, requierePersistencia?: boolean): void;
   /** Respaldo de rutinas en clave aparte (opcional para almacenes de test). */
   leerRutinas?(): string | null;
-  escribirRutinas?(texto: string): void;
+  escribirRutinas?(texto: string, requierePersistencia?: boolean): void;
 };
 
 /** Almacén en memoria (tests, o respaldo si `localStorage` no está). */
@@ -134,9 +134,17 @@ export function almacenLocalStorage(
       if (soloMemoria) return null;
       try { return ventana.localStorage?.getItem(CLAVE_RUTINAS) ?? null; } catch { return null; }
     },
-    escribirRutinas: (texto) => {
-      if (soloMemoria) return;
-      try { ventana.localStorage?.setItem(CLAVE_RUTINAS, texto); } catch { /* el estado principal ya está guardado */ }
+    escribirRutinas: (texto, requierePersistencia = false) => {
+      if (soloMemoria) {
+        if (requierePersistencia) throw new Error('No se pudo guardar en este navegador. No se aplicaron cambios.');
+        return;
+      }
+      try {
+        if (!ventana.localStorage) throw new Error('localStorage no disponible');
+        ventana.localStorage.setItem(CLAVE_RUTINAS, texto);
+      } catch {
+        if (requierePersistencia) throw new Error('No se pudo guardar el respaldo. No se aplicaron cambios.');
+      }
     },
   };
 }
@@ -566,7 +574,7 @@ export class RepositorioClases implements RepositorioDeClases {
         rutinas,
       };
       // Si venía de una versión anterior (o faltaban campos), persistimos la migrada.
-      if (version !== VERSION_ESTADO || !Array.isArray(dato.alumnos) || !Array.isArray(dato.rutinas)) this.persistir(estado);
+      if (version !== VERSION_ESTADO || !Array.isArray(dato.alumnos) || !Array.isArray(dato.rutinas)) this.persistir(estado, true);
       return estado;
     } catch {
       return null;
@@ -583,7 +591,9 @@ export class RepositorioClases implements RepositorioDeClases {
       alumnos: this.sembrarAlumnos(hoyLocal(ahora)),
       rutinas: [],
     };
-    this.persistir(estado);
+    // La primera siembra también exige persistencia: si falla el respaldo,
+    // no puede dejar un principal a medias ni entregar un éxito en memoria.
+    this.persistir(estado, true);
     return estado;
   }
 
@@ -606,24 +616,20 @@ export class RepositorioClases implements RepositorioDeClases {
       ...estado,
       guardadoEn: new Date(this.reloj.ahora()).toISOString(),
     });
+    // El respaldo se escribe primero: si falla, el principal todavía no cambió.
+    // Si el principal falla después, se intenta restaurar el respaldo previo.
     const respaldo = this.almacen.escribirRutinas ? JSON.stringify(estado.rutinas) : null;
     const respaldoAnterior = respaldo === null ? null : this.almacen.leerRutinas?.() ?? null;
-    const principalAnterior = this.almacen.leer();
-    // El principal confirma el cambio. Si el respaldo falla, se restaura para
-    // no dejar una ficha/pago nuevo visible tras un error anunciado.
-    this.almacen.escribir(principal, requierePersistencia);
-    if (respaldo !== null) {
-      try {
-        this.almacen.escribirRutinas!(respaldo);
-      } catch (error) {
-        try {
-          if (principalAnterior !== null) this.almacen.escribir(principalAnterior, requierePersistencia);
-          else this.almacen.escribir('', requierePersistencia);
-          this.almacen.escribirRutinas!(respaldoAnterior ?? '');
-          this.almacen.escribir(principal, requierePersistencia);
-        } catch { /* se conserva el error original */ }
-        throw error;
+    if (respaldo !== null) this.almacen.escribirRutinas!(respaldo, requierePersistencia);
+    try {
+      this.almacen.escribir(principal, requierePersistencia);
+    } catch (error) {
+      // La compensación usa persistencia obligatoria: en modo privado/cuota
+      // llena no puede afirmar que restauró si en realidad solo fue memoria.
+      if (respaldo !== null) {
+        try { this.almacen.escribirRutinas!(respaldoAnterior ?? '', true); } catch { /* se conserva el error original */ }
       }
+      throw error;
     }
   }
 }

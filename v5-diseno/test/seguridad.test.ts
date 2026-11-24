@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import { createRequire } from 'node:module';
 import { COLORES, normalizarFichaGuardada, colorPorId } from '../src/alumnos.ts';
 import { normalizarPagoGuardado, registrarPago, resumenCobros } from '../src/cobros.ts';
-import { almacenMemoria, RepositorioClases, type Almacen } from '../src/repositorio.ts';
+import { almacenMemoria, almacenLocalStorage, CLAVE_ESTADO, CLAVE_RUTINAS, RepositorioClases, type Almacen } from '../src/repositorio.ts';
 import { relojFalso } from '../src/reloj.ts';
 
 const payload = '"><img src=x onerror="window.__ximeXss=1">';
@@ -147,49 +147,23 @@ test('SEG-02: cada pago corrupto se aísla sin descartar los válidos', () => {
   assert.throws(() => registrarPago([normalizado], base), /ya está registrado/);
 });
 
-test('SEG-03: si también falla revertir el principal, sí deja el cambio persistido', () => {
-  const original = JSON.stringify({ version: 2, clases: [], alumnos: [], pagos: [], rutinas: [] });
-  let escrituras = 0;
-  let principal: string | null = original;
-  const almacen: Almacen = {
-    leer: () => principal,
-    escribir: (texto) => {
-      escrituras += 1;
-      if (escrituras === 2) throw new Error('compensación llena');
-      principal = texto;
-    },
-    leerRutinas: () => '[]',
-    escribirRutinas: () => { throw new Error('respaldo lleno'); },
-  };
-  const repo = new RepositorioClases(almacen, relojFalso(Date.parse('2026-11-24T13:00:00Z')));
-  repo.listar();
-  escrituras = 0;
-  assert.throws(() => repo.crearAlumno({ nombre: 'Tercera', modalidad: 'mensual' }), /respaldo lleno/);
-  assert.equal(escrituras, 2);
-  assert.equal(JSON.parse(principal!).alumnos.length, 1, 'sin compensación posible queda el principal nuevo');
-  assert.deepEqual(repo.listarAlumnos().map((a) => a.nombre), ['Tercera']);
-});
-
-test('SEG-03: si falla el respaldo, revierte principal y respaldo y no confirma el alta', () => {
+test('SEG-03: si falla el respaldo, no toca el principal ni confirma el alta', () => {
   const original = JSON.stringify({ version: 2, clases: [], alumnos: [], pagos: [], rutinas: [] });
   const respaldoOriginal = '[{"id":"rut-anterior","nombre":"Anterior","dias":[0],"desde":"2026-11-02","hora":"10:00"}]';
   let respaldo = respaldoOriginal;
-  let principal: string | null = original;
+  let principal = original;
   let fallarRespaldo = false;
-  let fallarCompensacion = false;
-  let escrituraNueva = true;
-  let permitirRespaldo = true;
+  let fallarPrincipal = false;
+  let permitirCompensacion = true;
   const almacen: Almacen = {
     leer: () => principal,
     escribir: (texto) => {
-      const compensando = !escrituraNueva;
-      escrituraNueva = false;
-      if (compensando && fallarCompensacion) throw new Error('compensación llena');
-      principal = texto || null;
+      if (fallarPrincipal) throw new Error('principal lleno');
+      principal = texto;
     },
     leerRutinas: () => respaldo,
-    escribirRutinas: (texto) => {
-      if (!permitirRespaldo || fallarRespaldo) throw new Error('respaldo lleno');
+    escribirRutinas: (texto, requiere) => {
+      if (fallarRespaldo || (requiere && !permitirCompensacion)) throw new Error('respaldo lleno');
       respaldo = texto;
     },
   };
@@ -197,32 +171,65 @@ test('SEG-03: si falla el respaldo, revierte principal y respaldo y no confirma 
   repo.listar();
   fallarRespaldo = true;
   assert.throws(() => repo.crearAlumno({ nombre: 'Otra', modalidad: 'mensual' }), /respaldo lleno/);
-  assert.equal(principal, original, 'el estado principal vuelve exactamente al previo');
+  assert.equal(principal, original, 'escribir respaldo primero deja el principal intacto');
   assert.equal(respaldo, respaldoOriginal);
   assert.deepEqual(repo.listarAlumnos(), []);
   fallarRespaldo = false;
-  escrituraNueva = true;
   repo.crearAlumno({ nombre: 'Otra', modalidad: 'mensual' });
   assert.deepEqual(repo.listarAlumnos().map((a) => a.nombre), ['Otra']);
-  fallarCompensacion = true;
-  fallarRespaldo = true;
-  escrituraNueva = true;
-  assert.throws(() => repo.crearAlumno({ nombre: 'Tercera', modalidad: 'mensual' }), /respaldo lleno/);
-  assert.equal(JSON.parse(principal!).alumnos.length, 2, 'límite explícito: si también falla revertir, persiste el principal nuevo');
-  assert.deepEqual(repo.listarAlumnos().map((a) => a.nombre), ['Otra', 'Tercera'], 'una relectura ve el principal persistido, no un éxito inventado');
+  const respaldoAntes = respaldo;
+  fallarPrincipal = true;
+  assert.throws(() => repo.crearAlumno({ nombre: 'Tercera', modalidad: 'mensual' }), /principal lleno/);
+  assert.equal(respaldo, respaldoAntes, 'la compensación restaura el respaldo anterior');
+  assert.deepEqual(repo.listarAlumnos().map((a) => a.nombre), ['Otra']);
+});
+
+test('SEG-03: si también falla compensar el respaldo, propaga el error del principal', () => {
+  const original = JSON.stringify({ version: 2, clases: [], alumnos: [], pagos: [], rutinas: [] });
+  let principal = original;
+  let respaldo = '[]';
+  let fallarPrincipal = false;
+  let permitirCompensacion = true;
+  let respaldos = 0;
+  const almacen: Almacen = {
+    leer: () => principal,
+    escribir: (texto) => {
+      if (fallarPrincipal) throw new Error('principal lleno');
+      principal = texto;
+    },
+    leerRutinas: () => respaldo,
+    escribirRutinas: (texto, requiere) => {
+      respaldos += 1;
+      if (requiere && respaldos % 2 === 0 && !permitirCompensacion) throw new Error('compensación llena');
+      respaldo = texto;
+    },
+  };
+  const repo = new RepositorioClases(almacen, relojFalso(Date.parse('2026-11-24T13:00:00Z')));
+  repo.listar();
+  fallarPrincipal = true;
+  assert.throws(() => repo.crearAlumno({ nombre: 'Tercera', modalidad: 'mensual' }), /principal lleno/);
+  assert.deepEqual(repo.listarAlumnos(), []);
+  assert.equal(respaldo, '[]', 'la compensación restaura el respaldo previo');
+  fallarPrincipal = false;
+  repo.crearAlumno({ nombre: 'Otra', modalidad: 'mensual' });
+  respaldos = 0;
+  permitirCompensacion = false;
+  fallarPrincipal = true;
+  assert.throws(() => repo.crearAlumno({ nombre: 'Tercera', modalidad: 'mensual' }), /principal lleno/);
+  assert.deepEqual(repo.listarAlumnos().map((a) => a.nombre), ['Otra']);
+  assert.equal(respaldo, '[]', 'si el primer respaldo reemplazó el previo, se conserva el nuevo; límite sin transacción');
 });
 
 test('SEG-03: una siembra con respaldo fallido deja el almacén vacío', () => {
   let principal: string | null = null;
   const respaldoOriginal = '[]';
   let respaldo = respaldoOriginal;
-  let permitirRespaldo = false;
   const almacen: Almacen = {
     leer: () => principal,
     escribir: (texto) => { principal = texto || null; },
     leerRutinas: () => respaldo,
-    escribirRutinas: (texto) => {
-      if (!permitirRespaldo) throw new Error('respaldo lleno');
+    escribirRutinas: (texto, requiere) => {
+      if (principal === null && requiere) throw new Error('respaldo lleno');
       respaldo = texto;
     },
   };
@@ -230,4 +237,23 @@ test('SEG-03: una siembra con respaldo fallido deja el almacén vacío', () => {
   assert.throws(() => repo.listarAlumnos(), /respaldo lleno/);
   assert.equal(principal, null);
   assert.equal(respaldo, respaldoOriginal);
+});
+
+test('SEG-03: el adaptador real propaga la cuota del respaldo y deja el principal intacto', () => {
+  const original = JSON.stringify({ version: 2, clases: [], alumnos: [], pagos: [], rutinas: [] });
+  const navegador = new Map<string, string>([[CLAVE_ESTADO, original], [CLAVE_RUTINAS, '[]']]);
+  const almacen = almacenLocalStorage({
+    localStorage: {
+      getItem: (clave) => navegador.get(clave) ?? null,
+      setItem: (clave, valor) => {
+        if (clave === CLAVE_RUTINAS) throw new Error('cuota llena');
+        navegador.set(clave, valor);
+      },
+    },
+  });
+  const repo = new RepositorioClases(almacen, relojFalso(Date.parse('2026-11-24T13:00:00Z')));
+  repo.listar();
+  assert.throws(() => repo.registrarPago({ id: 'p-nuevo', alumnoId: 'a0', periodo: '2026-11', montoUYU: 6500, fecha: '2026-11-24', quien: 'Xime' }), /respaldo/);
+  assert.equal(navegador.get(CLAVE_ESTADO), original);
+  assert.deepEqual(repo.listarPagos(), []);
 });
