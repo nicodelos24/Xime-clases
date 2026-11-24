@@ -23,9 +23,9 @@ import {
   type OpcionReprogramar,
 } from './clases.ts';
 import { hoyLocal, type InstanteMs, type Reloj } from './reloj.ts';
-import { anularPago, corregirFechaPago, registrarPago, type Pago, type PagoNuevo } from './cobros.ts';
+import { anularPago, corregirFechaPago, normalizarPagosGuardados, registrarPago, type Pago, type PagoNuevo } from './cobros.ts';
 import {
-  crearAlumno, editarAlumno, esFotoValida, normalizarFichaGuardada,
+  crearAlumno, editarAlumno, esFotoValida, esIdAlumno, normalizarFichaGuardada,
   type AlumnoFicha, type AlumnoFichaInput,
 } from './alumnos.ts';
 import {
@@ -148,25 +148,31 @@ export type SembrarAlumnos = (hoy: string) => AlumnoFicha[];
  * Sanea lo leído del almacén: completa campos que falten (p. ej. `eventos`
  * de datos guardados por una versión anterior) sin inventar estado.
  */
-function normalizarClase(c: Clase): Clase {
-  return {
-    ...c,
-    alumnos: Array.isArray(c.alumnos) ? c.alumnos : [],
-    marcadaEn: c.marcadaEn ?? null,
-    cancelacion: c.cancelacion ?? null,
-    eventos: Array.isArray(c.eventos) ? c.eventos : [],
-  };
-}
-
 /** Sanea una rutina guardada: completa excepciones y valida lo esencial. */
 function normalizarRutina(r: RutinaSemanal): RutinaSemanal | null {
-  if (!r || typeof r.id !== 'string' || typeof r.nombre !== 'string'
+  if (!r || typeof r.id !== 'string' || !/^rut-[A-Za-z0-9-]+$/.test(r.id)
+    || typeof r.nombre !== 'string'
     || !Array.isArray(r.dias) || typeof r.desde !== 'string' || typeof r.hora !== 'string') return null;
   return {
     ...r,
     dias: r.dias,
     duracionMin: r.duracionMin ?? 60,
     excepciones: r.excepciones && typeof r.excepciones === 'object' ? r.excepciones : {},
+  };
+}
+
+/** Sanea una clase guardada; un ID ajeno al dominio no se entrega a los sinks. */
+function normalizarClase(dato: unknown): Clase | null {
+  if (!dato || typeof dato !== 'object' || Array.isArray(dato)) return null;
+  const c = dato as Clase;
+  if (typeof c.id !== 'string') return null;
+  if (!esIdAlumno(c.id) && !/^(?:[abv]\d+|c-[A-Za-z0-9-]+|suelta-[A-Za-z0-9-]+|rut-[A-Za-z0-9-]+@\d{4}-\d{2}-\d{2}|c\d+)$/.test(c.id)) return null;
+  return {
+    ...c,
+    alumnos: Array.isArray(c.alumnos) ? c.alumnos : [],
+    marcadaEn: c.marcadaEn ?? null,
+    cancelacion: c.cancelacion ?? null,
+    eventos: Array.isArray(c.eventos) ? c.eventos : [],
   };
 }
 
@@ -539,8 +545,10 @@ export class RepositorioClases implements RepositorioDeClases {
       // pestaña de otro build no puede borrar los datos de la clienta.
       const version = dato?.version;
       if (!dato || !VERSIONES_LEIBLES.has(version as number) || !Array.isArray(dato.clases)) return null;
-      const clases = dato.clases.map(normalizarClase);
-      const pagos = Array.isArray(dato.pagos) ? dato.pagos : [];
+      const clases = (dato.clases as unknown[])
+        .map(normalizarClase)
+        .filter((c): c is Clase => c !== null);
+      const pagos = normalizarPagosGuardados(dato.pagos);
       const alumnos = Array.isArray(dato.alumnos)
         ? dato.alumnos.map(normalizarFichaGuardada).filter((a): a is AlumnoFicha => a !== null)
         : this.sembrarAlumnos(hoyLocal(this.reloj.ahora()));
@@ -594,14 +602,28 @@ export class RepositorioClases implements RepositorioDeClases {
   }
 
   private persistir(estado: EstadoClases, requierePersistencia = false): void {
-    // Si la escritura obligatoria falla, lanza ANTES de tocar el respaldo:
-    // así no quedan rutinas nuevas con un estado principal viejo.
-    this.almacen.escribir(JSON.stringify({
+    const principal = JSON.stringify({
       ...estado,
       guardadoEn: new Date(this.reloj.ahora()).toISOString(),
-    }), requierePersistencia);
-    // Respaldo separado: si una pestaña v2 re-graba el estado principal y
-    // pierde `rutinas`, acá siguen para recuperarlas.
-    this.almacen.escribirRutinas?.(JSON.stringify(estado.rutinas));
+    });
+    const respaldo = this.almacen.escribirRutinas ? JSON.stringify(estado.rutinas) : null;
+    const respaldoAnterior = respaldo === null ? null : this.almacen.leerRutinas?.() ?? null;
+    const principalAnterior = this.almacen.leer();
+    // El principal confirma el cambio. Si el respaldo falla, se restaura para
+    // no dejar una ficha/pago nuevo visible tras un error anunciado.
+    this.almacen.escribir(principal, requierePersistencia);
+    if (respaldo !== null) {
+      try {
+        this.almacen.escribirRutinas!(respaldo);
+      } catch (error) {
+        try {
+          if (principalAnterior !== null) this.almacen.escribir(principalAnterior, requierePersistencia);
+          else this.almacen.escribir('', requierePersistencia);
+          this.almacen.escribirRutinas!(respaldoAnterior ?? '');
+          this.almacen.escribir(principal, requierePersistencia);
+        } catch { /* se conserva el error original */ }
+        throw error;
+      }
+    }
   }
 }

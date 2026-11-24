@@ -1,18 +1,87 @@
-import { diasDeFecha, diasDelMes, esFechaValida, parseFecha } from './fechas.js?v=202611240423';
-export function registrarPago(pagos, nuevo) {
-    if (!nuevo.id.trim() || !nuevo.alumnoId.trim() || !nuevo.quien.trim())
-        throw new Error('Faltan datos del pago');
-    if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(nuevo.periodo) || !esFechaValida(nuevo.fecha)) {
-        throw new Error('Fecha o período inválido');
+import { diasDeFecha, diasDelMes, esFechaValida, parseFecha } from './fechas.js?v=202611240819';
+function textoNoVacio(valor) {
+    return typeof valor === 'string' && valor.trim().length > 0;
+}
+/**
+ * Valida UN pago leído de disco. Los valores inválidos se omiten (sin
+ * convertirlos en pagos cero ni tocar el almacén): así no falsean KPI ni
+ * historial y el período vuelve a figurar como deuda pendiente. La lectura no
+ * reescribe el estado; un comando posterior sólo conserva los pagos válidos.
+ */
+export function normalizarPagoGuardado(dato) {
+    if (!dato || typeof dato !== 'object' || Array.isArray(dato))
+        return null;
+    const p = dato;
+    if (!textoNoVacio(p.id) || !textoNoVacio(p.alumnoId) || !textoNoVacio(p.quien))
+        return null;
+    if (typeof p.periodo !== 'string' || !/^\d{4}-(0[1-9]|1[0-2])$/.test(p.periodo))
+        return null;
+    if (typeof p.fecha !== 'string' || !esFechaValida(p.fecha))
+        return null;
+    if (!Number.isSafeInteger(p.montoUYU) || p.montoUYU <= 0)
+        return null;
+    let anulado = null;
+    if (p.anulado !== undefined && p.anulado !== null) {
+        if (!p.anulado || typeof p.anulado !== 'object' || Array.isArray(p.anulado))
+            return null;
+        const a = p.anulado;
+        if (typeof a.fecha !== 'string' || !esFechaValida(a.fecha) || a.fecha < p.fecha)
+            return null;
+        if (!textoNoVacio(a.motivo) || !textoNoVacio(a.quien))
+            return null;
+        anulado = { fecha: a.fecha, motivo: a.motivo.trim(), quien: a.quien.trim() };
     }
-    if (!Number.isSafeInteger(nuevo.montoUYU) || nuevo.montoUYU <= 0)
+    return {
+        id: p.id.trim(),
+        alumnoId: p.alumnoId.trim(),
+        periodo: p.periodo,
+        montoUYU: p.montoUYU,
+        fecha: p.fecha,
+        quien: p.quien.trim(),
+        anulado,
+    };
+}
+/** Lee pagos de forma tolerante: conserva los válidos y omite sólo los corruptos. */
+export function normalizarPagosGuardados(datos) {
+    if (!Array.isArray(datos))
+        return [];
+    const ids = new Set();
+    const periodos = new Set();
+    const resultado = [];
+    for (const dato of datos) {
+        const p = normalizarPagoGuardado(dato);
+        if (!p || ids.has(p.id))
+            continue;
+        // Un duplicado no puede duplicar KPI; si hay dos activos para el mismo
+        // período, se conserva sólo el primero y el otro no se muestra como pago.
+        const periodo = `${p.alumnoId}|${p.periodo}`;
+        if (!p.anulado && periodos.has(periodo))
+            continue;
+        ids.add(p.id);
+        if (!p.anulado)
+            periodos.add(periodo);
+        resultado.push(p);
+    }
+    return resultado;
+}
+export function registrarPago(pagos, nuevo) {
+    const normalizado = normalizarPagoGuardado({ ...nuevo, anulado: null });
+    if (!normalizado) {
+        if (typeof nuevo.id !== 'string' || typeof nuevo.alumnoId !== 'string' || typeof nuevo.quien !== 'string'
+            || !nuevo.id.trim() || !nuevo.alumnoId.trim() || !nuevo.quien.trim())
+            throw new Error('Faltan datos del pago');
+        if (typeof nuevo.periodo !== 'string' || typeof nuevo.fecha !== 'string'
+            || !/^\d{4}-(0[1-9]|1[0-2])$/.test(nuevo.periodo) || !esFechaValida(nuevo.fecha)) {
+            throw new Error('Fecha o período inválido');
+        }
         throw new Error('El monto debe ser un entero positivo en UYU');
-    if (pagos.some((p) => p.id === nuevo.id))
+    }
+    if (pagos.some((p) => p.id === normalizado.id))
         throw new Error('El pago ya está registrado');
-    if (pagos.some((p) => !p.anulado && p.alumnoId === nuevo.alumnoId && p.periodo === nuevo.periodo)) {
+    if (pagos.some((p) => !p.anulado && p.alumnoId === normalizado.alumnoId && p.periodo === normalizado.periodo)) {
         throw new Error('Ya hay un pago activo para este período');
     }
-    return [...pagos, { ...nuevo, anulado: null }];
+    return [...pagos, normalizado];
 }
 /** Corrige la fecha en que se pagó/renovió, dejando rastro de la corrección. */
 export function corregirFechaPago(pagos, id, fechaNueva, motivo, quien, hoy) {

@@ -10,7 +10,7 @@ import { alumnosCobrosDemo, datosDemo, fichasDemo } from './src/demo.ts';
 import { resumenCobros, filtrarCobros, ordenarCobros, type EstadoCobro, type OrdenCobro, type Pago } from './src/cobros.ts';
 import {
   construirVista, filtrarYOrdenar, puntoEstadoVence, textoEstadoVence, validarAlumno,
-  iniciales, colorPorId, type AlumnoFicha, type AlumnoFichaInput, type FichaVista, type OrdenAlumnos,
+  iniciales, colorPorId, esFotoValida, type AlumnoFicha, type AlumnoFichaInput, type FichaVista, type OrdenAlumnos,
 } from './src/alumnos.ts';
 import { resumenHoy, clasesDelDia, clasesDeLaSemana } from './src/resumen.ts';
 import { registrarToqueFecha, mesDe, type ToqueFecha } from './src/agenda.ts';
@@ -70,12 +70,12 @@ function esc(s: string): string {
 function chipEstado(c: Clase): string {
   if (c.estado === 'dada') {
     // Punto 2: el chip "Dada" es tocable → abre Cancelar / Cambiar de día.
-    return '<button class="chip chip-dada chip-boton" type="button" data-acciones="' + c.id + '" aria-label="Opciones para la clase ' + c.nombre + ', dada"><svg class="ico" width="13" height="13"><use href="#i-check"/></svg>Dada</button>';
+    return '<button class="chip chip-dada chip-boton" type="button" data-acciones="' + esc(c.id) + '" aria-label="Opciones para la clase ' + esc(c.nombre) + ', dada"><svg class="ico" width="13" height="13"><use href="#i-check"/></svg>Dada</button>';
   }
   if (c.estado === 'cancelada') {
     return '<span class="chip chip-cancelada"><svg class="ico" width="13" height="13"><use href="#i-alerta"/></svg>Cancelada</span>';
   }
-  return '<button class="chip chip-por chip-por-dar chip-boton" type="button" data-acciones="' + c.id + '" aria-label="Opciones para la clase ' + esc(c.nombre) + ', por dar">Por dar</button>';
+  return `<button class="chip chip-por chip-por-dar chip-boton" type="button" data-acciones="${esc(c.id)}" aria-label="Opciones para la clase ${esc(c.nombre)}, por dar">Por dar</button>`;
 }
 
 /**
@@ -100,7 +100,7 @@ function desplegableAlumnos(c: Clase): string {
  *  solo Cancelada conserva su "Revertir" porque no hay chip tocable. */
 function accionClase(c: Clase): string {
   if (c.estado === 'cancelada') {
-    return `<button class="marcar marcar-reversa" type="button" data-reversa="${c.id}">Revertir</button>`;
+    return `<button class="marcar marcar-reversa" type="button" data-reversa="${esc(c.id)}">Revertir</button>`;
   }
   return '';
 }
@@ -313,8 +313,8 @@ function cablearGestoClase(tarjeta: HTMLElement): void {
   tarjeta.addEventListener('pointerdown', (e) => {
     if (e.pointerType === 'mouse' && e.button !== 0) return;
     if (tarjeta.closest('dialog, .sheet')) return;
-    // Los controles conservan prioridad: chip abre su menú, detalles abre su
-    // lista, Revertir revierte. El gesto simple/largo nace sólo en zona vacía.
+    // Los controles conservan prioridad y su click actual. El gesto
+    // simple/largo nace sólo en la zona vacía de la tarjeta.
     if (e.target instanceof Element && e.target.closest('button, a, input, select, textarea, details, summary, [data-reversa], [role="button"]')) return;
     const c = clases.find((x) => x.id === id);
     if (!c || c.estado === 'cancelada') return;
@@ -440,7 +440,7 @@ function pintarLinea(fecha: string | null) {
     <p class="linea-fecha">${esc(etiquetaDia(dia))}${dia === hoyLocal(reloj.ahora()) ? ' · hoy' : ''}</p>
     ${delDia
       .map(
-        (c) => `<article class="clase${c.estado === 'dada' ? ' hecha' : ''}${c.estado === 'cancelada' ? ' cancelada' : ''}${c.estado === 'programada' ? ' por-dar' : ''}" data-clase="${c.id}">
+        (c) => `<article class="clase${c.estado === 'dada' ? ' hecha' : ''}${c.estado === 'cancelada' ? ' cancelada' : ''}${c.estado === 'programada' ? ' por-dar' : ''}" data-clase="${esc(c.id)}">
           <div class="clase-hora"><b>${horaClase(c)}</b><span>${c.duracionMin} min</span></div>
           <div class="clase-datos">
             <p class="clase-nombre">${esc(c.nombre)}</p>
@@ -612,7 +612,7 @@ function pintarTarjetasDiaMes(): void {
     lista.className = 'dia-lista';
     lista.innerHTML = delDia
       .map(
-        (c) => `<article class="clase${c.estado === 'dada' ? ' hecha' : ''}${c.estado === 'cancelada' ? ' cancelada' : ''}${c.estado === 'programada' ? ' por-dar' : ''}" data-clase="${c.id}">
+        (c) => `<article class="clase${c.estado === 'dada' ? ' hecha' : ''}${c.estado === 'cancelada' ? ' cancelada' : ''}${c.estado === 'programada' ? ' por-dar' : ''}" data-clase="${esc(c.id)}">
           <div class="clase-hora"><b>${horaClase(c)}</b><span>${c.duracionMin} min</span></div>
           <div class="clase-datos">
             <p class="clase-nombre">${esc(c.nombre)}</p>
@@ -1179,7 +1179,7 @@ function abrirFormularioSuelta(fechaDesdeDia?: string, origen?: HTMLElement) {
   (cuadro.querySelector('[name="nombre"]') as HTMLElement)?.focus();
 }
 
-/* ---------------------------------------------------- cancelar clase y WhatsApp */
+/* ------------------------------------------- cancelar clase (sheet + WhatsApp) */
 let sheet: HTMLElement | null = null;
 let claseEnSheet: Clase | null = null;
 let modoEnvio: 'masivo' | 'individual' | 'ninguno' = 'masivo';
@@ -1380,7 +1380,7 @@ function abrirCancelacion(id: string) {
   previo.dataset.disparador = `clase-acciones-${id}`;
   previo.setAttribute('role', 'dialog');
   previo.setAttribute('aria-modal', 'true');
-  previo.setAttribute('aria-label', 'Cancelar clase');
+  previo.setAttribute('aria-label', `Cancelar ${c.nombre}`);
   previo.dataset.retornoFoco = `clase-acciones-${id}`;
   previo.innerHTML = `
     <div class="sheet-head">
@@ -1427,7 +1427,7 @@ function abrirCancelacion(id: string) {
           .map(
             (a) => `<li>
               <label>
-                <input type="checkbox" value="${a.id}">
+                <input type="checkbox" value="${esc(a.id)}">
                 <span class="avatar">${esc(a.nombre.slice(0, 2).toUpperCase())}</span>
                 <span class="al-nombre">${esc(a.nombre)}</span>
               </label>
@@ -1608,7 +1608,7 @@ let busquedaAlumno = '';
  * este valor: es un cálculo de la vista.
  */
 function vencimientosDeCobros(): Map<string, number> {
-  const r = verCobros(repo.listarPagos());
+  const r = verCobros();
   const mapa = new Map<string, number>();
   for (const f of r.filas) {
     if (f.pago) continue;
@@ -1630,8 +1630,13 @@ function avatarAlumno(nombre: string, id: string, foto: string | undefined, tama
   const estilo = `width:${tamano}px;height:${tamano}px;font-size:${Math.round(tamano * 0.34)}px`;
   const sinFoto = `<span class="avatar ${clase}" style="${estilo}" aria-hidden="true">${esc(iniciales(nombre))}</span>`;
   if (!foto) return sinFoto;
+  // Repositorio ya normaliza la foto leída; defensa extra en el borde HTML:
+  // sólo data:image de tamaño acotado, escapado para atributo.
+  if (!esFotoValida(foto)) return sinFoto;
   const srcFoto = esc(foto).replace(/"/g, '&quot;');
-  return `<span class="avatar avatar-foto" style="${estilo}" aria-hidden="true">${sinFoto}<img src="${srcFoto}" alt="" loading="lazy" onerror="this.previousElementSibling.remove();this.remove()"></span>`;
+  // Sin JavaScript inline (CSP del build): al fallar la imagen queda la
+  // silueta inicial debajo. Nunca se ejecuta contenido de la foto.
+  return `<span class="avatar avatar-foto" style="${estilo}" aria-hidden="true">${sinFoto}<img src="${srcFoto}" alt="" loading="lazy"></span>`;
 }
 
 function filasAlumnos(): FichaVista[] {
@@ -2088,7 +2093,7 @@ function alumnosParaCobros() {
     ancla: f.ancla, montoUYU: montos.get(f.id) ?? MONTO_UYU,
   }));
 }
-const verCobros = (pagos = repo.listarPagos()) => resumenCobros(alumnosParaCobros(), pagos, hoyLocal(reloj.ahora()));
+const verCobros = () => resumenCobros(alumnosParaCobros(), repo.listarPagos(), hoyLocal(reloj.ahora()));
 type FilaCobro = ReturnType<typeof verCobros>['filas'][number];
 
 /* Estado del filtro y del orden de Cobros (rediseño 23-nov, B6).
@@ -2108,7 +2113,7 @@ function textoVence(dias: number) {
 
 function pintarCobros() {
   const pagos = repo.listarPagos();
-  const r = verCobros(pagos);
+  const r = verCobros();
   const kpis: Record<string, string> = {
     '#v-hoy .kpi-cobrado': uyu(r.cobradoHoy), '#v-hoy .kpi-por': uyu(r.porCobrar),
     '#v-hoy .kpi-vencen': String(r.vencenHoy.length), '#v-cobros .kpi-cobrado': uyu(r.cobradoMes),
@@ -2132,7 +2137,7 @@ function pintarCobros() {
     const fichaFila = repo.listarAlumnos().find((a) => a.id === f.alumno.id);
     const avatar = avatarAlumno(f.alumno.nombre, fichaFila?.id ?? f.alumno.id, fichaFila?.foto, 32);
     return `<li>
-    <button type="button" class="cobro-fila" data-fila="${f.alumno.id}|${f.periodo}" aria-haspopup="dialog"
+    <button type="button" class="cobro-fila" data-fila="${esc(`${f.alumno.id}|${f.periodo}`)}" aria-haspopup="dialog"
       aria-label="${f.pago ? 'Ver ficha de' : 'Ver ficha de'} ${esc(f.alumno.nombre)}, ${f.pago ? `pagado el ${fechaBreve(f.pago.fecha)}, ${uyu(f.alumno.montoUYU)}` : `deuda ${uyu(f.alumno.montoUYU)}, ${textoVence(f.dias)}`}">
       ${avatar}
       <span class="cobro-row">
@@ -2540,7 +2545,6 @@ document.addEventListener('pointerdown', (e) => {
   if (cScroll && cScroll.scrollHeight > cScroll.clientHeight + 4 && cScroll.scrollTop > 2) return;
   // Una foto tarda en procesarse: hasta entonces el gesto pertenece al input.
   if (abierto.querySelector('input[type="file"]:focus')) return;
-  if (abierto.querySelector('.confirmar-cambios')) return;
   deslizarInicio = { pointerId: e.pointerId, y0: e.clientY, y1: e.clientY, maxBajo: 0, sheet: abierto };
 }, true);
 

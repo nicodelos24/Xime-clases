@@ -7,10 +7,10 @@
  * El estado que el dueño genera encima (cancelaciones, reprogramaciones) sí
  * vive en el repositorio y no se vuelve a sembrar.
  */
-import { crearClase } from './clases.js?v=202611240423';
-import { lunesDe, sumarDias } from './fechas.js?v=202611240423';
-import { hoyLocal } from './reloj.js?v=202611240423';
-import { colorPorId } from './alumnos.js?v=202611240423';
+import { crearClase } from './clases.js?v=202611240819';
+import { lunesDe, sumarDias } from './fechas.js?v=202611240819';
+import { hoyLocal } from './reloj.js?v=202611240819';
+import { colorPorId } from './alumnos.js?v=202611240819';
 function alumnos(nombres, prefijo) {
     return nombres.map(([nombre, telefono], i) => ({ id: `${prefijo}${i}`, nombre, telefono }));
 }

@@ -13,7 +13,7 @@
  */
 /** Grupos existentes de la demo (seleccionables, sin crear grupos nuevos). */
 export const GRUPOS_DEMO = ['Martes A', 'Martes B', 'Viernes', 'Lunes', 'Sábado'];
-const COLORES = ['avatar', 'avatar-2', 'avatar-3', 'avatar-4', 'avatar-5', 'avatar-6'];
+export const COLORES = ['avatar', 'avatar-2', 'avatar-3', 'avatar-4', 'avatar-5', 'avatar-6'];
 /** Color estable a partir del ID (no cambia al editar ni al reordenar). */
 export function colorPorId(id) {
     let h = 0;
@@ -140,10 +140,17 @@ export function editarAlumno(alumno, input) {
 export function normalizarFichaGuardada(dato) {
     if (!dato || typeof dato.id !== 'string' || !dato.id.trim())
         return null;
+    // La agenda A/B usa IDs compactos (a0, b8…); las altas nuevas usan al-….
+    // Cualquier otra identidad se descarta: no puede escaparse a data-* ni HTML.
+    if (!esIdAlumno(dato.id) && !/^[abv]\d+$/.test(dato.id))
+        return null;
     if (typeof dato.nombre !== 'string' || !dato.nombre.trim())
         return null;
     const modalidad = dato.modalidad === 'individual' || dato.tipo === 'individual' ? 'individual' : 'mensual';
     const id = dato.id;
+    const color = typeof dato.color === 'string' && COLORES.includes(dato.color)
+        ? dato.color
+        : colorPorId(id);
     return {
         id,
         nombre: dato.nombre,
@@ -152,7 +159,7 @@ export function normalizarFichaGuardada(dato) {
         ancla: Number.isInteger(dato.ancla) && dato.ancla >= 1 && dato.ancla <= 31 ? dato.ancla : 21,
         fechaAlta: typeof dato.fechaAlta === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dato.fechaAlta) ? dato.fechaAlta : '2026-01-01',
         activo: dato.activo !== false,
-        color: typeof dato.color === 'string' ? dato.color : colorPorId(id),
+        color,
         contacto: typeof dato.contacto === 'string' ? dato.contacto : '',
         pagado: typeof dato.pagado === 'boolean' ? dato.pagado : false,
         foto: esFotoValida(dato.foto) ? dato.foto : '',

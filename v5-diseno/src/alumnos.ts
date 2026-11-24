@@ -60,7 +60,7 @@ export type AlumnoFichaInput = {
 /** Grupos existentes de la demo (seleccionables, sin crear grupos nuevos). */
 export const GRUPOS_DEMO = ['Martes A', 'Martes B', 'Viernes', 'Lunes', 'Sábado'] as const;
 
-const COLORES = ['avatar', 'avatar-2', 'avatar-3', 'avatar-4', 'avatar-5', 'avatar-6'];
+export const COLORES = ['avatar', 'avatar-2', 'avatar-3', 'avatar-4', 'avatar-5', 'avatar-6'];
 
 /** Color estable a partir del ID (no cambia al editar ni al reordenar). */
 export function colorPorId(id: string): string {
@@ -200,9 +200,15 @@ export function editarAlumno(alumno: AlumnoFicha, input: AlumnoFichaInput): Alum
  */
 export function normalizarFichaGuardada(dato: Partial<AlumnoFicha> & { tipo?: string }): AlumnoFicha | null {
   if (!dato || typeof dato.id !== 'string' || !dato.id.trim()) return null;
+  // La agenda A/B usa IDs compactos (a0, b8…); las altas nuevas usan al-….
+  // Cualquier otra identidad se descarta: no puede escaparse a data-* ni HTML.
+  if (!esIdAlumno(dato.id) && !/^[abv]\d+$/.test(dato.id)) return null;
   if (typeof dato.nombre !== 'string' || !dato.nombre.trim()) return null;
   const modalidad: Modalidad = dato.modalidad === 'individual' || dato.tipo === 'individual' ? 'individual' : 'mensual';
   const id = dato.id;
+  const color = typeof dato.color === 'string' && COLORES.includes(dato.color as (typeof COLORES)[number])
+    ? dato.color
+    : colorPorId(id);
   return {
     id,
     nombre: dato.nombre,
@@ -211,7 +217,7 @@ export function normalizarFichaGuardada(dato: Partial<AlumnoFicha> & { tipo?: st
     ancla: Number.isInteger(dato.ancla) && dato.ancla! >= 1 && dato.ancla! <= 31 ? dato.ancla! : 21,
     fechaAlta: typeof dato.fechaAlta === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dato.fechaAlta) ? dato.fechaAlta : '2026-01-01',
     activo: dato.activo !== false,
-    color: typeof dato.color === 'string' ? dato.color : colorPorId(id),
+    color,
     contacto: typeof dato.contacto === 'string' ? dato.contacto : '',
     pagado: typeof dato.pagado === 'boolean' ? dato.pagado : false,
     foto: esFotoValida(dato.foto) ? dato.foto : '',
@@ -226,7 +232,7 @@ export function normalizarFichaGuardada(dato: Partial<AlumnoFicha> & { tipo?: st
  */
 export const MAX_CARACTERES_FOTO = 150_000;
 
-export function esFotoValida(valor: unknown): boolean {
+export function esFotoValida(valor: unknown): valor is string {
   if (typeof valor !== 'string' || valor.length === 0 || valor.length > MAX_CARACTERES_FOTO) return false;
   return /^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/.test(valor);
 }

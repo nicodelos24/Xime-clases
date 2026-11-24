@@ -1,24 +1,24 @@
 // Clases v5 · navegación + funcionamiento (auto-marcado, Cancelar clase, WhatsApp)
 // La estética vive en tokens.css/propuesta.css; acá solo se cambian estados,
 // textos y el flujo de cancelación. Sin emoji: solo SVG de icons.js.
-import { horaClase, } from './src/clases.js?v=202611240423';
-import { CLAVE_ESTADO, RepositorioClases, almacenLocalStorage } from './src/repositorio.js?v=202611240423';
-import { alumnosCobrosDemo, datosDemo, fichasDemo } from './src/demo.js?v=202611240423';
-import { resumenCobros, filtrarCobros, ordenarCobros } from './src/cobros.js?v=202611240423';
-import { construirVista, filtrarYOrdenar, puntoEstadoVence, textoEstadoVence, validarAlumno, iniciales, colorPorId, } from './src/alumnos.js?v=202611240423';
-import { resumenHoy, clasesDelDia, clasesDeLaSemana } from './src/resumen.js?v=202611240423';
-import { registrarToqueFecha, mesDe } from './src/agenda.js?v=202611240423';
-import { primerDiaDeMes, diaSeleccionadoAlCargar } from './src/agenda-mes.js?v=202611240423';
-import { decisionDeGesto, DURACION_TOQUE_LARGO, UMBRAL_MOVIMIENTO_GESTO } from './src/toque-clase.js?v=202611240423';
-import { destinoDeEnlace, vistaInicial, vistasActivas } from './src/navegacion.js?v=202611240423';
-import { pistaDeTira } from './src/scroll-pista.js?v=202611240423';
-import { actualizarBarra, estadoBarraInicial, debeReaparecerPorQuietud, REAPARECER_TRAS_MS, } from './src/barra-scroll.js?v=202611240423';
-import { ajustarLock, debeBloquearScroll, estiloSheet, debeCerrarPorToqueFuera, esToqueFuera, debeSuprimirClickTrasCierre, debeCerrarPorDeslizar, FRANJA_CIERRE, } from './src/sheets.js?v=202611240423';
-import { diaCorto, mesCorto, etiquetaDia, etiquetaDiaCompleta, etiquetaMes, fechaCorta, sumarDias, parseFecha, lunesDe, diasDelMes, esFechaValida, } from './src/fechas.js?v=202611240423';
-import { relojDelDispositivo, hoyLocal } from './src/reloj.js?v=202611240423';
-import { CLAVE_PREFIJO, PREFIJO_POR_DEFECTO, prefijoEsValido, prefijoSeguro, conPrefijo } from './src/prefijo.js?v=202611240423';
-import { bloqueContacto } from './src/contacto.js?v=202611240423';
-import { textoCancelacion, destinos, resumenEnvio, linkTexto, linkAvisoVencimiento, } from './src/whatsapp.js?v=202611240423';
+import { horaClase, } from './src/clases.js?v=202611240819';
+import { CLAVE_ESTADO, RepositorioClases, almacenLocalStorage } from './src/repositorio.js?v=202611240819';
+import { alumnosCobrosDemo, datosDemo, fichasDemo } from './src/demo.js?v=202611240819';
+import { resumenCobros, filtrarCobros, ordenarCobros } from './src/cobros.js?v=202611240819';
+import { construirVista, filtrarYOrdenar, puntoEstadoVence, textoEstadoVence, validarAlumno, iniciales, colorPorId, esFotoValida, } from './src/alumnos.js?v=202611240819';
+import { resumenHoy, clasesDelDia, clasesDeLaSemana } from './src/resumen.js?v=202611240819';
+import { registrarToqueFecha, mesDe } from './src/agenda.js?v=202611240819';
+import { primerDiaDeMes, diaSeleccionadoAlCargar } from './src/agenda-mes.js?v=202611240819';
+import { decisionDeGesto, DURACION_TOQUE_LARGO, UMBRAL_MOVIMIENTO_GESTO } from './src/toque-clase.js?v=202611240819';
+import { destinoDeEnlace, vistaInicial, vistasActivas } from './src/navegacion.js?v=202611240819';
+import { pistaDeTira } from './src/scroll-pista.js?v=202611240819';
+import { actualizarBarra, estadoBarraInicial, debeReaparecerPorQuietud, REAPARECER_TRAS_MS, } from './src/barra-scroll.js?v=202611240819';
+import { ajustarLock, debeBloquearScroll, estiloSheet, debeCerrarPorToqueFuera, esToqueFuera, debeSuprimirClickTrasCierre, debeCerrarPorDeslizar, FRANJA_CIERRE, } from './src/sheets.js?v=202611240819';
+import { diaCorto, mesCorto, etiquetaDia, etiquetaDiaCompleta, etiquetaMes, fechaCorta, sumarDias, parseFecha, lunesDe, diasDelMes, esFechaValida, } from './src/fechas.js?v=202611240819';
+import { relojDelDispositivo, hoyLocal } from './src/reloj.js?v=202611240819';
+import { CLAVE_PREFIJO, PREFIJO_POR_DEFECTO, prefijoEsValido, prefijoSeguro, conPrefijo } from './src/prefijo.js?v=202611240819';
+import { bloqueContacto } from './src/contacto.js?v=202611240819';
+import { textoCancelacion, destinos, resumenEnvio, linkTexto, linkAvisoVencimiento, } from './src/whatsapp.js?v=202611240819';
 /* ------------------------------------------------- estado persistente (local) */
 const reloj = relojDelDispositivo();
 /** Quién opera la app hoy: único dueño. En Fase 4 sale de la sesión. */
@@ -47,12 +47,12 @@ function esc(s) {
 function chipEstado(c) {
     if (c.estado === 'dada') {
         // Punto 2: el chip "Dada" es tocable → abre Cancelar / Cambiar de día.
-        return '<button class="chip chip-dada chip-boton" type="button" data-acciones="' + c.id + '" aria-label="Opciones para la clase ' + c.nombre + ', dada"><svg class="ico" width="13" height="13"><use href="#i-check"/></svg>Dada</button>';
+        return '<button class="chip chip-dada chip-boton" type="button" data-acciones="' + esc(c.id) + '" aria-label="Opciones para la clase ' + esc(c.nombre) + ', dada"><svg class="ico" width="13" height="13"><use href="#i-check"/></svg>Dada</button>';
     }
     if (c.estado === 'cancelada') {
         return '<span class="chip chip-cancelada"><svg class="ico" width="13" height="13"><use href="#i-alerta"/></svg>Cancelada</span>';
     }
-    return '<button class="chip chip-por chip-por-dar chip-boton" type="button" data-acciones="' + c.id + '" aria-label="Opciones para la clase ' + esc(c.nombre) + ', por dar">Por dar</button>';
+    return `<button class="chip chip-por chip-por-dar chip-boton" type="button" data-acciones="${esc(c.id)}" aria-label="Opciones para la clase ${esc(c.nombre)}, por dar">Por dar</button>`;
 }
 /**
  * Punto 1: desplegable informativo de alumnos en cada tarjeta de clase.
@@ -76,7 +76,7 @@ function desplegableAlumnos(c) {
  *  solo Cancelada conserva su "Revertir" porque no hay chip tocable. */
 function accionClase(c) {
     if (c.estado === 'cancelada') {
-        return `<button class="marcar marcar-reversa" type="button" data-reversa="${c.id}">Revertir</button>`;
+        return `<button class="marcar marcar-reversa" type="button" data-reversa="${esc(c.id)}">Revertir</button>`;
     }
     return '';
 }
@@ -275,8 +275,8 @@ function cablearGestoClase(tarjeta) {
             return;
         if (tarjeta.closest('dialog, .sheet'))
             return;
-        // Los controles conservan prioridad: chip abre su menú, detalles abre su
-        // lista, Revertir revierte. El gesto simple/largo nace sólo en zona vacía.
+        // Los controles conservan prioridad y su click actual. El gesto
+        // simple/largo nace sólo en la zona vacía de la tarjeta.
         if (e.target instanceof Element && e.target.closest('button, a, input, select, textarea, details, summary, [data-reversa], [role="button"]'))
             return;
         const c = clases.find((x) => x.id === id);
@@ -409,7 +409,7 @@ function pintarLinea(fecha) {
     cont.innerHTML = `<li class="linea-dia">
     <p class="linea-fecha">${esc(etiquetaDia(dia))}${dia === hoyLocal(reloj.ahora()) ? ' · hoy' : ''}</p>
     ${delDia
-        .map((c) => `<article class="clase${c.estado === 'dada' ? ' hecha' : ''}${c.estado === 'cancelada' ? ' cancelada' : ''}${c.estado === 'programada' ? ' por-dar' : ''}" data-clase="${c.id}">
+        .map((c) => `<article class="clase${c.estado === 'dada' ? ' hecha' : ''}${c.estado === 'cancelada' ? ' cancelada' : ''}${c.estado === 'programada' ? ' por-dar' : ''}" data-clase="${esc(c.id)}">
           <div class="clase-hora"><b>${horaClase(c)}</b><span>${c.duracionMin} min</span></div>
           <div class="clase-datos">
             <p class="clase-nombre">${esc(c.nombre)}</p>
@@ -588,7 +588,7 @@ function pintarTarjetasDiaMes() {
         const lista = document.createElement('div');
         lista.className = 'dia-lista';
         lista.innerHTML = delDia
-            .map((c) => `<article class="clase${c.estado === 'dada' ? ' hecha' : ''}${c.estado === 'cancelada' ? ' cancelada' : ''}${c.estado === 'programada' ? ' por-dar' : ''}" data-clase="${c.id}">
+            .map((c) => `<article class="clase${c.estado === 'dada' ? ' hecha' : ''}${c.estado === 'cancelada' ? ' cancelada' : ''}${c.estado === 'programada' ? ' por-dar' : ''}" data-clase="${esc(c.id)}">
           <div class="clase-hora"><b>${horaClase(c)}</b><span>${c.duracionMin} min</span></div>
           <div class="clase-datos">
             <p class="clase-nombre">${esc(c.nombre)}</p>
@@ -1183,7 +1183,7 @@ function abrirFormularioSuelta(fechaDesdeDia, origen) {
     actualizarResumen();
     cuadro.querySelector('[name="nombre"]')?.focus();
 }
-/* ---------------------------------------------------- cancelar clase y WhatsApp */
+/* ------------------------------------------- cancelar clase (sheet + WhatsApp) */
 let sheet = null;
 let claseEnSheet = null;
 let modoEnvio = 'masivo';
@@ -1395,7 +1395,7 @@ function abrirCancelacion(id) {
     previo.dataset.disparador = `clase-acciones-${id}`;
     previo.setAttribute('role', 'dialog');
     previo.setAttribute('aria-modal', 'true');
-    previo.setAttribute('aria-label', 'Cancelar clase');
+    previo.setAttribute('aria-label', `Cancelar ${c.nombre}`);
     previo.dataset.retornoFoco = `clase-acciones-${id}`;
     previo.innerHTML = `
     <div class="sheet-head">
@@ -1441,7 +1441,7 @@ function abrirCancelacion(id) {
         ${c.alumnos
         .map((a) => `<li>
               <label>
-                <input type="checkbox" value="${a.id}">
+                <input type="checkbox" value="${esc(a.id)}">
                 <span class="avatar">${esc(a.nombre.slice(0, 2).toUpperCase())}</span>
                 <span class="al-nombre">${esc(a.nombre)}</span>
               </label>
@@ -1614,7 +1614,7 @@ let busquedaAlumno = '';
  * este valor: es un cálculo de la vista.
  */
 function vencimientosDeCobros() {
-    const r = verCobros(repo.listarPagos());
+    const r = verCobros();
     const mapa = new Map();
     for (const f of r.filas) {
         if (f.pago)
@@ -1638,8 +1638,14 @@ function avatarAlumno(nombre, id, foto, tamano = 38) {
     const sinFoto = `<span class="avatar ${clase}" style="${estilo}" aria-hidden="true">${esc(iniciales(nombre))}</span>`;
     if (!foto)
         return sinFoto;
+    // Repositorio ya normaliza la foto leída; defensa extra en el borde HTML:
+    // sólo data:image de tamaño acotado, escapado para atributo.
+    if (!esFotoValida(foto))
+        return sinFoto;
     const srcFoto = esc(foto).replace(/"/g, '&quot;');
-    return `<span class="avatar avatar-foto" style="${estilo}" aria-hidden="true">${sinFoto}<img src="${srcFoto}" alt="" loading="lazy" onerror="this.previousElementSibling.remove();this.remove()"></span>`;
+    // Sin JavaScript inline (CSP del build): al fallar la imagen queda la
+    // silueta inicial debajo. Nunca se ejecuta contenido de la foto.
+    return `<span class="avatar avatar-foto" style="${estilo}" aria-hidden="true">${sinFoto}<img src="${srcFoto}" alt="" loading="lazy"></span>`;
 }
 function filasAlumnos() {
     return construirVista(repo.listarAlumnos(), vencimientosDeCobros(), hoyLocal(reloj.ahora()));
@@ -2109,7 +2115,7 @@ function alumnosParaCobros() {
         ancla: f.ancla, montoUYU: montos.get(f.id) ?? MONTO_UYU,
     }));
 }
-const verCobros = (pagos = repo.listarPagos()) => resumenCobros(alumnosParaCobros(), pagos, hoyLocal(reloj.ahora()));
+const verCobros = () => resumenCobros(alumnosParaCobros(), repo.listarPagos(), hoyLocal(reloj.ahora()));
 /* Estado del filtro y del orden de Cobros (rediseño 23-nov, B6).
    En memoria, como los de Alumnos: no se guardan en localStorage. */
 let estadoCobros = 'todos';
@@ -2125,7 +2131,7 @@ function textoVence(dias) {
 }
 function pintarCobros() {
     const pagos = repo.listarPagos();
-    const r = verCobros(pagos);
+    const r = verCobros();
     const kpis = {
         '#v-hoy .kpi-cobrado': uyu(r.cobradoHoy), '#v-hoy .kpi-por': uyu(r.porCobrar),
         '#v-hoy .kpi-vencen': String(r.vencenHoy.length), '#v-cobros .kpi-cobrado': uyu(r.cobradoMes),
@@ -2149,7 +2155,7 @@ function pintarCobros() {
         const fichaFila = repo.listarAlumnos().find((a) => a.id === f.alumno.id);
         const avatar = avatarAlumno(f.alumno.nombre, fichaFila?.id ?? f.alumno.id, fichaFila?.foto, 32);
         return `<li>
-    <button type="button" class="cobro-fila" data-fila="${f.alumno.id}|${f.periodo}" aria-haspopup="dialog"
+    <button type="button" class="cobro-fila" data-fila="${esc(`${f.alumno.id}|${f.periodo}`)}" aria-haspopup="dialog"
       aria-label="${f.pago ? 'Ver ficha de' : 'Ver ficha de'} ${esc(f.alumno.nombre)}, ${f.pago ? `pagado el ${fechaBreve(f.pago.fecha)}, ${uyu(f.alumno.montoUYU)}` : `deuda ${uyu(f.alumno.montoUYU)}, ${textoVence(f.dias)}`}">
       ${avatar}
       <span class="cobro-row">
@@ -2581,8 +2587,6 @@ document.addEventListener('pointerdown', (e) => {
         return;
     // Una foto tarda en procesarse: hasta entonces el gesto pertenece al input.
     if (abierto.querySelector('input[type="file"]:focus'))
-        return;
-    if (abierto.querySelector('.confirmar-cambios'))
         return;
     deslizarInicio = { pointerId: e.pointerId, y0: e.clientY, y1: e.clientY, maxBajo: 0, sheet: abierto };
 }, true);
