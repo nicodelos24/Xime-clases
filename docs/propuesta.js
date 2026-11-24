@@ -1,23 +1,24 @@
 // Clases v5 · navegación + funcionamiento (auto-marcado, Cancelar clase, WhatsApp)
 // La estética vive en tokens.css/propuesta.css; acá solo se cambian estados,
 // textos y el flujo de cancelación. Sin emoji: solo SVG de icons.js.
-import { horaClase, } from './src/clases.js?v=202611240042';
-import { CLAVE_ESTADO, RepositorioClases, almacenLocalStorage } from './src/repositorio.js?v=202611240042';
-import { alumnosCobrosDemo, datosDemo, fichasDemo } from './src/demo.js?v=202611240042';
-import { resumenCobros, filtrarCobros, ordenarCobros } from './src/cobros.js?v=202611240042';
-import { iniciales } from './src/alumnos.js?v=202611240042';
-import { resumenHoy, clasesDelDia, clasesDeLaSemana } from './src/resumen.js?v=202611240042';
-import { registrarToqueFecha, mesDe } from './src/agenda.js?v=202611240042';
-import { primerDiaDeMes, diaSeleccionadoAlCargar } from './src/agenda-mes.js?v=202611240042';
-import { destinoDeEnlace, vistaInicial, vistasActivas } from './src/navegacion.js?v=202611240042';
-import { pistaDeTira } from './src/scroll-pista.js?v=202611240042';
-import { actualizarBarra, estadoBarraInicial, debeReaparecerPorQuietud, REAPARECER_TRAS_MS, } from './src/barra-scroll.js?v=202611240042';
-import { ajustarLock, debeBloquearScroll, estiloSheet, debeCerrarPorToqueFuera, esToqueFuera, debeSuprimirClickTrasCierre, debeCerrarPorDeslizar, FRANJA_CIERRE, } from './src/sheets.js?v=202611240042';
-import { diaCorto, mesCorto, etiquetaDia, etiquetaDiaCompleta, etiquetaMes, fechaCorta, sumarDias, parseFecha, lunesDe, diasDelMes, esFechaValida, } from './src/fechas.js?v=202611240042';
-import { relojDelDispositivo, hoyLocal } from './src/reloj.js?v=202611240042';
-import { CLAVE_PREFIJO, PREFIJO_POR_DEFECTO, prefijoEsValido, prefijoSeguro, conPrefijo } from './src/prefijo.js?v=202611240042';
-import { bloqueContacto } from './src/contacto.js?v=202611240042';
-import { textoCancelacion, destinos, resumenEnvio, linkTexto, linkAvisoVencimiento, } from './src/whatsapp.js?v=202611240042';
+import { horaClase, } from './src/clases.js?v=202611240423';
+import { CLAVE_ESTADO, RepositorioClases, almacenLocalStorage } from './src/repositorio.js?v=202611240423';
+import { alumnosCobrosDemo, datosDemo, fichasDemo } from './src/demo.js?v=202611240423';
+import { resumenCobros, filtrarCobros, ordenarCobros } from './src/cobros.js?v=202611240423';
+import { construirVista, filtrarYOrdenar, puntoEstadoVence, textoEstadoVence, validarAlumno, iniciales, colorPorId, } from './src/alumnos.js?v=202611240423';
+import { resumenHoy, clasesDelDia, clasesDeLaSemana } from './src/resumen.js?v=202611240423';
+import { registrarToqueFecha, mesDe } from './src/agenda.js?v=202611240423';
+import { primerDiaDeMes, diaSeleccionadoAlCargar } from './src/agenda-mes.js?v=202611240423';
+import { decisionDeGesto, DURACION_TOQUE_LARGO, UMBRAL_MOVIMIENTO_GESTO } from './src/toque-clase.js?v=202611240423';
+import { destinoDeEnlace, vistaInicial, vistasActivas } from './src/navegacion.js?v=202611240423';
+import { pistaDeTira } from './src/scroll-pista.js?v=202611240423';
+import { actualizarBarra, estadoBarraInicial, debeReaparecerPorQuietud, REAPARECER_TRAS_MS, } from './src/barra-scroll.js?v=202611240423';
+import { ajustarLock, debeBloquearScroll, estiloSheet, debeCerrarPorToqueFuera, esToqueFuera, debeSuprimirClickTrasCierre, debeCerrarPorDeslizar, FRANJA_CIERRE, } from './src/sheets.js?v=202611240423';
+import { diaCorto, mesCorto, etiquetaDia, etiquetaDiaCompleta, etiquetaMes, fechaCorta, sumarDias, parseFecha, lunesDe, diasDelMes, esFechaValida, } from './src/fechas.js?v=202611240423';
+import { relojDelDispositivo, hoyLocal } from './src/reloj.js?v=202611240423';
+import { CLAVE_PREFIJO, PREFIJO_POR_DEFECTO, prefijoEsValido, prefijoSeguro, conPrefijo } from './src/prefijo.js?v=202611240423';
+import { bloqueContacto } from './src/contacto.js?v=202611240423';
+import { textoCancelacion, destinos, resumenEnvio, linkTexto, linkAvisoVencimiento, } from './src/whatsapp.js?v=202611240423';
 /* ------------------------------------------------- estado persistente (local) */
 const reloj = relojDelDispositivo();
 /** Quién opera la app hoy: único dueño. En Fase 4 sale de la sesión. */
@@ -133,9 +134,18 @@ function pintarHoy() {
           </div>`)
                 .join('');
         }
-        // Punto 2: los chips "Dada" del hero también abren las opciones.
+        // El chip conserva su acción actual de abrir menú; el gesto no nace acá.
         grupos.querySelectorAll('[data-acciones]').forEach((b) => {
             b.addEventListener('click', () => abrirAcciones(b.dataset.acciones));
+        });
+        // El gesto de toque (simple = cambiar, largo = menú) también en el hero.
+        grupos.querySelectorAll('.grupo').forEach((g) => {
+            const chip = g.querySelector('[data-acciones]');
+            const id = chip?.dataset.acciones;
+            if (id) {
+                g.dataset.clase = id;
+                cablearGestoClase(g);
+            }
         });
     }
 }
@@ -254,9 +264,117 @@ function pintarSemanaDe(f) {
         });
     });
 }
+const TOQUES_CLASE = new Map();
+function cablearGestoClase(tarjeta) {
+    if (tarjeta.dataset.gestoOk)
+        return;
+    tarjeta.dataset.gestoOk = '1';
+    const id = tarjeta.dataset.clase;
+    tarjeta.addEventListener('pointerdown', (e) => {
+        if (e.pointerType === 'mouse' && e.button !== 0)
+            return;
+        if (tarjeta.closest('dialog, .sheet'))
+            return;
+        // Los controles conservan prioridad: chip abre su menú, detalles abre su
+        // lista, Revertir revierte. El gesto simple/largo nace sólo en zona vacía.
+        if (e.target instanceof Element && e.target.closest('button, a, input, select, textarea, details, summary, [data-reversa], [role="button"]'))
+            return;
+        const c = clases.find((x) => x.id === id);
+        if (!c || c.estado === 'cancelada')
+            return;
+        const gestoPrevio = TOQUES_CLASE.get(e.pointerId);
+        if (gestoPrevio)
+            window.clearTimeout(gestoPrevio.temporizador);
+        TOQUES_CLASE.delete(e.pointerId);
+        const dato = { pointerId: e.pointerId, id, estado: c.estado, x: e.clientX, y: e.clientY, maxMov: 0, temporizador: 0, cancelado: false, inicio: e.timeStamp };
+        tarjeta.classList.add('presionando');
+        dato.temporizador = window.setTimeout(() => {
+            if (!TOQUES_CLASE.has(e.pointerId))
+                return;
+            TOQUES_CLASE.delete(e.pointerId);
+            tarjeta.classList.remove('presionando');
+            navigator.vibrate?.(12);
+            abrirAcciones(id);
+        }, DURACION_TOQUE_LARGO);
+        TOQUES_CLASE.set(e.pointerId, dato);
+    }, { passive: true });
+    tarjeta.addEventListener('pointermove', (e) => {
+        const dato = TOQUES_CLASE.get(e.pointerId);
+        if (!dato)
+            return;
+        dato.maxMov = Math.max(dato.maxMov, Math.hypot(e.clientX - dato.x, e.clientY - dato.y));
+        if (dato.maxMov > UMBRAL_MOVIMIENTO_GESTO) {
+            tarjeta.classList.remove('presionando');
+            window.clearTimeout(dato.temporizador);
+            TOQUES_CLASE.delete(e.pointerId);
+        }
+    }, { passive: true });
+    const soltar = (e) => {
+        const dato = TOQUES_CLASE.get(e.pointerId);
+        if (!dato || dato.id !== id)
+            return;
+        window.clearTimeout(dato.temporizador);
+        TOQUES_CLASE.delete(e.pointerId);
+        tarjeta.classList.remove('presionando');
+        // Duración REAL del gesto: al soltar menos al apoyar (mismo reloj,
+        // `timeStamp` de PointerEvent; el ID del setTimeout NO es un reloj).
+        const duracion = Math.max(0, e.timeStamp - dato.inicio);
+        const decision = decisionDeGesto({ duracionMs: duracion, maxDesplazamiento: dato.maxMov, cancelado: dato.cancelado }, dato.estado);
+        if (decision === 'menu')
+            abrirAcciones(id);
+        else if (decision === 'estado')
+            cambiarEstadoConToque(id, dato.estado);
+    };
+    const cancelar = (e) => {
+        const dato = TOQUES_CLASE.get(e.pointerId);
+        if (dato && dato.id === id) {
+            window.clearTimeout(dato.temporizador);
+            TOQUES_CLASE.delete(e.pointerId);
+            tarjeta.classList.remove('presionando');
+        }
+    };
+    tarjeta.addEventListener('pointerup', soltar);
+    tarjeta.addEventListener('pointercancel', cancelar);
+    // El sistema puede capturar el puntero para scroll: lo que siga no es toque.
+    tarjeta.addEventListener('contextmenu', (e) => {
+        // En PC, el click derecho sobre la zona no interactiva abre el menú.
+        if (e.target instanceof Element && e.target.closest('button, a, input, select, textarea, [role="button"]'))
+            return;
+        e.preventDefault();
+        abrirAcciones(id);
+    });
+}
+/** Toque simple: Por dar marca Dada; Dada vuelve a Por dar, ambos con Deshacer. */
+function cambiarEstadoConToque(id, estado) {
+    try {
+        if (estado === 'programada') {
+            repo.marcarDada(id, { quien: QUIEN, ahora: reloj.ahora() });
+        }
+        else if (estado === 'dada') {
+            repo.deshacerMarcada(id, { quien: QUIEN, ahora: reloj.ahora() });
+        }
+        else
+            return;
+    }
+    catch (err) {
+        avisar(err instanceof Error ? err.message : 'No se pudo cambiar la asistencia', 3000);
+        return;
+    }
+    clases = repo.listar();
+    refrescar();
+    const idAnterior = toast.dataset.revertirManual;
+    if (idAnterior && idAnterior !== id)
+        delete toast.dataset.deshacer;
+    delete toast.dataset.revertirManual;
+    avisar(estado === 'programada' ? 'Clase marcada dada · Deshacer' : 'Clase vuelta a Por dar · Deshacer', 6000);
+    toast.dataset.deshacer = '1';
+    toast.dataset.revertirManual = id;
+}
 /** Cablea los chips y botones de un bloque de tarjetas (mes o semana). */
 function cablearTarjetas(raiz) {
+    raiz.querySelectorAll('.clase[data-clase]').forEach((t) => cablearGestoClase(t));
     raiz.querySelectorAll('[data-acciones]').forEach((b) => {
+        // El chip abre su menú con cualquier click; el gesto no nace en controles.
         b.addEventListener('click', () => abrirAcciones(b.dataset.acciones));
     });
     raiz.querySelectorAll('[data-cancelar]').forEach((b) => {
@@ -513,6 +631,8 @@ function ajustarAlViewport(el) {
 }
 /** Bloquea el scroll de la página mientras haya cualquier sheet abierto. */
 function abrirSheet(el) {
+    if (!el.querySelector(':scope > .sheet-agarre'))
+        el.insertAdjacentHTML('afterbegin', '<div class="sheet-agarre" aria-hidden="true"></div>');
     ajustarAlViewport(el);
     profundidadSheets = ajustarLock(profundidadSheets, true);
     if (debeBloquearScroll(profundidadSheets)) {
@@ -538,7 +658,11 @@ function retirarSheet(el) {
     el.classList.add('cerrando');
     el.dataset.lockLiberado = '1'; // se va: deja de contar para el lock
     liberarSiNoHaySheets();
-    setTimeout(() => { el.remove(); liberarSiNoHaySheets(); }, 240);
+    const fin = () => { el.remove(); liberarSiNoHaySheets(); };
+    // Firefox no garantiza animationend (hoja oculta, reduced-motion, eventos
+    // detenidos): el temporizador es la salida confiable en todos los navegadores.
+    el.addEventListener('animationend', fin, { once: true });
+    setTimeout(fin, 300);
 }
 /**
  * Tabulables de un contenedor, en orden de documento, para el focus trap:
@@ -649,8 +773,16 @@ function confirmarCierreConCambios(el, guardar, descartar) {
     caja.setAttribute('role', 'dialog');
     caja.setAttribute('aria-modal', 'true');
     const soltarTrapCaja = atraparTab(caja);
-    const cerrarCuadroConfirm = () => { soltarTrapCaja(); if (caja.open)
-        caja.close(); caja.remove(); liberarSiNoHaySheets(); };
+    const retorno = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const cerrarCuadroConfirm = () => {
+        soltarTrapCaja();
+        if (caja.open)
+            caja.close();
+        caja.remove();
+        liberarSiNoHaySheets();
+        if (!document.querySelector('dialog.confirmar-cambios[open]') && retorno?.isConnected)
+            retorno.focus({ preventScroll: true });
+    };
     const descartarYValidar = () => { cerrarCuadroConfirm(); descartar(); };
     // Escape sobre el aviso significa "Seguir editando": no descarta cambios.
     caja.addEventListener('cancel', (e) => { e.preventDefault(); cerrarCuadroConfirm(); });
@@ -688,11 +820,36 @@ function cerrarCuadroConCambios(el, guardar) {
 function cerrarCuadro(el) {
     const origen = el.dataset.disparador;
     const control = origen ? document.getElementById(origen) : null;
+    const retorno = control && document.contains(control) ? control : el.dataset.retornoFoco ? document.getElementById(el.dataset.retornoFoco) : null;
     retirarSheet(el);
-    if (control && document.contains(control))
-        control.focus();
+    if (retorno && document.contains(retorno))
+        retorno.focus();
+    else
+        toast.focus();
 }
-/** Abre el primer cuadro del FAB: elegir «Clase semanal» o «Clase suelta». */
+function avisarError(error, mensaje) {
+    error.textContent = mensaje;
+    error.setAttribute('aria-atomic', 'true');
+}
+function validarClase(error, campos) {
+    if (!campos.nombre) {
+        avisarError(error, 'Poné el nombre de la clase.');
+        return false;
+    }
+    if (campos.desde && campos.fecha === null) {
+        avisarError(error, 'Elegí una fecha de inicio válida.');
+        return false;
+    }
+    if (campos.fecha === null) {
+        avisarError(error, 'Elegí una fecha válida.');
+        return false;
+    }
+    if (!/^\d{1,2}:\d{2}$/.test(campos.hora)) {
+        avisarError(error, 'Elegí la hora de inicio.');
+        return false;
+    }
+    return true;
+}
 function abrirAgendar() {
     cerrarSheet();
     const cuadro = document.createElement('div');
@@ -859,28 +1016,22 @@ function abrirFormularioSemanal(fechaDesdeDia) {
         const hora = String(new FormData(form).get('hora') ?? '');
         const duracionMin = Number(new FormData(form).get('duracion') ?? 60);
         const desde = leerFechaDe(cuadro, 'inicio');
-        if (!nombre) {
-            error.textContent = 'Poné el nombre de la clase.';
+        if (!desde) {
+            avisarError(error, 'Elegí la fecha de inicio.');
             return;
         }
         if (elegidos.size === 0) {
-            error.textContent = 'Elegí al menos un día de la semana.';
+            avisarError(error, 'Elegí al menos un día de la semana.');
             return;
         }
-        if (!desde) {
-            error.textContent = 'Elegí una fecha de inicio válida.';
+        if (!validarClase(error, { nombre, fecha: desde, hora, desde: true }))
             return;
-        }
-        if (!/^\d{1,2}:\d{2}$/.test(hora)) {
-            error.textContent = 'Elegí la hora de inicio.';
-            return;
-        }
         const id = nuevoId('rut');
         try {
             repo.crearRutina({ id, nombre, dias: Array.from(elegidos), desde, hora, duracionMin });
         }
         catch (err) {
-            error.textContent = err instanceof Error ? err.message : 'No se pudo guardar. Intentá de nuevo.';
+            avisarError(error, err instanceof Error ? err.message : 'No se pudo guardar. Intentá de nuevo.');
             return;
         }
         clases = repo.listar();
@@ -1007,37 +1158,32 @@ function abrirFormularioSuelta(fechaDesdeDia, origen) {
         const hora = String(fd.get('hora') ?? '');
         const duracionMin = Number(fd.get('duracion') ?? 60);
         const fecha = leerFechaDe(cuadro, 'fecha');
-        if (!nombre) {
-            error.textContent = 'Poné el nombre de la clase.';
+        if (!validarClase(error, { nombre, fecha, hora }))
             return;
-        }
-        if (!fecha) {
-            error.textContent = 'Elegí una fecha válida.';
-            return;
-        }
-        if (!/^\d{1,2}:\d{2}$/.test(hora)) {
-            error.textContent = 'Elegí la hora de inicio.';
+        const fechaGuardada = fecha;
+        if (!fechaGuardada) {
+            avisarError(error, 'Elegí una fecha válida.');
             return;
         }
         try {
-            repo.crearSuelta({ id: nuevoId('suelta'), nombre, fecha, hora, duracionMin });
+            repo.crearSuelta({ id: nuevoId('suelta'), nombre, fecha: fechaGuardada, hora, duracionMin });
         }
         catch (err) {
-            error.textContent = err instanceof Error ? err.message : 'No se pudo guardar. Intentá de nuevo.';
+            avisarError(error, err instanceof Error ? err.message : 'No se pudo guardar. Intentá de nuevo.');
             return;
         }
         clases = repo.listar();
-        mesSeleccionado = fecha;
-        diaMesSeleccionado = fecha;
-        pintarSemanaDe(fecha);
+        mesSeleccionado = fechaGuardada;
+        diaMesSeleccionado = fechaGuardada;
+        pintarSemanaDe(fechaGuardada);
         cerrarCuadro(cuadro);
         refrescar();
-        avisar(`Clase guardada · ${nombre} el ${etiquetaDia(fecha)}`);
+        avisar(`Clase guardada · ${nombre} el ${etiquetaDia(fechaGuardada)}`);
     });
     actualizarResumen();
     cuadro.querySelector('[name="nombre"]')?.focus();
 }
-/* ------------------------------------------- cancelar clase (sheet + WhatsApp) */
+/* ---------------------------------------------------- cancelar clase y WhatsApp */
 let sheet = null;
 let claseEnSheet = null;
 let modoEnvio = 'masivo';
@@ -1057,8 +1203,13 @@ function cerrarAcciones() {
         return;
     const s = sheet;
     if (s.dataset.dirty === '1') {
-        const cajaCambio = s.querySelector('.cambiar-dia');
+        const confirmarCancelar = s.querySelector('[data-accion="confirmar"]');
+        if (confirmarCancelar) {
+            confirmarCancelar.click();
+            return;
+        }
         const confirmar = s.querySelector('[data-accion="confirmar-cambio"]');
+        const cajaCambio = s.querySelector('.cambiar-dia');
         const guardar = () => {
             if (cajaCambio && cajaCambio.hidden) {
                 // Estaba en el sub-cuadro de fecha: volver a mostrarlo para que el
@@ -1086,6 +1237,11 @@ function abrirAcciones(id) {
     previo.setAttribute('role', 'dialog');
     previo.setAttribute('aria-modal', 'true');
     previo.setAttribute('aria-label', `Opciones para ${c.nombre}`);
+    const disparador = document.querySelector(`[data-acciones="${id}"]`);
+    if (disparador) {
+        disparador.id = `clase-acciones-${id}`;
+        previo.dataset.retornoFoco = disparador.id;
+    }
     const esManual = c.estado === 'dada' && c.eventos.at(-1)?.tipo === 'marcada-manual';
     previo.innerHTML = `
     <div class="sheet-head">
@@ -1190,18 +1346,18 @@ function abrirAcciones(id) {
         errorCambio.textContent = '';
         const nuevaFecha = leerFechaDe(caja, 'destino');
         if (!nuevaFecha) {
-            errorCambio.textContent = 'Elegí una fecha válida.';
+            avisarError(errorCambio, 'Elegí una fecha válida.');
             return;
         }
         if (nuevaFecha === c.fecha) {
-            errorCambio.textContent = 'Esa ya es la fecha de la clase.';
+            avisarError(errorCambio, 'Esa ya es la fecha de la clase.');
             return;
         }
         try {
             repo.reprogramar(id, nuevaFecha, { quien: QUIEN, ahora: reloj.ahora() });
         }
         catch (err) {
-            errorCambio.textContent = err instanceof Error ? err.message : 'No se pudo mover la clase.';
+            avisarError(errorCambio, err instanceof Error ? err.message : 'No se pudo mover la clase.');
             return;
         }
         clases = repo.listar();
@@ -1218,6 +1374,8 @@ function abrirCancelacion(id) {
     const c = clases.find((x) => x.id === id);
     if (!c)
         return;
+    if (sheet && !sheet.classList.contains('cerrando'))
+        cerrarSheet();
     claseEnSheet = c;
     modoEnvio = 'masivo';
     elegidos = new Set();
@@ -1237,7 +1395,8 @@ function abrirCancelacion(id) {
     previo.dataset.disparador = `clase-acciones-${id}`;
     previo.setAttribute('role', 'dialog');
     previo.setAttribute('aria-modal', 'true');
-    previo.setAttribute('aria-label', `Cancelar ${c.nombre}`);
+    previo.setAttribute('aria-label', 'Cancelar clase');
+    previo.dataset.retornoFoco = `clase-acciones-${id}`;
     previo.innerHTML = `
     <div class="sheet-head">
       <div>
@@ -1340,6 +1499,12 @@ function abrirCancelacion(id) {
     previo.querySelector('#canc-motivo').focus();
 }
 function confirmarCancelacion(c, motivo) {
+    if (clases.some((x) => x.id === c.id && x.estado === 'cancelada')) {
+        // Doble click/click sintético: la clase ya estaba cancelada. No repetir
+        // auditoría, mensajes ni apertura de WhatsApp.
+        cerrarSheet();
+        return;
+    }
     const ahora = reloj.ahora();
     const cancelada = repo.cancelar(c.id, { motivo: motivo || 'sin motivo', quien: QUIEN, ahora });
     let lista = [];
@@ -1401,16 +1566,23 @@ function revertirCancelacion(id) {
 toast.addEventListener('click', () => {
     if (toast.dataset.revertirManual && toast.dataset.deshacer === '1') {
         const id = toast.dataset.revertirManual;
+        const estado = clases.find((c) => c.id === id)?.estado;
         try {
-            repo.deshacerMarcada(id, { quien: QUIEN, ahora: reloj.ahora() });
+            if (estado === 'dada')
+                repo.deshacerMarcada(id, { quien: QUIEN, ahora: reloj.ahora() });
+            else if (estado === 'programada')
+                repo.marcarDada(id, { quien: QUIEN, ahora: reloj.ahora() });
+            else
+                throw new Error('La clase ya no se puede deshacer');
             clases = repo.listar();
             refrescar();
-            avisar('Marca manual deshecha · vuelve a Por dar');
+            avisar(estado === 'dada' ? 'Marca manual deshecha · vuelve a Por dar' : 'Clase marcada dada · vuelve al estado anterior');
         }
         catch (e) {
             avisar(e instanceof Error ? e.message : 'No se pudo deshacer', 3000);
         }
         delete toast.dataset.deshacer;
+        delete toast.dataset.revertirManual;
         toast.classList.remove('ver');
         return;
     }
@@ -1432,7 +1604,6 @@ toast.addEventListener('click', () => {
     }
 });
 /* ------------------------------------------------------- alumnos (fichas) */
-import { construirVista, filtrarYOrdenar, puntoEstadoVence, textoEstadoVence, validarAlumno, } from './src/alumnos.js?v=202611240042';
 let ordenAlumnos = 'ninguno';
 const filtrosAlumnos = new Set();
 let busquedaAlumno = '';
@@ -1453,6 +1624,22 @@ function vencimientosDeCobros() {
             mapa.set(f.alumno.id, f.dias);
     }
     return mapa;
+}
+/**
+ * Avatar único de alumno (pedido de Nico 24-nov): mismas iniciales y MISMO
+ * color pastel en Alumnos y Cobros, porque sale del ID estable con las
+ * funciones que ya existían (`iniciales`/`colorPorId`, sin nada nuevo). Si el
+ * alumno tiene foto elegida (ver ficha), la foto reemplaza al círculo en las
+ * dos listas y en la ficha; sin foto, quedan las iniciales de siempre.
+ */
+function avatarAlumno(nombre, id, foto, tamano = 38) {
+    const clase = colorPorId(id);
+    const estilo = `width:${tamano}px;height:${tamano}px;font-size:${Math.round(tamano * 0.34)}px`;
+    const sinFoto = `<span class="avatar ${clase}" style="${estilo}" aria-hidden="true">${esc(iniciales(nombre))}</span>`;
+    if (!foto)
+        return sinFoto;
+    const srcFoto = esc(foto).replace(/"/g, '&quot;');
+    return `<span class="avatar avatar-foto" style="${estilo}" aria-hidden="true">${sinFoto}<img src="${srcFoto}" alt="" loading="lazy" onerror="this.previousElementSibling.remove();this.remove()"></span>`;
 }
 function filasAlumnos() {
     return construirVista(repo.listarAlumnos(), vencimientosDeCobros(), hoyLocal(reloj.ahora()));
@@ -1491,7 +1678,7 @@ function pintarAlumnos() {
         ? out.map((a) => {
             const punto = puntoEstadoVence(a);
             return `<li class="fila-alumno"><button type="button" class="alumno-fila-btn" data-ficha="${esc(a.id)}" aria-label="Abrir ficha de ${esc(a.nombre)}">
-          <span class="avatar ${a.color}">${esc(a.ini)}</span><div><p class="al-nombre">${esc(a.nombre)}</p>${alumnoSub(a)}</div><span class="punto ${punto}"></span>
+          ${avatarAlumno(a.nombre, a.id, a.foto)}<div><p class="al-nombre">${esc(a.nombre)}</p>${alumnoSub(a)}</div><span class="punto ${punto}"></span>
         </button></li>`;
         }).join('')
         : `<p class="pv-vacio">${todas.length === 0 ? 'Todavía no hay alumnos. Tocá «Nuevo alumno» para cargar el primero.' : 'Ningún alumno con estos filtros'}</p>`;
@@ -1572,6 +1759,95 @@ function cablearAyudas(raiz) {
         });
     });
 }
+/**
+ * Foto del alumno (24-nov): cable del botón «Elegir foto» (y «Quitar»).
+ * Un solo <input type="file"> oculto: el celular ofrece cámara o galería, y el
+ * explorador ofrece archivos. Al elegir, se reduce a 256px y se guarda como
+ * JPEG (dataURL chico, <150 KB). La foto queda pendiente en el formulario;
+ * sólo Guardar la confirma y «Quitar» vuelve a las iniciales.
+ */
+const MAX_LADO_FOTO = 480;
+/** Bloque de foto pendiente: no toca el repo hasta Guardar la ficha. */
+function bloqueFotoFicha(ficha, fotoPendiente = ficha?.foto ?? '') {
+    const nombre = ficha?.nombre ?? 'Nuevo alumno';
+    const id = ficha?.id ?? 'nuevo-alumno';
+    const conFoto = Boolean(fotoPendiente);
+    return `<div class="foto-alumno" data-ficha-foto>
+    <div class="foto-alumno-preview">${avatarAlumno(nombre, id, fotoPendiente, 64)}</div>
+    <div class="foto-alumno-acciones">
+      <button type="button" class="cobros-link ficha-accion" data-foto-alumno="camara"><svg class="ico" width="18" height="18" aria-hidden="true"><use href="#i-foto-camara"/></svg>${conFoto ? 'Cambiar foto' : 'Tomar foto'}</button>
+      <button type="button" class="cobros-link ficha-accion" data-foto-alumno="galeria"><svg class="ico" width="18" height="18" aria-hidden="true"><use href="#i-foto-galeria"/></svg>${conFoto ? 'Elegir otra' : 'Elegir foto'}</button>
+      <input type="file" accept="image/*" capture="environment" hidden data-entrada-foto="camara">
+      <input type="file" accept="image/*" hidden data-entrada-foto="galeria">
+      ${conFoto ? '<button type="button" class="cobros-link ficha-accion ficha-foto-quitar" data-quitar-foto>Quitar foto</button>' : ''}
+      <p class="foto-alumno-nota al-sub">La foto se guarda en este dispositivo. No se descarga de WhatsApp.</p>
+    </div>
+  </div>`;
+}
+function reducirFoto(archivo) {
+    return new Promise((resolver, rechazar) => {
+        if (!archivo.type.startsWith('image/')) {
+            rechazar(new Error('No se pudo abrir la foto. Probá con otra imagen.'));
+            return;
+        }
+        const url = URL.createObjectURL(archivo);
+        const img = new Image();
+        img.onload = () => {
+            URL.revokeObjectURL(url);
+            const lado = Math.max(1, Math.min(img.naturalWidth, img.naturalHeight));
+            const escala = Math.min(1, MAX_LADO_FOTO / lado);
+            const ancho = Math.max(1, Math.round(img.naturalWidth * escala));
+            const alto = Math.max(1, Math.round(img.naturalHeight * escala));
+            const lienzo = document.createElement('canvas');
+            lienzo.width = ancho;
+            lienzo.height = alto;
+            const contexto = lienzo.getContext('2d');
+            if (!contexto) {
+                rechazar(new Error('No se pudo procesar esa imagen'));
+                return;
+            }
+            contexto.drawImage(img, 0, 0, ancho, alto);
+            resolver(lienzo.toDataURL('image/jpeg', 0.72));
+        };
+        img.onerror = () => { URL.revokeObjectURL(url); rechazar(new Error('No se pudo leer esa imagen')); };
+        img.src = url;
+    });
+}
+function cablearFotoFicha(dialogo, ficha, onFoto) {
+    dialogo.querySelectorAll('[data-foto-alumno]').forEach((boton) => {
+        boton.addEventListener('click', () => dialogo.querySelector(`[data-entrada-foto="${boton.dataset.fotoAlumno}"]`)?.click());
+    });
+    dialogo.querySelectorAll('[data-entrada-foto]').forEach((entrada) => {
+        entrada.addEventListener('change', async () => {
+            const archivo = entrada.files?.[0];
+            if (!archivo)
+                return;
+            const error = dialogo.querySelector('.cobros-panel-error');
+            if (error)
+                error.textContent = '';
+            if (!archivo.type.startsWith('image/')) {
+                if (error)
+                    error.textContent = 'No se pudo abrir la foto. Probá con otra imagen.';
+                entrada.value = '';
+                return;
+            }
+            try {
+                const dataURL = await reducirFoto(archivo);
+                if (!dialogo.open)
+                    return;
+                onFoto(dataURL);
+            }
+            catch {
+                if (error)
+                    error.textContent = 'No se pudo abrir la foto. Probá con otra imagen.';
+            }
+            finally {
+                entrada.value = '';
+            }
+        });
+    });
+    dialogo.querySelector('[data-quitar-foto]')?.addEventListener('click', () => onFoto(''));
+}
 function abrirFichaConCobro(ficha, origen, alCrear) {
     abrirFicha(ficha, origen, alCrear);
     if (!ficha)
@@ -1609,7 +1885,7 @@ function abrirFichaConCobro(ficha, origen, alCrear) {
         ? `<span class="ficha-chip ficha-chip-vence">${esc(textoVence(deuda.dias))}</span>`
         : '';
     resumen.innerHTML = `<div class="ficha-chips">
-      <span class="ficha-chip ficha-chip-alumno"><span class="avatar ${ficha.color} ${esc(iniciales(ficha.nombre))}">${esc(iniciales(ficha.nombre))}</span>${esc(ficha.nombre)}</span>
+      <span class="ficha-chip ficha-chip-alumno">${avatarAlumno(ficha.nombre, ficha.id, ficha.foto, 22)}${esc(ficha.nombre)}</span>
       ${chipDeuda}${chipVence}
     </div>
     <p>${texto}${deuda ? '' : ''}${ultimo || deuda ? burbujaAyuda('La mensualidad vence el mismo día del mes siguiente al alta. Si pagó después, corregí la fecha del pago: queda registrado con su motivo.') : ''}</p>
@@ -1650,6 +1926,7 @@ function abrirFicha(ficha, origen, alCrear) {
     <p class="al-sub">${esNueva ? 'Ficha real · se guarda en este dispositivo' : `Alta ${esc(fechaCorta(ficha.fechaAlta))}`}</p></div>
     <div class="cobros-panel-dato">${esNueva ? '' : `<span class="ficha-id">ID ${esc(ficha.id)}</span>`}</div></div>
     <p class="cobros-panel-nota">${esNueva ? 'Completá los datos para dar de alta. Nada se envía ni crea grupos.' : burbujaAyuda('Podés corregir nombre, modalidad, día de vencimiento y teléfono. La identidad y la fecha de alta no se cambian.')}</p>
+    ${bloqueFotoFicha(ficha)}
     <form novalidate>
       <label class="campo"><span>Nombre *</span><input name="nombre" required maxlength="80" autocomplete="off" value="${esNueva ? '' : esc(ficha.nombre)}" placeholder="Nombre y apellido"></label>
       ${esNueva ? `<p class="campo"><span>Fecha de registro *</span></p>${selectorFecha('alta', hoy)}` : ''}
@@ -1675,6 +1952,17 @@ function abrirFicha(ficha, origen, alCrear) {
     if (esNueva)
         cablearFecha(dialogo, 'alta');
     cablearAyudas(dialogo);
+    let fotoPendiente = ficha?.foto ?? '';
+    const actualizarFotoPendiente = (foto) => {
+        fotoPendiente = foto;
+        dialogo.querySelector('[data-ficha-foto]')?.remove();
+        dialogo.querySelector('form')?.insertAdjacentHTML('beforebegin', bloqueFotoFicha(ficha, foto));
+        cablearFotoFicha(dialogo, ficha, actualizarFotoPendiente);
+        dialogo.querySelector('.cobros-panel-error')?.replaceChildren();
+        if (!foto)
+            dialogo.querySelector('[data-foto-alumno="camara"]')?.focus();
+    };
+    cablearFotoFicha(dialogo, ficha, actualizarFotoPendiente);
     let modalidad = ficha?.modalidad ?? 'mensual';
     let pagado = false;
     const pintarSeleccion = () => {
@@ -1702,7 +1990,7 @@ function abrirFicha(ficha, origen, alCrear) {
         const datos = new FormData(form);
         const fechaAlta = esNueva ? leerFechaDe(dialogo, 'alta') : ficha.fechaAlta;
         if (esNueva && !fechaAlta) {
-            error.textContent = 'Elegí la fecha de registro';
+            avisarError(error, 'Elegí la fecha de registro');
             return;
         }
         const anclaRaw = String(datos.get('ancla') ?? '').trim();
@@ -1717,18 +2005,23 @@ function abrirFicha(ficha, origen, alCrear) {
         };
         const errores = validarAlumno(input);
         if (Object.keys(errores).length > 0) {
-            error.textContent = Object.values(errores)[0];
+            avisarError(error, Object.values(errores)[0]);
             return;
         }
         let creada;
         try {
             if (esNueva)
                 creada = repo.crearAlumno(input);
-            else
+            else {
                 repo.editarAlumno(ficha.id, input);
+                repo.asignarFotoAlumno(ficha.id, fotoPendiente);
+            }
+            if (creada && fotoPendiente)
+                repo.asignarFotoAlumno(creada.id, fotoPendiente);
         }
         catch (err) {
-            error.textContent = err instanceof Error ? err.message : 'No se pudo guardar la ficha';
+            avisarError(error, err instanceof Error ? err.message : 'No se pudo guardar la ficha');
+            ;
             return;
         }
         dialogo.close();
@@ -1851,19 +2144,25 @@ function pintarCobros() {
     const avisos = r.avisos.length;
     campana.setAttribute('aria-label', avisos === 1 ? '1 aviso de cobro' : `${avisos} avisos de cobro`);
     campana.querySelector('.campana-punto').hidden = avisos === 0;
-    listaCobros.innerHTML = ordenarCobros(filtrarCobros(r.filas, estadoCobros), ordenCobros).map((f, indice) => `<li>
+    listaCobros.innerHTML = ordenarCobros(filtrarCobros(r.filas, estadoCobros), ordenCobros).map((f) => {
+        // Avatar idéntico al de Alumnos: mismo ID, mismo color, misma foto.
+        const fichaFila = repo.listarAlumnos().find((a) => a.id === f.alumno.id);
+        const avatar = avatarAlumno(f.alumno.nombre, fichaFila?.id ?? f.alumno.id, fichaFila?.foto, 32);
+        return `<li>
     <button type="button" class="cobro-fila" data-fila="${f.alumno.id}|${f.periodo}" aria-haspopup="dialog"
       aria-label="${f.pago ? 'Ver ficha de' : 'Ver ficha de'} ${esc(f.alumno.nombre)}, ${f.pago ? `pagado el ${fechaBreve(f.pago.fecha)}, ${uyu(f.alumno.montoUYU)}` : `deuda ${uyu(f.alumno.montoUYU)}, ${textoVence(f.dias)}`}">
+      ${avatar}
       <span class="cobro-row">
         <span class="al-nombre">${esc(f.alumno.nombre)}</span>
         <span class="cobro-meta">${f.pago ? `Pagado el ${fechaBreve(f.pago.fecha)} · ${esc(f.alumno.grupo)}` : `${esc(f.alumno.grupo)}`}</span>
       </span>
       ${f.pago
-        ? `<span class="cobro-importe"><b>${uyu(f.alumno.montoUYU)}</b><small class="pagado">Pagado</small></span>`
-        : `<span class="cobro-importe"><b>${uyu(f.alumno.montoUYU)}</b><small>Debe</small></span><span class="cobro-vence ${f.dias < 0 ? 'vencido' : f.dias <= 7 ? 'pronto' : ''}">${textoVence(f.dias)}</span>`}
+            ? `<span class="cobro-importe"><b>${uyu(f.alumno.montoUYU)}</b><small class="pagado">Pagado</small></span>`
+            : `<span class="cobro-importe"><b>${uyu(f.alumno.montoUYU)}</b><small>Debe</small></span><span class="cobro-vence ${f.dias < 0 ? 'vencido' : f.dias <= 7 ? 'pronto' : ''}">${textoVence(f.dias)}</span>`}
       <svg class="ico" width="13" height="13" aria-hidden="true"><use href="#i-der"/></svg>
     </button>
-  </li>`).join('');
+  </li>`;
+    }).join('');
     // data-fila por ID+período (nunca por índice): con filtros u orden la fila
     // del DOM no coincide con el índice de `r.filas`.
     const filasVisibles = ordenarCobros(filtrarCobros(r.filas, estadoCobros), ordenCobros);
@@ -1963,19 +2262,23 @@ function abrirDialogoCobros(titulo, contexto, icono, contenido, origen) {
     $('.cel').appendChild(dialogo);
     abrirSheet(dialogo);
     dialogo.showModal();
+    dialogo.focoPrevio = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     const soltarTrap = atraparTab(dialogo);
     observarCambios(dialogo); // cubre el-form y los chips de modalidad/grupo
     const form = dialogo.querySelector('form');
     const submit = () => form?.requestSubmit();
+    const retorno = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     const cerrarConAviso = () => {
         if (document.querySelector('dialog.confirmar-cambios[open]'))
             return; // ya hay un aviso
+        dialogo.focoPrevio = retorno ?? document.activeElement;
         if (dialogo.dataset.dirty === '1') {
             confirmarCierreConCambios(dialogo, submit, () => dialogo.close());
         }
         else
             dialogo.close();
     };
+    const focoPrevio = () => dialogo.focoPrevio;
     // Guardamos el cierre con aviso en el elemento para que la X, el "Volver",
     // el toque fuera, Escape y el cambio de vista usen TODOS el mismo camino.
     dialogo.cerrarConAviso = cerrarConAviso;
@@ -2003,10 +2306,13 @@ function abrirDialogoCobros(titulo, contexto, icono, contenido, origen) {
         soltarTrap();
         dialogo.remove();
         liberarSiNoHaySheets();
-        if (!document.querySelector('.cobros-panel[open]') && origen.isConnected)
-            origen.focus();
-        else if (!document.querySelector('.cobros-panel[open]'))
-            toast.focus(); // origen fuera del DOM: el toast como ancla accesible
+        if (!document.querySelector('.cobros-panel[open]')) {
+            const destino = origen.isConnected ? origen : focoPrevio();
+            if (destino?.isConnected)
+                destino.focus();
+            else
+                toast.focus(); // sin destino accesible: ancla neutral
+        }
     });
     return dialogo;
 }
@@ -2109,8 +2415,24 @@ function cerrarSheetsPorNavegacion() {
     $$('.sheet:not(.cerrando):not(.cobros-panel)').forEach((el) => cerrarCuadro(el));
     $$('dialog.sheet[open]').forEach((el) => cerrarDialogoConAviso(el));
 }
-/** Ejecuta el cierre de un sheet por toque fuera (mismo camino que X/Volver). */
+/** Restaura el estado visual del gesto antes de pedir confirmación. */
+function limpiarDeslizamiento(el, cerrar = false) {
+    deslizarInicio = null;
+    el.classList.remove('arrastrando', 'rebotando', 'saliendo');
+    el.style.removeProperty('transform');
+    el.style.removeProperty('opacity');
+    el.style.removeProperty('animation');
+    el.style.removeProperty('transition');
+    if (cerrar)
+        el.style.display = 'none';
+}
+/** Reemplaza el cierre aprobado de 00bc6825, conservando aviso y retorno de foco. */
 function cerrarSheetPorFuera(abierto) {
+    // La barra de arrastre es decorativa: tras soltarla no debe quedar un
+    // desplazamiento visible cuando el cierre pide confirmación.
+    limpiarDeslizamiento(abierto, !abierto.classList.contains('cobros-panel'));
+    if (document.querySelector('dialog.confirmar-cambios[open]'))
+        return;
     if (abierto.classList.contains('cobros-panel')) {
         cerrarDialogoConAviso(abierto);
         return;
@@ -2213,8 +2535,11 @@ document.addEventListener('click', (e) => {
 document.addEventListener('pointercancel', (e) => {
     if (toqueFueraInicio?.pointerId === e.pointerId)
         toqueFueraInicio = null;
-    if (deslizarInicio?.pointerId === e.pointerId)
-        soltarDeslizar();
+    if (deslizarInicio?.pointerId === e.pointerId) {
+        const cancelado = deslizarInicio.sheet;
+        deslizarInicio = null;
+        rebotarSheet(cancelado);
+    }
 }, true);
 /* ------------------------------------------------------------ deslizar abajo */
 /**
@@ -2227,11 +2552,24 @@ document.addEventListener('pointercancel', (e) => {
 let deslizarInicio = null;
 document.addEventListener('pointerdown', (e) => {
     const abierto = document.querySelector('.sheet:not(.cerrando)');
-    if (!abierto || !(e.target instanceof Element) || !abierto.contains(e.target))
+    if (!abierto || document.querySelector('dialog.confirmar-cambios[open]'))
         return;
+    if (abierto.classList.contains('saliendo') || abierto.classList.contains('rebotando'))
+        return;
+    if (e.pointerType === 'mouse' && e.button !== 0)
+        return;
+    if (!(e.target instanceof Element))
+        return;
+    // Un <dialog> modal reorienta el backdrop al propio dialog: decidir por
+    // coordenadas evita descartar un gesto sintético cuyo target es el sheet.
     const r = abierto.getBoundingClientRect();
-    // La franja de nacimiento: cerca del borde superior del cuadro.
-    if (e.clientY < r.top || e.clientY > r.top + FRANJA_CIERRE)
+    if (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top)
+        return;
+    const agarre = abierto.querySelector(':scope > .sheet-agarre');
+    const cabeza = abierto.querySelector(':scope > .sheet-head');
+    const finZona = Math.max(r.top + FRANJA_CIERRE, agarre?.getBoundingClientRect().bottom ?? 0, cabeza?.getBoundingClientRect().bottom ?? 0);
+    // La barrita y la cabecera completas son zona de arrastre.
+    if (e.clientY < r.top || e.clientY > finZona)
         return;
     // No robar el gesto a botones/campos de la cabecera (X, links, inputs).
     if (e.target.closest('button, a, input, select, textarea, [role="button"]'))
@@ -2240,6 +2578,11 @@ document.addEventListener('pointerdown', (e) => {
     // contenido por ver bajo el dedo le robamos el gesto vertical.
     const cScroll = abierto.querySelector('form, .opciones, .lista-cobros-panel');
     if (cScroll && cScroll.scrollHeight > cScroll.clientHeight + 4 && cScroll.scrollTop > 2)
+        return;
+    // Una foto tarda en procesarse: hasta entonces el gesto pertenece al input.
+    if (abierto.querySelector('input[type="file"]:focus'))
+        return;
+    if (abierto.querySelector('.confirmar-cambios'))
         return;
     deslizarInicio = { pointerId: e.pointerId, y0: e.clientY, y1: e.clientY, maxBajo: 0, sheet: abierto };
 }, true);
@@ -2251,38 +2594,62 @@ document.addEventListener('pointermove', (e) => {
     g.y1 = e.clientY;
     if (dy > g.maxBajo)
         g.maxBajo = dy;
-    if (dy > 0) {
-        // Sigue al dedo: sin transición ni animación de entrada mientras arrastra.
-        g.sheet.style.animation = 'none';
-        g.sheet.style.transition = 'none';
-        g.sheet.style.transform = `translateY(${Math.max(0, dy)}px)`;
-    }
+    if (Math.abs(dy) > 3)
+        g.sheet.classList.add('arrastrando');
+    // Resistencia hacia arriba; hacia abajo sigue al dedo 1:1.
+    const desplazamiento = dy > 0 ? dy : dy * 0.28;
+    g.sheet.style.animation = 'none';
+    g.sheet.style.transform = `translateY(${desplazamiento}px)`;
 }, true);
 document.addEventListener('pointerup', (e) => {
     const g = deslizarInicio;
     if (!g || g.pointerId !== e.pointerId)
         return;
-    const dy = e.clientY - g.y0;
-    const cerrar = debeCerrarPorDeslizar(dy, g.maxBajo, false);
-    deslizarInicio = null;
-    if (cerrar) {
-        g.sheet.style.animation = '';
-        g.sheet.style.transition = '';
-        g.sheet.style.transform = '';
-        cerrarSheetPorFuera(g.sheet);
-    }
-    else
-        soltarDeslizar();
-});
-/** Devuelve el cuadro a su lugar con la animación de siempre. */
-function soltarDeslizar() {
-    const g = deslizarInicio;
-    deslizarInicio = null;
-    if (!g)
+    // Una hoja ya animando su cierre/rebote no recibe otro gesto encima.
+    if (g.sheet.classList.contains('saliendo') || g.sheet.classList.contains('rebotando')) {
+        deslizarInicio = null;
         return;
-    g.sheet.style.animation = '';
-    g.sheet.style.transition = '';
-    g.sheet.style.transform = '';
+    }
+    const dy = e.clientY - g.y0;
+    const maxBajo = Math.max(g.maxBajo, dy);
+    // Sin layout útil no se inventa un umbral diminuto: usar el default de 80 px.
+    const alto = g.sheet.getBoundingClientRect().height;
+    const cerrar = debeCerrarPorDeslizar(dy, maxBajo, false, undefined, alto);
+    deslizarInicio = null;
+    if (cerrar)
+        salirSheetDeslizando(g.sheet);
+    else
+        rebotarSheet(g.sheet);
+});
+/** Salida directa de 260 ms; después usa el cierre ya existente. */
+function salirSheetDeslizando(el) {
+    el.classList.remove('arrastrando', 'rebotando');
+    el.classList.add('saliendo');
+    el.style.animation = 'none';
+    el.style.transform = 'translateY(100%)';
+    const reducir = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    window.setTimeout(() => {
+        el.style.animation = '';
+        el.style.transform = '';
+        el.classList.remove('saliendo');
+        cerrarSheetPorFuera(el);
+    }, reducir ? 0 : 260);
+}
+/** Rebote de 320 ms; reduced-motion vuelve inmediato. */
+function rebotarSheet(el) {
+    el.classList.remove('arrastrando');
+    // No reiniciar un rebote ya en curso (por un pointerup tardío).
+    if (el.classList.contains('rebotando'))
+        return;
+    el.classList.add('rebotando');
+    el.style.animation = 'none';
+    el.style.transform = 'translateY(0)';
+    const reducir = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    window.setTimeout(() => {
+        el.style.animation = '';
+        el.style.transform = '';
+        el.classList.remove('rebotando');
+    }, reducir ? 0 : 320);
 }
 // Escape: los <dialog> nativos lo manejan con su propio `cancel` (enganchado
 // en abrirDialogoCobros); los sheets <div> los atiende acá. Si hay un aviso de
@@ -2321,13 +2688,12 @@ function pintarTitulo(id) {
     if (h1)
         h1.textContent = titulos[id] || 'Hoy';
 }
-function irA(id, fijarHash = true) {
+function irA(id, fijarHash = true, enfocarDestino = false) {
     const destino = document.getElementById(id);
     if (!destino)
         return;
-    cerrarSheetsPorNavegacion();
-    // Una sola pantalla a la vez, por construcción: el destino se lleva `activa`
-    // y el resto la pierde siempre (no depende de qué clases traiga el HTML).
+    // Que «Ver mes» no cambie el hash no significa que la vista mensual no deba
+    // activarse: la cápsula permanece en Clases, pero la pantalla es el mes.
     const activas = new Set(vistasActivas(vistas.map((v) => v.id), id));
     vistas.forEach((v) => v.classList.toggle('activa', activas.has(v.id)));
     void destino.offsetWidth;
@@ -2341,18 +2707,32 @@ function irA(id, fijarHash = true) {
             t.removeAttribute('aria-current');
     });
     pintarTitulo(id);
-    // Los chips de Alumnos desbordan a 320 px: recalcular la pista recién cuando
-    // la vista está visible (oculta, `clientWidth` es 0 y todo parece entrar).
     if (id === 'v-alumnos')
         actualizarPistaFiltros();
     if (id === 'v-cobros')
         actualizarPistaCobros();
     if (fijarHash && history.replaceState)
         history.replaceState(null, '', '#' + id);
+    pintarSemana();
+    refrescar();
+    cerrarSheetsPorNavegacion();
     // replaceState no dispara hashchange: reconfigurar la barra acá al cambiar de vista.
+    const titulo = $('#v-mes .mes-titulo-nav h2');
+    if (titulo && !titulo.hasAttribute('tabindex'))
+        titulo.setAttribute('tabindex', '-1');
     window.scrollTo(0, 0);
     document.querySelector('.tabbar')?.classList.remove('oculta');
     document.documentElement.classList.remove('barra-oculta');
+    if (enfocarDestino && id === 'v-mes') {
+        // El enlace se destruye al repintar: su destino equivalente es el título
+        // mensual, al que se puede desplazar el foco sin añadir un tab stop.
+        const titulo = $('#v-mes .mes-titulo-nav h2');
+        if (titulo) {
+            if (!titulo.hasAttribute('tabindex'))
+                titulo.setAttribute('tabindex', '-1');
+            titulo.focus({ preventScroll: true });
+        }
+    }
 }
 tabs.forEach((t) => t.addEventListener('click', (e) => {
     e.preventDefault();
@@ -2485,6 +2865,8 @@ requestAnimationFrame(actualizarPistaCobros);
 // Primer cálculo tras el layout inicial (fuentes y estilos ya aplicados).
 requestAnimationFrame(actualizarPistaFiltros);
 $$('a.link-suave').forEach((a) => a.addEventListener('click', (e) => {
+    // El enlace original se registra antes de quitarle href, y luego conserva
+    // su listener propio: así «Ver mes» no queda inerte ni navega dos veces.
     const destino = destinoDeEnlace(a.getAttribute('href'));
     if (!destino)
         return; // enlace convertido en botón (p. ej. «Ver mes»)
@@ -2494,6 +2876,7 @@ $$('a.link-suave').forEach((a) => a.addEventListener('click', (e) => {
 // El mes es una vista dentro de Clases: el enlace «Ver mes» entra sin hash
 // propio para que la navegación hacia atrás no se coma la vista activa.
 $$('a.link-suave[href="#v-mes"]').forEach((a) => {
+    a.dataset.verMes = '1';
     a.removeAttribute('href');
     a.setAttribute('role', 'button');
     a.setAttribute('tabindex', '0');
@@ -2501,10 +2884,10 @@ $$('a.link-suave[href="#v-mes"]').forEach((a) => {
         const k = e.key;
         if (k === 'Enter' || k === ' ') {
             e.preventDefault();
-            irA('v-mes', false);
+            irA('v-mes', false, true);
         }
     });
-    a.addEventListener('click', (e) => { e.preventDefault(); e.stopImmediatePropagation(); irA('v-mes', false); });
+    a.addEventListener('click', (e) => { e.preventDefault(); e.stopImmediatePropagation(); irA('v-mes', false, true); });
 });
 $('.fab')?.addEventListener('click', () => abrirAgendar());
 window.addEventListener('storage', (e) => { if (e.key === CLAVE_ESTADO) {
@@ -2512,6 +2895,8 @@ window.addEventListener('storage', (e) => { if (e.key === CLAVE_ESTADO) {
     pintarAlumnos();
 } });
 /* --------------------------------------------------------------- arranque */
+/** Prefijo vigente en este dispositivo; se lee una vez al abrir. */
+let prefijoMovil = prefijoSeguro(localStorage.getItem(CLAVE_PREFIJO));
 function refrescar() {
     pintarSemana();
     pintarHoy();
@@ -2574,8 +2959,6 @@ setInterval(() => {
     reconciliarAlVolver();
 }, 30000);
 /* ------------------------- configuración: prefijo de móvil (punto 9) ------- */
-/** Prefijo vigente en este dispositivo; se lee una vez al abrir. */
-let prefijoMovil = prefijoSeguro(localStorage.getItem(CLAVE_PREFIJO));
 function abrirConfiguracion(origen) {
     const contenido = `<p class="cobros-panel-nota">Se agrega a los números de WhatsApp que no lo traigan. Ejemplo: ${esc(prefijoMovil)} (Uruguay).</p>
     <form novalidate>

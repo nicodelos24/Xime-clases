@@ -15,11 +15,11 @@
  *    cancelaciones, reversiones, reprogramaciones y el estado por hora.
  *  - Nunca se borra una clase: el historial de eventos queda en la clase.
  */
-import { cancelarClase, crearClase, deshacerCancelacion, deshacerMarcada, marcarDada, reconciliar, registrarMensajeEnviado, reprogramarClase, } from './clases.js?v=202611240042';
-import { hoyLocal } from './reloj.js?v=202611240042';
-import { anularPago, corregirFechaPago, registrarPago } from './cobros.js?v=202611240042';
-import { crearAlumno, editarAlumno, normalizarFichaGuardada, } from './alumnos.js?v=202611240042';
-import { conExcepcion, crearClaseSuelta, crearRutina, generarOcurrencias, generarOcurrenciasEnRango, } from './agendar.js?v=202611240042';
+import { cancelarClase, crearClase, deshacerCancelacion, deshacerMarcada, marcarDada, reconciliar, registrarMensajeEnviado, reprogramarClase, } from './clases.js?v=202611240423';
+import { hoyLocal } from './reloj.js?v=202611240423';
+import { anularPago, corregirFechaPago, registrarPago } from './cobros.js?v=202611240423';
+import { crearAlumno, editarAlumno, esFotoValida, normalizarFichaGuardada, } from './alumnos.js?v=202611240423';
+import { conExcepcion, crearClaseSuelta, crearRutina, generarOcurrencias, generarOcurrenciasEnRango, } from './agendar.js?v=202611240423';
 /**
  * Versión del formato guardado. v2 agregó `alumnos` (Pieza C); las rutinas
  * semanales (20/11) se guardan como campo ADITIVO `rutinas` SIN subir la
@@ -197,6 +197,23 @@ export class RepositorioClases {
         this.persistir(nuevo, true);
         this.estado = nuevo;
         return editada;
+    }
+    /**
+     * Foto del alumno (24-nov): acepta dataURL de imagen chico (lo valida el
+     * dominio con `esFotoValida`) o '' para quitarla. Persiste en la MISMA
+     * ficha, así Alumnos y Cobros comparten la foto con un solo dato guardado.
+     */
+    asignarFotoAlumno(id, foto) {
+        const estado = this.cargar();
+        const ficha = estado.alumnos.find((a) => a.id === id);
+        if (!ficha)
+            throw new Error('No se encontró la ficha del alumno');
+        const fotoLimpia = esFotoValida(foto) ? foto : '';
+        const actualizada = { ...ficha, foto: fotoLimpia };
+        const nuevo = { ...estado, alumnos: estado.alumnos.map((a) => (a.id === id ? actualizada : a)) };
+        this.persistir(nuevo, true);
+        this.estado = nuevo;
+        return actualizada;
     }
     /** Crea una clase nueva y la persiste. */
     crear(spec) {

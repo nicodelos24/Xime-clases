@@ -102,6 +102,7 @@ export function crearAlumno(input, fechaAlta, yaExiste, azar = Math.random) {
         fechaAlta: input.fechaAlta ?? fechaAlta,
         activo: true,
         color: colorPorId(id),
+        foto: '',
     };
 }
 /**
@@ -127,6 +128,8 @@ export function editarAlumno(alumno, input) {
         // Alta y pago inicial se congelan: la edición no reescribe la identidad.
         fechaAlta: alumno.fechaAlta,
         pagado: alumno.pagado,
+        // La foto pendiente la confirma el repositorio al Guardar la ficha.
+        foto: alumno.foto ?? '',
     };
 }
 /**
@@ -152,7 +155,20 @@ export function normalizarFichaGuardada(dato) {
         color: typeof dato.color === 'string' ? dato.color : colorPorId(id),
         contacto: typeof dato.contacto === 'string' ? dato.contacto : '',
         pagado: typeof dato.pagado === 'boolean' ? dato.pagado : false,
+        foto: esFotoValida(dato.foto) ? dato.foto : '',
     };
+}
+/**
+ * Valida la foto guardada/elegida (24-nov): dataURL de imagen chico. Defensa
+ * al leer: un valor enorme o de otro tipo no rompe la ficha, se descarta y el
+ * alumno vuelve a verse con sus iniciales. Techo 150_000 caracteres: una foto
+ * de 480px JPEG calidad .72 suele quedar bajo este techo; más no es un avatar.
+ */
+export const MAX_CARACTERES_FOTO = 150_000;
+export function esFotoValida(valor) {
+    if (typeof valor !== 'string' || valor.length === 0 || valor.length > MAX_CARACTERES_FOTO)
+        return false;
+    return /^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/.test(valor);
 }
 /** Identificador de ID válido (para tests y defensa al leer). */
 export function esIdAlumno(id) {

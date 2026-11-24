@@ -137,6 +137,8 @@ const UMBRAL = UMBRAL_ARRASTRE_CIERRE;
 test('deslizar más que el umbral hacia abajo cierra', () => {
   assert.equal(debeCerrarPorDeslizar(UMBRAL + 1, UMBRAL + 1, false), true);
   assert.equal(debeCerrarPorDeslizar(UMBRAL, UMBRAL + 10, false), true);
+  assert.equal(debeCerrarPorDeslizar(60, 60, false, undefined, 200), true);
+  assert.equal(debeCerrarPorDeslizar(39, 39, false, undefined, 200), false);
 });
 
 test('un temblor o un toque estático no cierran', () => {

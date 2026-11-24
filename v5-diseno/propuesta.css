@@ -479,7 +479,7 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; width: 0; }
 .dia-agendar:hover { background: var(--tq-700); transform: translateY(-1px); }
 .dia-agendar:active { transform: scale(.96); }
 .dia-agendar:focus-visible, .dia-ver-semana:focus-visible { outline: 2px solid var(--tq-600); outline-offset: 2px; }
-.dia-ver-semana { min-height: 34px; }
+.dia-agendar, .dia-ver-semana { min-height: 44px; }
 .dia-vacio {
   font-size: 13px; color: var(--tinta-2); text-align: center;
   background: var(--bg-alt); border: 1px dashed var(--borde-crema);
@@ -601,6 +601,62 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; width: 0; }
 
 /* Rediseño 23-nov: estilos de la pieza 2 (ficha + Cobros), sobre tokens v5.
    Nada fuera de la ficha y de Cobros; sin emoji, sin ids nuevos de color. */
+
+/* ---- Foto de alumno (24-nov) ----
+   El círculo es el mismo .avatar en las dos listas y en la ficha: cuando hay
+   foto, una <img> cuadrada llena el círculo (border-radius 50% recorta igual);
+   sin foto quedan las iniciales de siempre. Nada nuevo de color ni tema. */
+.avatar-foto { overflow: hidden; padding: 0; flex: none; display: grid; place-items: center; border: 1px solid var(--linea); }
+.avatar-foto > .avatar { border: 0; }
+.avatar-foto > img { grid-area: 1 / 1; width: 100%; height: 100%; object-fit: cover; object-position: center; display: block; }
+.foto-alumno { display: flex; align-items: center; gap: 12px; margin: 2px 0 10px; }
+.foto-alumno-preview { flex: none; display: grid; place-items: center; width: 64px; height: 64px; }
+.foto-alumno-acciones { display: flex; flex-direction: column; gap: 6px; min-width: 0; flex: 1; }
+.foto-alumno-acciones .ficha-accion {
+  align-self: stretch; justify-content: center; min-height: 44px;
+  border: 1px solid var(--linea); border-radius: var(--r-chico);
+  background: var(--bg-alt); color: var(--tq-700); font-size: 13px;
+  text-decoration: none; transition: background var(--t-rapida) var(--ease), transform var(--t-rapida) var(--ease);
+}
+.foto-alumno-acciones .ficha-accion:first-child { padding-top: 11px; }
+.foto-alumno-acciones .ficha-accion + .ficha-accion { border-top: 1px solid var(--linea); }
+.foto-alumno-acciones .ficha-accion:last-child { padding-bottom: 11px; }
+.foto-alumno-acciones .ficha-accion:hover { background: var(--tq-50); }
+.foto-alumno-acciones .ficha-accion:active { transform: scale(.97); }
+.foto-alumno-acciones .ficha-accion:focus-visible { outline: 2px solid var(--tq-600); outline-offset: 2px; }
+[data-tema="oscuro"] .foto-alumno-acciones .ficha-accion { color: var(--tq-300); }
+.foto-alumno-acciones .ficha-foto-quitar { color: var(--rosa); }
+[data-tema="oscuro"] .foto-alumno-acciones .ficha-foto-quitar { color: var(--rosa-pastel); }
+.foto-alumno-nota { font-size: 13px; margin: 0; }
+@media (prefers-reduced-motion: reduce) {
+  .foto-alumno-acciones .ficha-accion { transition: none; }
+  .foto-alumno-acciones .ficha-accion:active { transform: none; }
+}
+@media (max-width: 360px) {
+  .foto-alumno { flex-wrap: wrap; }
+  .foto-alumno-preview { width: 100%; }
+  .foto-alumno-acciones { display: grid; grid-template-columns: 1fr 1fr; }
+  .foto-alumno-acciones .ficha-foto-quitar { justify-self: stretch; text-align: center; }
+  .foto-alumno-nota { grid-column: 1 / -1; text-align: center; }
+}
+
+/* Zona no interactiva de la tarjeta: presión larga y toque simple (spec 24-nov). */
+.clase, .grupo { touch-action: manipulation; }
+.clase.presionando, .grupo.presionando {
+  transform: translateY(1px);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--tq-500) 28%, transparent);
+  transition: transform var(--t-rapida) var(--ease), box-shadow var(--t-rapida) var(--ease);
+}
+
+/* ---- Cierre por deslizamiento (spec 24-nov) ---- */
+.sheet-agarre { width: 46px; height: 5px; margin: 0 auto 12px; border-radius: 999px; background: var(--linea); transition: background var(--t-rapida) var(--ease); }
+.sheet.arrastrando .sheet-agarre { background: var(--tinta-2); }
+.sheet.arrastrando { transition: none !important; animation: none !important; opacity: .92; }
+.sheet.rebotando { transition: transform 320ms cubic-bezier(.22,.9,.36,1), opacity 320ms var(--ease) !important; animation: none !important; }
+.sheet.saliendo { transition: transform 260ms var(--ease), opacity 260ms var(--ease) !important; animation: none !important; opacity: .35; }
+@media (prefers-reduced-motion: reduce) {
+  .sheet.arrastrando, .sheet.rebotando, .sheet.saliendo { transition: none !important; opacity: 1; }
+}
 
 /* ---- Cobros: filtros y orden (B6) ---- */
 .filtros .f-chip .n {
@@ -740,7 +796,7 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; width: 0; }
 
 /* Cobros: la fila completa abre el detalle, sin un botón repetido por alumno. */
 .cobros-contexto { display: flex; align-items: center; gap: 9px; }
-#abrir-historial { cursor: pointer; font-family: inherit; min-height: 38px; background: var(--tq-100); }
+#abrir-historial { cursor: pointer; font-family: inherit; min-height: 44px; background: var(--tq-100); }
 #abrir-historial:hover { background: var(--tq-200); }
 #lista-cobros > li { padding: 0; }
 .cobro-fila {
@@ -748,7 +804,7 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; width: 0; }
   padding: 13px 14px; border: 0; border-radius: inherit; background: transparent;
   color: inherit; text-align: left; font: inherit; cursor: pointer;
 }
-.cobro-fila > span { flex: 1; min-width: 0; }
+.cobro-fila > .cobro-row { flex: 1; min-width: 0; }
 /* `.al-nombre` ya trae el clamp de 2 lineas + «…» de arriba (display
    -webkit-box, también block-level): acá solo el auxiliar necesita ser de bloque. */
 .cobro-fila .al-sub { display: block; }
@@ -832,7 +888,7 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; width: 0; }
 /* ---------- Fichas de alumnos (Pieza C): reusa tokens v5 de Cobros ---------- */
 .agenda-titulo .cobros-contexto { gap: 8px; }
 .agenda-titulo .cobros-contexto h2 { font-size: 17.5px; letter-spacing: -.01em; }
-#nuevo-alumno { cursor: pointer; font-family: inherit; min-height: 38px; }
+#nuevo-alumno { cursor: pointer; font-family: inherit; min-height: 44px; }
 .lista-alumnos li.fila-alumno { cursor: pointer; padding: 0; }
 .alumno-fila-btn {
   display: flex; align-items: center; gap: 11px; width: 100%; min-width: 0;
@@ -844,7 +900,7 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; width: 0; }
 .ficha-grupo {
   border: 1.5px solid var(--linea); background: var(--bg-alt); color: var(--tinta);
   border-radius: 999px; padding: 7px 12px; font: inherit; font-size: 12.5px;
-  font-weight: 650; cursor: pointer; min-height: 36px;
+  font-weight: 650; cursor: pointer; min-height: 44px;
   transition: border-color var(--t-rapida) var(--ease), background var(--t-rapida) var(--ease);
 }
 .ficha-grupo:hover { border-color: var(--tq-300); }
@@ -910,7 +966,7 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; width: 0; }
   opacity: 0; pointer-events: none;
   transition: opacity var(--t-media) var(--ease), transform var(--t-media) var(--ease);
 }
-.toast.ver { opacity: 1; transform: translate(-50%, 0); }
+.toast.ver { opacity: 1; transform: translate(-50%, 0); pointer-events: auto; }
 
 /* --------------------------- estilos de estados nuevos (tokens sin tocar) */
 /* Chip "Cancelada": mismo molde que chip-por / chip-dada. */
@@ -1020,7 +1076,7 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; width: 0; }
 .sheet-eyebrow { font-size: 11.5px; letter-spacing: .06em; text-transform: uppercase; color: var(--tinta-2); }
 .sheet-head h3 { font-size: 19px; letter-spacing: -.01em; margin-top: 2px; }
 .sheet-cerrar {
-  width: 34px; height: 34px; border-radius: 50%; flex: none;
+  width: 44px; height: 44px; border-radius: 50%; flex: none;
   border: 1px solid var(--linea); background: var(--bg-alt); color: var(--tinta);
   display: grid; place-items: center; cursor: pointer;
   transform: rotate(45deg); /* la cruz de "agendar" cerrada */
