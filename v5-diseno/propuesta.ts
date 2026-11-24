@@ -1555,7 +1555,7 @@ function revertirCancelacion(id: string): boolean {
     return false;
   }
   refrescar();
-  avisar('Clase revertida a Programada');
+  avisar('Clase revertida a Por dar');
   return true;
 }
 

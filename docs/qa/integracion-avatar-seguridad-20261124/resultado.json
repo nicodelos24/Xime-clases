@@ -1,0 +1,9 @@
+{
+  "ok": true,
+  "base": "http://localhost:8879/index.html",
+  "alumnos": 13,
+  "estadoTrasTap": "Dada",
+  "srcFotoBytes": 1035,
+  "pageErrors": [],
+  "consoleErrors": []
+}

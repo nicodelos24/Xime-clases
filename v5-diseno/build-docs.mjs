@@ -37,7 +37,7 @@ function transpilar(origen, nombre) {
 const copiar = ['index.html', 'propuesta.css', 'tokens.css', 'icons.js'];
 for (const f of copiar) {
   let txt = await readFile(join(RAIZ, f), 'utf8');
-  if (f === 'index.html') txt = txt.replace(/\?v=\d{12}/g, `?v=${SELLO}`);
+  if (f === 'index.html') txt = txt.replace('propuesta.ts', 'propuesta.js').replace(/\?v=\d{12}/g, `?v=${SELLO}`);
   await writeFile(join(DOCS, f), txt);
 }
 
