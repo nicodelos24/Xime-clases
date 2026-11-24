@@ -14,6 +14,8 @@
 
 export type Modalidad = 'mensual' | 'individual';
 
+import type { DeudaIndividual } from './cobros.ts';
+
 /** Ficha persistida. `id` estable: lo usan los pagos y la agenda histórica. */
 export type AlumnoFicha = {
   id: string;
@@ -284,6 +286,8 @@ export type FichaVista = AlumnoFicha & {
   /** null = sin vencimiento pendiente (al día); número = días hasta vencer. */
   vence: number | null;
   estadoVence: EstadoVence;
+  /** Deuda individual derivada de Cobros; las mensualidades no la usan. */
+  deudaIndividual: DeudaIndividual | null;
   tipo: Modalidad; // alias usado por los chips/filtros de la vista actual
   alta: number;    // días desde el alta (para "Más recientes")
 };
@@ -299,19 +303,24 @@ export function construirVista(
   fichas: readonly AlumnoFicha[],
   pagosPorAlumno: ReadonlyMap<string, number>,
   hoy: string,
+  deudasIndividuales: ReadonlyMap<string, DeudaIndividual> = new Map(),
 ): FichaVista[] {
   const dia = Date.parse(`${hoy}T00:00:00Z`);
   return fichas.map((f) => {
-    const dias = pagosPorAlumno.get(f.id);
+    const dias = f.modalidad === 'individual' ? undefined : pagosPorAlumno.get(f.id);
+    const deuda = f.modalidad === 'individual' ? deudasIndividuales.get(f.id) ?? null : null;
     const vence = dias ?? null;
-    const estadoVence: EstadoVence = dias === undefined
-      ? 'aldia'
-      : dias < 0 ? 'vencido' : dias === 0 ? 'hoy' : 'pendiente';
+    const estadoVence: EstadoVence = deuda && deuda.clases > 0
+      ? 'vencido'
+      : dias === undefined
+        ? 'aldia'
+        : dias < 0 ? 'vencido' : dias === 0 ? 'hoy' : 'pendiente';
     return {
       ...f,
       ini: iniciales(f.nombre),
       vence,
       estadoVence,
+      deudaIndividual: deuda,
       tipo: f.modalidad,
       alta: Number.isNaN(dia) ? 0 : Math.max(0, Math.round((dia - Date.parse(`${f.fechaAlta}T00:00:00Z`)) / 86400000)),
     };
@@ -320,6 +329,7 @@ export function construirVista(
 
 /** Texto corto del estado de cobro para la fila de Alumnos. */
 export function textoEstadoVence(f: Pick<FichaVista, 'estadoVence' | 'vence'>): string {
+  if (f.estadoVence === 'vencido' && f.vence === null) return 'deuda pendiente';
   switch (f.estadoVence) {
     case 'aldia': return 'al día';
     case 'hoy': return 'vence hoy';

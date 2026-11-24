@@ -1,4 +1,5 @@
-import { diasDeFecha, diasDelMes, esFechaValida, parseFecha } from './fechas.js?v=202611241130';
+import { diasDeFecha, diasDelMes, esFechaValida, parseFecha } from './fechas.js?v=202611241339';
+import { precio } from './tarifas.js?v=202611241339';
 function textoNoVacio(valor) {
     return typeof valor === 'string' && valor.trim().length > 0;
 }
@@ -189,16 +190,31 @@ export function cobrosIndividuales(alumnos, pagos, clases, hoy) {
     const activos = pagos.filter((p) => !p.anulado && p.concepto === 'clase-individual');
     return clases
         .filter((c) => c.estado === 'dada')
-        .flatMap((clase) => clase.alumnos.map((a) => {
-        const alumno = porId.get(a.id);
-        if (!alumno || !alumno.individual)
-            return null;
-        const pago = activos.find((p) => p.alumnoId === alumno.id && p.claseId === clase.id);
-        return { alumno, clase, fecha: clase.fecha, ...(pago ? { pago } : {}) };
-    }))
+        .flatMap((clase) => {
+        const participantes = new Set();
+        return clase.alumnos.flatMap((a) => {
+            if (participantes.has(a.id))
+                return [];
+            participantes.add(a.id);
+            const alumno = porId.get(a.id);
+            if (!alumno || !alumno.individual)
+                return [null];
+            const pago = activos.find((p) => p.alumnoId === alumno.id && p.claseId === clase.id);
+            return [{ alumno, clase, fecha: clase.fecha, ...(pago ? { pago } : {}) }];
+        });
+    })
         .filter((f) => f !== null)
         .filter((f) => f.fecha <= hoy)
         .sort((a, b) => a.fecha.localeCompare(b.fecha) || a.alumno.nombre.localeCompare(b.alumno.nombre, 'es'));
+}
+export function deudaIndividual(alumno, cobros) {
+    const pendientes = cobros.filter((f) => f.alumno.id === alumno.id && !f.pago);
+    const tarifa = precio(alumno, 'clase-individual', pendientes.at(-1)?.fecha ?? '');
+    return {
+        clases: pendientes.length,
+        montoUYU: tarifa === null ? 0 : tarifa * pendientes.length,
+        sinTarifa: pendientes.length > 0 && tarifa === null,
+    };
 }
 /**
  * Resumen de mensualidades. Las fichas individuales NO entran: reservar una

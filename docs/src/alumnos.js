@@ -203,19 +203,23 @@ export function esIdAlumno(id) {
  * de `0` ("vence hoy"): el primero se oculta con el chip «Al día», el segundo
  * debe verse y marcarse como vencimiento de hoy.
  */
-export function construirVista(fichas, pagosPorAlumno, hoy) {
+export function construirVista(fichas, pagosPorAlumno, hoy, deudasIndividuales = new Map()) {
     const dia = Date.parse(`${hoy}T00:00:00Z`);
     return fichas.map((f) => {
-        const dias = pagosPorAlumno.get(f.id);
+        const dias = f.modalidad === 'individual' ? undefined : pagosPorAlumno.get(f.id);
+        const deuda = f.modalidad === 'individual' ? deudasIndividuales.get(f.id) ?? null : null;
         const vence = dias ?? null;
-        const estadoVence = dias === undefined
-            ? 'aldia'
-            : dias < 0 ? 'vencido' : dias === 0 ? 'hoy' : 'pendiente';
+        const estadoVence = deuda && deuda.clases > 0
+            ? 'vencido'
+            : dias === undefined
+                ? 'aldia'
+                : dias < 0 ? 'vencido' : dias === 0 ? 'hoy' : 'pendiente';
         return {
             ...f,
             ini: iniciales(f.nombre),
             vence,
             estadoVence,
+            deudaIndividual: deuda,
             tipo: f.modalidad,
             alta: Number.isNaN(dia) ? 0 : Math.max(0, Math.round((dia - Date.parse(`${f.fechaAlta}T00:00:00Z`)) / 86400000)),
         };
@@ -223,6 +227,8 @@ export function construirVista(fichas, pagosPorAlumno, hoy) {
 }
 /** Texto corto del estado de cobro para la fila de Alumnos. */
 export function textoEstadoVence(f) {
+    if (f.estadoVence === 'vencido' && f.vence === null)
+        return 'deuda pendiente';
     switch (f.estadoVence) {
         case 'aldia': return 'al día';
         case 'hoy': return 'vence hoy';

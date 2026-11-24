@@ -826,6 +826,7 @@ html[data-tema="oscuro"] .avatar:not(.avatar-2):not(.avatar-3):not(.avatar-4):no
 .cobro-importe { display: flex; flex-direction: column; align-items: flex-end; flex: none; line-height: 1.15; }
 .cobro-importe b { font-size: 15px; font-weight: 800; color: var(--tinta); font-variant-numeric: tabular-nums; }
 .cobro-importe small { font-size: 10.5px; font-weight: 650; color: var(--tinta-2); }
+.cobro-importe .cobro-sin-tarifa { font-size: 11px; max-width: 16ch; white-space: normal; text-align: right; color: var(--ambar); }
 .cobro-importe .pagado { color: var(--verde); }
 [data-tema="oscuro"] .cobro-fila .cobro-vence { background: var(--bg-alt); color: var(--tinta-2); }
 [data-tema="oscuro"] .cobro-fila .cobro-vence.vencido { background: var(--rosa-tinte); color: var(--rosa-pastel); }
@@ -888,6 +889,8 @@ html[data-tema="oscuro"] .cobro-fila .cobro-vence.pronto { background: var(--amb
 .cobros-panel-dato { text-align: right; white-space: nowrap; }
 .cobros-panel-dato > .al-sub { display: block; }
 .cobros-panel-nota, .cobros-panel-error:not(:empty) { margin-top: 12px; color: var(--tinta-2); font-size: 13px; }
+.cobro-sin-tarifa { color: var(--ambar); font-size: 13px; white-space: normal; }
+[data-tema="oscuro"] .cobro-sin-tarifa { color: var(--ambar-pastel); }
 /* Ronda romper y pulir (22-nov) · hallazgo 3: en la ficha de edición el dato
    de cobro se leía igual (13px/400/--tinta-2) que el texto auxiliar. Solo el
    estado y el importe dentro de `.ficha-cobro` toman peso y acento de la

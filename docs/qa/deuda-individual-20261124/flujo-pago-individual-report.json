@@ -1,0 +1,86 @@
+{
+  "browser": "chromium headless propio (puerto CDP 9233, user-data-dir temporal)",
+  "url": "http://127.0.0.1:8851/index.html#v-cobros",
+  "tarifaCargada": 3100,
+  "antes": {
+    "vista": [
+      "v-cobros"
+    ],
+    "tarifa": null,
+    "pagos": 0,
+    "fila": "JP\nJulieta P.\nClase individual · 23-11-2026\nFalta cargar la tarifa\nDebe"
+  },
+  "dialogo": {
+    "txt": "CLASE INDIVIDUAL\n\nRegistrar pago\n\nJulieta P.\n\nClase individual · 23-11-2026\n\nFalta cargar la tarifa\nUYU\n\nFalta cargar la tarifa de esta clase. Ingresá el importe en UYU; se guarda en la ficha para las próximas clases. No se usa ningún precio de ejemplo.\n\nTarifa en UYU *\n¿Cuándo pagó? *\nDía\n1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n11\n12\n13\n14\n15\n16\n17\n18\n19\n20\n21\n22\n23\n24\n25\n26\n27\n28\n29\n30\nMes\nene\nfeb\nmar\nabr\nmay\njun\njul\nago\nsept\noct\nnov\ndic\nAño\n2020\n2021\n2022\n2023\n2024\n2025\n2026\n2027\n2028\n2029\n2030\n2031\n2032\n\nVolver\nConfirmar pago",
+    "importe": ""
+  },
+  "sinImporte": {
+    "open": true,
+    "valido": false,
+    "valor": "",
+    "pagos": 0
+  },
+  "dialogoConImporte": {
+    "importe": "3100",
+    "submit": "Confirmar pago"
+  },
+  "despues": {
+    "vista": [
+      "v-cobros"
+    ],
+    "dialogoAbierto": false,
+    "tarifa": 3100,
+    "pagos": [
+      {
+        "id": "e670878e69fd5f427854e3573d530ce7",
+        "alumnoId": "a2",
+        "periodo": "2026-11",
+        "montoUYU": 3100,
+        "fecha": "2026-11-24",
+        "quien": "dueño",
+        "anulado": null,
+        "concepto": "clase-individual",
+        "claseId": "c-lun"
+      }
+    ],
+    "filasJulieta": [
+      "JP\nJulieta P.\nClase individual · 23-11-2026\n$3.100\nPagado"
+    ],
+    "kpis": [
+      "$0",
+      "0"
+    ]
+  },
+  "ficha": {
+    "txt": "ALUMNOS\n\nEditar ficha\n\nJulieta P.\n\nAlta 17-11-2026\n\nID a2\n\n?\n\nJP\nTomar foto\nElegir foto\n\nLa foto se guarda en este dispositivo. No se descarga de WhatsApp.\n\nJP\nJulieta P.\nAl día\n\nÚltimo pago individual: 24-11-2026 · $3.100.\n?\n\nWhatsApp\n+598 099 112 233\n\nEnviar WhatsApp\nEditar fecha del pago\n\n?\n\nNombre *\nTarifa en UYU *\n?\n\nModalidad *\n\nMensual\nIndividual\nDía de vencimiento (1–31)\nGrupo (opcional)\n?\nTeléfono / WhatsApp\n\nVolver\nGuardar cambios",
+    "tarifa": "3100",
+    "accion": "Editar fecha del pago"
+  },
+  "recarga": {
+    "vista": [
+      "v-alumnos"
+    ],
+    "tarifa": 3100,
+    "pagos": [
+      {
+        "id": "e670878e69fd5f427854e3573d530ce7",
+        "alumnoId": "a2",
+        "periodo": "2026-11",
+        "montoUYU": 3100,
+        "fecha": "2026-11-24",
+        "quien": "dueño",
+        "anulado": null,
+        "concepto": "clase-individual",
+        "claseId": "c-lun"
+      }
+    ],
+    "filasJulieta": [
+      "JP\n      \n        Julieta P.\n        Clase individual · 23-11-2026\n      \n      $3.100Pagado"
+    ]
+  },
+  "fichaRecarga": {
+    "txt": "ALUMNOS\n\nEditar ficha\n\nJulieta P.\n\nAlta 17-11-2026\n\nID a2\n\n?\n\nJP\nTomar foto\nElegir foto\n\nLa foto se guarda en este dispositivo. No se descarga de WhatsApp.\n\nJP\nJulieta P.\nAl día\n\nÚltimo pago individual: 24-11-2026 · $3.100.\n?\n\nWhatsApp\n+598 099 112 233\n\nEnviar WhatsApp\nEditar fecha del pago\n\n?\n\nNombre *\nTarifa en UYU *\n?\n\nModalidad *\n\nMensual\nIndividual\nDía de vencimiento (1–31)\nGrupo (opcional)\n?\nTeléfono / WhatsApp\n\nVolver\nGuardar cambios",
+    "tarifa": "3100"
+  },
+  "ok": true
+}
