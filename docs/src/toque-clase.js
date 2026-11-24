@@ -29,6 +29,10 @@ export function resultadoDeToqueSimple(estado) {
         return 'por-dar';
     return 'nada';
 }
+export function decisionDeAperturaDeMenu(abierta) {
+    // Un gesto nunca duplica una hoja ya abierta.
+    return abierta ? 'nada' : 'abrir';
+}
 export function decisionDeEventoToque(evento, origen, estado) {
     if (evento.consumido)
         return 'nada';

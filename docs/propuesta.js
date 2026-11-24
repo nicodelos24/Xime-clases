@@ -1,24 +1,24 @@
 // Clases v5 · navegación + funcionamiento (auto-marcado, Cancelar clase, WhatsApp)
 // La estética vive en tokens.css/propuesta.css; acá solo se cambian estados,
 // textos y el flujo de cancelación. Sin emoji: solo SVG de icons.js.
-import { horaClase, } from './src/clases.js?v=202611240850';
-import { CLAVE_ESTADO, RepositorioClases, almacenLocalStorage } from './src/repositorio.js?v=202611240850';
-import { alumnosCobrosDemo, datosDemo, fichasDemo } from './src/demo.js?v=202611240850';
-import { resumenCobros, filtrarCobros, ordenarCobros } from './src/cobros.js?v=202611240850';
-import { construirVista, filtrarYOrdenar, puntoEstadoVence, textoEstadoVence, validarAlumno, iniciales, colorPorId, esFotoValida, } from './src/alumnos.js?v=202611240850';
-import { resumenHoy, clasesDelDia, clasesDeLaSemana } from './src/resumen.js?v=202611240850';
-import { registrarToqueFecha, mesDe } from './src/agenda.js?v=202611240850';
-import { primerDiaDeMes, diaSeleccionadoAlCargar } from './src/agenda-mes.js?v=202611240850';
-import { decisionDeGesto, DURACION_TOQUE_LARGO, UMBRAL_MOVIMIENTO_GESTO } from './src/toque-clase.js?v=202611240850';
-import { destinoDeEnlace, vistaInicial, vistasActivas } from './src/navegacion.js?v=202611240850';
-import { pistaDeTira } from './src/scroll-pista.js?v=202611240850';
-import { actualizarBarra, estadoBarraInicial, debeReaparecerPorQuietud, REAPARECER_TRAS_MS, } from './src/barra-scroll.js?v=202611240850';
-import { ajustarLock, debeBloquearScroll, estiloSheet, debeCerrarPorToqueFuera, esToqueFuera, debeSuprimirClickTrasCierre, debeCerrarPorDeslizar, FRANJA_CIERRE, } from './src/sheets.js?v=202611240850';
-import { diaCorto, mesCorto, etiquetaDia, etiquetaDiaCompleta, etiquetaMes, fechaCorta, sumarDias, parseFecha, lunesDe, diasDelMes, esFechaValida, } from './src/fechas.js?v=202611240850';
-import { relojDelDispositivo, hoyLocal } from './src/reloj.js?v=202611240850';
-import { CLAVE_PREFIJO, PREFIJO_POR_DEFECTO, prefijoEsValido, prefijoSeguro, conPrefijo } from './src/prefijo.js?v=202611240850';
-import { bloqueContacto } from './src/contacto.js?v=202611240850';
-import { textoCancelacion, destinos, resumenEnvio, linkTexto, linkAvisoVencimiento, } from './src/whatsapp.js?v=202611240850';
+import { horaClase, } from './src/clases.js?v=202611240859';
+import { CLAVE_ESTADO, RepositorioClases, almacenLocalStorage } from './src/repositorio.js?v=202611240859';
+import { alumnosCobrosDemo, datosDemo, fichasDemo } from './src/demo.js?v=202611240859';
+import { resumenCobros, filtrarCobros, ordenarCobros } from './src/cobros.js?v=202611240859';
+import { construirVista, filtrarYOrdenar, puntoEstadoVence, textoEstadoVence, validarAlumno, iniciales, colorPorId, esFotoValida, } from './src/alumnos.js?v=202611240859';
+import { resumenHoy, clasesDelDia, clasesDeLaSemana } from './src/resumen.js?v=202611240859';
+import { registrarToqueFecha, mesDe } from './src/agenda.js?v=202611240859';
+import { primerDiaDeMes, diaSeleccionadoAlCargar } from './src/agenda-mes.js?v=202611240859';
+import { decisionDeGesto, decisionDeAperturaDeMenu, DURACION_TOQUE_LARGO, UMBRAL_MOVIMIENTO_GESTO } from './src/toque-clase.js?v=202611240859';
+import { destinoDeEnlace, vistaInicial, vistasActivas } from './src/navegacion.js?v=202611240859';
+import { pistaDeTira } from './src/scroll-pista.js?v=202611240859';
+import { actualizarBarra, estadoBarraInicial, debeReaparecerPorQuietud, REAPARECER_TRAS_MS, } from './src/barra-scroll.js?v=202611240859';
+import { ajustarLock, debeBloquearScroll, estiloSheet, debeCerrarPorToqueFuera, esToqueFuera, debeSuprimirClickTrasCierre, decisionCierreSheetsPorNavegacion, debeCerrarPorDeslizar, FRANJA_CIERRE, } from './src/sheets.js?v=202611240859';
+import { diaCorto, mesCorto, etiquetaDia, etiquetaDiaCompleta, etiquetaMes, fechaCorta, sumarDias, parseFecha, lunesDe, diasDelMes, esFechaValida, } from './src/fechas.js?v=202611240859';
+import { relojDelDispositivo, hoyLocal } from './src/reloj.js?v=202611240859';
+import { CLAVE_PREFIJO, PREFIJO_POR_DEFECTO, prefijoEsValido, prefijoSeguro, conPrefijo } from './src/prefijo.js?v=202611240859';
+import { bloqueContacto } from './src/contacto.js?v=202611240859';
+import { textoCancelacion, destinos, resumenEnvio, linkTexto, linkAvisoVencimiento, } from './src/whatsapp.js?v=202611240859';
 /* ------------------------------------------------- estado persistente (local) */
 const reloj = relojDelDispositivo();
 /** Quién opera la app hoy: único dueño. En Fase 4 sale de la sesión. */
@@ -295,6 +295,9 @@ function cablearGestoClase(tarjeta) {
             tarjeta.classList.remove('presionando');
             navigator.vibrate?.(12);
             abrirAcciones(id);
+            const abierta = document.querySelector(`.sheet[data-disparador="clase-acciones-${id}"]:not(.cerrando)`);
+            if (abierta?.dataset.retornoFoco)
+                document.getElementById(abierta.dataset.retornoFoco)?.focus({ preventScroll: true });
         }, DURACION_TOQUE_LARGO);
         TOQUES_CLASE.set(e.pointerId, dato);
     }, { passive: true });
@@ -360,8 +363,17 @@ function cambiarEstadoConToque(id, estado) {
         avisar(err instanceof Error ? err.message : 'No se pudo cambiar la asistencia', 3000);
         return;
     }
+    // Restaurar el foco al chip de esa clase si sigue conectado; tras el
+    // repinte puede haberse destruido, y entonces el toast es el ancla neutral.
+    const chipViejo = document.querySelector(`[data-acciones="${id}"]`);
+    const tarjetaVieja = document.querySelector(`.clase[data-clase="${id}"]`);
     clases = repo.listar();
     refrescar();
+    const chipNuevo = chipViejo?.isConnected
+        ? chipViejo
+        : document.querySelector(`[data-acciones="${id}"]`)
+            ?? (tarjetaVieja?.isConnected ? tarjetaVieja : null);
+    chipNuevo?.focus({ preventScroll: true });
     const idAnterior = toast.dataset.revertirManual;
     if (idAnterior && idAnterior !== id)
         delete toast.dataset.deshacer;
@@ -763,9 +775,9 @@ function confirmarCierreConCambios(el, guardar, descartar) {
       <h3>¿Hay cambios sin guardar, querés guardarlos?</h3>
       <p class="confirmar-cambios-nota">Si descartás, se pierden los cambios de este cuadro.</p>
       <div class="confirmar-cambios-acciones">
+        ${guardar ? '<button type="button" class="btn-primario" data-decision="guardar">Guardar</button>' : ''}
         <button type="button" class="btn-secundario" data-decision="seguir">Seguir editando</button>
         <button type="button" class="btn-secundario" data-decision="descartar">Descartar</button>
-        <button type="button" class="btn-primario" data-decision="guardar">Guardar</button>
       </div>
     </div>`;
     document.body.appendChild(caja);
@@ -795,7 +807,7 @@ function confirmarCierreConCambios(el, guardar, descartar) {
         const decision = boton.dataset.decision;
         if (decision === 'guardar') {
             cerrarCuadroConfirm();
-            guardar();
+            guardar?.();
         }
         else if (decision === 'descartar')
             descartarYValidar();
@@ -803,7 +815,8 @@ function confirmarCierreConCambios(el, guardar, descartar) {
             cerrarCuadroConfirm();
     });
     caja.showModal();
-    caja.querySelector('[data-decision="guardar"]').focus();
+    const primero = caja.querySelector('[data-decision="seguir"]');
+    (primero ?? caja).focus();
 }
 /**
  * Cierre genérico de un sheet con formulario: si está `dirty`, pregunta antes;
@@ -1185,6 +1198,8 @@ function abrirFormularioSuelta(fechaDesdeDia, origen) {
 }
 /* ------------------------------------------- cancelar clase (sheet + WhatsApp) */
 let sheet = null;
+/** ID del cuadro de cancelación, incluso si F5/navegación lo retira del DOM. */
+let cancelacionPendiente = null;
 let claseEnSheet = null;
 let modoEnvio = 'masivo';
 let elegidos = new Set();
@@ -1227,6 +1242,9 @@ function cerrarAcciones() {
 /** Cuadro de acciones (20/11): lo abre el chip de estado de la clase
  *  («Por dar» o «Dada»). Abrir NO cambia el estado. */
 function abrirAcciones(id) {
+    // Un gesto nunca reabre una hoja ya abierta (doble apertura del chip).
+    if (cancelacionPendiente || decisionDeAperturaDeMenu(!!document.querySelector('.sheet:not(.cerrando)')) === 'nada')
+        return;
     const c = clases.find((x) => x.id === id);
     if (!c || c.estado === 'cancelada')
         return;
@@ -1238,9 +1256,11 @@ function abrirAcciones(id) {
     previo.setAttribute('aria-modal', 'true');
     previo.setAttribute('aria-label', `Opciones para ${c.nombre}`);
     const disparador = document.querySelector(`[data-acciones="${id}"]`);
-    if (disparador) {
-        disparador.id = `clase-acciones-${id}`;
-        previo.dataset.retornoFoco = disparador.id;
+    const retorno = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const origenFoco = retorno?.isConnected ? retorno : disparador;
+    if (origenFoco) {
+        origenFoco.id = `clase-acciones-${id}`;
+        previo.dataset.retornoFoco = origenFoco.id;
     }
     const esManual = c.estado === 'dada' && c.eventos.at(-1)?.tipo === 'marcada-manual';
     previo.innerHTML = `
@@ -1371,6 +1391,8 @@ function abrirAcciones(id) {
     });
 }
 function abrirCancelacion(id) {
+    if (cancelacionPendiente)
+        return;
     const c = clases.find((x) => x.id === id);
     if (!c)
         return;
@@ -1397,6 +1419,8 @@ function abrirCancelacion(id) {
     previo.setAttribute('aria-modal', 'true');
     previo.setAttribute('aria-label', `Cancelar ${c.nombre}`);
     previo.dataset.retornoFoco = `clase-acciones-${id}`;
+    previo.dataset.cancelacion = id;
+    cancelacionPendiente = id;
     previo.innerHTML = `
     <div class="sheet-head">
       <div>
@@ -1499,6 +1523,11 @@ function abrirCancelacion(id) {
     previo.querySelector('#canc-motivo').focus();
 }
 function confirmarCancelacion(c, motivo) {
+    // Un clic confirmado no debe reactivarse por un click tardío/sintético tras
+    // una recarga: un gesto nuevo sólo reabre acciones si el usuario lo inicia.
+    if (cancelacionPendiente !== c.id)
+        return;
+    cancelacionPendiente = null;
     if (clases.some((x) => x.id === c.id && x.estado === 'cancelada')) {
         // Doble click/click sintético: la clase ya estaba cancelada. No repetir
         // auditoría, mensajes ni apertura de WhatsApp.
@@ -1544,6 +1573,9 @@ function confirmarCancelacion(c, motivo) {
     }
     toast.dataset.deshacer = '1';
     toast.dataset.clase = c.id;
+    // El panel confirmado se destruye. Su click tardío (o el de un F5 justo
+    // entre pointerup y click) no puede reabrir las acciones de esa clase.
+    clickTrasCierrePendiente = true;
 }
 function revertirCancelacion(id) {
     const c = clases.find((x) => x.id === id);
@@ -1595,6 +1627,9 @@ toast.addEventListener('click', () => {
         toast.classList.remove('ver');
         return;
     }
+    // El gesto confirmado consume también el posible click tardío: no puede
+    // caer sobre el chip y reabrir el sheet de acciones recién cancelado.
+    clickTrasCierrePendiente = true;
     const pendientes = JSON.parse(toast.dataset.pendientes || '[]');
     if (pendientes.length > 0) {
         const siguiente = pendientes.shift();
@@ -1783,8 +1818,8 @@ function bloqueFotoFicha(ficha, fotoPendiente = ficha?.foto ?? '') {
     <div class="foto-alumno-acciones">
       <button type="button" class="cobros-link ficha-accion" data-foto-alumno="camara"><svg class="ico" width="18" height="18" aria-hidden="true"><use href="#i-foto-camara"/></svg>${conFoto ? 'Cambiar foto' : 'Tomar foto'}</button>
       <button type="button" class="cobros-link ficha-accion" data-foto-alumno="galeria"><svg class="ico" width="18" height="18" aria-hidden="true"><use href="#i-foto-galeria"/></svg>${conFoto ? 'Elegir otra' : 'Elegir foto'}</button>
-      <input type="file" accept="image/*" capture="environment" hidden data-entrada-foto="camara">
-      <input type="file" accept="image/*" hidden data-entrada-foto="galeria">
+      <input type="file" accept="image/*" capture="environment" hidden data-entrada-foto="camara" aria-label="Tomar foto del alumno">
+      <input type="file" accept="image/*" hidden data-entrada-foto="galeria" aria-label="Elegir foto del alumno">
       ${conFoto ? '<button type="button" class="cobros-link ficha-accion ficha-foto-quitar" data-quitar-foto>Quitar foto</button>' : ''}
       <p class="foto-alumno-nota al-sub">La foto se guarda en este dispositivo. No se descarga de WhatsApp.</p>
     </div>
@@ -1824,16 +1859,30 @@ function cablearFotoFicha(dialogo, ficha, onFoto) {
         boton.addEventListener('click', () => dialogo.querySelector(`[data-entrada-foto="${boton.dataset.fotoAlumno}"]`)?.click());
     });
     dialogo.querySelectorAll('[data-entrada-foto]').forEach((entrada) => {
+        const error = () => {
+            const acciones = dialogo.querySelector('[data-ficha-foto] .foto-alumno-acciones');
+            if (!acciones)
+                return;
+            let aviso = acciones.querySelector('.foto-alumno-error');
+            if (!aviso) {
+                aviso = document.createElement('p');
+                aviso.className = 'foto-alumno-error';
+                aviso.setAttribute('role', 'alert');
+                acciones.append(aviso);
+            }
+            aviso.textContent = 'No se pudo abrir la foto. Probá con otra imagen.';
+            acciones.scrollIntoView({ block: 'nearest' });
+        };
         entrada.addEventListener('change', async () => {
             const archivo = entrada.files?.[0];
             if (!archivo)
                 return;
-            const error = dialogo.querySelector('.cobros-panel-error');
-            if (error)
-                error.textContent = '';
+            const errorFormulario = dialogo.querySelector('.cobros-panel-error');
+            if (errorFormulario)
+                errorFormulario.textContent = '';
+            dialogo.querySelector('.foto-alumno-error')?.remove();
             if (!archivo.type.startsWith('image/')) {
-                if (error)
-                    error.textContent = 'No se pudo abrir la foto. Probá con otra imagen.';
+                error();
                 entrada.value = '';
                 return;
             }
@@ -1844,8 +1893,7 @@ function cablearFotoFicha(dialogo, ficha, onFoto) {
                 onFoto(dataURL);
             }
             catch {
-                if (error)
-                    error.textContent = 'No se pudo abrir la foto. Probá con otra imagen.';
+                error();
             }
             finally {
                 entrada.value = '';
@@ -2416,8 +2464,42 @@ campana.addEventListener('click', () => {
 /* ------------------------------------------------------------- navegación */
 /** Cierra cualquier sheet abierto antes de cambiar de vista. */
 function cerrarSheetsPorNavegacion() {
-    if (sheet)
-        cerrarAcciones();
+    const abierto = document.querySelector('.sheet:not(.cerrando)');
+    const decision = decisionCierreSheetsPorNavegacion(abierto, (el) => el.dataset.cancelacion !== undefined);
+    if (decision === 'nada' && !cancelacionPendiente)
+        return;
+    if (decision === 'cerrar' && abierto) {
+        // El clic tardío de la confirmación pertenece a un documento destruido.
+        // Consumirlo evita que caiga sobre un chip y reabra las acciones padres.
+        clickTrasCierrePendiente = true;
+        cerrarCuadro(abierto);
+        sheet = null;
+        cancelacionPendiente = null;
+        return;
+    }
+    // Un F5/hashchange entre pointerup y click de una cancelación debe descartar
+    // el flujo completo, nunca dejar vivo el sheet padre que lo abrió.
+    if (cancelacionPendiente) {
+        $$('.sheet:not(.cerrando)').forEach((el) => cerrarCuadro(el));
+        sheet = null;
+        cancelacionPendiente = null;
+        return;
+    }
+    // La confirmación de una cancelación no se puede disparar desde el cierre
+    // por navegación: ese atajo equivaldría a autorizar una acción destructiva.
+    if (sheet && sheet.dataset.cancelacion !== undefined) {
+        cerrarSheet();
+        return;
+    }
+    if (sheet) {
+        // No usar el clic de la X como atajo: «Guardar» en cancelación significa
+        // confirmar la destrucción, y navegar no es una confirmación del dueño.
+        const confirmar = sheet.querySelector('[data-accion="confirmar"]');
+        if (!confirmar && sheet.dataset.dirty === '1')
+            confirmarCierreConCambios(sheet, undefined, () => cerrarSheet());
+        else
+            cerrarSheet();
+    }
     $$('.sheet:not(.cerrando):not(.cobros-panel)').forEach((el) => cerrarCuadro(el));
     $$('dialog.sheet[open]').forEach((el) => cerrarDialogoConAviso(el));
 }
@@ -2437,6 +2519,19 @@ function cerrarSheetPorFuera(abierto) {
     // La barra de arrastre es decorativa: tras soltarla no debe quedar un
     // desplazamiento visible cuando el cierre pide confirmación.
     limpiarDeslizamiento(abierto, !abierto.classList.contains('cobros-panel'));
+    // Swipe de cierre no ejecuta «Guardar» de cancelación: pide descartar o seguir.
+    if (abierto.dataset.dirty === '1') {
+        const confirmar = abierto.querySelector('[data-accion="confirmar"]');
+        if (confirmar) {
+            confirmarCierreConCambios(abierto, undefined, () => {
+                if (abierto === sheet)
+                    cerrarSheet();
+                else
+                    cerrarCuadro(abierto);
+            });
+            return;
+        }
+    }
     if (document.querySelector('dialog.confirmar-cambios[open]'))
         return;
     if (abierto.classList.contains('cobros-panel')) {
@@ -2693,6 +2788,8 @@ function pintarTitulo(id) {
         h1.textContent = titulos[id] || 'Hoy';
 }
 function irA(id, fijarHash = true, enfocarDestino = false) {
+    const focoEntrada = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const debeEnfocarMes = enfocarDestino && id === 'v-mes' && (focoEntrada?.dataset.verMes === '1' || Boolean(focoEntrada?.closest('.link-suave[href="#v-mes"]')));
     const destino = document.getElementById(id);
     if (!destino)
         return;
@@ -2727,7 +2824,7 @@ function irA(id, fijarHash = true, enfocarDestino = false) {
     window.scrollTo(0, 0);
     document.querySelector('.tabbar')?.classList.remove('oculta');
     document.documentElement.classList.remove('barra-oculta');
-    if (enfocarDestino && id === 'v-mes') {
+    if (debeEnfocarMes) {
         // El enlace se destruye al repintar: su destino equivalente es el título
         // mensual, al que se puede desplazar el foco sin añadir un tab stop.
         const titulo = $('#v-mes .mes-titulo-nav h2');
@@ -2818,7 +2915,7 @@ if (tabbar) {
     });
     // Al cambiar de vista puede cambiar la altura del contenido y el scroll;
     // recalcular la referencia para no interpretar ese salto como una dirección.
-    window.addEventListener('hashchange', recalibrar);
+    window.addEventListener('hashchange', () => { cerrarSheetsPorNavegacion(); recalibrar(); });
     window.addEventListener('resize', recalibrar, { passive: true });
 }
 /* ---------------------------------------- pista de scroll de los chips */
@@ -2994,12 +3091,27 @@ const inicial = vistaInicial(location.hash, vistas.map((v) => v.id));
 // hash no nombra una vista, manda la pantalla por defecto del HTML.
 irA(inicial ?? (vistas.find((v) => v.classList.contains('activa'))?.id ?? 'v-hoy'), false);
 // Exposición mínima para QA (consola / capturas): sin tocar el estado real.
-window.ximeV5 = {
+const v5 = window;
+v5.ximeV5 = {
     get clases() { return structuredClone(clases); },
     get alumnos() { return structuredClone(repo.listarAlumnos()); },
+    get hojaAbierta() { return !!document.querySelector('.sheet:not(.cerrando)'); },
+    get destinoFoco() {
+        const hoja = document.querySelector('.sheet:not(.cerrando)');
+        const retorno = hoja?.dataset.retornoFoco ? document.getElementById(hoja.dataset.retornoFoco) : null;
+        return { hoja: hoja?.getAttribute('aria-label') ?? null, retorno: retorno?.id ?? null, activo: document.activeElement?.id ?? null };
+    },
     refrescar,
     irA,
     abrirFicha,
+    estadoPrueba() {
+        const clase = clases.find((c) => c.estado === 'programada');
+        return clase ? {
+            id: clase.id, estado: clase.estado,
+            tarjeta: !!document.querySelector(`.clase[data-clase="${clase.id}"]`),
+            chip: !!document.querySelector(`[data-acciones="${clase.id}"]`),
+        } : null;
+    },
     reloj,
     textoCancelacion,
     linkTexto,

@@ -1514,7 +1514,7 @@ function abrirCancelacion(id: string) {
 
 function confirmarCancelacion(c: Clase, motivo: string) {
   // Un clic confirmado no debe reactivarse por un click tardío/sintético tras
-  // un F5: el gesto nuevo sólo puede reabrir acciones si el usuario lo inicia.
+  // una recarga: un gesto nuevo sólo reabre acciones si el usuario lo inicia.
   if (cancelacionPendiente !== c.id) return;
   cancelacionPendiente = null;
   if (clases.some((x) => x.id === c.id && x.estado === 'cancelada')) {
@@ -1808,8 +1808,8 @@ function bloqueFotoFicha(ficha: AlumnoFicha | null, fotoPendiente = ficha?.foto 
     <div class="foto-alumno-acciones">
       <button type="button" class="cobros-link ficha-accion" data-foto-alumno="camara"><svg class="ico" width="18" height="18" aria-hidden="true"><use href="#i-foto-camara"/></svg>${conFoto ? 'Cambiar foto' : 'Tomar foto'}</button>
       <button type="button" class="cobros-link ficha-accion" data-foto-alumno="galeria"><svg class="ico" width="18" height="18" aria-hidden="true"><use href="#i-foto-galeria"/></svg>${conFoto ? 'Elegir otra' : 'Elegir foto'}</button>
-      <input type="file" accept="image/*" capture="environment" hidden data-entrada-foto="camara">
-      <input type="file" accept="image/*" hidden data-entrada-foto="galeria">
+      <input type="file" accept="image/*" capture="environment" hidden data-entrada-foto="camara" aria-label="Tomar foto del alumno">
+      <input type="file" accept="image/*" hidden data-entrada-foto="galeria" aria-label="Elegir foto del alumno">
       ${conFoto ? '<button type="button" class="cobros-link ficha-accion ficha-foto-quitar" data-quitar-foto>Quitar foto</button>' : ''}
       <p class="foto-alumno-nota al-sub">La foto se guarda en este dispositivo. No se descarga de WhatsApp.</p>
     </div>
@@ -1845,13 +1845,27 @@ function cablearFotoFicha(dialogo: HTMLDialogElement, ficha: AlumnoFicha | null,
     boton.addEventListener('click', () => dialogo.querySelector<HTMLInputElement>(`[data-entrada-foto="${boton.dataset.fotoAlumno}"]`)?.click());
   });
   dialogo.querySelectorAll<HTMLInputElement>('[data-entrada-foto]').forEach((entrada) => {
+    const error = () => {
+      const acciones = dialogo.querySelector<HTMLElement>('[data-ficha-foto] .foto-alumno-acciones');
+      if (!acciones) return;
+      let aviso = acciones.querySelector<HTMLElement>('.foto-alumno-error');
+      if (!aviso) {
+        aviso = document.createElement('p');
+        aviso.className = 'foto-alumno-error';
+        aviso.setAttribute('role', 'alert');
+        acciones.append(aviso);
+      }
+      aviso.textContent = 'No se pudo abrir la foto. Probá con otra imagen.';
+      acciones.scrollIntoView({ block: 'nearest' });
+    };
     entrada.addEventListener('change', async () => {
       const archivo = entrada.files?.[0];
       if (!archivo) return;
-      const error = dialogo.querySelector('.cobros-panel-error') as HTMLElement | null;
-      if (error) error.textContent = '';
+      const errorFormulario = dialogo.querySelector('.cobros-panel-error') as HTMLElement | null;
+      if (errorFormulario) errorFormulario.textContent = '';
+      dialogo.querySelector('.foto-alumno-error')?.remove();
       if (!archivo.type.startsWith('image/')) {
-        if (error) error.textContent = 'No se pudo abrir la foto. Probá con otra imagen.';
+        error();
         entrada.value = '';
         return;
       }
@@ -1860,7 +1874,7 @@ function cablearFotoFicha(dialogo: HTMLDialogElement, ficha: AlumnoFicha | null,
         if (!dialogo.open) return;
         onFoto(dataURL);
       } catch {
-        if (error) error.textContent = 'No se pudo abrir la foto. Probá con otra imagen.';
+        error();
       } finally {
         entrada.value = '';
       }

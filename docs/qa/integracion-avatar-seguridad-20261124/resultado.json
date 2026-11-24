@@ -2,8 +2,71 @@
   "ok": true,
   "base": "http://localhost:8879/index.html",
   "alumnos": 13,
-  "estadoTrasTap": "Dada",
+  "estadoTrasTap": "Por dar",
   "srcFotoBytes": 1035,
+  "cancelacionPersistida": true,
+  "descarteCancelacionPersistido": true,
+  "segundoChipTrasF5": true,
+  "f5": {
+    "conAcciones": [
+      {
+        "ms": 0,
+        "hojasVivas": 0
+      },
+      {
+        "ms": 250,
+        "hojasVivas": 0
+      },
+      {
+        "ms": 350,
+        "hojasVivas": 0
+      }
+    ],
+    "trasCerrarAcciones": [
+      {
+        "ms": 0,
+        "hojasVivas": 0
+      },
+      {
+        "ms": 250,
+        "hojasVivas": 0
+      },
+      {
+        "ms": 350,
+        "hojasVivas": 0
+      }
+    ],
+    "trasDescartar": [
+      {
+        "ms": 0,
+        "hojasVivas": 0
+      },
+      {
+        "ms": 250,
+        "hojasVivas": 0
+      },
+      {
+        "ms": 350,
+        "hojasVivas": 0
+      }
+    ],
+    "trasCancelar": [
+      {
+        "ms": 0,
+        "hojasVivas": 0
+      },
+      {
+        "ms": 250,
+        "hojasVivas": 0
+      },
+      {
+        "ms": 350,
+        "hojasVivas": 0
+      }
+    ],
+    "hojasVivas": 0,
+    "hojasTrasRecarga": []
+  },
   "pageErrors": [],
   "consoleErrors": []
 }

@@ -9,16 +9,16 @@
  * Sin DOM, sin `Date.now()` y sin estado global: la UI (propuesta.js) los
  * consume; las pruebas (test/*.test.ts) los consumen con reloj simulado.
  */
-export * from './reloj.js?v=202611240850';
-export * from './fechas.js?v=202611240850';
-export * from './clases.js?v=202611240850';
-export * from './whatsapp.js?v=202611240850';
-export * from './resumen.js?v=202611240850';
-export * from './agenda.js?v=202611240850';
-export * from './agenda-mes.js?v=202611240850';
-export * from './navegacion.js?v=202611240850';
-export * from './barra-scroll.js?v=202611240850';
-export * from './repositorio.js?v=202611240850';
-export * from './demo.js?v=202611240850';
-export * from './cobros.js?v=202611240850';
-export * from './alumnos.js?v=202611240850';
+export * from './reloj.js?v=202611240859';
+export * from './fechas.js?v=202611240859';
+export * from './clases.js?v=202611240859';
+export * from './whatsapp.js?v=202611240859';
+export * from './resumen.js?v=202611240859';
+export * from './agenda.js?v=202611240859';
+export * from './agenda-mes.js?v=202611240859';
+export * from './navegacion.js?v=202611240859';
+export * from './barra-scroll.js?v=202611240859';
+export * from './repositorio.js?v=202611240859';
+export * from './demo.js?v=202611240859';
+export * from './cobros.js?v=202611240859';
+export * from './alumnos.js?v=202611240859';

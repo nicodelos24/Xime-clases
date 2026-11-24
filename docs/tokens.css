@@ -394,6 +394,10 @@ body {
 
 /* Ronda romper y pulir (22-nov) · hallazgo 3: chips de modalidad legibles en oscuro.
    --lila / --azul sobre sus tintes oscuros daban 1.78:1 y 1.89:1. */
-[data-tema="oscuro"] .et-mensual { color: #C9B6E8; }   /* sobre --lila-tinte #2E2542: 7.77:1 */
+[data-tema="oscuro"] .fila-mensual .avatar { color: #C9B6E8; }
+[data-tema="oscuro"] .fila-individual .avatar { color: #A8CDEA; }
+[data-tema="oscuro"] .fila-mensual .mod { color: #C9B6E8; }
+[data-tema="oscuro"] .fila-individual .mod { color: #A8CDEA; }
 [data-tema="oscuro"] .et-individual { color: #A8CDEA; } /* sobre --azul-tinte #1E3546: 7.61:1 */
+[data-tema="oscuro"] .et-mensual { color: #C9B6E8; }   /* sobre --lila-tinte #2E2542: 7.77:1 */
 [data-tema="oscuro"] .ficha-grupo.activo { color: var(--tq-700); } /* #7BE0D6 sobre #1C3A3B: 7.84:1 */

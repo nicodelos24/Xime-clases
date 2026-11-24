@@ -251,7 +251,11 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; width: 0; }
   box-shadow: var(--sombra);
   transition: background var(--t-media) var(--ease), transform var(--t-rapida) var(--ease), box-shadow var(--t-media) var(--ease);
 }
-.link-suave:hover { background: var(--tq-100); transform: translateY(-1px); box-shadow: var(--sombra-fuerte); }
+/* En oscuro el pill mantiene su fondo claro v5; su texto usa el extremo
+   turquesa oscuro existente (10.01:1), no el turquesa luminoso del tema. */
+[data-tema="oscuro"] .link-suave { color: var(--tq-900); }
+[data-tema="oscuro"] .link-suave:hover { color: var(--tq-900); }
+
 .link-suave:active { transform: scale(.96); }
 .link-suave:focus-visible { outline: 2px solid var(--tq-600); outline-offset: 2px; }
 .link-suave .ico { flex: none; }
@@ -278,13 +282,13 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; width: 0; }
   cursor: pointer; color: var(--tinta);
   transition: transform var(--t-rapida) var(--ease), background var(--t-rapida) var(--ease), color var(--t-rapida) var(--ease), border-color var(--t-rapida) var(--ease);
 }
-.tira-dia span { font-size: 10.5px; color: var(--tinta-2); letter-spacing: .05em; }
+.tira-dia span { font-size: 10.5px; color: var(--tq-900); letter-spacing: .05em; }
 /* Punto 3 (23-nov): la tira muestra la fecha real — «LU nov» arriba y el día
    abajo. En pantallas chicas (≤360px) el mes se oculta: con 7 columnas de
    ~33px «LU nov» no entra y se partía en dos líneas. El número sigue grande y
    el título de la vista ya dice el rango de fechas completo. */
 .tira-dia span { display: inline-flex; gap: 2px; align-items: baseline; }
-.tira-dia span em { font-style: normal; opacity: .8; }
+.tira-dia span em { font-style: normal; opacity: 1; }
 @media (max-width: 360px) {
   .tira-dia span em { display: none; }
 }
@@ -301,7 +305,12 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; width: 0; }
   box-shadow: 0 6px 16px rgba(11,107,106,.32);
   animation: pop var(--t-media) var(--ease);
 }
-.tira-dia.activo span { color: rgba(255,255,255,.82); }
+.tira-dia.activo span { color: #fff; }
+/* El turquesa luminoso de oscuro no admite blanco pequeño: usar su extremo
+   oscuro existente conserva el tinte y da 10.01:1 en todos los textos. */
+[data-tema="oscuro"] .tira-dia.activo {
+  background: var(--tq-900); border-color: var(--tq-900); color: #fff;
+}
 @keyframes pop { 0% { transform: scale(.9); } 60% { transform: scale(1.05); } 100% { transform: scale(1); } }
 
 /* ---------- Línea de tiempo ---------- */
@@ -385,6 +394,11 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; width: 0; }
   box-shadow: 0 10px 24px rgba(8,69,74,.30);
   transition: transform var(--t-rapida) var(--ease), box-shadow var(--t-rapida) var(--ease), background var(--t-rapida) var(--ease);
   animation: aparecer var(--t-media) var(--ease) 220ms both;
+}
+[data-tema="oscuro"] .fab {
+  /* El acento v5 claro no admite blanco pequeño; el extremo oscuro existente
+     conserva la identidad y da 10.01:1. */
+  background: var(--tq-900);
 }
 .fab:hover { transform: translateY(-3px); background: var(--tq-700); box-shadow: 0 14px 30px rgba(8,69,74,.36); }
 .fab:active { transform: scale(.96); }
@@ -547,6 +561,10 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; width: 0; }
 }
 .f-chip:hover { border-color:var(--tq-300); }
 .f-chip.activo { background:var(--tq-600); border-color:var(--tq-600); color:#fff; }
+[data-tema="oscuro"] .f-chip.activo {
+  /* Mismo acento, tinta lo bastante oscura para AA (10.73:1). */
+  background:var(--tq-600); border-color:var(--tq-600); color:var(--tq-900);
+}
 .f-chip:focus-visible { outline:2px solid var(--tq-600); outline-offset:2px; }
 .al-sub { display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
 .etiqueta { font-size:10.5px; font-weight:700; padding:2px 7px; border-radius:999px; }
@@ -575,6 +593,13 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; width: 0; }
 .avatar-4 { background: var(--azul-tinte); color: var(--azul); }
 .avatar-5 { background: var(--verde-tinte); color: var(--verde); }
 .avatar-6 { background: var(--ambar-tinte); color: var(--ambar); }
+[data-tema="oscuro"] .avatar-2 { color: var(--rosa-pastel); }
+[data-tema="oscuro"] .avatar-2 { color: var(--rosa-pastel); }
+[data-tema="oscuro"] .avatar-3 { color: #C9B6E8; }
+[data-tema="oscuro"] .avatar-4 { color: #A8CDEA; }
+[data-tema="oscuro"] .avatar-5 { color: var(--verde-pastel); }
+[data-tema="oscuro"] .avatar-6 { color: var(--ambar-pastel); }
+[data-tema="oscuro"] .avatar { color: var(--tq-200); }
 .lista-alumnos li > div, .lista-cobros li > div { flex: 1; min-width: 0; }
 .al-nombre { font-size: 14.5px; font-weight: 650; letter-spacing: -.01em; }
 /* Ronda romper y pulir (22-nov) · hallazgo 1: un nombre muy largo ocupaba 3
@@ -609,9 +634,14 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; width: 0; }
 .avatar-foto { overflow: hidden; padding: 0; flex: none; display: grid; place-items: center; border: 1px solid var(--linea); }
 .avatar-foto > .avatar { border: 0; }
 .avatar-foto > img { grid-area: 1 / 1; width: 100%; height: 100%; object-fit: cover; object-position: center; display: block; }
-.foto-alumno { display: flex; align-items: center; gap: 12px; margin: 2px 0 10px; }
+.foto-alumno { display: flex; align-items: flex-start; gap: 12px; margin: 2px 0 10px; }
 .foto-alumno-preview { flex: none; display: grid; place-items: center; width: 64px; height: 64px; }
 .foto-alumno-acciones { display: flex; flex-direction: column; gap: 6px; min-width: 0; flex: 1; }
+/* El error se crea en el formulario, pero se pinta dentro del bloque de foto
+   al que pertenece la acción. Así queda visible junto al control, sin sumar
+   un alert global ni desplazar el flujo de la ficha. */
+.foto-alumno-acciones .foto-alumno-error { margin: 2px 0 0; color: var(--rosa); }
+[data-tema="oscuro"] .foto-alumno-acciones .foto-alumno-error { color: var(--rosa-pastel); }
 .foto-alumno-acciones .ficha-accion {
   align-self: stretch; justify-content: center; min-height: 44px;
   border: 1px solid var(--linea); border-radius: var(--r-chico);
@@ -624,7 +654,7 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; width: 0; }
 .foto-alumno-acciones .ficha-accion:hover { background: var(--tq-50); }
 .foto-alumno-acciones .ficha-accion:active { transform: scale(.97); }
 .foto-alumno-acciones .ficha-accion:focus-visible { outline: 2px solid var(--tq-600); outline-offset: 2px; }
-[data-tema="oscuro"] .foto-alumno-acciones .ficha-accion { color: var(--tq-300); }
+[data-tema="oscuro"] .foto-alumno-acciones .ficha-accion { color: var(--tq-700); }
 .foto-alumno-acciones .ficha-foto-quitar { color: var(--rosa); }
 [data-tema="oscuro"] .foto-alumno-acciones .ficha-foto-quitar { color: var(--rosa-pastel); }
 .foto-alumno-nota { font-size: 13px; margin: 0; }
@@ -638,6 +668,7 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; width: 0; }
   .foto-alumno-acciones { display: grid; grid-template-columns: 1fr 1fr; }
   .foto-alumno-acciones .ficha-foto-quitar { justify-self: stretch; text-align: center; }
   .foto-alumno-nota { grid-column: 1 / -1; text-align: center; }
+  .foto-alumno-acciones .foto-alumno-error { grid-column: 1 / -1; }
 }
 
 /* Zona no interactiva de la tarjeta: presión larga y toque simple (spec 24-nov). */
@@ -658,9 +689,14 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; width: 0; }
   .sheet.arrastrando, .sheet.rebotando, .sheet.saliendo { transition: none !important; opacity: 1; }
 }
 
+/* La cabecera y el agarre son zona de arrastre propio: `pan-y` en el sheet
+   hacía que Chrome tomara el gesto y emitiera pointercancel antes del cierre.
+   El resto del cuadro conserva `pan-y` para scrollear su contenido. */
+.sheet-agarre, .sheet-head { touch-action: none; }
+
 /* ---- Cobros: filtros y orden (B6) ---- */
 .filtros .f-chip .n {
-  opacity: .65; font-variant-numeric: tabular-nums; font-weight: 800; margin-left: 2px;
+  font-variant-numeric: tabular-nums; font-weight: 800; margin-left: 2px;
 }
 /* Estado vacío (§3.5): la clase compartida .pv-vacio ya da el estilo;
    dentro de la lista de Cobros solo se centra igual que acá. */
@@ -685,6 +721,7 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; width: 0; }
   font-variant-numeric: tabular-nums;
 }
 [data-tema="oscuro"] .ficha-chip-deuda { color: var(--rosa-pastel); }
+[data-tema="oscuro"] .ficha-chip-ok { color: var(--verde-pastel); }
 .ficha-chip-vence {
   background: var(--bg-alt); color: var(--tinta-2);
 }
@@ -778,8 +815,8 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; width: 0; }
 .cobro-importe small { font-size: 10.5px; font-weight: 650; color: var(--tinta-2); }
 .cobro-importe .pagado { color: var(--verde); }
 [data-tema="oscuro"] .cobro-fila .cobro-vence { background: var(--bg-alt); color: var(--tinta-2); }
-[data-tema="oscuro"] .cobro-fila .cobro-vence.vencido { background: var(--rosa-tinte); color: var(--rosa); }
-[data-tema="oscuro"] .cobro-fila .cobro-vence.pronto { background: var(--ambar-tinte); color: var(--ambar); }
+[data-tema="oscuro"] .cobro-fila .cobro-vence.vencido { background: var(--rosa-tinte); color: var(--rosa-pastel); }
+[data-tema="oscuro"] .cobro-fila .cobro-vence.pronto { background: var(--ambar-tinte); color: var(--ambar-pastel); }
 [data-tema="oscuro"] .cobro-importe b { color: var(--tinta); }
 [data-tema="oscuro"] .cobro-importe .pagado { color: var(--verde); }
 /* A 390/360 px: el nombre no parte la fila y el grupo desaparece antes que el monto. */
@@ -842,8 +879,11 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; width: 0; }
    rosa-pastel 8.17:1 y ámbar-pastel 9.61:1 (AA en los cuatro casos). */
 .ficha-cobro .ficha-cobro-estado { font-weight: 650; }
 .ficha-cobro .ficha-cobro-estado.vencido { color: var(--rosa); }
+.ficha-cobro .ficha-cobro-estado.vencido { color: var(--rosa); }
 .ficha-cobro .ficha-cobro-estado.pendiente { color: var(--ambar); }
 .ficha-cobro .ficha-cobro-monto { font-weight: 700; color: var(--tinta); }
+[data-tema="oscuro"] .ficha-cobro-estado.vencido { color: var(--rosa-pastel); }
+[data-tema="oscuro"] .ficha-cobro-estado.pendiente { color: var(--ambar-pastel); }
 /* Contacto de la ficha: el número se ve como dato (no como texto auxiliar) y
    el enlace de WhatsApp queda debajo, alineado al mismo margen. */
 .ficha-contacto { display: flex; align-items: baseline; gap: 6px; margin-top: 8px; color: var(--tinta); }
