@@ -66,12 +66,12 @@ function esc(s: string): string {
 function chipEstado(c: Clase): string {
   if (c.estado === 'dada') {
     // Punto 2: el chip "Dada" es tocable → abre Cancelar / Cambiar de día.
-    return '<button class="chip chip-dada chip-boton" type="button" data-acciones="' + c.id + '" aria-label="Opciones para la clase ' + c.nombre + ', dada"><svg class="ico" width="13" height="13"><use href="#i-check"/></svg>Dada</button>';
+    return '<button class="chip chip-dada chip-boton" type="button" data-acciones="' + esc(c.id) + '" aria-label="Opciones para la clase ' + esc(c.nombre) + ', dada"><svg class="ico" width="13" height="13"><use href="#i-check"/></svg>Dada</button>';
   }
   if (c.estado === 'cancelada') {
     return '<span class="chip chip-cancelada"><svg class="ico" width="13" height="13"><use href="#i-alerta"/></svg>Cancelada</span>';
   }
-  return '<button class="chip chip-por chip-por-dar chip-boton" type="button" data-acciones="' + c.id + '" aria-label="Opciones para la clase ' + esc(c.nombre) + ', por dar">Por dar</button>';
+  return `<button class="chip chip-por chip-por-dar chip-boton" type="button" data-acciones="${esc(c.id)}" aria-label="Opciones para la clase ${esc(c.nombre)}, por dar">Por dar</button>`;
 }
 
 /**
@@ -96,7 +96,7 @@ function desplegableAlumnos(c: Clase): string {
  *  solo Cancelada conserva su "Revertir" porque no hay chip tocable. */
 function accionClase(c: Clase): string {
   if (c.estado === 'cancelada') {
-    return `<button class="marcar marcar-reversa" type="button" data-reversa="${c.id}">Revertir</button>`;
+    return `<button class="marcar marcar-reversa" type="button" data-reversa="${esc(c.id)}">Revertir</button>`;
   }
   return '';
 }
@@ -319,7 +319,7 @@ function pintarLinea(fecha: string | null) {
     <p class="linea-fecha">${esc(etiquetaDia(dia))}${dia === hoyLocal(reloj.ahora()) ? ' · hoy' : ''}</p>
     ${delDia
       .map(
-        (c) => `<article class="clase${c.estado === 'dada' ? ' hecha' : ''}${c.estado === 'cancelada' ? ' cancelada' : ''}${c.estado === 'programada' ? ' por-dar' : ''}" data-clase="${c.id}">
+        (c) => `<article class="clase${c.estado === 'dada' ? ' hecha' : ''}${c.estado === 'cancelada' ? ' cancelada' : ''}${c.estado === 'programada' ? ' por-dar' : ''}" data-clase="${esc(c.id)}">
           <div class="clase-hora"><b>${horaClase(c)}</b><span>${c.duracionMin} min</span></div>
           <div class="clase-datos">
             <p class="clase-nombre">${esc(c.nombre)}</p>
@@ -491,7 +491,7 @@ function pintarTarjetasDiaMes(): void {
     lista.className = 'dia-lista';
     lista.innerHTML = delDia
       .map(
-        (c) => `<article class="clase${c.estado === 'dada' ? ' hecha' : ''}${c.estado === 'cancelada' ? ' cancelada' : ''}${c.estado === 'programada' ? ' por-dar' : ''}" data-clase="${c.id}">
+        (c) => `<article class="clase${c.estado === 'dada' ? ' hecha' : ''}${c.estado === 'cancelada' ? ' cancelada' : ''}${c.estado === 'programada' ? ' por-dar' : ''}" data-clase="${esc(c.id)}">
           <div class="clase-hora"><b>${horaClase(c)}</b><span>${c.duracionMin} min</span></div>
           <div class="clase-datos">
             <p class="clase-nombre">${esc(c.nombre)}</p>
@@ -1274,7 +1274,7 @@ function abrirCancelacion(id: string) {
           .map(
             (a) => `<li>
               <label>
-                <input type="checkbox" value="${a.id}">
+                <input type="checkbox" value="${esc(a.id)}">
                 <span class="avatar">${esc(a.nombre.slice(0, 2).toUpperCase())}</span>
                 <span class="al-nombre">${esc(a.nombre)}</span>
               </label>
@@ -1498,7 +1498,7 @@ function pintarAlumnos(): void {
     ? out.map((a) => {
         const punto = puntoEstadoVence(a);
         return `<li class="fila-alumno"><button type="button" class="alumno-fila-btn" data-ficha="${esc(a.id)}" aria-label="Abrir ficha de ${esc(a.nombre)}">
-          <span class="avatar ${a.color}">${esc(a.ini)}</span><div><p class="al-nombre">${esc(a.nombre)}</p>${alumnoSub(a)}</div><span class="punto ${punto}"></span>
+          <span class="avatar ${esc(a.color)}">${esc(a.ini)}</span><div><p class="al-nombre">${esc(a.nombre)}</p>${alumnoSub(a)}</div><span class="punto ${punto}"></span>
         </button></li>`;
       }).join('')
     : `<p class="pv-vacio">${todas.length === 0 ? 'Todavía no hay alumnos. Tocá «Nuevo alumno» para cargar el primero.' : 'Ningún alumno con estos filtros'}</p>`;
@@ -1612,7 +1612,7 @@ function abrirFichaConCobro(ficha: AlumnoFicha | null, origen: HTMLElement, alCr
     ? `<span class="ficha-chip ficha-chip-vence">${esc(textoVence(deuda.dias))}</span>`
     : '';
   resumen.innerHTML = `<div class="ficha-chips">
-      <span class="ficha-chip ficha-chip-alumno"><span class="avatar ${ficha.color} ${esc(iniciales(ficha.nombre))}">${esc(iniciales(ficha.nombre))}</span>${esc(ficha.nombre)}</span>
+      <span class="ficha-chip ficha-chip-alumno"><span class="avatar ${esc(ficha.color)} ${esc(iniciales(ficha.nombre))}">${esc(iniciales(ficha.nombre))}</span>${esc(ficha.nombre)}</span>
       ${chipDeuda}${chipVence}
     </div>
     <p>${texto}${deuda ? '' : ''}${ultimo || deuda ? burbujaAyuda('La mensualidad vence el mismo día del mes siguiente al alta. Si pagó después, corregí la fecha del pago: queda registrado con su motivo.') : ''}</p>
@@ -1859,7 +1859,7 @@ function pintarCobros() {
   campana.querySelector<HTMLElement>('.campana-punto')!.hidden = avisos === 0;
 
   listaCobros.innerHTML = ordenarCobros(filtrarCobros(r.filas, estadoCobros), ordenCobros).map((f, indice) => `<li>
-    <button type="button" class="cobro-fila" data-fila="${f.alumno.id}|${f.periodo}" aria-haspopup="dialog"
+    <button type="button" class="cobro-fila" data-fila="${esc(`${f.alumno.id}|${f.periodo}`)}" aria-haspopup="dialog"
       aria-label="${f.pago ? 'Ver ficha de' : 'Ver ficha de'} ${esc(f.alumno.nombre)}, ${f.pago ? `pagado el ${fechaBreve(f.pago.fecha)}, ${uyu(f.alumno.montoUYU)}` : `deuda ${uyu(f.alumno.montoUYU)}, ${textoVence(f.dias)}`}">
       <span class="cobro-row">
         <span class="al-nombre">${esc(f.alumno.nombre)}</span>
