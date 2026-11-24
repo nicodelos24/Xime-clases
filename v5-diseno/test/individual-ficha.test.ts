@@ -4,6 +4,8 @@ import { strict as assert } from 'node:assert';
 import { readFile } from 'node:fs/promises';
 import { crearAlumno, type AlumnoFicha } from '../src/alumnos.ts';
 import { cobrosIndividuales, deudaIndividual, resumenCobros, type Pago } from '../src/cobros.ts';
+import { RepositorioClases, almacenMemoria } from '../src/repositorio.ts';
+import { relojFalso } from '../src/reloj.ts';
 import type { Clase } from '../src/clases.ts';
 
 const HOY = '2026-11-24';
@@ -77,6 +79,50 @@ test('ficha individual: sin tarifa propia avisa falta cargar, nunca usa $6500 ni
   assert.match(ui, /No se usa ningún precio de ejemplo/);
   assert.match(ui, /registrarPagoConTarifa\(alumno\.id, tarifa/);
   assert.doesNotMatch(ui, /6500/);
+});
+
+test('flujo real: cargar tarifa y confirmar el pago deja al día y sobrevive recarga', () => {
+  const ahora = new Date('2026-11-24T15:00:00Z').getTime();
+  const guardado = almacenMemoria();
+  const repo = new RepositorioClases(
+    guardado, relojFalso(ahora),
+    () => [clase('c1', '2026-11-23')],
+    () => [ficha({ id: 'a2', tarifaUYU: null })],
+  );
+  const inicial = repo.listarAlumnos()[0]!;
+  assert.equal(inicial.tarifaUYU, null, 'la ficha arranca sin precio');
+  const antes = deudaIndividual(inicial, cobrosIndividuales(
+    [{ ...inicial, individual: true, montoUYU: 0 }], [], [clase('c1', '2026-11-23', 'dada', inicial.id)], HOY,
+  ));
+  assert.deepEqual(antes, { clases: 1, montoUYU: 0, sinTarifa: true });
+
+  // Exactamente lo que hace el diálogo: graba tarifa y pago en una sola escritura.
+  repo.registrarPagoConTarifa(inicial.id, 3100, {
+    id: 'p-c1', periodo: '2026-11', quien: 'prueba', fecha: HOY,
+    concepto: 'clase-individual', claseId: 'c1',
+  });
+
+  const pagos = JSON.parse(guardado.leer()!).pagos as Pago[];
+  assert.equal(pagos.length, 1);
+  assert.deepEqual(
+    { monto: pagos[0]!.montoUYU, concepto: pagos[0]!.concepto, claseId: pagos[0]!.claseId },
+    { monto: 3100, concepto: 'clase-individual', claseId: 'c1' },
+  );
+
+  // Otra instancia leyendo el mismo almacén simula la recarga de la página.
+  const recargado = new RepositorioClases(
+    guardado, relojFalso(ahora),
+    () => [clase('c1', '2026-11-23')],
+    () => [ficha({ id: 'a2', tarifaUYU: null })],
+  );
+  const actual = recargado.listarAlumnos()[0]!;
+  assert.equal(actual.tarifaUYU, 3100, 'la tarifa cargada se conserva al recargar');
+  const cobros = cobrosIndividuales(
+    [{ ...actual, individual: true, montoUYU: actual.tarifaUYU ?? 0 }], pagos, [clase('c1', '2026-11-23', 'dada', actual.id)], HOY,
+  );
+  assert.equal(cobros[0]!.pago?.montoUYU, 3100);
+  assert.deepEqual(deudaIndividual(actual, cobros), { clases: 0, montoUYU: 0, sinTarifa: false });
+  assert.equal(resumenCobros([{ ...actual, individual: true, montoUYU: actual.tarifaUYU }], pagos, HOY).filas.length, 0);
 });
 
 test('contrato UI: ficha individual usa deuda compartida y excluye mensualidad; Cobros no muestra $0 normal', async () => {
