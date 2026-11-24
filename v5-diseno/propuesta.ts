@@ -15,7 +15,7 @@ import {
 import { resumenHoy, clasesDelDia, clasesDeLaSemana } from './src/resumen.ts';
 import { registrarToqueFecha, mesDe, type ToqueFecha } from './src/agenda.ts';
 import { primerDiaDeMes, diaSeleccionadoAlCargar } from './src/agenda-mes.ts';
-import { decisionDeGesto, DURACION_TOQUE_LARGO, UMBRAL_MOVIMIENTO_GESTO, type EstadoClaseGesto } from './src/toque-clase.ts';
+import { decisionDeGesto, decisionDeAperturaDeMenu, DURACION_TOQUE_LARGO, UMBRAL_MOVIMIENTO_GESTO, type EstadoClaseGesto } from './src/toque-clase.ts';
 import { destinoDeEnlace, vistaInicial, vistasActivas } from './src/navegacion.ts';
 import { pistaDeTira } from './src/scroll-pista.ts';
 import {
@@ -24,7 +24,8 @@ import {
 } from './src/barra-scroll.ts';
 import {
   ajustarLock, debeBloquearScroll, estiloSheet, debeCerrarPorToqueFuera, esToqueFuera,
-  debeSuprimirClickTrasCierre, debeCerrarPorDeslizar, FRANJA_CIERRE, type PuntoToque,
+  debeSuprimirClickTrasCierre, decisionCierreSheetsPorNavegacion,
+  debeCerrarPorDeslizar, FRANJA_CIERRE, type PuntoToque,
 } from './src/sheets.ts';
 import {
   diaCorto, mesCorto, etiquetaDia, etiquetaDiaCompleta, etiquetaDiaCorta, etiquetaMes,
@@ -301,7 +302,8 @@ function pintarSemanaDe(f: string): void {
  *  - arrastrar para scrollear no marca nada, y el menú se abre al mantener.
  * Dedo y mouse pasan por el mismo camino (Pointer Events). El chip conserva
  * su click (incluido teclado/AT) para abrir el menú, sin iniciar el gesto.
- * La decisión (umbrales) vive en `src/toque-clase.ts`, testeada sin navegador.
+ * El toque simple en zona vacía alterna Por dar ↔ Dada y restaura el foco
+ * al chip de esa clase; al repintar, el toast queda como ancla neutral.
  */
 type ToqueClaseActivo = { pointerId: number; id: string; estado: EstadoClaseGesto; x: number; y: number; maxMov: number; temporizador: number; cancelado: boolean; inicio: number };
 const TOQUES_CLASE = new Map<number, ToqueClaseActivo>();
@@ -329,6 +331,8 @@ function cablearGestoClase(tarjeta: HTMLElement): void {
       tarjeta.classList.remove('presionando');
       navigator.vibrate?.(12);
       abrirAcciones(id);
+      const abierta = document.querySelector<HTMLElement>(`.sheet[data-disparador="clase-acciones-${id}"]:not(.cerrando)`);
+      if (abierta?.dataset.retornoFoco) document.getElementById(abierta.dataset.retornoFoco)?.focus({ preventScroll: true });
     }, DURACION_TOQUE_LARGO);
     TOQUES_CLASE.set(e.pointerId, dato);
   }, { passive: true });
@@ -389,8 +393,17 @@ function cambiarEstadoConToque(id: string, estado: EstadoClaseGesto): void {
     avisar(err instanceof Error ? err.message : 'No se pudo cambiar la asistencia', 3000);
     return;
   }
+  // Restaurar el foco al chip de esa clase si sigue conectado; tras el
+  // repinte puede haberse destruido, y entonces el toast es el ancla neutral.
+  const chipViejo = document.querySelector<HTMLElement>(`[data-acciones="${id}"]`);
+  const tarjetaVieja = document.querySelector<HTMLElement>(`.clase[data-clase="${id}"]`);
   clases = repo.listar();
   refrescar();
+  const chipNuevo = chipViejo?.isConnected
+    ? chipViejo
+    : document.querySelector<HTMLElement>(`[data-acciones="${id}"]`)
+      ?? (tarjetaVieja?.isConnected ? tarjetaVieja : null);
+  chipNuevo?.focus({ preventScroll: true });
   const idAnterior = toast.dataset.revertirManual;
   if (idAnterior && idAnterior !== id) delete toast.dataset.deshacer;
   delete toast.dataset.revertirManual;
@@ -780,7 +793,7 @@ function observarCambios(el: HTMLElement, onCambio?: () => void): void {
  * Guardar (ejecuta el submit), Descartar (cierra) y Seguir editando.
  * Devuelve `true` cuando el dueño eligió guardar (quien llama decide si cierra).
  */
-function confirmarCierreConCambios(el: HTMLElement, guardar: () => void, descartar: () => void): void {
+function confirmarCierreConCambios(el: HTMLElement, guardar: (() => void) | undefined, descartar: () => void): void {
   if (document.querySelector('dialog.confirmar-cambios[open]')) return; // un solo cuadro a la vez
   // Debe ser un <dialog> modal, no un <div>: los sheets de ficha/cobros son
   // <dialog> con showModal() y viven en la "top layer" del navegador; ningún
@@ -795,9 +808,9 @@ function confirmarCierreConCambios(el: HTMLElement, guardar: () => void, descart
       <h3>¿Hay cambios sin guardar, querés guardarlos?</h3>
       <p class="confirmar-cambios-nota">Si descartás, se pierden los cambios de este cuadro.</p>
       <div class="confirmar-cambios-acciones">
+        ${guardar ? '<button type="button" class="btn-primario" data-decision="guardar">Guardar</button>' : ''}
         <button type="button" class="btn-secundario" data-decision="seguir">Seguir editando</button>
         <button type="button" class="btn-secundario" data-decision="descartar">Descartar</button>
-        <button type="button" class="btn-primario" data-decision="guardar">Guardar</button>
       </div>
     </div>`;
   document.body.appendChild(caja);
@@ -821,12 +834,13 @@ function confirmarCierreConCambios(el: HTMLElement, guardar: () => void, descart
     const boton = e.target.closest('[data-decision]') as HTMLElement | null;
     if (!boton) return;
     const decision = boton.dataset.decision;
-    if (decision === 'guardar') { cerrarCuadroConfirm(); guardar(); }
+    if (decision === 'guardar') { cerrarCuadroConfirm(); guardar?.(); }
     else if (decision === 'descartar') descartarYValidar();
     else cerrarCuadroConfirm();
   });
   caja.showModal();
-  (caja.querySelector('[data-decision="guardar"]') as HTMLElement).focus();
+  const primero = caja.querySelector<HTMLElement>('[data-decision="seguir"]');
+  (primero ?? caja).focus();
 }
 
 /**
@@ -1181,6 +1195,8 @@ function abrirFormularioSuelta(fechaDesdeDia?: string, origen?: HTMLElement) {
 
 /* ------------------------------------------- cancelar clase (sheet + WhatsApp) */
 let sheet: HTMLElement | null = null;
+/** ID del cuadro de cancelación, incluso si F5/navegación lo retira del DOM. */
+let cancelacionPendiente: string | null = null;
 let claseEnSheet: Clase | null = null;
 let modoEnvio: 'masivo' | 'individual' | 'ninguno' = 'masivo';
 let elegidos = new Set<string>();
@@ -1221,6 +1237,8 @@ function cerrarAcciones(): void {
 /** Cuadro de acciones (20/11): lo abre el chip de estado de la clase
  *  («Por dar» o «Dada»). Abrir NO cambia el estado. */
 function abrirAcciones(id: string) {
+  // Un gesto nunca reabre una hoja ya abierta (doble apertura del chip).
+  if (cancelacionPendiente || decisionDeAperturaDeMenu(!!document.querySelector('.sheet:not(.cerrando)')) === 'nada') return;
   const c = clases.find((x) => x.id === id);
   if (!c || c.estado === 'cancelada') return;
   cerrarSheet();
@@ -1231,9 +1249,11 @@ function abrirAcciones(id: string) {
   previo.setAttribute('aria-modal', 'true');
   previo.setAttribute('aria-label', `Opciones para ${c.nombre}`);
   const disparador = document.querySelector<HTMLElement>(`[data-acciones="${id}"]`);
-  if (disparador) {
-    disparador.id = `clase-acciones-${id}`;
-    previo.dataset.retornoFoco = disparador.id;
+  const retorno = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+  const origenFoco = retorno?.isConnected ? retorno : disparador;
+  if (origenFoco) {
+    origenFoco.id = `clase-acciones-${id}`;
+    previo.dataset.retornoFoco = origenFoco.id;
   }
   const esManual = c.estado === 'dada' && c.eventos.at(-1)?.tipo === 'marcada-manual';
   previo.innerHTML = `
@@ -1359,6 +1379,7 @@ function abrirAcciones(id: string) {
 }
 
 function abrirCancelacion(id: string) {
+  if (cancelacionPendiente) return;
   const c = clases.find((x) => x.id === id);
   if (!c) return;
   if (sheet && !sheet.classList.contains('cerrando')) cerrarSheet();
@@ -1382,6 +1403,8 @@ function abrirCancelacion(id: string) {
   previo.setAttribute('aria-modal', 'true');
   previo.setAttribute('aria-label', `Cancelar ${c.nombre}`);
   previo.dataset.retornoFoco = `clase-acciones-${id}`;
+  previo.dataset.cancelacion = id;
+  cancelacionPendiente = id;
   previo.innerHTML = `
     <div class="sheet-head">
       <div>
@@ -1490,6 +1513,10 @@ function abrirCancelacion(id: string) {
 }
 
 function confirmarCancelacion(c: Clase, motivo: string) {
+  // Un clic confirmado no debe reactivarse por un click tardío/sintético tras
+  // un F5: el gesto nuevo sólo puede reabrir acciones si el usuario lo inicia.
+  if (cancelacionPendiente !== c.id) return;
+  cancelacionPendiente = null;
   if (clases.some((x) => x.id === c.id && x.estado === 'cancelada')) {
     // Doble click/click sintético: la clase ya estaba cancelada. No repetir
     // auditoría, mensajes ni apertura de WhatsApp.
@@ -1540,6 +1567,9 @@ function confirmarCancelacion(c: Clase, motivo: string) {
   }
   toast.dataset.deshacer = '1';
   toast.dataset.clase = c.id;
+  // El panel confirmado se destruye. Su click tardío (o el de un F5 justo
+  // entre pointerup y click) no puede reabrir las acciones de esa clase.
+  clickTrasCierrePendiente = true;
 }
 
 function revertirCancelacion(id: string): boolean {
@@ -1587,6 +1617,9 @@ toast.addEventListener('click', () => {
     toast.classList.remove('ver');
     return;
   }
+  // El gesto confirmado consume también el posible click tardío: no puede
+  // caer sobre el chip y reabrir el sheet de acciones recién cancelado.
+  clickTrasCierrePendiente = true;
   const pendientes = JSON.parse(toast.dataset.pendientes || '[]') as string[];
   if (pendientes.length > 0) {
     const siguiente = pendientes.shift() as string;
@@ -2384,7 +2417,39 @@ campana.addEventListener('click', () => {
 /* ------------------------------------------------------------- navegación */
 /** Cierra cualquier sheet abierto antes de cambiar de vista. */
 function cerrarSheetsPorNavegacion(): void {
-  if (sheet) cerrarAcciones();
+  const abierto = document.querySelector('.sheet:not(.cerrando)') as HTMLElement | null;
+  const decision = decisionCierreSheetsPorNavegacion(abierto, (el) => el.dataset.cancelacion !== undefined);
+  if (decision === 'nada' && !cancelacionPendiente) return;
+  if (decision === 'cerrar' && abierto) {
+    // El clic tardío de la confirmación pertenece a un documento destruido.
+    // Consumirlo evita que caiga sobre un chip y reabra las acciones padres.
+    clickTrasCierrePendiente = true;
+    cerrarCuadro(abierto);
+    sheet = null;
+    cancelacionPendiente = null;
+    return;
+  }
+  // Un F5/hashchange entre pointerup y click de una cancelación debe descartar
+  // el flujo completo, nunca dejar vivo el sheet padre que lo abrió.
+  if (cancelacionPendiente) {
+    $$('.sheet:not(.cerrando)').forEach((el) => cerrarCuadro(el as HTMLElement));
+    sheet = null;
+    cancelacionPendiente = null;
+    return;
+  }
+  // La confirmación de una cancelación no se puede disparar desde el cierre
+  // por navegación: ese atajo equivaldría a autorizar una acción destructiva.
+  if (sheet && sheet.dataset.cancelacion !== undefined) {
+    cerrarSheet();
+    return;
+  }
+  if (sheet) {
+    // No usar el clic de la X como atajo: «Guardar» en cancelación significa
+    // confirmar la destrucción, y navegar no es una confirmación del dueño.
+    const confirmar = sheet.querySelector('[data-accion="confirmar"]') as HTMLElement | null;
+    if (!confirmar && sheet.dataset.dirty === '1') confirmarCierreConCambios(sheet, undefined, () => cerrarSheet());
+    else cerrarSheet();
+  }
   $$('.sheet:not(.cerrando):not(.cobros-panel)').forEach((el) => cerrarCuadro(el as HTMLElement));
   $$('dialog.sheet[open]').forEach((el) => cerrarDialogoConAviso(el as HTMLDialogElement));
 }
@@ -2405,6 +2470,17 @@ function cerrarSheetPorFuera(abierto: HTMLElement): void {
   // La barra de arrastre es decorativa: tras soltarla no debe quedar un
   // desplazamiento visible cuando el cierre pide confirmación.
   limpiarDeslizamiento(abierto, !abierto.classList.contains('cobros-panel'));
+  // Swipe de cierre no ejecuta «Guardar» de cancelación: pide descartar o seguir.
+  if (abierto.dataset.dirty === '1') {
+    const confirmar = abierto.querySelector('[data-accion="confirmar"]') as HTMLElement | null;
+    if (confirmar) {
+      confirmarCierreConCambios(abierto, undefined, () => {
+        if (abierto === sheet) cerrarSheet();
+        else cerrarCuadro(abierto);
+      });
+      return;
+    }
+  }
   if (document.querySelector('dialog.confirmar-cambios[open]')) return;
   if (abierto.classList.contains('cobros-panel')) {
     cerrarDialogoConAviso(abierto as HTMLDialogElement);
@@ -2641,6 +2717,8 @@ function pintarTitulo(id: string) {
 }
 
 function irA(id: string, fijarHash = true, enfocarDestino = false) {
+  const focoEntrada = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+  const debeEnfocarMes = enfocarDestino && id === 'v-mes' && (focoEntrada?.dataset.verMes === '1' || Boolean(focoEntrada?.closest('.link-suave[href="#v-mes"]')));
   const destino = document.getElementById(id);
   if (!destino) return;
   // Que «Ver mes» no cambie el hash no significa que la vista mensual no deba
@@ -2668,7 +2746,7 @@ function irA(id: string, fijarHash = true, enfocarDestino = false) {
   window.scrollTo(0, 0);
   document.querySelector('.tabbar')?.classList.remove('oculta');
   document.documentElement.classList.remove('barra-oculta');
-  if (enfocarDestino && id === 'v-mes') {
+  if (debeEnfocarMes) {
     // El enlace se destruye al repintar: su destino equivalente es el título
     // mensual, al que se puede desplazar el foco sin añadir un tab stop.
     const titulo = $('#v-mes .mes-titulo-nav h2') as HTMLElement | null;
@@ -2762,7 +2840,7 @@ if (tabbar) {
 
   // Al cambiar de vista puede cambiar la altura del contenido y el scroll;
   // recalcular la referencia para no interpretar ese salto como una dirección.
-  window.addEventListener('hashchange', recalibrar);
+  window.addEventListener('hashchange', () => { cerrarSheetsPorNavegacion(); recalibrar(); });
   window.addEventListener('resize', recalibrar, { passive: true });
 }
 
@@ -2942,12 +3020,27 @@ const inicial = vistaInicial(location.hash, vistas.map((v) => v.id));
 irA(inicial ?? (vistas.find((v) => v.classList.contains('activa'))?.id ?? 'v-hoy'), false);
 
 // Exposición mínima para QA (consola / capturas): sin tocar el estado real.
-(window as unknown as Record<string, unknown>).ximeV5 = {
+const v5 = window as unknown as Record<string, unknown>;
+v5.ximeV5 = {
   get clases() { return structuredClone(clases); },
   get alumnos() { return structuredClone(repo.listarAlumnos()); },
+  get hojaAbierta() { return !!document.querySelector('.sheet:not(.cerrando)'); },
+  get destinoFoco() {
+    const hoja = document.querySelector<HTMLElement>('.sheet:not(.cerrando)');
+    const retorno = hoja?.dataset.retornoFoco ? document.getElementById(hoja.dataset.retornoFoco) : null;
+    return { hoja: hoja?.getAttribute('aria-label') ?? null, retorno: retorno?.id ?? null, activo: document.activeElement?.id ?? null };
+  },
   refrescar,
   irA,
   abrirFicha,
+  estadoPrueba() {
+    const clase = clases.find((c) => c.estado === 'programada');
+    return clase ? {
+      id: clase.id, estado: clase.estado,
+      tarjeta: !!document.querySelector(`.clase[data-clase="${clase.id}"]`),
+      chip: !!document.querySelector(`[data-acciones="${clase.id}"]`),
+    } : null;
+  },
   reloj,
   textoCancelacion,
   linkTexto,

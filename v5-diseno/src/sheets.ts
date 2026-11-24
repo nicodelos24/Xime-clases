@@ -110,6 +110,22 @@ export function debeSuprimirClickTrasCierre(pendiente: boolean): boolean {
   return pendiente;
 }
 
+export type EstadoNavegacionSheets = 'cerrar' | 'aviso' | 'nada';
+
+/**
+ * Una confirmación destructiva no es un cierre cualquiera: sólo después de
+ * cancelar pueden cerrarse también las acciones padre que abrieron el cuadro.
+ * Antes, un F5/hashchange entre el pointerup y el click de confirmación llamaba
+ * a `cerrarSheetsPorNavegacion` y dejaba vivo el sheet de acciones viejo.
+ */
+export function decisionCierreSheetsPorNavegacion(
+  abierto: HTMLElement | null,
+  esCancelacion: (el: HTMLElement) => boolean,
+): EstadoNavegacionSheets {
+  if (!abierto) return 'nada';
+  return esCancelacion(abierto) ? 'cerrar' : 'aviso';
+}
+
 /**
  * Deslizar hacia abajo para cerrar (igual que Ropa): el dedo nace en la franja
  * superior del sheet (cabecera + aire), baja una distancia neta y al pasar el

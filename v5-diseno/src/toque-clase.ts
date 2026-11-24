@@ -58,6 +58,11 @@ export type EventoToque = {
   consumido: boolean;
 };
 
+export function decisionDeAperturaDeMenu(abierta: boolean): 'abrir' | 'nada' {
+  // Un gesto nunca duplica una hoja ya abierta.
+  return abierta ? 'nada' : 'abrir';
+}
+
 export function decisionDeEventoToque(
   evento: EventoToque,
   origen: 'tarjeta' | 'chip',

@@ -21,7 +21,6 @@ const orden = ['fechas.js', 'reloj.js', 'prefijo.js', 'agenda.js', 'agenda-mes.j
   'navegacion.js', 'agendar.js', 'alumnos.js', 'clases.js', 'resumen.js',
   'cobros.js', 'contacto.js', 'whatsapp.js', 'demo.js', 'repositorio.js',
   'barra-scroll.js', 'scroll-pista.js', 'sheets.js', 'toque-clase.js'];
-
 const vistos = new Set();
 let codigo = '';
 for (const f of orden) {
@@ -115,14 +114,13 @@ async function gesto(nombre, dy) {
   };
 }
 
-  await gesto('deslizar100', 100);
-  resultado.cierreAdaptativo = resultado.deslizar100.abiertos === 0;
-    chipActual()?.dispatchEvent(new window.MouseEvent('click', { bubbles: true, cancelable: true }));
-  await new Promise((r) => setTimeout(r, 150));
-  await gesto('estatico', 0);
-  // Reabrimos y probamos un temblor de 5 px (no debe cerrar).
-chipActual()?.dispatchEvent(new window.MouseEvent('click', { bubbles: true, cancelable: true }));
-await new Promise((r) => setTimeout(r, 150));
+await gesto('deslizar100', 100);
+resultado.cierreAdaptativo = resultado.deslizar100.abiertos === 0;
+await new Promise((r) => setTimeout(r, 850));
+await abrir();
+await gesto('estatico', 0);
+// Reabrimos y probamos un temblor de 5 px (no debe cerrar).
+await abrir();
 await gesto('temblor5', 5);
 // Y la X de la cabecera sigue funcionando (toque corto en botón).
 const s3 = document.querySelector('.sheet:not(.cerrando)');

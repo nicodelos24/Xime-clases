@@ -6,7 +6,7 @@ import {
   MARGEN_SHEET, alturaMaximaSheet, estiloSheet, ajustarLock, debeBloquearScroll,
   OPCIONES_CAMBIOS_SIN_GUARDAR, DECISION_ESCAPE_AVISO,
   debeCerrarPorToqueFuera, UMBRAL_MOVIMIENTO_TOQUE, esToqueFuera,
-  debeSuprimirClickTrasCierre, debeCerrarPorDeslizar, UMBRAL_ARRASTRE_CIERRE, FRANJA_CIERRE,
+  debeSuprimirClickTrasCierre, decisionCierreSheetsPorNavegacion, debeCerrarPorDeslizar, UMBRAL_ARRASTRE_CIERRE, FRANJA_CIERRE,
   deslizarRechazado, type PuntoToque, type RectSheet,
 } from '../src/sheets.ts';
 
@@ -123,6 +123,14 @@ test('decisión por coordenadas en los bordes del sheet', () => {
 // generaba un click sintético que atravesaba al dialog ya cerrado y volvía a
 // abrir el sheet de Cobros al caer sobre un cobro-fila. Sólo se suprime el
 // primer click tras el cierre; los clicks normales (con flag limpio) pasan.
+test('cancelación confirmada y acciones pendientes se cierran juntos al navegar', () => {
+  const acciones = { dataset: { cancelacion: undefined }, clase: 'sheet' } as unknown as HTMLElement;
+  const cancelacion = { dataset: { cancelacion: 'c-1' }, clase: 'sheet' } as unknown as HTMLElement;
+  assert.equal(decisionCierreSheetsPorNavegacion(null, (el) => el.dataset.cancelacion !== undefined), 'nada');
+  assert.equal(decisionCierreSheetsPorNavegacion(acciones, (el) => el.dataset.cancelacion !== undefined), 'aviso');
+  assert.equal(decisionCierreSheetsPorNavegacion(cancelacion, (el) => el.dataset.cancelacion !== undefined), 'cerrar');
+});
+
 test('se suprime el click sintético posterior al cierre por tap fuera', () => {
   assert.equal(debeSuprimirClickTrasCierre(true), true);
 });
