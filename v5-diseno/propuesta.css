@@ -606,9 +606,8 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; width: 0; }
 .filtros .f-chip .n {
   opacity: .65; font-variant-numeric: tabular-nums; font-weight: 800; margin-left: 2px;
 }
-.cobros-vacio {
-  padding: 14px; color: var(--tinta-2); font-size: 13px; text-align: center;
-}
+/* Estado vacío (§3.5): la clase compartida .pv-vacio ya da el estilo;
+   dentro de la lista de Cobros solo se centra igual que acá. */
 
 /* ---- Ficha del alumno: cabecera con chips (A4/B8) ---- */
 .ficha-chips {
@@ -639,22 +638,30 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; width: 0; }
 /* ---- Burbujas «?» con ayuda accesible (A1) ---- */
 .ayuda { display: inline-flex; align-items: center; gap: 2px; }
 .ayuda-btn {
-  display: inline-grid; place-items: center; width: 30px; height: 30px;
-  padding: 0; border: 0; background: transparent; border-radius: 999px;
-  color: var(--tq-700); cursor: pointer; flex: none;
+  position: relative;               /* ancla del ::before de área táctil */
+  display: inline-grid; place-items: center;
+  width: 32px; height: 32px;              /* visual 32×32 (spec §1.1) */
+  border-radius: 50%; overflow: visible;
+  background: var(--tq-100); color: var(--tq-700);
+  border: 1px solid var(--linea); font: 700 15px/1 system-ui, sans-serif;
+  flex: none;
   transition: background var(--t-rapida) var(--ease), transform var(--t-rapida) var(--ease);
 }
-[data-tema="oscuro"] .ayuda-btn { color: var(--tq-300); }
-.ayuda-btn:hover { background: var(--tq-100); }
+.ayuda-btn::before {
+  content: ""; position: absolute;        /* área táctil 44×44 sin agrandar el círculo */
+  inset: -6px; border-radius: 50%;
+}
+[data-tema="oscuro"] .ayuda-btn { background: var(--tq-100); color: var(--tq-300); border-color: var(--tq-200); }
+.ayuda-btn:hover { background: var(--tq-200); }
 .ayuda-btn:active { transform: scale(.9); }
 .ayuda-btn:focus-visible { outline: 2px solid var(--tq-600); outline-offset: 2px; }
 .ayuda-texto {
   display: block; width: 100%; margin-top: 6px;
   color: var(--tinta-2); font-size: 12.5px; line-height: 1.45;
 }
-.ayuda-btn[aria-expanded="true"] { background: var(--tq-100); }
+.ayuda-btn[aria-expanded="true"] { background: var(--tq-200); }
 
-/* ---- WhatsApp con ícono SVG (A3): patrón .btn-wa de Ropa V2 ---- */
+/* ---- WhatsApp con ícono SVG (A3): botón PRIMARIO estilo .btn-wa ---- */
 .ficha-accion-wa {
   display: inline-flex; align-items: center; gap: 8px;
   color: var(--tq-700); font-weight: 700;
@@ -663,7 +670,26 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; width: 0; }
 .ficha-wa-ico { flex: none; }
 /* el símbolo i-wa trae su fill inline; el trazo base de .ico no lo toca */
 .ficha-wa-ico { fill: currentColor; stroke: none; }
+
+/* Acento fuerte (spec §2.3, resuelve el duplicado con :755): solo la ficha
+   de acciones convierte la primera en botón primario; :755 sigue gobernando
+   cualquier otro uso del color del texto */
+.ficha-acciones .ficha-accion-wa {
+  background: var(--tq-700); color: var(--bg-alt); border-radius: var(--r-chico);
+  justify-content: center; gap: 8px; font-size: 13.5px; font-weight: 800;
+  min-height: 46px; height: 46px; padding: 0 14px; box-shadow: var(--sombra-crema);
+  text-decoration: none;
+}
+.ficha-acciones .ficha-accion-wa:hover { background: var(--tq-600); }
+.ficha-acciones .ficha-accion-wa:active { transform: scale(.98); }
+[data-tema="oscuro"] .ficha-acciones .ficha-accion-wa { color: var(--bg); }
+@media (prefers-reduced-motion: reduce) {
+  .ayuda-btn, .ficha-acciones .ficha-accion-wa { transition: none; transform: none; }
+}
 .ayuda-btn .ico { stroke-width: 2.2; }
+
+.ficha-accion-ayuda { margin-top: 8px; }
+.ficha-accion-ayuda .ayuda-texto { width: auto; margin-top: 4px; }
 
 /* ---------- Cobros ---------- */
 .kpis-cobros { grid-template-columns: repeat(2, 1fr); }
@@ -678,6 +704,39 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; width: 0; }
 .monto { font-size: 15px; letter-spacing: -.01em; color: var(--rosa); }
 .monto-suave { color: var(--ambar); }
 .monto-ok { color: var(--verde); font-size: 13px; background: var(--verde-tinte); padding: 5px 10px; border-radius: 999px; }
+
+/* ---- Fila de Cobros con jerarquía nueva (§3.3, B8/B9) ----
+   El bloque base (.cobro-fila de la base aprobada, :746) manda en padding,
+   bordes y tipografía heredada; acá solo la jerarquía y el vencimiento. */
+.cobro-fila .cobro-row { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.cobro-fila .cobro-meta { font-size: 11px; color: var(--tinta-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cobro-fila .cobro-vence {
+  display: inline-block; padding: 2px 7px; border-radius: 999px;
+  background: var(--bg); color: var(--tinta-2); font-weight: 700;
+  font-size: 11px; flex: none; font-variant-numeric: tabular-nums;
+}
+.cobro-fila .cobro-vence.vencido { background: var(--rosa-tinte); color: var(--rosa); }
+.cobro-fila .cobro-vence.pronto { background: var(--ambar-tinte); color: var(--ambar); }
+.cobro-importe { display: flex; flex-direction: column; align-items: flex-end; flex: none; line-height: 1.15; }
+.cobro-importe b { font-size: 15px; font-weight: 800; color: var(--tinta); font-variant-numeric: tabular-nums; }
+.cobro-importe small { font-size: 10.5px; font-weight: 650; color: var(--tinta-2); }
+.cobro-importe .pagado { color: var(--verde); }
+[data-tema="oscuro"] .cobro-fila .cobro-vence { background: var(--bg-alt); color: var(--tinta-2); }
+[data-tema="oscuro"] .cobro-fila .cobro-vence.vencido { background: var(--rosa-tinte); color: var(--rosa); }
+[data-tema="oscuro"] .cobro-fila .cobro-vence.pronto { background: var(--ambar-tinte); color: var(--ambar); }
+[data-tema="oscuro"] .cobro-importe b { color: var(--tinta); }
+[data-tema="oscuro"] .cobro-importe .pagado { color: var(--verde); }
+/* A 390/360 px: el nombre no parte la fila y el grupo desaparece antes que el monto. */
+@media (max-width: 390px) {
+  .cobro-fila { gap: 9px; }
+  .cobro-fila .cobro-meta { max-width: 34ch; }
+  .cobro-fila .cobro-vence { max-width: 30vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+}
+@media (max-width: 360px) {
+  .cobro-importe b { font-size: 14px; }
+  .cobro-fila .cobro-meta { font-size: 10.5px; }
+  .cobro-fila .cobro-vence { padding: 2px 6px; }
+}
 
 /* Cobros: la fila completa abre el detalle, sin un botón repetido por alumno. */
 .cobros-contexto { display: flex; align-items: center; gap: 9px; }
@@ -745,6 +804,7 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; width: 0; }
   display: flex; align-items: center; width: 100%; min-height: 44px;
   padding: 0; text-align: left; border-radius: 0;
 }
+.ficha-acciones .ficha-accion.ficha-accion-wa { border-radius: var(--r-chico); }
 /* Rediseño 23-nov (Fina, 320/390): cada acción con su aire, separadas por
    filete, sin pegarse al número ni al borde inferior. La principal (WA) en
    acento, las dos secundarias en --tinta-2. Área táctil ≥ 44px. */
@@ -752,6 +812,7 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; width: 0; }
 .ficha-acciones .ficha-accion:first-child { padding-top: 4px; }
 .ficha-acciones .ficha-accion + .ficha-accion { border-top: 1px solid var(--linea); }
 .ficha-acciones .ficha-accion:last-child { padding-bottom: 2px; }
+.ficha-acciones .ficha-accion.ficha-accion-wa { padding: 0 14px; }
 .ficha-accion-wa { color: var(--tq-700); }
 .ficha-acciones .ficha-accion:not(.ficha-accion-wa) { color: var(--tinta-2); font-weight: 650; }
 .ficha-acciones .ficha-accion:focus-visible { outline: 2px solid var(--tq-600); outline-offset: 2px; }

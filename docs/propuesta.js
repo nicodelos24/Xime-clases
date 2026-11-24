@@ -1,23 +1,23 @@
 // Clases v5 · navegación + funcionamiento (auto-marcado, Cancelar clase, WhatsApp)
 // La estética vive en tokens.css/propuesta.css; acá solo se cambian estados,
 // textos y el flujo de cancelación. Sin emoji: solo SVG de icons.js.
-import { horaClase, } from './src/clases.js?v=202611232227';
-import { CLAVE_ESTADO, RepositorioClases, almacenLocalStorage } from './src/repositorio.js?v=202611232227';
-import { alumnosCobrosDemo, datosDemo, fichasDemo } from './src/demo.js?v=202611232227';
-import { resumenCobros, filtrarCobros, ordenarCobros } from './src/cobros.js?v=202611232227';
-import { iniciales } from './src/alumnos.js?v=202611232227';
-import { resumenHoy, clasesDelDia, clasesDeLaSemana } from './src/resumen.js?v=202611232227';
-import { registrarToqueFecha, mesDe } from './src/agenda.js?v=202611232227';
-import { primerDiaDeMes, diaSeleccionadoAlCargar } from './src/agenda-mes.js?v=202611232227';
-import { destinoDeEnlace, vistaInicial, vistasActivas } from './src/navegacion.js?v=202611232227';
-import { pistaDeTira } from './src/scroll-pista.js?v=202611232227';
-import { actualizarBarra, estadoBarraInicial, debeReaparecerPorQuietud, REAPARECER_TRAS_MS, } from './src/barra-scroll.js?v=202611232227';
-import { ajustarLock, debeBloquearScroll, estiloSheet, debeCerrarPorToqueFuera, esToqueFuera, debeSuprimirClickTrasCierre, } from './src/sheets.js?v=202611232227';
-import { diaCorto, mesCorto, etiquetaDia, etiquetaDiaCompleta, etiquetaMes, fechaCorta, sumarDias, parseFecha, lunesDe, diasDelMes, esFechaValida, } from './src/fechas.js?v=202611232227';
-import { relojDelDispositivo, hoyLocal } from './src/reloj.js?v=202611232227';
-import { CLAVE_PREFIJO, PREFIJO_POR_DEFECTO, prefijoEsValido, prefijoSeguro, conPrefijo } from './src/prefijo.js?v=202611232227';
-import { bloqueContacto } from './src/contacto.js?v=202611232227';
-import { textoCancelacion, destinos, resumenEnvio, linkTexto, linkAvisoVencimiento, } from './src/whatsapp.js?v=202611232227';
+import { horaClase, } from './src/clases.js?v=202611232320';
+import { CLAVE_ESTADO, RepositorioClases, almacenLocalStorage } from './src/repositorio.js?v=202611232320';
+import { alumnosCobrosDemo, datosDemo, fichasDemo } from './src/demo.js?v=202611232320';
+import { resumenCobros, filtrarCobros, ordenarCobros } from './src/cobros.js?v=202611232320';
+import { iniciales } from './src/alumnos.js?v=202611232320';
+import { resumenHoy, clasesDelDia, clasesDeLaSemana } from './src/resumen.js?v=202611232320';
+import { registrarToqueFecha, mesDe } from './src/agenda.js?v=202611232320';
+import { primerDiaDeMes, diaSeleccionadoAlCargar } from './src/agenda-mes.js?v=202611232320';
+import { destinoDeEnlace, vistaInicial, vistasActivas } from './src/navegacion.js?v=202611232320';
+import { pistaDeTira } from './src/scroll-pista.js?v=202611232320';
+import { actualizarBarra, estadoBarraInicial, debeReaparecerPorQuietud, REAPARECER_TRAS_MS, } from './src/barra-scroll.js?v=202611232320';
+import { ajustarLock, debeBloquearScroll, estiloSheet, debeCerrarPorToqueFuera, esToqueFuera, debeSuprimirClickTrasCierre, } from './src/sheets.js?v=202611232320';
+import { diaCorto, mesCorto, etiquetaDia, etiquetaDiaCompleta, etiquetaMes, fechaCorta, sumarDias, parseFecha, lunesDe, diasDelMes, esFechaValida, } from './src/fechas.js?v=202611232320';
+import { relojDelDispositivo, hoyLocal } from './src/reloj.js?v=202611232320';
+import { CLAVE_PREFIJO, PREFIJO_POR_DEFECTO, prefijoEsValido, prefijoSeguro, conPrefijo } from './src/prefijo.js?v=202611232320';
+import { bloqueContacto } from './src/contacto.js?v=202611232320';
+import { textoCancelacion, destinos, resumenEnvio, linkTexto, linkAvisoVencimiento, } from './src/whatsapp.js?v=202611232320';
 /* ------------------------------------------------- estado persistente (local) */
 const reloj = relojDelDispositivo();
 /** Quién opera la app hoy: único dueño. En Fase 4 sale de la sesión. */
@@ -1432,7 +1432,7 @@ toast.addEventListener('click', () => {
     }
 });
 /* ------------------------------------------------------- alumnos (fichas) */
-import { construirVista, filtrarYOrdenar, puntoEstadoVence, textoEstadoVence, validarAlumno, } from './src/alumnos.js?v=202611232227';
+import { construirVista, filtrarYOrdenar, puntoEstadoVence, textoEstadoVence, validarAlumno, } from './src/alumnos.js?v=202611232320';
 let ordenAlumnos = 'ninguno';
 const filtrosAlumnos = new Set();
 let busquedaAlumno = '';
@@ -1552,9 +1552,7 @@ function textoCobroFicha(dias, montoUYU, fecha) {
 function burbujaAyuda(texto) {
     const id = `ayuda-${Math.random().toString(36).slice(2, 8)}`;
     return `<span class="ayuda">
-    <button type="button" class="ayuda-btn" aria-expanded="false" aria-controls="${id}" aria-label="Ayuda: más información sobre este dato">
-      <svg class="ico" width="14" height="14" aria-hidden="true"><use href="#i-ayuda"/></svg>
-    </button>
+    <button type="button" class="ayuda-btn" aria-expanded="false" aria-controls="${id}" aria-label="Ayuda: más información sobre este dato">?</button>
     <span class="ayuda-texto" id="${id}" role="note" hidden>${esc(texto)}</span>
   </span>`;
 }
@@ -1623,7 +1621,7 @@ function abrirFichaConCobro(ficha, origen, alCrear) {
       ${avisoLink ? `<a class="cobros-link ficha-accion" href="${avisoLink}" target="_blank" rel="noopener" data-avisar>Avisar por WhatsApp (por vencer)</a>` : ''}
       <button type="button" class="cobros-link ficha-accion" data-editar-cobro>${ultimo ? 'Editar fecha del pago' : deuda ? 'Registrar pago' : 'Ver cobros'}</button>
     </div>
-    <p class="al-sub">${contacto.link ? 'Los links abren WhatsApp con el mensaje escrito; el envío lo confirmás vos.' : ''}</p>`;
+    ${contacto.link ? `<p class="ficha-accion-ayuda">${burbujaAyuda('Los links abren WhatsApp con el mensaje escrito; el envío lo confirmás vos.')}</p>` : ''}`;
     dialogo.querySelector('form')?.before(resumen);
     cablearAyudas(resumen);
     resumen.querySelector('[data-editar-cobro]')?.addEventListener('click', () => {
@@ -1855,10 +1853,14 @@ function pintarCobros() {
     campana.querySelector('.campana-punto').hidden = avisos === 0;
     listaCobros.innerHTML = ordenarCobros(filtrarCobros(r.filas, estadoCobros), ordenCobros).map((f, indice) => `<li>
     <button type="button" class="cobro-fila" data-fila="${f.alumno.id}|${f.periodo}" aria-haspopup="dialog"
-      aria-label="${f.pago ? 'Ver pago' : 'Registrar pago'} de ${esc(f.alumno.nombre)}, ${f.periodo}">
-      <span><span class="al-nombre">${esc(f.alumno.nombre)}</span>
-      <span class="al-sub">${f.pago ? `Pagado el ${fechaBreve(f.pago.fecha)}` : textoVence(f.dias)} · ${esc(f.alumno.grupo)}</span></span>
-      <strong class="monto ${f.pago ? 'monto-ok' : f.dias > 0 ? 'monto-suave' : ''}">${f.pago ? 'Pagado' : uyu(f.alumno.montoUYU)}</strong>
+      aria-label="${f.pago ? 'Ver ficha de' : 'Ver ficha de'} ${esc(f.alumno.nombre)}, ${f.pago ? `pagado el ${fechaBreve(f.pago.fecha)}, ${uyu(f.alumno.montoUYU)}` : `deuda ${uyu(f.alumno.montoUYU)}, ${textoVence(f.dias)}`}">
+      <span class="cobro-row">
+        <span class="al-nombre">${esc(f.alumno.nombre)}</span>
+        <span class="cobro-meta">${f.pago ? `Pagado el ${fechaBreve(f.pago.fecha)} · ${esc(f.alumno.grupo)}` : `${esc(f.alumno.grupo)}`}</span>
+      </span>
+      ${f.pago
+        ? `<span class="cobro-importe"><b>${uyu(f.alumno.montoUYU)}</b><small class="pagado">Pagado</small></span>`
+        : `<span class="cobro-importe"><b>${uyu(f.alumno.montoUYU)}</b><small>Debe</small></span><span class="cobro-vence ${f.dias < 0 ? 'vencido' : f.dias <= 7 ? 'pronto' : ''}">${textoVence(f.dias)}</span>`}
       <svg class="ico" width="13" height="13" aria-hidden="true"><use href="#i-der"/></svg>
     </button>
   </li>`).join('');
@@ -1883,10 +1885,10 @@ function pintarCobros() {
     const total = r.filas.length;
     const filtroActivo = estadoCobros !== 'todos';
     if (visibles === 0 && total > 0 && filtroActivo) {
-        listaCobros.innerHTML = `<li><p class="cobros-vacio">Nada con este filtro</p></li>`;
+        listaCobros.innerHTML = `<li><p class="pv-vacio">Ningún cobro con este filtro</p></li>`;
     }
     else if (total === 0) {
-        listaCobros.innerHTML = `<li><p class="cobros-vacio">Todavía no hay alumnos que cobrar</p></li>`;
+        listaCobros.innerHTML = `<li><p class="pv-vacio">Todavía no hay alumnos que cobrar</p></li>`;
     }
     // Chips: marca el estado y el orden elegidos; «Todos» activo solo si no hay
     // filtro. El texto del chip muestra cuántas filas hay con el filtro.
@@ -1982,6 +1984,20 @@ function abrirDialogoCobros(titulo, contexto, icono, contenido, origen) {
     // engancharlo acá (y no solo en `document`) evita perderlo cuando hay modales
     // apilados, que era el motivo por el que cerraba sin avisar.
     dialogo.addEventListener('cancel', (e) => { e.preventDefault(); cerrarConAviso(); });
+    // Burbuja «?» (A1): Escape primero cierra la ayuda abierta, no el diálogo.
+    dialogo.addEventListener('keydown', (e) => {
+        if (e.key !== 'Escape')
+            return;
+        const abierta = dialogo.querySelector('.ayuda-texto:not([hidden])');
+        if (!abierta)
+            return;
+        e.preventDefault();
+        e.stopPropagation();
+        const btn = abierta.parentElement?.querySelector('.ayuda-btn');
+        if (btn)
+            btn.click();
+        btn?.focus();
+    }, true); // captura: corre antes del `cancel` del <dialog>
     dialogo.addEventListener('close', () => {
         dialogo.dataset.lockLiberado = '1';
         soltarTrap();
@@ -2259,6 +2275,8 @@ function irA(id, fijarHash = true) {
     // la vista está visible (oculta, `clientWidth` es 0 y todo parece entrar).
     if (id === 'v-alumnos')
         actualizarPistaFiltros();
+    if (id === 'v-cobros')
+        actualizarPistaCobros();
     if (fijarHash && history.replaceState)
         history.replaceState(null, '', '#' + id);
     // replaceState no dispara hashchange: reconfigurar la barra acá al cambiar de vista.
@@ -2393,7 +2411,7 @@ document.addEventListener('visibilitychange', () => {
     if (!document.hidden)
         actualizarPistaCobros();
 });
-actualizarPistaCobros();
+requestAnimationFrame(actualizarPistaCobros);
 // Primer cálculo tras el layout inicial (fuentes y estilos ya aplicados).
 requestAnimationFrame(actualizarPistaFiltros);
 $$('a.link-suave').forEach((a) => a.addEventListener('click', (e) => {
