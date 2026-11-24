@@ -23,17 +23,20 @@ import {
   type OpcionReprogramar,
 } from './clases.ts';
 import { hoyLocal, type InstanteMs, type Reloj } from './reloj.ts';
-import { anularPago, corregirFechaPago, normalizarPagosGuardados, registrarPago, type Pago, type PagoNuevo } from './cobros.ts';
+import {
+  anularPago as anularPagoDominio, corregirFechaPago as corregirFechaPagoDominio,
+  normalizarPagosGuardados, registrarPago as registrarPagoDominio, type Pago, type PagoNuevo,
+} from './cobros.ts';
 import {
   crearAlumno, editarAlumno, esFotoValida, esIdAlumno, normalizarFichaGuardada,
-  type AlumnoFicha, type AlumnoFichaInput,
+  type AlumnoFicha, type AlumnoFichaInput, type CamposAlta,
 } from './alumnos.ts';
 import {
   conExcepcion, crearClaseSuelta, crearRutina, generarOcurrencias, generarOcurrenciasEnRango,
   type ClaseSueltaNueva, type RutinaNueva, type RutinaSemanal,
 } from './agendar.ts';
 export type { Pago } from './cobros.ts';
-export type { AlumnoFicha, AlumnoFichaInput } from './alumnos.ts';
+export type { AlumnoFicha, AlumnoFichaInput, CamposAlta } from './alumnos.ts';
 export type { RutinaSemanal, RutinaNueva, ClaseSueltaNueva } from './agendar.ts';
 
 /**
@@ -206,10 +209,14 @@ export interface RepositorioDeClases {
   registrarMensajeEnviado(id: string, canal: CanalMensaje): Clase;
   listarPagos(): readonly Pago[];
   registrarPago(nuevo: Omit<PagoNuevo, 'fecha'> & { fecha?: string }): void;
+  /** Agrupa varias escrituras y restaura el estado anterior si una falla. */
+  transaccion<T>(operacion: () => T): T;
+  /** Corrige tarifa y pago en una sola persistencia atómica. */
+  registrarPagoConTarifa(alumnoId: string, tarifaUYU: number, nuevo: Omit<PagoNuevo, 'alumnoId' | 'montoUYU' | 'fecha'> & { fecha?: string }): void;
   anularPago(id: string, motivo: string, quien: string): void;
   corregirFechaPago(id: string, fechaNueva: string, motivo: string, quien: string): void;
   listarAlumnos(): readonly AlumnoFicha[];
-  crearAlumno(input: AlumnoFichaInput): AlumnoFicha;
+  crearAlumno(input: CamposAlta): AlumnoFicha;
   editarAlumno(id: string, input: AlumnoFichaInput): AlumnoFicha;
   /** Foto del alumno (24-nov): dataURL validado, o '' para quitarla. */
   asignarFotoAlumno(id: string, foto: string): AlumnoFicha;
@@ -251,17 +258,17 @@ export class RepositorioClases implements RepositorioDeClases {
    */
   registrarPago(nuevo: Omit<PagoNuevo, 'fecha'> & { fecha?: string }): void {
     const fecha = nuevo.fecha ?? hoyLocal(this.reloj.ahora());
-    this.actualizarPagos((pagos) => registrarPago(pagos, { ...nuevo, fecha }));
+    this.actualizarPagos((pagos) => registrarPagoDominio(pagos, { ...nuevo, fecha }));
   }
 
   anularPago(id: string, motivo: string, quien: string): void {
     const fecha = hoyLocal(this.reloj.ahora());
-    this.actualizarPagos((pagos) => anularPago(pagos, id, { fecha, motivo, quien }));
+    this.actualizarPagos((pagos) => anularPagoDominio(pagos, id, { fecha, motivo, quien }));
   }
 
   corregirFechaPago(id: string, fechaNueva: string, motivo: string, quien: string): void {
     const hoy = hoyLocal(this.reloj.ahora());
-    this.actualizarPagos((pagos) => corregirFechaPago(pagos, id, fechaNueva, motivo, quien, hoy));
+    this.actualizarPagos((pagos) => corregirFechaPagoDominio(pagos, id, fechaNueva, motivo, quien, hoy));
   }
 
   private actualizarPagos(transformar: (pagos: Pago[]) => Pago[]): void {
@@ -277,7 +284,7 @@ export class RepositorioClases implements RepositorioDeClases {
     return this.cargar().alumnos;
   }
 
-  crearAlumno(input: AlumnoFichaInput): AlumnoFicha {
+  crearAlumno(input: CamposAlta): AlumnoFicha {
     const estado = this.cargar();
     const fechaAlta = hoyLocal(this.reloj.ahora());
     const ficha = crearAlumno(input, fechaAlta, (id) => estado.alumnos.some((a) => a.id === id));
@@ -296,6 +303,32 @@ export class RepositorioClases implements RepositorioDeClases {
     this.persistir(nuevo, true);
     this.estado = nuevo;
     return editada;
+  }
+
+  registrarPagoConTarifa(alumnoId: string, tarifaUYU: number, nuevo: Omit<PagoNuevo, 'alumnoId' | 'montoUYU' | 'fecha'> & { fecha?: string }): void {
+    const fecha = nuevo.fecha ?? hoyLocal(this.reloj.ahora());
+    const estado = this.cargar();
+    const original = estado.alumnos.find((a) => a.id === alumnoId);
+    if (!original) throw new Error('No se encontró la ficha del alumno');
+    const alumnos = estado.alumnos.map((a) => (a.id === alumnoId ? editarAlumno(a, { tarifaUYU }) : a));
+    const pagos = registrarPagoDominio(estado.pagos, { ...nuevo, alumnoId, montoUYU: tarifaUYU, fecha });
+    // Una sola escritura: si el pago es inválido, la tarifa tampoco se guarda.
+    this.persistir({ ...estado, alumnos, pagos }, true);
+    this.estado = { ...estado, alumnos, pagos };
+  }
+
+  /** Varias escrituras en memoria; no usar para flujos que deban ser atómicos. */
+  transaccion<T>(operacion: () => T): T {
+    const anterior = this.cargar();
+    try {
+      const resultado = operacion();
+      const actual = this.cargar();
+      if (actual !== anterior) this.persistir(actual);
+      return resultado;
+    } catch (error) {
+      this.estado = anterior;
+      throw error;
+    }
   }
 
   /**

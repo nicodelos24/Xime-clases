@@ -1,9 +1,11 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { anularPago, corregirFechaPago, registrarPago, resumenCobros, vencimientoDelMes, filtrarCobros, ordenarCobros, type EstadoCobro, type OrdenCobro, type PagoNuevo } from '../src/cobros.ts';
+import { anularPago, corregirFechaPago, registrarPago, resumenCobros, vencimientoDelMes, filtrarCobros, ordenarCobros, cobrosIndividuales, type EstadoCobro, type OrdenCobro, type PagoNuevo } from '../src/cobros.ts';
 import { alumnosCobrosDemo, datosDemo } from '../src/demo.ts';
 import { hoyLocal, relojFalso } from '../src/reloj.ts';
 import { almacenLocalStorage, almacenMemoria, RepositorioClases, VERSION_ESTADO } from '../src/repositorio.ts';
+import { precio } from '../src/tarifas.ts';
+import type { Clase } from '../src/clases.ts';
 
 // Con la regla del mismo día del mes siguiente, la mensualidad del período
 // 2026-11 vence el 21-dic-2026 (ancla de a0 = 21).
@@ -149,8 +151,66 @@ test('si el navegador no puede guardar no confirma el pago ni modifica el ledger
   assert.equal(repo.listarPagos()[0]?.anulado, null);
 });
 
-/* Rediseño 23-nov (B6): filtro y orden de la lista de Cobros. Pure sobre las
-   filas de `resumenCobros`; la lista sin filtro queda igual que siempre. */
+const ALTA = '2026-11-24';
+
+/* Cobro individual: primero la clase efectiva; reservar/cancelar/futura no crea deuda. */
+const alumnaIndividual = { id: 'al-individual000', nombre: 'Alumna Individual', grupo: 'Individual', ancla: 21, montoUYU: 2750, tarifaUYU: 2750, individual: true };
+const claseIndividual = (id: string, fecha: string, estado: Clase['estado']): Clase => ({
+  id, nombre: 'Clase individual', fecha, minutos: 600, duracionMin: 60, estado,
+  alumnos: [{ id: alumnaIndividual.id, nombre: alumnaIndividual.nombre, telefono: '' }],
+  eventos: [], marcadaEn: null, cancelacion: null,
+});
+
+test('individual: reserva, clase futura y cancelada no generan deuda; una clase dada sí', () => {
+  const clases = [
+    claseIndividual('c-reservada', '2026-11-24', 'programada'),
+    claseIndividual('c-futura', '2026-11-30', 'dada'),
+    claseIndividual('c-cancelada', '2026-11-23', 'cancelada'),
+    claseIndividual('c-dada', '2026-11-20', 'dada'),
+  ];
+  assert.equal(precio(alumnaIndividual, 'clase-individual', ALTA), 2750);
+  assert.deepEqual(resumenCobros([alumnaIndividual], [], ALTA), resumenCobros([], [], ALTA));
+  const pendientes = cobrosIndividuales([alumnaIndividual], [], clases, ALTA);
+  assert.deepEqual(pendientes.map((f) => f.clase.id), ['c-dada']);
+  assert.equal(pendientes[0]?.pago, undefined);
+});
+
+test('individual: se cobra una vez por alumno+clase, no una vez por mes', () => {
+  const clases = [claseIndividual('c-1', '2026-11-20', 'dada'), claseIndividual('c-2', '2026-11-22', 'dada')];
+  const pagos = registrarPago([], { id: 'p-c1', alumnoId: alumnaIndividual.id, periodo: '2026-11', montoUYU: 2750, fecha: ALTA, quien: 'prueba', concepto: 'clase-individual', claseId: 'c-1' });
+  const segundo = registrarPago(pagos, { id: 'p-c2', alumnoId: alumnaIndividual.id, periodo: '2026-11', montoUYU: 3000, fecha: ALTA, quien: 'prueba', concepto: 'clase-individual', claseId: 'c-2' });
+  assert.equal(segundo.length, 2);
+  assert.throws(() => registrarPago(segundo, { id: 'p-dup', alumnoId: alumnaIndividual.id, periodo: '2026-11', montoUYU: 2750, fecha: ALTA, quien: 'prueba', concepto: 'clase-individual', claseId: 'c-1' }), /esta clase/);
+  assert.deepEqual(cobrosIndividuales([alumnaIndividual], segundo, clases, ALTA).map((f) => f.pago?.id), ['p-c1', 'p-c2']);
+  assert.equal(resumenCobros([alumnaIndividual], segundo, ALTA).filas.length, 0, 'las clases no se convierten en mensualidad');
+});
+
+test('individual: corregir la tarifa al cobrar no cambia el importe de un pago histórico', () => {
+  const pagos = registrarPago([], { id: 'p-viejo', alumnoId: alumnaIndividual.id, periodo: '2026-11', montoUYU: 2750, fecha: '2026-11-20', quien: 'prueba', concepto: 'clase-individual', claseId: 'c-1' });
+  const nuevaTarifa = { ...alumnaIndividual, tarifaUYU: 3200, montoUYU: 3200 };
+  const ficha = { ...alumnaIndividual, tarifaUYU: 3200 };
+  assert.equal(precio(nuevaTarifa, 'clase-individual', ALTA), 3200);
+  assert.equal(pagos[0]?.montoUYU, 2750);
+  const nuevoPago = registrarPago([], { id: 'p-nuevo', alumnoId: alumnaIndividual.id, periodo: '2026-11', montoUYU: precio(ficha, 'clase-individual', ALTA)!, fecha: ALTA, quien: 'prueba', concepto: 'clase-individual', claseId: 'c-2' });
+  assert.equal(nuevoPago[0]?.montoUYU, 3200);
+});
+
+test('individual: recarga conserva concepto/claseId y pago histórico sin concepto sigue siendo mensualidad', () => {
+  const clases = [claseIndividual('c-1', '2026-11-20', 'dada')];
+  const guardado = {
+    version: 3, guardadoEn: '', clases, alumnos: [], pagos: [
+      { id: 'p-ind', alumnoId: alumnaIndividual.id, periodo: '2026-11', montoUYU: 2750, fecha: ALTA, quien: 'prueba', concepto: 'clase-individual', claseId: 'c-1' },
+      { id: 'p-mes', alumnoId: 'al-mensual00000', periodo: '2026-10', montoUYU: 6500, fecha: ALTA, quien: 'prueba' },
+    ],
+  };
+  const repo = new RepositorioClases(almacenMemoria(JSON.stringify(guardado)), relojFalso(Date.parse(`${ALTA}T12:00:00Z`)));
+  const pagos = repo.listarPagos();
+  assert.equal(pagos.find((p) => p.id === 'p-ind')?.concepto, 'clase-individual');
+  assert.equal(pagos.find((p) => p.id === 'p-ind')?.claseId, 'c-1');
+  assert.equal(pagos.find((p) => p.id === 'p-mes')?.concepto, undefined, 'no se agrega concepto a pagos históricos');
+  assert.equal(pagos.find((p) => p.id === 'p-mes')?.montoUYU, 6500);
+});
+
 
 type FilaPrueba = { dias: number; pago: { id: string } | null; alumno: { nombre: string; montoUYU: number } };
 const fila = (dias: number, nombre: string, pago = false): FilaPrueba => ({

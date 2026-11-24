@@ -12,6 +12,7 @@ import { lunesDe, sumarDias } from './fechas.ts';
 import { hoyLocal, type InstanteMs } from './reloj.ts';
 import type { AlumnoCobro } from './cobros.ts';
 import { colorPorId, type AlumnoFicha } from './alumnos.ts';
+import { precioDemo } from './tarifas.ts';
 
 function alumnos(nombres: [string, string][], prefijo: string): AlumnoDeClase[] {
   return nombres.map(([nombre, telefono], i) => ({ id: `${prefijo}${i}`, nombre, telefono }));
@@ -57,6 +58,9 @@ export const alumnosCobrosDemo: AlumnoCobro[] = ([
   id: alumno.id, nombre: alumno.nombre, grupo: `Grupo ${grupo}`, ancla, montoUYU: 6500,
 }));
 
+// Las fichas demo cargan su tarifa desde PRECIOS_DEMO en `fichasDemo()`.
+// Esta lista sintética es la semilla histórica de Cobros: nunca se usa como
+// fallback de una ficha real.
 /**
  * La semana demo (lunes a sábado) que contiene el día de `ahora`.
  * Desde el 23/11 el estado NO sale del reloj (auto-marcado descartado): los
@@ -89,6 +93,8 @@ export function fichasDemo(hoy: string): AlumnoFicha[] {
     color: colorPorId(a.id),
     contacto: telefonosDemo.get(a.id) ?? '',
     pagado: false,
+    // Precio demo explícito: se siembra SOLO en datos sintéticos.
+    tarifaUYU: precioDemo(i % 3 === 2 ? 'clase-individual' : 'mensualidad', '2026-01-01'),
   }));
 }
 

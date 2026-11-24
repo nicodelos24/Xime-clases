@@ -34,6 +34,11 @@ export type AlumnoFicha = {
   /** Estado del primer pago informado al dar de alta (informativo; el ledger manda). */
   pagado: boolean;
   /**
+   * Tarifa propia en UYU, guardada en la ficha. Entero positivo o null:
+   * null = sin tarifa propia (nunca se inventa el precio de la demo).
+   */
+  tarifaUYU: number | null;
+  /**
    * Foto opcional elegida por la dueña (24-nov): dataURL chico (<~150 KB),
    * se confirma al Guardar la ficha y se ve en Alumnos y Cobros. Vacío/ausente
    * = sin foto, quedan las iniciales del avatar.
@@ -46,8 +51,9 @@ export type AlumnoFicha = {
  *  clienta cobra por mes o por clase individual. `grupo` queda como dato
  *  heredado opcional (sólo para no romper fichas/datos demo ya guardados). */
 export type AlumnoFichaInput = {
-  nombre: string;
-  modalidad: Modalidad;
+  /** Nombre y modalidad son obligatorios al crear; opcionales sólo en una edición parcial. */
+  nombre?: string;
+  modalidad?: Modalidad;
   grupo?: string;
   ancla?: number;
   contacto?: string;
@@ -55,6 +61,8 @@ export type AlumnoFichaInput = {
   fechaAlta?: string;
   /** Estado del primer pago: true = «pagó», false = «va a pagar». El ledger de pagos es la fuente de verdad. */
   pagado?: boolean;
+  /** Tarifa propia en UYU: entero positivo. Opcional en la edición (conserva la vigente); obligatoria al dar de alta. */
+  tarifaUYU?: number;
 };
 
 /** Grupos existentes de la demo (seleccionables, sin crear grupos nuevos). */
@@ -90,9 +98,11 @@ function texto(valor: unknown): string {
 export function validarAlumno(input: AlumnoFichaInput): Record<string, string> {
   const errores: Record<string, string> = {};
   const nombre = texto(input.nombre);
-  if (nombre.length < 2) errores.nombre = 'Ingresá el nombre del alumno';
-  else if (!/^[\p{L}\p{M}][\p{L}\p{M} '\-.]*$/u.test(nombre)) errores.nombre = 'El nombre solo admite letras, espacios, apóstrofos, guiones y puntos';
-  if (input.modalidad !== 'mensual' && input.modalidad !== 'individual') errores.modalidad = 'Elegí una modalidad';
+  if (input.nombre !== undefined && nombre.length < 2) errores.nombre = 'Ingresá el nombre del alumno';
+  else if (input.nombre !== undefined && !/^[\p{L}\p{M}][\p{L}\p{M} '\-.]*$/u.test(nombre)) {
+    errores.nombre = 'El nombre solo admite letras, espacios, apóstrofos, guiones y puntos';
+  }
+  if (input.modalidad !== undefined && input.modalidad !== 'mensual' && input.modalidad !== 'individual') errores.modalidad = 'Elegí una modalidad';
   if (input.ancla !== undefined && (!Number.isInteger(input.ancla) || input.ancla < 1 || input.ancla > 31)) {
     errores.ancla = 'El día ancla debe estar entre 1 y 31';
   }
@@ -107,6 +117,9 @@ export function validarAlumno(input: AlumnoFichaInput): Record<string, string> {
     if (m < 1 || m > 12 || d < 1 || d > maxDia) errores.fechaAlta = 'Fecha de registro inválida';
   }
   if (input.pagado !== undefined && typeof input.pagado !== 'boolean') errores.pagado = 'Estado de pago inválido';
+  if (input.tarifaUYU !== undefined && (!Number.isSafeInteger(input.tarifaUYU) || input.tarifaUYU <= 0)) {
+    errores.tarifaUYU = 'Ingresá una tarifa entera en UYU (mayor a 0)';
+  }
   return errores;
 }
 
@@ -115,24 +128,29 @@ export function alumnoEsValido(input: AlumnoFichaInput): boolean {
 }
 
 /** Campos editables ya normalizados (todos presentes, listos para guardar). */
-type CamposNormalizados = {
+export type CamposNormalizados = {
   nombre: string;
   modalidad: Modalidad;
   grupo: string;
   ancla: number;
   contacto: string;
   pagado: boolean;
+  /** Tarifa propia explícita; null = sin tarifa (nunca se guarda un default de demo). */
+  tarifaUYU: number | null;
 };
+
+export type CamposAlta = AlumnoFichaInput;
 
 /** Normaliza un input válido a los campos que se guardan (contacto opcional). */
 export function normalizarAlumno(input: AlumnoFichaInput): CamposNormalizados {
   return {
     nombre: texto(input.nombre),
-    modalidad: input.modalidad,
+    modalidad: input.modalidad ?? 'mensual',
     grupo: texto(input.grupo),
     ancla: input.ancla ?? 21,
     contacto: texto(input.contacto),
     pagado: input.pagado ?? false,
+    tarifaUYU: input.tarifaUYU ?? null,
   };
 }
 
@@ -149,12 +167,14 @@ export function nuevoIdAlumno(yaExiste: (id: string) => boolean, azar: () => num
 
 /** Alta: valida, congela fecha de alta y actor, y asigna ID + color estables. */
 export function crearAlumno(
-  input: AlumnoFichaInput,
+  input: CamposAlta,
   fechaAlta: string,
   yaExiste: (id: string) => boolean,
   azar: () => number = Math.random,
 ): AlumnoFicha {
   const errores = validarAlumno(input);
+  if (input.nombre === undefined) errores.nombre = 'Ingresá el nombre del alumno';
+  if (input.modalidad === undefined) errores.modalidad = 'Elegí una modalidad';
   if (Object.keys(errores).length > 0) throw new Error(Object.values(errores)[0]!);
   const norm = normalizarAlumno(input);
   const id = nuevoIdAlumno(yaExiste, azar);
@@ -180,13 +200,15 @@ export function editarAlumno(alumno: AlumnoFicha, input: AlumnoFichaInput): Alum
   if (Object.keys(errores).length > 0) throw new Error(Object.values(errores)[0]!);
   return {
     ...alumno,
-    nombre: texto(input.nombre),
-    modalidad: input.modalidad,
+    nombre: input.nombre === undefined ? alumno.nombre : texto(input.nombre),
+    modalidad: input.modalidad ?? alumno.modalidad,
     // El formulario ya no expone grupo: si el input no lo trae, se conserva el
     // grupo vigente de la ficha (dato demo/heredado, no se edita desde la UI).
     grupo: input.grupo === undefined ? alumno.grupo : texto(input.grupo),
     ancla: input.ancla ?? alumno.ancla,
     contacto: input.contacto === undefined ? alumno.contacto : texto(input.contacto),
+    // Tarifa propia: si el formulario no la trae se conserva; null sigue null.
+    tarifaUYU: input.tarifaUYU === undefined ? alumno.tarifaUYU ?? null : input.tarifaUYU,
     // Alta y pago inicial se congelan: la edición no reescribe la identidad.
     fechaAlta: alumno.fechaAlta,
     pagado: alumno.pagado,
@@ -222,6 +244,8 @@ export function normalizarFichaGuardada(dato: Partial<AlumnoFicha> & { tipo?: st
     color,
     contacto: typeof dato.contacto === 'string' ? dato.contacto : '',
     pagado: typeof dato.pagado === 'boolean' ? dato.pagado : false,
+    // Fichas v2 sin tarifa: null, nunca el precio de ejemplo de la demo.
+    tarifaUYU: Number.isSafeInteger(dato.tarifaUYU) && (dato.tarifaUYU as number) > 0 ? dato.tarifaUYU as number : null,
     foto: esFotoValida(dato.foto) ? dato.foto : '',
   };
 }

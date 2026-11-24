@@ -1,4 +1,8 @@
 import { diasDeFecha, diasDelMes, esFechaValida, parseFecha } from './fechas.ts';
+import type { Clase } from './clases.ts';
+
+/** Concepto del cobro. Los pagos históricos sin este campo son mensualidades. */
+export type ConceptoPago = 'mensualidad' | 'clase-individual';
 
 export type Pago = {
   id: string;
@@ -8,6 +12,10 @@ export type Pago = {
   fecha: string; // AAAA-MM-DD en Montevideo
   quien: string;
   anulado: Anulacion | null;
+  /** Aditivo: ausente en pagos viejos = mensualidad (nunca se reescriben). */
+  concepto?: ConceptoPago;
+  /** Aditivo: clase efectiva que se liquida (sólo en cobros individuales). */
+  claseId?: string;
 };
 
 export type PagoNuevo = Omit<Pago, 'anulado'>;
@@ -30,6 +38,7 @@ export function normalizarPagoGuardado(dato: unknown): Pago | null {
   if (typeof p.periodo !== 'string' || !/^\d{4}-(0[1-9]|1[0-2])$/.test(p.periodo)) return null;
   if (typeof p.fecha !== 'string' || !esFechaValida(p.fecha)) return null;
   if (!Number.isSafeInteger(p.montoUYU) || (p.montoUYU as number) <= 0) return null;
+  const concepto: ConceptoPago = p.concepto === 'clase-individual' ? 'clase-individual' : 'mensualidad';
   let anulado: Anulacion | null = null;
   if (p.anulado !== undefined && p.anulado !== null) {
     if (!p.anulado || typeof p.anulado !== 'object' || Array.isArray(p.anulado)) return null;
@@ -46,6 +55,9 @@ export function normalizarPagoGuardado(dato: unknown): Pago | null {
     fecha: p.fecha,
     quien: p.quien.trim(),
     anulado,
+    // Los pagos históricos NO se reescriben: se leen como mensualidades.
+    ...(p.concepto === 'clase-individual' ? { concepto: 'clase-individual' as const } : {}),
+    ...(concepto === 'clase-individual' && typeof p.claseId === 'string' && p.claseId.trim() ? { claseId: p.claseId.trim() } : {}),
   };
 }
 
@@ -53,17 +65,19 @@ export function normalizarPagoGuardado(dato: unknown): Pago | null {
 export function normalizarPagosGuardados(datos: unknown): Pago[] {
   if (!Array.isArray(datos)) return [];
   const ids = new Set<string>();
-  const periodos = new Set<string>();
+  const claves = new Set<string>();
   const resultado: Pago[] = [];
   for (const dato of datos) {
     const p = normalizarPagoGuardado(dato);
     if (!p || ids.has(p.id)) continue;
-    // Un duplicado no puede duplicar KPI; si hay dos activos para el mismo
-    // período, se conserva sólo el primero y el otro no se muestra como pago.
-    const periodo = `${p.alumnoId}|${p.periodo}`;
-    if (!p.anulado && periodos.has(periodo)) continue;
+    // Un duplicado no puede duplicar KPI: mensualidad por alumno+período,
+    // clase individual por alumno+clase (dos clases en un mes son dos cobros).
+    const clave = p.concepto === 'clase-individual'
+      ? `clase|${p.alumnoId}|${p.claseId ?? ''}`
+      : `mes|${p.alumnoId}|${p.periodo}`;
+    if (!p.anulado && claves.has(clave)) continue;
     ids.add(p.id);
-    if (!p.anulado) periodos.add(periodo);
+    if (!p.anulado) claves.add(clave);
     resultado.push(p);
   }
   return resultado;
@@ -81,8 +95,13 @@ export function registrarPago(pagos: readonly Pago[], nuevo: PagoNuevo): Pago[] 
     throw new Error('El monto debe ser un entero positivo en UYU');
   }
   if (pagos.some((p) => p.id === normalizado.id)) throw new Error('El pago ya está registrado');
-  if (pagos.some((p) => !p.anulado && p.alumnoId === normalizado.alumnoId && p.periodo === normalizado.periodo)) {
-    throw new Error('Ya hay un pago activo para este período');
+  if (pagos.some((p) => !p.anulado && p.alumnoId === normalizado.alumnoId
+    && (normalizado.concepto === 'clase-individual'
+      ? p.concepto === 'clase-individual' && p.claseId === normalizado.claseId
+      : p.concepto !== 'clase-individual' && p.periodo === normalizado.periodo))) {
+    throw new Error(normalizado.concepto === 'clase-individual'
+      ? 'Ya hay un pago activo para esta clase'
+      : 'Ya hay un pago activo para este período');
   }
   return [...pagos, normalizado];
 }
@@ -166,7 +185,15 @@ export function ordenarCobros<T extends FilaFiltrable>(filas: readonly T[], orde
   });
 }
 
-export type AlumnoCobro = { id: string; nombre: string; grupo: string; ancla: number; montoUYU: number };
+export type AlumnoCobro = {
+  id: string;
+  nombre: string;
+  grupo: string;
+  ancla: number;
+  montoUYU: number;
+  /** true = se cobra por clase efectiva; nunca genera mensualidad por reservar. */
+  individual?: boolean;
+};
 
 /**
  * Vencimiento de la mensualidad: el MISMO día del mes siguiente al del alta
@@ -193,20 +220,60 @@ export function vencimientoDelMes(periodo: string, ancla: number): string {
   return `${destino}-${String(dia).padStart(2, '0')}`;
 }
 
+/**
+ * Pagos pendientes de clases individuales ya DADAS (nunca de reservas).
+ * Cada clase dictada es un cobro: se identifica por `alumnoId|claseId` para
+ * que no se duplique al pagar ni al recargar.
+ */
+export type CobroIndividual = {
+  alumno: AlumnoCobro;
+  clase: Clase;
+  fecha: string;
+  pago?: Pago;
+};
+
+export function cobrosIndividuales(
+  alumnos: readonly AlumnoCobro[],
+  pagos: readonly Pago[],
+  clases: readonly Clase[],
+  hoy: string,
+): CobroIndividual[] {
+  const porId = new Map(alumnos.map((a) => [a.id, a]));
+  const activos = pagos.filter((p) => !p.anulado && p.concepto === 'clase-individual');
+  return clases
+    .filter((c) => c.estado === 'dada')
+    .flatMap<CobroIndividual | null>((clase) => clase.alumnos.map((a) => {
+      const alumno = porId.get(a.id);
+      if (!alumno || !alumno.individual) return null;
+      const pago = activos.find((p) => p.alumnoId === alumno.id && p.claseId === clase.id);
+      return { alumno, clase, fecha: clase.fecha, ...(pago ? { pago } : {}) };
+    }))
+    .filter((f): f is CobroIndividual => f !== null)
+    .filter((f) => f.fecha <= hoy)
+    .sort((a, b) => a.fecha.localeCompare(b.fecha) || a.alumno.nombre.localeCompare(b.alumno.nombre, 'es'));
+}
+
+/**
+ * Resumen de mensualidades. Las fichas individuales NO entran: reservar una
+ * clase no crea deuda mensual. Cada fila debe venir con la tarifa persistida;
+ * una ficha sin tarifa (monto 0/negocio inválido) no genera deuda inventada.
+ */
 export function resumenCobros(alumnos: readonly AlumnoCobro[], pagos: readonly Pago[], hoy: string, diasAviso: 0 | 7 | 10 = 7) {
   const periodo = hoy.slice(0, 7);
   // Con la regla del mismo día del mes siguiente, lo que vence ESTE mes es la
   // mensualidad del mes ANTERIOR; la del mes actual vence el mes que viene.
   const anterior = mesAnterior(periodo);
   const dia = diasDeFecha(hoy);
-  const activos = pagos.filter((p) => !p.anulado);
-  const filas = alumnos.flatMap((alumno) => [anterior, periodo].map((mes) => {
-    const fecha = vencimientoDelMes(mes, alumno.ancla);
-    return {
-      alumno, periodo: mes, fecha, dias: diasDeFecha(fecha) - dia,
-      pago: activos.find((p) => p.alumnoId === alumno.id && p.periodo === mes),
-    };
-  })).filter((fila) => fila.dias <= diasAviso)
+  const activos = pagos.filter((p) => !p.anulado && p.concepto !== 'clase-individual');
+  const filas = alumnos
+    .filter((a) => !a.individual && Number.isSafeInteger(a.montoUYU) && a.montoUYU > 0)
+    .flatMap((alumno) => [anterior, periodo].map((mes) => {
+      const fecha = vencimientoDelMes(mes, alumno.ancla);
+      return {
+        alumno, periodo: mes, fecha, dias: diasDeFecha(fecha) - dia,
+        pago: activos.find((p) => p.alumnoId === alumno.id && p.periodo === mes),
+      };
+    })).filter((fila) => fila.dias <= diasAviso)
     .sort((a, b) => Number(a.dias < 0) - Number(b.dias < 0) || (a.dias < 0 ? b.dias - a.dias : a.dias - b.dias));
   const pendientes = filas.filter((f) => !f.pago);
   const vencenHoy = pendientes.filter((f) => f.dias === 0);
