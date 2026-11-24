@@ -36,3 +36,25 @@ export function precio(
   const tarifa = alumno.tarifaUYU;
   return typeof tarifa === 'number' && Number.isSafeInteger(tarifa) && tarifa > 0 ? tarifa : null;
 }
+
+/**
+ * Importe para precargar un diálogo de cobro. Las filas de Cobros entregan
+ * `montoUYU` (ya derivado de la ficha) y NO `tarifaUYU`: llamar sólo a
+ * `precio()` sobre esa fila devuelve null y abría el diálogo en $0 (D1).
+ * Un pago ya registrado manda; si no, se usa la tarifa propia y, como
+ * respaldo, el `montoUYU` de la fila. Nunca se inventa un precio de ejemplo.
+ */
+export function precioPrecargado(
+  alumno: { montoUYU: number; tarifaUYU?: number | null },
+  concepto: Concepto,
+  fecha: string,
+  pago?: { montoUYU: number } | null,
+): number {
+  if (pago) return pago.montoUYU;
+  const propia = precio(alumno, concepto, fecha);
+  if (propia !== null) return propia;
+  // Si la ficha declara una tarifa inválida, no se sustituye por el respaldo:
+  // se muestra 0 para que se corrija, nunca un precio inventado.
+  if ('tarifaUYU' in alumno) return 0;
+  return Number.isSafeInteger(alumno.montoUYU) && alumno.montoUYU > 0 ? alumno.montoUYU : 0;
+}

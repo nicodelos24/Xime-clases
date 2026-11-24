@@ -11,7 +11,7 @@ import {
   resumenCobros, cobrosIndividuales, filtrarCobros, ordenarCobros,
   type EstadoCobro, type OrdenCobro, type Pago,
 } from './src/cobros.ts';
-import { precio } from './src/tarifas.ts';
+import { precioPrecargado, precio } from './src/tarifas.ts';
 import {
   construirVista, filtrarYOrdenar, puntoEstadoVence, textoEstadoVence, validarAlumno,
   iniciales, colorPorId, esFotoValida, type AlumnoFicha, type AlumnoFichaInput, type FichaVista, type OrdenAlumnos,
@@ -2049,7 +2049,9 @@ function abrirFicha(ficha: AlumnoFicha | null, origen: HTMLElement, alCrear?: (c
     };
     const errores = validarAlumno(input);
     if (Object.keys(errores).length > 0) {
-      avisarError(error, Object.values(errores)[0]!);
+      const primerError = Object.keys(errores)[0]!;
+      avisarError(error, errores[primerError]!);
+      form.querySelector<HTMLInputElement>(`[name="${primerError}"]`)?.focus();
       return;
     }
     let creada: AlumnoFicha | undefined;
@@ -2061,7 +2063,7 @@ function abrirFicha(ficha: AlumnoFicha | null, origen: HTMLElement, alCrear?: (c
       }
       if (creada && fotoPendiente) repo.asignarFotoAlumno(creada.id, fotoPendiente);
     } catch (err) {
-      avisarError(error, err instanceof Error ? err.message : 'No se pudo guardar la ficha');;
+      avisarError(error, err instanceof Error ? err.message : 'No se pudo guardar la ficha');
       return;
     }
     dialogo.close();
@@ -2393,19 +2395,31 @@ function cerrarDialogoConAviso(dlg: HTMLDialogElement): void {
   else dlg.close();
 }
 
+/**
+ * Importe precargado del cobro individual (D1): la fila trae `montoUYU`, no
+ * `tarifaUYU`, así que el diálogo debe usar el respaldo de la fila.
+ */
+export function importeInicialIndividual(
+  alumno: { montoUYU: number; tarifaUYU?: number | null },
+  clase: { fecha: string },
+  pago?: Pago,
+): number {
+  return precioPrecargado(alumno, 'clase-individual', clase.fecha, pago);
+}
+
 /** Registra una clase individual dada; al cobrar se guarda su tarifa en la ficha. */
 function abrirPagoIndividual(cobro: CobroIndividualVista, origen: HTMLElement): void {
   const { alumno, clase } = cobro;
   const pago = cobro.pago;
-  const tarifaInicial = pago?.montoUYU ?? precio(alumno, 'clase-individual', clase.fecha) ?? 0;
+  const tarifaInicial = importeInicialIndividual(alumno, clase, pago);
   const tarifaEntrada = tarifaInicial ? String(tarifaInicial) : '';
   const dialogo = abrirDialogoCobros(
     pago ? 'Anular pago' : 'Registrar pago', 'Clase individual', pago ? 'alerta' : 'cobros',
     `<div class="cobros-panel-resumen">
-      <div><p class="al-nombre">${esc(alumno.nombre)}</p><p class="al-sub">Clase efectiva · ${esc(fechaCorta(clase.fecha))}</p></div>
+      <div><p class="al-nombre">${esc(alumno.nombre)}</p><p class="al-sub">Clase individual · ${esc(fechaCorta(clase.fecha))}</p></div>
       <div class="cobros-panel-dato"><strong>${uyu(tarifaInicial)}</strong><span class="al-sub">UYU</span></div>
     </div>
-    <p class="cobros-panel-nota">${pago ? `Registrado el ${esc(fechaCorta(pago.fecha))} por ${esc(pago.quien)}. El importe de este pago no se reescribe.` : 'La reserva no crea deuda: acá se cobra la clase que ya diste. Podés corregir la tarifa de la ficha antes de confirmar.'}</p>
+    <p class="cobros-panel-nota">${pago ? `Registrado el ${esc(fechaCorta(pago.fecha))} por ${esc(pago.quien)}. El importe de este pago no se reescribe.` : 'La reserva no crea deuda: acá se cobra la clase que ya diste. Corregí la Tarifa en UYU si hace falta: se guarda en la ficha para las próximas clases.'}</p>
     <form>
       ${pago ? `<label class="campo"><span>Fecha del pago (día / mes / año)</span></label>${selectorFecha('pago', pago.fecha)}`
         : `<label class="campo"><span>Tarifa en UYU *</span><input name="tarifaUYU" type="number" min="1" step="1" inputmode="numeric" required value="${tarifaEntrada}"></label>
@@ -2440,7 +2454,11 @@ function abrirPagoIndividual(cobro: CobroIndividualVista, origen: HTMLElement): 
         repo.corregirFechaPago(pago.id, fecha, motivo, QUIEN);
       } else {
         const tarifa = Number(new FormData(form).get('tarifaUYU'));
-        if (!Number.isSafeInteger(tarifa) || tarifa <= 0) { error.textContent = 'Ingresá una tarifa entera en UYU (mayor a 0)'; return; }
+        if (!Number.isSafeInteger(tarifa) || tarifa <= 0) {
+          error.textContent = 'Ingresá una tarifa entera en UYU (mayor a 0)';
+          form.querySelector<HTMLInputElement>('[name="tarifaUYU"]')?.focus();
+          return;
+        }
         // La tarifa es de la FICHA, no del pago: corregirla hoy no cambia pagos
         // históricos. Se persiste antes de registrar el cobro de esta clase.
         const id = Array.from(crypto.getRandomValues(new Uint32Array(4)), (n) => n.toString(16).padStart(8, '0')).join('');
@@ -2507,6 +2525,7 @@ function abrirPago(nombre: string, periodo: string, monto: number, origen: HTMLE
         const tarifa = Number(datosPago.get('tarifaUYU'));
         if (!Number.isSafeInteger(tarifa) || tarifa <= 0) {
           form.querySelector('[role="alert"]')!.textContent = 'Ingresá una tarifa entera en UYU (mayor a 0)';
+          form.querySelector<HTMLInputElement>('[name="tarifaUYU"]')?.focus();
           return;
         }
         // Corregir la tarifa actualiza sólo la ficha; los pagos históricos

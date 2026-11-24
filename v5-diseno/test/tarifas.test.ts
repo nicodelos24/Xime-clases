@@ -4,7 +4,7 @@ import {
   crearAlumno, editarAlumno, normalizarFichaGuardada, normalizarAlumno, validarAlumno,
   type AlumnoFicha, type AlumnoFichaInput, type CamposAlta,
 } from '../src/alumnos.ts';
-import { precio, precioDemo, PRECIOS_DEMO } from '../src/tarifas.ts';
+import { precio, precioDemo, precioPrecargado, PRECIOS_DEMO } from '../src/tarifas.ts';
 import { almacenMemoria, RepositorioClases } from '../src/repositorio.ts';
 import { relojFalso } from '../src/reloj.ts';
 import { registrarPago } from '../src/cobros.ts';
@@ -23,6 +23,22 @@ test('precio(alumno, concepto, fecha) usa la tarifa propia y nunca el default de
   assert.equal(precio({ tarifaUYU: 1.5 }, 'mensualidad', '2026-11-24'), null);
   assert.equal(precioDemo('mensualidad', ALTA), PRECIOS_DEMO.mensualidad);
   assert.equal(precioDemo('clase-individual', ALTA), PRECIOS_DEMO['clase-individual']);
+});
+
+test('REGRESIÓN D1: el diálogo individual precarga el importe de la fila sin tarifaUYU', () => {
+  // `alumnosParaCobros()` entrega `montoUYU` derivado de la ficha, sin la
+  // propiedad `tarifaUYU`. Antes el diálogo abría en $0 y había que reescribir
+  // el importe a mano en cada cobro (390/320/escritorio).
+  const fila = { id: 'a2', nombre: 'Diego G.', grupo: 'Grupo A', ancla: 26, montoUYU: 2500, individual: true };
+  assert.equal(precio(fila, 'clase-individual', '2026-11-24'), null, 'la fila no trae tarifaUYU');
+  assert.equal(precioPrecargado(fila, 'clase-individual', '2026-11-24'), 2500);
+  // La tarifa corregida en la ficha se refleja al recalcular la fila.
+  const corregida = { ...fila, tarifaUYU: 3100, montoUYU: 3100 };
+  assert.equal(precioPrecargado(corregida, 'clase-individual', '2026-11-24'), 3100);
+  // Un pago existente manda sobre la tarifa vigente (no se reescribe).
+  assert.equal(precioPrecargado(corregida, 'clase-individual', '2026-11-24', { montoUYU: 2500 }), 2500);
+  // Sin tarifa propia ni importe de fila no se inventa un precio de ejemplo.
+  assert.equal(precioPrecargado({ ...fila, montoUYU: 0 }, 'clase-individual', ALTA), 0);
 });
 
 test('alta y edición parcial de tarifa validan enteros positivos y conservan identidad', () => {
