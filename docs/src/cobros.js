@@ -1,4 +1,4 @@
-import { diasDeFecha, diasDelMes, esFechaValida, parseFecha } from './fechas.js?v=202611240800';
+import { diasDeFecha, diasDelMes, esFechaValida, parseFecha } from './fechas.js?v=202611241130';
 function textoNoVacio(valor) {
     return typeof valor === 'string' && valor.trim().length > 0;
 }
@@ -20,6 +20,7 @@ export function normalizarPagoGuardado(dato) {
         return null;
     if (!Number.isSafeInteger(p.montoUYU) || p.montoUYU <= 0)
         return null;
+    const concepto = p.concepto === 'clase-individual' ? 'clase-individual' : 'mensualidad';
     let anulado = null;
     if (p.anulado !== undefined && p.anulado !== null) {
         if (!p.anulado || typeof p.anulado !== 'object' || Array.isArray(p.anulado))
@@ -39,6 +40,9 @@ export function normalizarPagoGuardado(dato) {
         fecha: p.fecha,
         quien: p.quien.trim(),
         anulado,
+        // Los pagos históricos NO se reescriben: se leen como mensualidades.
+        ...(p.concepto === 'clase-individual' ? { concepto: 'clase-individual' } : {}),
+        ...(concepto === 'clase-individual' && typeof p.claseId === 'string' && p.claseId.trim() ? { claseId: p.claseId.trim() } : {}),
     };
 }
 /** Lee pagos de forma tolerante: conserva los válidos y omite sólo los corruptos. */
@@ -46,20 +50,22 @@ export function normalizarPagosGuardados(datos) {
     if (!Array.isArray(datos))
         return [];
     const ids = new Set();
-    const periodos = new Set();
+    const claves = new Set();
     const resultado = [];
     for (const dato of datos) {
         const p = normalizarPagoGuardado(dato);
         if (!p || ids.has(p.id))
             continue;
-        // Un duplicado no puede duplicar KPI; si hay dos activos para el mismo
-        // período, se conserva sólo el primero y el otro no se muestra como pago.
-        const periodo = `${p.alumnoId}|${p.periodo}`;
-        if (!p.anulado && periodos.has(periodo))
+        // Un duplicado no puede duplicar KPI: mensualidad por alumno+período,
+        // clase individual por alumno+clase (dos clases en un mes son dos cobros).
+        const clave = p.concepto === 'clase-individual'
+            ? `clase|${p.alumnoId}|${p.claseId ?? ''}`
+            : `mes|${p.alumnoId}|${p.periodo}`;
+        if (!p.anulado && claves.has(clave))
             continue;
         ids.add(p.id);
         if (!p.anulado)
-            periodos.add(periodo);
+            claves.add(clave);
         resultado.push(p);
     }
     return resultado;
@@ -78,8 +84,13 @@ export function registrarPago(pagos, nuevo) {
     }
     if (pagos.some((p) => p.id === normalizado.id))
         throw new Error('El pago ya está registrado');
-    if (pagos.some((p) => !p.anulado && p.alumnoId === normalizado.alumnoId && p.periodo === normalizado.periodo)) {
-        throw new Error('Ya hay un pago activo para este período');
+    if (pagos.some((p) => !p.anulado && p.alumnoId === normalizado.alumnoId
+        && (normalizado.concepto === 'clase-individual'
+            ? p.concepto === 'clase-individual' && p.claseId === normalizado.claseId
+            : p.concepto !== 'clase-individual' && p.periodo === normalizado.periodo))) {
+        throw new Error(normalizado.concepto === 'clase-individual'
+            ? 'Ya hay un pago activo para esta clase'
+            : 'Ya hay un pago activo para este período');
     }
     return [...pagos, normalizado];
 }
@@ -173,14 +184,37 @@ export function vencimientoDelMes(periodo, ancla) {
     const dia = Math.min(ancla, diasDelMes(y, m));
     return `${destino}-${String(dia).padStart(2, '0')}`;
 }
+export function cobrosIndividuales(alumnos, pagos, clases, hoy) {
+    const porId = new Map(alumnos.map((a) => [a.id, a]));
+    const activos = pagos.filter((p) => !p.anulado && p.concepto === 'clase-individual');
+    return clases
+        .filter((c) => c.estado === 'dada')
+        .flatMap((clase) => clase.alumnos.map((a) => {
+        const alumno = porId.get(a.id);
+        if (!alumno || !alumno.individual)
+            return null;
+        const pago = activos.find((p) => p.alumnoId === alumno.id && p.claseId === clase.id);
+        return { alumno, clase, fecha: clase.fecha, ...(pago ? { pago } : {}) };
+    }))
+        .filter((f) => f !== null)
+        .filter((f) => f.fecha <= hoy)
+        .sort((a, b) => a.fecha.localeCompare(b.fecha) || a.alumno.nombre.localeCompare(b.alumno.nombre, 'es'));
+}
+/**
+ * Resumen de mensualidades. Las fichas individuales NO entran: reservar una
+ * clase no crea deuda mensual. Cada fila debe venir con la tarifa persistida;
+ * una ficha sin tarifa (monto 0/negocio inválido) no genera deuda inventada.
+ */
 export function resumenCobros(alumnos, pagos, hoy, diasAviso = 7) {
     const periodo = hoy.slice(0, 7);
     // Con la regla del mismo día del mes siguiente, lo que vence ESTE mes es la
     // mensualidad del mes ANTERIOR; la del mes actual vence el mes que viene.
     const anterior = mesAnterior(periodo);
     const dia = diasDeFecha(hoy);
-    const activos = pagos.filter((p) => !p.anulado);
-    const filas = alumnos.flatMap((alumno) => [anterior, periodo].map((mes) => {
+    const activos = pagos.filter((p) => !p.anulado && p.concepto !== 'clase-individual');
+    const filas = alumnos
+        .filter((a) => !a.individual && Number.isSafeInteger(a.montoUYU) && a.montoUYU > 0)
+        .flatMap((alumno) => [anterior, periodo].map((mes) => {
         const fecha = vencimientoDelMes(mes, alumno.ancla);
         return {
             alumno, periodo: mes, fecha, dias: diasDeFecha(fecha) - dia,

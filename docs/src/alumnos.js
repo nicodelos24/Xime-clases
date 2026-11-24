@@ -41,11 +41,12 @@ function texto(valor) {
 export function validarAlumno(input) {
     const errores = {};
     const nombre = texto(input.nombre);
-    if (nombre.length < 2)
+    if (input.nombre !== undefined && nombre.length < 2)
         errores.nombre = 'Ingresá el nombre del alumno';
-    else if (!/^[\p{L}\p{M}][\p{L}\p{M} '\-.]*$/u.test(nombre))
+    else if (input.nombre !== undefined && !/^[\p{L}\p{M}][\p{L}\p{M} '\-.]*$/u.test(nombre)) {
         errores.nombre = 'El nombre solo admite letras, espacios, apóstrofos, guiones y puntos';
-    if (input.modalidad !== 'mensual' && input.modalidad !== 'individual')
+    }
+    if (input.modalidad !== undefined && input.modalidad !== 'mensual' && input.modalidad !== 'individual')
         errores.modalidad = 'Elegí una modalidad';
     if (input.ancla !== undefined && (!Number.isInteger(input.ancla) || input.ancla < 1 || input.ancla > 31)) {
         errores.ancla = 'El día ancla debe estar entre 1 y 31';
@@ -65,6 +66,9 @@ export function validarAlumno(input) {
     }
     if (input.pagado !== undefined && typeof input.pagado !== 'boolean')
         errores.pagado = 'Estado de pago inválido';
+    if (input.tarifaUYU !== undefined && (!Number.isSafeInteger(input.tarifaUYU) || input.tarifaUYU <= 0)) {
+        errores.tarifaUYU = 'Ingresá una tarifa entera en UYU (mayor a 0)';
+    }
     return errores;
 }
 export function alumnoEsValido(input) {
@@ -74,11 +78,12 @@ export function alumnoEsValido(input) {
 export function normalizarAlumno(input) {
     return {
         nombre: texto(input.nombre),
-        modalidad: input.modalidad,
+        modalidad: input.modalidad ?? 'mensual',
         grupo: texto(input.grupo),
         ancla: input.ancla ?? 21,
         contacto: texto(input.contacto),
         pagado: input.pagado ?? false,
+        tarifaUYU: input.tarifaUYU ?? null,
     };
 }
 const ID_RE = /^al-[a-z0-9]{8,}$/i;
@@ -94,6 +99,10 @@ export function nuevoIdAlumno(yaExiste, azar = Math.random) {
 /** Alta: valida, congela fecha de alta y actor, y asigna ID + color estables. */
 export function crearAlumno(input, fechaAlta, yaExiste, azar = Math.random) {
     const errores = validarAlumno(input);
+    if (input.nombre === undefined)
+        errores.nombre = 'Ingresá el nombre del alumno';
+    if (input.modalidad === undefined)
+        errores.modalidad = 'Elegí una modalidad';
     if (Object.keys(errores).length > 0)
         throw new Error(Object.values(errores)[0]);
     const norm = normalizarAlumno(input);
@@ -120,13 +129,15 @@ export function editarAlumno(alumno, input) {
         throw new Error(Object.values(errores)[0]);
     return {
         ...alumno,
-        nombre: texto(input.nombre),
-        modalidad: input.modalidad,
+        nombre: input.nombre === undefined ? alumno.nombre : texto(input.nombre),
+        modalidad: input.modalidad ?? alumno.modalidad,
         // El formulario ya no expone grupo: si el input no lo trae, se conserva el
         // grupo vigente de la ficha (dato demo/heredado, no se edita desde la UI).
         grupo: input.grupo === undefined ? alumno.grupo : texto(input.grupo),
         ancla: input.ancla ?? alumno.ancla,
         contacto: input.contacto === undefined ? alumno.contacto : texto(input.contacto),
+        // Tarifa propia: si el formulario no la trae se conserva; null sigue null.
+        tarifaUYU: input.tarifaUYU === undefined ? alumno.tarifaUYU ?? null : input.tarifaUYU,
         // Alta y pago inicial se congelan: la edición no reescribe la identidad.
         fechaAlta: alumno.fechaAlta,
         pagado: alumno.pagado,
@@ -164,6 +175,8 @@ export function normalizarFichaGuardada(dato) {
         color,
         contacto: typeof dato.contacto === 'string' ? dato.contacto : '',
         pagado: typeof dato.pagado === 'boolean' ? dato.pagado : false,
+        // Fichas v2 sin tarifa: null, nunca el precio de ejemplo de la demo.
+        tarifaUYU: Number.isSafeInteger(dato.tarifaUYU) && dato.tarifaUYU > 0 ? dato.tarifaUYU : null,
         foto: esFotoValida(dato.foto) ? dato.foto : '',
     };
 }

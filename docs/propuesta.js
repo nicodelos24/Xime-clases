@@ -1,24 +1,25 @@
 // Clases v5 · navegación + funcionamiento (auto-marcado, Cancelar clase, WhatsApp)
 // La estética vive en tokens.css/propuesta.css; acá solo se cambian estados,
 // textos y el flujo de cancelación. Sin emoji: solo SVG de icons.js.
-import { horaClase, } from './src/clases.js?v=202611240800';
-import { CLAVE_ESTADO, RepositorioClases, almacenLocalStorage } from './src/repositorio.js?v=202611240800';
-import { alumnosCobrosDemo, datosDemo, fichasDemo } from './src/demo.js?v=202611240800';
-import { resumenCobros, filtrarCobros, ordenarCobros } from './src/cobros.js?v=202611240800';
-import { construirVista, filtrarYOrdenar, puntoEstadoVence, textoEstadoVence, validarAlumno, iniciales, colorPorId, esFotoValida, } from './src/alumnos.js?v=202611240800';
-import { resumenHoy, clasesDelDia, clasesDeLaSemana } from './src/resumen.js?v=202611240800';
-import { registrarToqueFecha, mesDe } from './src/agenda.js?v=202611240800';
-import { primerDiaDeMes, diaSeleccionadoAlCargar } from './src/agenda-mes.js?v=202611240800';
-import { decisionDeGesto, decisionDeAperturaDeMenu, DURACION_TOQUE_LARGO, UMBRAL_MOVIMIENTO_GESTO } from './src/toque-clase.js?v=202611240800';
-import { destinoDeEnlace, vistaInicial, vistasActivas } from './src/navegacion.js?v=202611240800';
-import { pistaDeTira } from './src/scroll-pista.js?v=202611240800';
-import { actualizarBarra, estadoBarraInicial, debeReaparecerPorQuietud, REAPARECER_TRAS_MS, } from './src/barra-scroll.js?v=202611240800';
-import { ajustarLock, debeBloquearScroll, estiloSheet, debeCerrarPorToqueFuera, esToqueFuera, debeSuprimirClickTrasCierre, decisionCierreSheetsPorNavegacion, debeCerrarPorDeslizar, FRANJA_CIERRE, } from './src/sheets.js?v=202611240800';
-import { diaCorto, mesCorto, etiquetaDia, etiquetaDiaCompleta, etiquetaMes, fechaCorta, sumarDias, parseFecha, lunesDe, diasDelMes, esFechaValida, } from './src/fechas.js?v=202611240800';
-import { relojDelDispositivo, hoyLocal } from './src/reloj.js?v=202611240800';
-import { CLAVE_PREFIJO, PREFIJO_POR_DEFECTO, prefijoEsValido, prefijoSeguro, conPrefijo } from './src/prefijo.js?v=202611240800';
-import { bloqueContacto } from './src/contacto.js?v=202611240800';
-import { textoCancelacion, destinos, resumenEnvio, linkTexto, linkAvisoVencimiento, } from './src/whatsapp.js?v=202611240800';
+import { horaClase, } from './src/clases.js?v=202611241130';
+import { CLAVE_ESTADO, RepositorioClases, almacenLocalStorage } from './src/repositorio.js?v=202611241130';
+import { alumnosCobrosDemo, datosDemo, fichasDemo } from './src/demo.js?v=202611241130';
+import { resumenCobros, cobrosIndividuales, filtrarCobros, ordenarCobros, } from './src/cobros.js?v=202611241130';
+import { precioPrecargado, precio } from './src/tarifas.js?v=202611241130';
+import { construirVista, filtrarYOrdenar, puntoEstadoVence, textoEstadoVence, validarAlumno, iniciales, colorPorId, esFotoValida, } from './src/alumnos.js?v=202611241130';
+import { resumenHoy, clasesDelDia, clasesDeLaSemana } from './src/resumen.js?v=202611241130';
+import { registrarToqueFecha, mesDe } from './src/agenda.js?v=202611241130';
+import { primerDiaDeMes, diaSeleccionadoAlCargar } from './src/agenda-mes.js?v=202611241130';
+import { decisionDeGesto, decisionDeAperturaDeMenu, DURACION_TOQUE_LARGO, UMBRAL_MOVIMIENTO_GESTO } from './src/toque-clase.js?v=202611241130';
+import { destinoDeEnlace, vistaInicial, vistasActivas } from './src/navegacion.js?v=202611241130';
+import { pistaDeTira } from './src/scroll-pista.js?v=202611241130';
+import { actualizarBarra, estadoBarraInicial, debeReaparecerPorQuietud, REAPARECER_TRAS_MS, } from './src/barra-scroll.js?v=202611241130';
+import { ajustarLock, debeBloquearScroll, estiloSheet, debeCerrarPorToqueFuera, esToqueFuera, debeSuprimirClickTrasCierre, decisionCierreSheetsPorNavegacion, debeCerrarPorDeslizar, FRANJA_CIERRE, } from './src/sheets.js?v=202611241130';
+import { diaCorto, mesCorto, etiquetaDia, etiquetaDiaCompleta, etiquetaMes, fechaCorta, sumarDias, parseFecha, lunesDe, diasDelMes, esFechaValida, } from './src/fechas.js?v=202611241130';
+import { relojDelDispositivo, hoyLocal } from './src/reloj.js?v=202611241130';
+import { CLAVE_PREFIJO, PREFIJO_POR_DEFECTO, prefijoEsValido, prefijoSeguro, conPrefijo } from './src/prefijo.js?v=202611241130';
+import { bloqueContacto } from './src/contacto.js?v=202611241130';
+import { textoCancelacion, destinos, resumenEnvio, linkTexto, linkAvisoVencimiento, } from './src/whatsapp.js?v=202611241130';
 /* ------------------------------------------------- estado persistente (local) */
 const reloj = relojDelDispositivo();
 /** Quién opera la app hoy: único dueño. En Fase 4 sale de la sesión. */
@@ -1985,6 +1986,7 @@ function abrirFicha(ficha, origen, alCrear) {
     ${bloqueFotoFicha(ficha)}
     <form novalidate>
       <label class="campo"><span>Nombre *</span><input name="nombre" required maxlength="80" autocomplete="off" value="${esNueva ? '' : esc(ficha.nombre)}" placeholder="Nombre y apellido"></label>
+      <label class="campo"><span>Tarifa en UYU *${burbujaAyuda('Se guarda en la ficha. No se usa ningún precio de ejemplo.')}</span><input name="tarifaUYU" type="number" min="1" step="1" inputmode="numeric" required value="${ficha?.tarifaUYU ?? ''}" placeholder="Ej.: 2500"></label>
       ${esNueva ? `<p class="campo"><span>Fecha de registro *</span></p>${selectorFecha('alta', hoy)}` : ''}
       <p class="campo"><span>Modalidad *</span></p>
       <div class="ficha-grupo-opciones" role="group" aria-label="Modalidad">
@@ -2028,7 +2030,12 @@ function abrirFicha(ficha, origen, alCrear) {
             b.setAttribute('aria-pressed', String(on));
         });
     };
-    dialogo.querySelectorAll('[data-modalidad]').forEach((b) => b.addEventListener('click', () => { modalidad = b.dataset.modalidad; pintarSeleccion(); }));
+    dialogo.querySelectorAll('[data-modalidad]').forEach((b) => b.addEventListener('click', () => {
+        const valor = b.dataset.modalidad;
+        if (valor === 'mensual' || valor === 'individual')
+            modalidad = valor;
+        pintarSeleccion();
+    }));
     pintarSeleccion();
     const pintarPago = () => dialogo.querySelectorAll('[data-pago]').forEach((b) => {
         const on = b.dataset.pago === (pagado ? 'si' : 'no');
@@ -2050,9 +2057,11 @@ function abrirFicha(ficha, origen, alCrear) {
             return;
         }
         const anclaRaw = String(datos.get('ancla') ?? '').trim();
+        const tarifaRaw = String(datos.get('tarifaUYU') ?? '').trim();
         const input = {
             nombre: String(datos.get('nombre') ?? ''),
             modalidad,
+            tarifaUYU: tarifaRaw === '' ? 0 : Number(tarifaRaw),
             contacto: String(datos.get('contacto') ?? ''),
             ancla: anclaRaw === '' ? undefined : Number(anclaRaw),
             fechaAlta: fechaAlta ?? undefined,
@@ -2061,7 +2070,9 @@ function abrirFicha(ficha, origen, alCrear) {
         };
         const errores = validarAlumno(input);
         if (Object.keys(errores).length > 0) {
-            avisarError(error, Object.values(errores)[0]);
+            const primerError = Object.keys(errores)[0];
+            avisarError(error, errores[primerError]);
+            form.querySelector(`[name="${primerError}"]`)?.focus();
             return;
         }
         let creada;
@@ -2077,7 +2088,6 @@ function abrirFicha(ficha, origen, alCrear) {
         }
         catch (err) {
             avisarError(error, err instanceof Error ? err.message : 'No se pudo guardar la ficha');
-            ;
             return;
         }
         dialogo.close();
@@ -2151,21 +2161,21 @@ const uyu = (monto) => `$${formatoUYU.format(monto)}`;
 const listaCobros = document.querySelector('#lista-cobros');
 const botonHistorial = document.querySelector('#abrir-historial');
 const campana = document.querySelector('.campana');
-/** Tarifa por defecto para fichas creadas desde la app (demo usa 6500). */
-const MONTO_UYU = 6500;
 /**
- * Alumnos de Cobros: TODAS las fichas, vinculadas por ID estable. El nombre y
- * el grupo vigentes salen de la ficha; el ancla y la tarifa de la demo se
- * respetan, y una ficha nueva usa su ancla con la tarifa por defecto.
+ * Alumnos de Cobros: TODAS las fichas, vinculadas por ID estable. Nombre,
+ * grupo, ancla y tarifa salen de la FICHA PERSISTIDA. Nunca se usa el precio
+ * de la demo como fallback: una ficha sin tarifa no genera deuda.
  */
 function alumnosParaCobros() {
-    const montos = new Map(alumnosCobrosDemo.map((a) => [a.id, a.montoUYU]));
     return repo.listarAlumnos().map((f) => ({
-        id: f.id, nombre: f.nombre, grupo: f.grupo,
-        ancla: f.ancla, montoUYU: montos.get(f.id) ?? MONTO_UYU,
+        id: f.id, nombre: f.nombre, grupo: f.grupo, ancla: f.ancla,
+        montoUYU: precio(f, f.modalidad === 'individual' ? 'clase-individual' : 'mensualidad', hoyLocal(reloj.ahora())) ?? 0,
+        individual: f.modalidad === 'individual',
     }));
 }
 const verCobros = () => resumenCobros(alumnosParaCobros(), repo.listarPagos(), hoyLocal(reloj.ahora()));
+/** Clases individuales ya dadas, pendientes de cobro. Reservar no genera deuda. */
+const verCobrosIndividuales = () => cobrosIndividuales(alumnosParaCobros(), repo.listarPagos(), clases, hoyLocal(reloj.ahora()));
 /* Estado del filtro y del orden de Cobros (rediseño 23-nov, B6).
    En memoria, como los de Alumnos: no se guardan en localStorage. */
 let estadoCobros = 'todos';
@@ -2200,11 +2210,34 @@ function pintarCobros() {
     const avisos = r.avisos.length;
     campana.setAttribute('aria-label', avisos === 1 ? '1 aviso de cobro' : `${avisos} avisos de cobro`);
     campana.querySelector('.campana-punto').hidden = avisos === 0;
-    listaCobros.innerHTML = ordenarCobros(filtrarCobros(r.filas, estadoCobros), ordenCobros).map((f) => {
-        // Avatar idéntico al de Alumnos: mismo ID, mismo color, misma foto.
-        const fichaFila = repo.listarAlumnos().find((a) => a.id === f.alumno.id);
-        const avatar = avatarAlumno(f.alumno.nombre, fichaFila?.id ?? f.alumno.id, fichaFila?.foto, 32);
-        return `<li>
+    const filasIndividuales = verCobrosIndividuales();
+    const filasVisibles = ordenarCobros(filtrarCobros(r.filas, estadoCobros), ordenCobros);
+    const individualesVisibles = filasIndividuales.filter((f) => filtrarCobros([{
+            dias: -1, alumno: { nombre: f.alumno.nombre }, pago: f.pago,
+        }], estadoCobros).length > 0);
+    listaCobros.innerHTML = [
+        ...individualesVisibles.map((f) => {
+            const fichaFila = repo.listarAlumnos().find((a) => a.id === f.alumno.id);
+            const avatar = avatarAlumno(f.alumno.nombre, fichaFila?.id ?? f.alumno.id, fichaFila?.foto, 32);
+            const monto = precio(f.alumno, 'clase-individual', f.fecha) ?? f.alumno.montoUYU;
+            return `<li>
+    <button type="button" class="cobro-fila" data-clase-cobro="${esc(`${f.alumno.id}|${f.clase.id}`)}" aria-haspopup="dialog"
+      aria-label="${f.pago ? 'Ver ficha de' : 'Ver ficha de'} ${esc(f.alumno.nombre)}, ${f.pago ? `pagado el ${fechaBreve(f.pago.fecha)}, ${uyu(f.pago.montoUYU)}` : `clase del ${fechaBreve(f.fecha)}, ${uyu(monto)}`}">
+      ${avatar}
+      <span class="cobro-row">
+        <span class="al-nombre">${esc(f.alumno.nombre)}</span>
+        <span class="cobro-meta">Clase individual · ${esc(fechaCorta(f.fecha))}</span>
+      </span>
+      <span class="cobro-importe"><b>${uyu(f.pago ? f.pago.montoUYU : monto)}</b><small class="${f.pago ? 'pagado' : ''}">${f.pago ? 'Pagado' : 'Debe'}</small></span>
+      <svg class="ico" width="13" height="13" aria-hidden="true"><use href="#i-der"/></svg>
+    </button>
+  </li>`;
+        }),
+        ...filasVisibles.map((f) => {
+            // Avatar idéntico al de Alumnos: mismo ID, mismo color, misma foto.
+            const fichaFila = repo.listarAlumnos().find((a) => a.id === f.alumno.id);
+            const avatar = avatarAlumno(f.alumno.nombre, fichaFila?.id ?? f.alumno.id, fichaFila?.foto, 32);
+            return `<li>
     <button type="button" class="cobro-fila" data-fila="${esc(`${f.alumno.id}|${f.periodo}`)}" aria-haspopup="dialog"
       aria-label="${f.pago ? 'Ver ficha de' : 'Ver ficha de'} ${esc(f.alumno.nombre)}, ${f.pago ? `pagado el ${fechaBreve(f.pago.fecha)}, ${uyu(f.alumno.montoUYU)}` : `deuda ${uyu(f.alumno.montoUYU)}, ${textoVence(f.dias)}`}">
       ${avatar}
@@ -2213,15 +2246,22 @@ function pintarCobros() {
         <span class="cobro-meta">${f.pago ? `Pagado el ${fechaBreve(f.pago.fecha)} · ${esc(f.alumno.grupo)}` : `${esc(f.alumno.grupo)}`}</span>
       </span>
       ${f.pago
-            ? `<span class="cobro-importe"><b>${uyu(f.alumno.montoUYU)}</b><small class="pagado">Pagado</small></span>`
-            : `<span class="cobro-importe"><b>${uyu(f.alumno.montoUYU)}</b><small>Debe</small></span><span class="cobro-vence ${f.dias < 0 ? 'vencido' : f.dias <= 7 ? 'pronto' : ''}">${textoVence(f.dias)}</span>`}
+                ? `<span class="cobro-importe"><b>${uyu(f.alumno.montoUYU)}</b><small class="pagado">Pagado</small></span>`
+                : `<span class="cobro-importe"><b>${uyu(f.alumno.montoUYU)}</b><small>Debe</small></span><span class="cobro-vence ${f.dias < 0 ? 'vencido' : f.dias <= 7 ? 'pronto' : ''}">${textoVence(f.dias)}</span>`}
       <svg class="ico" width="13" height="13" aria-hidden="true"><use href="#i-der"/></svg>
     </button>
   </li>`;
-    }).join('');
+        }).join(''),
+    ].join('');
+    listaCobros.querySelectorAll('[data-clase-cobro]').forEach((b) => {
+        const [id, claseId] = (b.dataset.claseCobro ?? '').split('|');
+        const cobro = filasIndividuales.find((f) => f.alumno.id === id && f.clase.id === claseId);
+        if (!cobro)
+            return;
+        b.addEventListener('click', () => abrirPagoIndividual(cobro, b));
+    });
     // data-fila por ID+período (nunca por índice): con filtros u orden la fila
     // del DOM no coincide con el índice de `r.filas`.
-    const filasVisibles = ordenarCobros(filtrarCobros(r.filas, estadoCobros), ordenCobros);
     listaCobros.querySelectorAll('[data-fila]').forEach((b) => {
         const [id, periodo] = (b.dataset.fila ?? '').split('|');
         const fila = filasVisibles.find((f) => f.alumno.id === id && f.periodo === periodo);
@@ -2236,8 +2276,8 @@ function pintarCobros() {
             abrirFichaConCobro(ficha, b);
         });
     });
-    const visibles = filasVisibles.length;
-    const total = r.filas.length;
+    const visibles = filasVisibles.length + individualesVisibles.length;
+    const total = r.filas.length + filasIndividuales.length;
     const filtroActivo = estadoCobros !== 'todos';
     if (visibles === 0 && total > 0 && filtroActivo) {
         listaCobros.innerHTML = `<li><p class="pv-vacio">Ningún cobro con este filtro</p></li>`;
@@ -2260,7 +2300,7 @@ function pintarCobros() {
     const bTodos = $('#filtros-cobros [data-todos]');
     bTodos?.classList.toggle('activo', !filtroActivo);
     bTodos?.setAttribute('aria-pressed', String(!filtroActivo));
-    const debo = r.filas.filter((f) => !f.pago && f.dias <= 7).length;
+    const debo = r.filas.filter((f) => !f.pago && f.dias <= 7).length + filasIndividuales.filter((f) => !f.pago).length;
     const chipDeben = $('#filtros-cobros [data-estado="deben"] .n');
     if (chipDeben)
         chipDeben.textContent = debo ? String(debo) : '';
@@ -2380,17 +2420,99 @@ function cerrarDialogoConAviso(dlg) {
     else
         dlg.close();
 }
+/**
+ * Importe precargado del cobro individual (D1): la fila trae `montoUYU`, no
+ * `tarifaUYU`, así que el diálogo debe usar el respaldo de la fila.
+ */
+export function importeInicialIndividual(alumno, clase, pago) {
+    return precioPrecargado(alumno, 'clase-individual', clase.fecha, pago);
+}
+/** Registra una clase individual dada; al cobrar se guarda su tarifa en la ficha. */
+function abrirPagoIndividual(cobro, origen) {
+    const { alumno, clase } = cobro;
+    const pago = cobro.pago;
+    const tarifaInicial = importeInicialIndividual(alumno, clase, pago);
+    const tarifaEntrada = tarifaInicial ? String(tarifaInicial) : '';
+    const dialogo = abrirDialogoCobros(pago ? 'Anular pago' : 'Registrar pago', 'Clase individual', pago ? 'alerta' : 'cobros', `<div class="cobros-panel-resumen">
+      <div><p class="al-nombre">${esc(alumno.nombre)}</p><p class="al-sub">Clase individual · ${esc(fechaCorta(clase.fecha))}</p></div>
+      <div class="cobros-panel-dato"><strong>${uyu(tarifaInicial)}</strong><span class="al-sub">UYU</span></div>
+    </div>
+    <p class="cobros-panel-nota">${pago ? `Registrado el ${esc(fechaCorta(pago.fecha))} por ${esc(pago.quien)}. El importe de este pago no se reescribe.` : 'La reserva no crea deuda: acá se cobra la clase que ya diste. Corregí la Tarifa en UYU si hace falta: se guarda en la ficha para las próximas clases.'}</p>
+    <form>
+      ${pago ? `<label class="campo"><span>Fecha del pago (día / mes / año)</span></label>${selectorFecha('pago', pago.fecha)}`
+        : `<label class="campo"><span>Tarifa en UYU *</span><input name="tarifaUYU" type="number" min="1" step="1" inputmode="numeric" required value="${tarifaEntrada}"></label>
+      <label class="campo"><span>¿Cuándo pagó? *</span></label>${selectorFecha('pago', hoyLocal(reloj.ahora()))}`}
+      ${pago ? '<label class="campo"><span>Motivo de anulación (opcional)</span><input name="motivo" maxlength="160"></label>' : ''}
+      <p class="cobros-panel-error" role="alert"></p>
+      <div class="sheet-acciones"><button type="button" class="btn-secundario">Volver</button>
+      ${pago ? '<button type="button" class="btn-secundario cobros-anular">Anular pago</button>' : ''}
+      <button type="submit" class="btn-primario">${pago ? 'Guardar fecha' : 'Confirmar pago'}</button></div>
+    </form>`, origen);
+    cablearFecha(dialogo, 'pago');
+    cablearAyudas(dialogo);
+    const form = dialogo.querySelector('form');
+    const error = form.querySelector('[role="alert"]');
+    form.querySelector('.btn-secundario').addEventListener('click', () => cerrarDialogoConAviso(dialogo));
+    form.querySelector('.cobros-anular')?.addEventListener('click', () => {
+        try {
+            repo.anularPago(pago.id, String(new FormData(form).get('motivo') ?? ''), QUIEN);
+            dialogo.close();
+            pintarCobros();
+        }
+        catch (err) {
+            error.textContent = err instanceof Error ? err.message : 'No se pudo anular';
+        }
+    });
+    form.addEventListener('submit', (e) => {
+        e.preventDefault();
+        if (!dialogo.open)
+            return;
+        const fecha = leerFechaDe(dialogo, 'pago');
+        if (!fecha) {
+            error.textContent = 'Elegí una fecha válida';
+            return;
+        }
+        try {
+            if (pago) {
+                const motivo = String(new FormData(form).get('motivo') ?? '').trim() || 'Corrección de fecha';
+                repo.corregirFechaPago(pago.id, fecha, motivo, QUIEN);
+            }
+            else {
+                const tarifa = Number(new FormData(form).get('tarifaUYU'));
+                if (!Number.isSafeInteger(tarifa) || tarifa <= 0) {
+                    error.textContent = 'Ingresá una tarifa entera en UYU (mayor a 0)';
+                    form.querySelector('[name="tarifaUYU"]')?.focus();
+                    return;
+                }
+                // La tarifa es de la FICHA, no del pago: corregirla hoy no cambia pagos
+                // históricos. Se persiste antes de registrar el cobro de esta clase.
+                const id = Array.from(crypto.getRandomValues(new Uint32Array(4)), (n) => n.toString(16).padStart(8, '0')).join('');
+                repo.registrarPagoConTarifa(alumno.id, tarifa, { id, periodo: clase.fecha.slice(0, 7), quien: QUIEN, fecha, concepto: 'clase-individual', claseId: clase.id });
+            }
+        }
+        catch (errorCapturado) {
+            error.textContent = errorCapturado instanceof Error ? errorCapturado.message : 'No se pudo guardar';
+            return;
+        }
+        dialogo.close();
+        pintarCobros();
+        origen.focus();
+    });
+}
 function abrirPago(nombre, periodo, monto, origen, pago, fila) {
+    const montoFila = fila?.alumno.montoUYU ?? monto;
+    const tarifaEntrada = montoFila > 0 ? String(montoFila) : '';
     const accion = pago ? 'Anular pago' : 'Registrar pago';
     const mes = etiquetaMes(`${periodo}-01`);
     const dialogo = abrirDialogoCobros(accion, 'Mensualidad', pago ? 'alerta' : 'cobros', `<div class="cobros-panel-resumen">
     <div><p class="al-nombre">${esc(nombre)}</p><p class="al-sub">${esc(mes)}</p></div>
     <div class="cobros-panel-dato"><strong>${uyu(pago?.montoUYU ?? monto)}</strong><span class="al-sub">UYU</span></div></div>
     <p class="cobros-panel-nota">${pago ? burbujaAyuda(`Registrado el ${esc(fechaCorta(pago.fecha))} por ${esc(pago.quien)}. Podés corregir la fecha en que pagó/renovió o anular el pago; queda en el historial.`) : 'Confirmá cuándo pagó/renovió. La app no mueve dinero.'}</p>
-    <form>
+    <form novalidate>
       ${pago ? `<label class="campo"><span>Fecha del pago (día / mes / año)</span></label>${selectorFecha('pago', pago.fecha)}
       <label class="campo"><span>Motivo de anulación (opcional)</span><input name="motivo" maxlength="160"></label>`
-        : `<label class="campo"><span>¿Cuándo pagó/renovió? *</span></label>${selectorFecha('pago', hoyLocal(reloj.ahora()))}`}
+        : `<label class="campo"><span>Tarifa en UYU *${burbujaAyuda('Corregí la tarifa si hace falta: se guarda en la ficha para las próximas clases. Este pago usa el importe confirmado acá.')}</span><input name="tarifaUYU" type="number" min="1" step="1" inputmode="numeric" required value="${tarifaEntrada}"></label>
+      <label class="campo"><span>¿Cuándo pagó/renovó? *</span></label>${selectorFecha('pago', hoyLocal(reloj.ahora()))}`}
       <p class="cobros-panel-error" role="alert"></p>
       <div class="sheet-acciones"><button type="button" class="btn-secundario">Volver</button>
       ${pago ? '<button type="button" class="btn-secundario cobros-anular">Anular pago</button>' : ''}
@@ -2427,8 +2549,17 @@ function abrirPago(nombre, periodo, monto, origen, pago, fila) {
                 repo.corregirFechaPago(pago.id, fecha, motivo, QUIEN);
             }
             else if (fila) {
+                const datosPago = new FormData(form);
+                const tarifa = Number(datosPago.get('tarifaUYU'));
+                if (!Number.isSafeInteger(tarifa) || tarifa <= 0) {
+                    form.querySelector('[role="alert"]').textContent = 'Ingresá una tarifa entera en UYU (mayor a 0)';
+                    form.querySelector('[name="tarifaUYU"]')?.focus();
+                    return;
+                }
+                // Corregir la tarifa actualiza sólo la ficha; los pagos históricos
+                // conservan su monto. Este cobro usa el importe confirmado.
                 const id = Array.from(crypto.getRandomValues(new Uint32Array(4)), (n) => n.toString(16).padStart(8, '0')).join('');
-                repo.registrarPago({ id, alumnoId: fila.alumno.id, periodo, montoUYU: monto, quien: QUIEN, fecha });
+                repo.registrarPagoConTarifa(fila.alumno.id, tarifa, { id, periodo, quien: QUIEN, fecha });
             }
         }
         catch (error) {

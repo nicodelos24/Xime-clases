@@ -15,11 +15,11 @@
  *    cancelaciones, reversiones, reprogramaciones y el estado por hora.
  *  - Nunca se borra una clase: el historial de eventos queda en la clase.
  */
-import { cancelarClase, crearClase, deshacerCancelacion, deshacerMarcada, marcarDada, reconciliar, registrarMensajeEnviado, reprogramarClase, } from './clases.js?v=202611240800';
-import { hoyLocal } from './reloj.js?v=202611240800';
-import { anularPago, corregirFechaPago, normalizarPagosGuardados, registrarPago } from './cobros.js?v=202611240800';
-import { crearAlumno, editarAlumno, esFotoValida, esIdAlumno, normalizarFichaGuardada, } from './alumnos.js?v=202611240800';
-import { conExcepcion, crearClaseSuelta, crearRutina, generarOcurrencias, generarOcurrenciasEnRango, } from './agendar.js?v=202611240800';
+import { cancelarClase, crearClase, deshacerCancelacion, deshacerMarcada, marcarDada, reconciliar, registrarMensajeEnviado, reprogramarClase, } from './clases.js?v=202611241130';
+import { hoyLocal } from './reloj.js?v=202611241130';
+import { anularPago as anularPagoDominio, corregirFechaPago as corregirFechaPagoDominio, normalizarPagosGuardados, registrarPago as registrarPagoDominio, } from './cobros.js?v=202611241130';
+import { crearAlumno, editarAlumno, esFotoValida, esIdAlumno, normalizarFichaGuardada, } from './alumnos.js?v=202611241130';
+import { conExcepcion, crearClaseSuelta, crearRutina, generarOcurrencias, generarOcurrenciasEnRango, } from './agendar.js?v=202611241130';
 /**
  * Versión del formato guardado. v2 agregó `alumnos` (Pieza C); las rutinas
  * semanales (20/11) se guardan como campo ADITIVO `rutinas` SIN subir la
@@ -175,15 +175,15 @@ export class RepositorioClases {
      */
     registrarPago(nuevo) {
         const fecha = nuevo.fecha ?? hoyLocal(this.reloj.ahora());
-        this.actualizarPagos((pagos) => registrarPago(pagos, { ...nuevo, fecha }));
+        this.actualizarPagos((pagos) => registrarPagoDominio(pagos, { ...nuevo, fecha }));
     }
     anularPago(id, motivo, quien) {
         const fecha = hoyLocal(this.reloj.ahora());
-        this.actualizarPagos((pagos) => anularPago(pagos, id, { fecha, motivo, quien }));
+        this.actualizarPagos((pagos) => anularPagoDominio(pagos, id, { fecha, motivo, quien }));
     }
     corregirFechaPago(id, fechaNueva, motivo, quien) {
         const hoy = hoyLocal(this.reloj.ahora());
-        this.actualizarPagos((pagos) => corregirFechaPago(pagos, id, fechaNueva, motivo, quien, hoy));
+        this.actualizarPagos((pagos) => corregirFechaPagoDominio(pagos, id, fechaNueva, motivo, quien, hoy));
     }
     actualizarPagos(transformar) {
         const estado = this.cargar();
@@ -214,6 +214,33 @@ export class RepositorioClases {
         this.persistir(nuevo, true);
         this.estado = nuevo;
         return editada;
+    }
+    registrarPagoConTarifa(alumnoId, tarifaUYU, nuevo) {
+        const fecha = nuevo.fecha ?? hoyLocal(this.reloj.ahora());
+        const estado = this.cargar();
+        const original = estado.alumnos.find((a) => a.id === alumnoId);
+        if (!original)
+            throw new Error('No se encontró la ficha del alumno');
+        const alumnos = estado.alumnos.map((a) => (a.id === alumnoId ? editarAlumno(a, { tarifaUYU }) : a));
+        const pagos = registrarPagoDominio(estado.pagos, { ...nuevo, alumnoId, montoUYU: tarifaUYU, fecha });
+        // Una sola escritura: si el pago es inválido, la tarifa tampoco se guarda.
+        this.persistir({ ...estado, alumnos, pagos }, true);
+        this.estado = { ...estado, alumnos, pagos };
+    }
+    /** Varias escrituras en memoria; no usar para flujos que deban ser atómicos. */
+    transaccion(operacion) {
+        const anterior = this.cargar();
+        try {
+            const resultado = operacion();
+            const actual = this.cargar();
+            if (actual !== anterior)
+                this.persistir(actual);
+            return resultado;
+        }
+        catch (error) {
+            this.estado = anterior;
+            throw error;
+        }
     }
     /**
      * Foto del alumno (24-nov): acepta dataURL de imagen chico (lo valida el

@@ -7,10 +7,11 @@
  * El estado que el dueño genera encima (cancelaciones, reprogramaciones) sí
  * vive en el repositorio y no se vuelve a sembrar.
  */
-import { crearClase } from './clases.js?v=202611240800';
-import { lunesDe, sumarDias } from './fechas.js?v=202611240800';
-import { hoyLocal } from './reloj.js?v=202611240800';
-import { colorPorId } from './alumnos.js?v=202611240800';
+import { crearClase } from './clases.js?v=202611241130';
+import { lunesDe, sumarDias } from './fechas.js?v=202611241130';
+import { hoyLocal } from './reloj.js?v=202611241130';
+import { colorPorId } from './alumnos.js?v=202611241130';
+import { precioDemo } from './tarifas.js?v=202611241130';
 function alumnos(nombres, prefijo) {
     return nombres.map(([nombre, telefono], i) => ({ id: `${prefijo}${i}`, nombre, telefono }));
 }
@@ -49,6 +50,9 @@ export const alumnosCobrosDemo = [
 ].map(([alumno, grupo, ancla]) => ({
     id: alumno.id, nombre: alumno.nombre, grupo: `Grupo ${grupo}`, ancla, montoUYU: 6500,
 }));
+// Las fichas demo cargan su tarifa desde PRECIOS_DEMO en `fichasDemo()`.
+// Esta lista sintética es la semilla histórica de Cobros: nunca se usa como
+// fallback de una ficha real.
 /**
  * La semana demo (lunes a sábado) que contiene el día de `ahora`.
  * Desde el 23/11 el estado NO sale del reloj (auto-marcado descartado): los
@@ -79,6 +83,8 @@ export function fichasDemo(hoy) {
         color: colorPorId(a.id),
         contacto: telefonosDemo.get(a.id) ?? '',
         pagado: false,
+        // Precio demo explícito: se siembra SOLO en datos sintéticos.
+        tarifaUYU: precioDemo(i % 3 === 2 ? 'clase-individual' : 'mensualidad', '2026-01-01'),
     }));
 }
 export function datosDemo(ahora) {
