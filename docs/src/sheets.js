@@ -97,12 +97,13 @@ export const FRANJA_CIERRE = 64; // px desde el borde superior del sheet
  * aunque haya pasado por abajo. `cancelado` descarta gestos que el sistema
  * tomó (scroll/pull-to-refresh).
  */
-export function debeCerrarPorDeslizar(dy, maxBajo, cancelado, umbral = UMBRAL_ARRASTRE_CIERRE) {
+export function debeCerrarPorDeslizar(dy, maxBajo, cancelado, umbral = UMBRAL_ARRASTRE_CIERRE, altoPanel = 0) {
     if (cancelado)
         return false;
     if (dy <= 0 || maxBajo < dy)
         return false; // hacia arriba o inconsistente
-    return dy >= umbral;
+    const limite = altoPanel > 0 ? Math.min(umbral, altoPanel * 0.2) : umbral;
+    return dy >= limite;
 }
 /**
  * Y si no cerró, cuánto debe volver: siempre a su lugar (sin cierre parcial

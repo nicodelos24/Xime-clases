@@ -133,10 +133,12 @@ export function debeCerrarPorDeslizar(
   maxBajo: number,
   cancelado: boolean,
   umbral = UMBRAL_ARRASTRE_CIERRE,
+  altoPanel = 0,
 ): boolean {
   if (cancelado) return false;
   if (dy <= 0 || maxBajo < dy) return false; // hacia arriba o inconsistente
-  return dy >= umbral;
+  const limite = altoPanel > 0 ? Math.min(umbral, altoPanel * 0.2) : umbral;
+  return dy >= limite;
 }
 
 /**

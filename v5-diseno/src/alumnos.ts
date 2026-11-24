@@ -33,6 +33,12 @@ export type AlumnoFicha = {
   contacto: string;
   /** Estado del primer pago informado al dar de alta (informativo; el ledger manda). */
   pagado: boolean;
+  /**
+   * Foto opcional elegida por la dueña (24-nov): dataURL chico (<~150 KB),
+   * se confirma al Guardar la ficha y se ve en Alumnos y Cobros. Vacío/ausente
+   * = sin foto, quedan las iniciales del avatar.
+   */
+  foto?: string;
 };
 
 /** Datos que la ficha permite cargar/editar (sin ID, sin fecha de alta).
@@ -156,6 +162,7 @@ export function crearAlumno(
     fechaAlta: input.fechaAlta ?? fechaAlta,
     activo: true,
     color: colorPorId(id),
+    foto: '',
   };
 }
 
@@ -181,6 +188,8 @@ export function editarAlumno(alumno: AlumnoFicha, input: AlumnoFichaInput): Alum
     // Alta y pago inicial se congelan: la edición no reescribe la identidad.
     fechaAlta: alumno.fechaAlta,
     pagado: alumno.pagado,
+    // La foto pendiente la confirma el repositorio al Guardar la ficha.
+    foto: alumno.foto ?? '',
   };
 }
 
@@ -205,7 +214,21 @@ export function normalizarFichaGuardada(dato: Partial<AlumnoFicha> & { tipo?: st
     color: typeof dato.color === 'string' ? dato.color : colorPorId(id),
     contacto: typeof dato.contacto === 'string' ? dato.contacto : '',
     pagado: typeof dato.pagado === 'boolean' ? dato.pagado : false,
+    foto: esFotoValida(dato.foto) ? dato.foto : '',
   };
+}
+
+/**
+ * Valida la foto guardada/elegida (24-nov): dataURL de imagen chico. Defensa
+ * al leer: un valor enorme o de otro tipo no rompe la ficha, se descarta y el
+ * alumno vuelve a verse con sus iniciales. Techo 150_000 caracteres: una foto
+ * de 480px JPEG calidad .72 suele quedar bajo este techo; más no es un avatar.
+ */
+export const MAX_CARACTERES_FOTO = 150_000;
+
+export function esFotoValida(valor: unknown): boolean {
+  if (typeof valor !== 'string' || valor.length === 0 || valor.length > MAX_CARACTERES_FOTO) return false;
+  return /^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/.test(valor);
 }
 
 /** Identificador de ID válido (para tests y defensa al leer). */

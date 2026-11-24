@@ -25,7 +25,7 @@ import {
 import { hoyLocal, type InstanteMs, type Reloj } from './reloj.ts';
 import { anularPago, corregirFechaPago, registrarPago, type Pago, type PagoNuevo } from './cobros.ts';
 import {
-  crearAlumno, editarAlumno, normalizarFichaGuardada,
+  crearAlumno, editarAlumno, esFotoValida, normalizarFichaGuardada,
   type AlumnoFicha, type AlumnoFichaInput,
 } from './alumnos.ts';
 import {
@@ -197,6 +197,8 @@ export interface RepositorioDeClases {
   listarAlumnos(): readonly AlumnoFicha[];
   crearAlumno(input: AlumnoFichaInput): AlumnoFicha;
   editarAlumno(id: string, input: AlumnoFichaInput): AlumnoFicha;
+  /** Foto del alumno (24-nov): dataURL validado, o '' para quitarla. */
+  asignarFotoAlumno(id: string, foto: string): AlumnoFicha;
 }
 
 /** Repositorio único: la UI lee y manda comandos acá, nunca al estado suelto. */
@@ -280,6 +282,23 @@ export class RepositorioClases implements RepositorioDeClases {
     this.persistir(nuevo, true);
     this.estado = nuevo;
     return editada;
+  }
+
+  /**
+   * Foto del alumno (24-nov): acepta dataURL de imagen chico (lo valida el
+   * dominio con `esFotoValida`) o '' para quitarla. Persiste en la MISMA
+   * ficha, así Alumnos y Cobros comparten la foto con un solo dato guardado.
+   */
+  asignarFotoAlumno(id: string, foto: string): AlumnoFicha {
+    const estado = this.cargar();
+    const ficha = estado.alumnos.find((a) => a.id === id);
+    if (!ficha) throw new Error('No se encontró la ficha del alumno');
+    const fotoLimpia = esFotoValida(foto) ? foto : '';
+    const actualizada: AlumnoFicha = { ...ficha, foto: fotoLimpia };
+    const nuevo = { ...estado, alumnos: estado.alumnos.map((a) => (a.id === id ? actualizada : a)) };
+    this.persistir(nuevo, true);
+    this.estado = nuevo;
+    return actualizada;
   }
 
   /** Crea una clase nueva y la persiste. */
