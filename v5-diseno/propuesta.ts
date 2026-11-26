@@ -11,6 +11,7 @@ import {
   resumenCobros, cobrosIndividuales, deudaIndividual as deudaInd, filtrarCobros, ordenarCobros,
   type EstadoCobro, type OrdenCobro, type Pago, type AlumnoCobro, type DeudaIndividual,
 } from './src/cobros.ts';
+import { cobrosDeLaSemana, estadoCobro, tieneCobros, type FilaAgendaCobro } from './src/agenda-cobros.ts';
 import { precioPrecargado, precio } from './src/tarifas.ts';
 import {
   construirVista, filtrarYOrdenar, puntoEstadoVence, textoEstadoVence, validarAlumno,
@@ -2341,6 +2342,10 @@ type CobroIndividualVista = ReturnType<typeof verCobrosIndividuales>[number];
    En memoria, como los de Alumnos: no se guardan en localStorage. */
 let estadoCobros: EstadoCobro = 'todos';
 let ordenCobros: OrdenCobro = 'vencimiento';
+/** Semana mirada en la agenda de Cobros (lunes "AAAA-MM-DD"). */
+let lunesCobros: string | null = null;
+/** Día elegido en la tira de Cobros; si no, se resalta el de hoy. */
+let diaCobrosSeleccionado: string | null = null;
 
 function fechaBreve(fecha: string) {
   return fechaCorta(fecha);
@@ -2350,6 +2355,96 @@ function textoVence(dias: number) {
   if (dias === 0) return 'Vence hoy';
   const n = Math.abs(dias);
   return `${dias < 0 ? 'Venció hace' : 'Vence en'} ${n} ${n === 1 ? 'día' : 'días'}`;
+}
+
+function filasAgendaCobros(r: ReturnType<typeof verCobros>): FilaAgendaCobro[] {
+  const individuales = verCobrosIndividuales().map((f) => ({
+    fecha: f.fecha, alumno: f.alumno, estado: estadoCobro(-1, Boolean(f.pago)),
+  }));
+  const mensuales = r.filas.map((f) => ({
+    fecha: f.fecha, alumno: f.alumno, estado: estadoCobro(f.dias, Boolean(f.pago)),
+  }));
+  // Misma fuente que la lista: se respeta el filtro si el dueño eligió uno.
+  return [...individuales, ...mensuales].filter((f) => estadoCobros === 'todos'
+    || (estadoCobros === 'pagado' ? f.estado === 'pagado' : f.estado !== 'pagado'));
+}
+
+/** Agenda semanal de Cobros: tarjetas de ALUMNO por día de vencimiento. */
+function pintarAgendaCobros(): void {
+  const hoy = hoyLocal(reloj.ahora());
+  const lunes = lunesCobros ?? lunesDe(hoy);
+  const dias = cobrosDeLaSemana(filasAgendaCobros(verCobros()), lunes);
+  const seleccionado = diaCobrosSeleccionado ?? hoy;
+  const h2 = $('#v-cobros-calendario .cobros-titulo-semana h2') as HTMLElement | null;
+  if (h2) {
+    const corto = (f: string) => `${parseFecha(f).d} ${MESES_CORTOS[parseFecha(f).m - 1]}`;
+    const rango = `${corto(lunes)}–${corto(sumarDias(lunes, 6))}`;
+    const propia = lunes === lunesDe(hoy);
+    h2.textContent = propia ? `Esta semana · ${rango}` : `Semana del ${rango}`;
+    h2.setAttribute('aria-label', `Del ${etiquetaDiaCompleta(lunes)} al ${etiquetaDiaCompleta(sumarDias(lunes, 6))}`);
+  }
+  const tira = $('#tira-cobros');
+  if (tira) {
+    tira.innerHTML = dias.map((d) => {
+      const dia = parseFecha(d.fecha);
+      const activo = d.fecha === seleccionado ? ' activo' : '';
+      const puntos = d.cobros.filter((c) => c.estado === 'vencido').length
+        ? ' vencido' : tieneCobros(d) ? ' tiene' : '';
+      return `<button class="tira-dia${puntos}${activo}" type="button" data-fecha="${d.fecha}"
+        aria-label="${esc(etiquetaDiaCompleta(d.fecha))}: ${d.cobros.length} ${d.cobros.length === 1 ? 'cobro' : 'cobros'}">
+        <span><i>${diaCorto(d.fecha)}</i><em>${mesCorto(d.fecha)}</em></span><b>${dia.d}</b></button>`;
+    }).join('');
+    tira.querySelectorAll<HTMLButtonElement>('.tira-dia').forEach((b) => b.addEventListener('click', () => {
+      diaCobrosSeleccionado = b.dataset.fecha as string;
+      $$('#tira-cobros .tira-dia').forEach((o) => o.classList.remove('activo'));
+      b.classList.add('activo');
+      pintarLineaCobros(dias, diaCobrosSeleccionado);
+    }));
+  }
+  pintarLineaCobros(dias, seleccionado);
+}
+
+/** Día elegido primero; el resto de la semana sigue debajo, como en Clases. */
+function pintarLineaCobros(dias: ReturnType<typeof cobrosDeLaSemana>, elegido: string): void {
+  const linea = $('#linea-cobros');
+  if (!linea) return;
+  const elegidoIdx = Math.max(0, dias.findIndex((d) => d.fecha === elegido));
+  const orden = [...dias.slice(elegidoIdx), ...dias.slice(0, elegidoIdx)];
+  const hoy = hoyLocal(reloj.ahora());
+  const tarjetas = (dia: ReturnType<typeof cobrosDeLaSemana>[number]) => dia.cobros.map((c) => {
+    const ficha = repo.listarAlumnos().find((f) => f.id === c.alumno.id) ?? null;
+    const nomCobro = ficha ? nombreCompleto(ficha) : c.alumno.nombre;
+    const avatar = avatarAlumno(c.alumno.nombre, ficha?.id ?? c.alumno.id, ficha?.foto, 30, ficha?.apellido);
+    const monto = ficha ? (precio(ficha, ficha.formaPago === 'por-clase' ? 'clase-individual' : 'mensualidad', dia.fecha) ?? 0) : 0;
+    const estado = c.estado === 'pagado' ? 'pagado' : c.estado === 'vencido' ? 'vencido'
+      : c.estado === 'hoy' ? 'hoy' : 'porvencer';
+    const etiqueta = estado === 'pagado' ? 'Pagado' : estado === 'vencido' ? 'Vencido'
+      : estado === 'hoy' ? 'Vence hoy' : 'Por vencer';
+    return `<li>
+      <button type="button" class="cobro-tarjeta ${estado}" data-cobro="${esc(c.alumno.id)}" aria-haspopup="dialog"
+        aria-label="${esc(nomCobro)}, ${uyu(monto)}, ${etiqueta} el ${esc(fechaCorta(dia.fecha))}">
+        ${avatar}
+        <span class="cobro-tarjeta-datos">
+          <span class="al-nombre">${esc(nomCobro)}</span>
+          <span class="cobro-meta">${esc(ficha?.grupo ? `Grupo ${ficha.grupo} · ` : '')}${uyu(monto)}</span>
+        </span>
+        <span class="cobro-tarjeta-estado">${etiqueta}</span>
+        <svg class="ico" width="13" height="13" aria-hidden="true"><use href="#i-der"/></svg>
+      </button>
+    </li>`;
+  }).join('');
+  linea.innerHTML = orden.map((dia) => {
+    const etiqueta = `${etiquetaDia(dia.fecha)}${dia.fecha === hoy ? ' · hoy' : ''}`;
+    return `<li class="linea-dia">
+      <p class="linea-fecha">${esc(etiqueta)}</p>
+      ${dia.cobros.length ? `<ul class="cobro-tarjetas">${tarjetas(dia)}</ul>`
+        : '<p class="cobro-dia-vacio">Sin vencimientos</p>'}
+    </li>`;
+  }).join('');
+  linea.querySelectorAll<HTMLButtonElement>('[data-cobro]').forEach((b) => b.addEventListener('click', () => {
+    const ficha = repo.listarAlumnos().find((f) => f.id === b.dataset.cobro) ?? null;
+    abrirFichaConCobro(ficha, b);
+  }));
 }
 
 function pintarCobros() {
@@ -2467,7 +2562,38 @@ function pintarCobros() {
   const debo = r.filas.filter((f) => !f.pago && f.dias <= 7).length + filasIndividuales.filter((f) => !f.pago).length;
   const chipDeben = $('#filtros-cobros [data-estado="deben"] .n');
   if (chipDeben) chipDeben.textContent = debo ? String(debo) : '';
+  pintarAgendaCobros();
 }
+
+/* Modo Lista / Calendario dentro de Cobros (pedido de Nico 26/11). */
+function aplicarModoCobros(modo: 'lista' | 'calendario'): void {
+  const lista = $('#v-cobros-lista') as HTMLElement | null;
+  const agenda = $('#v-cobros-calendario') as HTMLElement | null;
+  if (lista) lista.hidden = modo !== 'lista';
+  if (agenda) agenda.hidden = modo !== 'calendario';
+  $$('#v-cobros .cobros-modo').forEach((b) => {
+    const on = (b as HTMLElement).dataset.modo === modo;
+    b.classList.toggle('activo', on);
+    b.setAttribute('aria-pressed', String(on));
+  });
+  if (modo === 'calendario') pintarAgendaCobros();
+  actualizarPistaCobros();
+}
+$$('#v-cobros .cobros-modo').forEach((b) => b.addEventListener('click', () => {
+  aplicarModoCobros((b as HTMLElement).dataset.modo as 'lista' | 'calendario');
+}));
+$('#cobros-semana-anterior')?.addEventListener('click', () => {
+  const lunes = lunesCobros ?? lunesDe(hoyLocal(reloj.ahora()));
+  lunesCobros = sumarDias(lunes, -7);
+  diaCobrosSeleccionado = null;
+  pintarAgendaCobros();
+});
+$('#cobros-semana-siguiente')?.addEventListener('click', () => {
+  const lunes = lunesCobros ?? lunesDe(hoyLocal(reloj.ahora()));
+  lunesCobros = sumarDias(lunes, 7);
+  diaCobrosSeleccionado = null;
+  pintarAgendaCobros();
+});
 
 /* Filtro y orden de Cobros (rediseño 23-nov, B6): mismos chips que Alumnos,
    con «Todos» que limpia. El orden es un par de chips exclusivos. */
@@ -3315,6 +3441,8 @@ setInterval(() => {
   const hoy = hoyLocal(reloj.ahora());
   if (hoy !== diaCobros) {
     diaCobros = hoy;
+    lunesCobros = null;
+    diaCobrosSeleccionado = null;
     pintarCobros();
     pintarAlumnos();
   }
