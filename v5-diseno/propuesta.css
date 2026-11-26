@@ -1120,6 +1120,12 @@ html[data-tema="oscuro"] .cobro-fila .cobro-vence.pronto { background: var(--amb
   animation: subirSheet var(--t-larga) var(--ease) both;
 }
 .sheet.cerrando { animation: bajarSheet var(--t-media) var(--ease) both; }
+/* Aviso «Clase cancelada»: sin velo oscuro y un poco más arriba, para no tapar
+   la tarjeta de mensualidades de Hoy. Mismo radio, borde y estética premium. */
+.sheet.aviso-cancelada {
+  box-shadow: 0 -10px 30px rgba(8, 69, 74, .16), var(--sombra-crema);
+  bottom: calc(var(--sheet-base) + 92px);
+}
 @keyframes subirSheet { from { transform: translateY(24px); opacity: 0; } to { transform: none; opacity: 1; } }
 @keyframes bajarSheet { from { transform: none; opacity: 1; } to { transform: translateY(24px); opacity: 0; } }
 
