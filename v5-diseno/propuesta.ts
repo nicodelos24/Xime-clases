@@ -2602,7 +2602,7 @@ function abrirPagoIndividual(cobro: CobroIndividualVista, origen: HTMLElement): 
       <div><p class="al-nombre">${esc(alumno.nombre)}</p><p class="al-sub">Clase individual · ${esc(fechaCorta(clase.fecha))}</p></div>
       <div class="cobros-panel-dato"><strong class="${faltaTarifa ? 'cobro-sin-tarifa' : ''}">${importeResumen}</strong><span class="al-sub">UYU</span></div>
     </div>
-    <p class="cobros-panel-nota">${pago ? `Registrado el ${esc(fechaCorta(pago.fecha))} por ${esc(pago.quien)}. El importe de este pago no se reescribe.` : faltaTarifa ? 'Falta cargar la tarifa de esta clase. Ingresá el importe en UYU; se guarda en la ficha para las próximas clases. No se usa ningún precio de ejemplo.' : 'La reserva no crea deuda: acá se cobra la clase que ya diste. Corregí la Tarifa en UYU si hace falta: se guarda en la ficha para las próximas clases.'}</p>
+    <p class="cobros-panel-nota">${pago ? `Registrado el ${esc(fechaCorta(pago.fecha))} por ${esc(pago.quien)}. El importe de este pago no se reescribe.` : faltaTarifa ? 'Se guarda en la ficha para las próximas clases.' : 'La reserva no crea deuda: acá se cobra la clase que ya diste. Corregí la Tarifa en UYU si hace falta: se guarda en la ficha para las próximas clases.'}</p>
     <form>
       ${pago ? `<label class="campo"><span>Fecha del pago (día / mes / año)</span></label>${selectorFecha('pago', pago.fecha)}`
         : `<label class="campo"><span>Tarifa en UYU *</span><input name="tarifaUYU" type="number" min="1" step="1" inputmode="numeric" required value="${tarifaEntrada}"></label>

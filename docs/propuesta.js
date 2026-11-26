@@ -1,25 +1,25 @@
 // Clases v5 · navegación + funcionamiento (auto-marcado, Cancelar clase, WhatsApp)
 // La estética vive en tokens.css/propuesta.css; acá solo se cambian estados,
 // textos y el flujo de cancelación. Sin emoji: solo SVG de icons.js.
-import { horaClase, } from './src/clases.js?v=202611262130';
-import { CLAVE_ESTADO, RepositorioClases, almacenLocalStorage } from './src/repositorio.js?v=202611262130';
-import { alumnosCobrosDemo, datosDemo, fichasDemo } from './src/demo.js?v=202611262130';
-import { resumenCobros, cobrosIndividuales, deudaIndividual as deudaInd, filtrarCobros, ordenarCobros, } from './src/cobros.js?v=202611262130';
-import { precioPrecargado, precio } from './src/tarifas.js?v=202611262130';
-import { construirVista, filtrarYOrdenar, puntoEstadoVence, textoEstadoVence, validarAlumno, iniciales, colorPorId, nombreCompleto, } from './src/alumnos.js?v=202611262130';
-import { resumenHoy, clasesDelDia, clasesDeLaSemana } from './src/resumen.js?v=202611262130';
-import { registrarToqueFecha, mesDe } from './src/agenda.js?v=202611262130';
-import { primerDiaDeMes, diaSeleccionadoAlCargar } from './src/agenda-mes.js?v=202611262130';
-import { decisionDeGesto, decisionDeAperturaDeMenu, DURACION_TOQUE_LARGO, UMBRAL_MOVIMIENTO_GESTO, etiquetaProximoPaso } from './src/toque-clase.js?v=202611262130';
-import { destinoDeEnlace, vistaInicial, vistasActivas } from './src/navegacion.js?v=202611262130';
-import { pistaDeTira } from './src/scroll-pista.js?v=202611262130';
-import { actualizarBarra, estadoBarraInicial, debeReaparecerPorQuietud, REAPARECER_TRAS_MS, } from './src/barra-scroll.js?v=202611262130';
-import { ajustarLock, debeBloquearScroll, estiloSheet, debeCerrarPorToqueFuera, esToqueFuera, debeSuprimirClickTrasCierre, decisionCierreSheetsPorNavegacion, debeCerrarPorDeslizar, FRANJA_CIERRE, } from './src/sheets.js?v=202611262130';
-import { diaCorto, mesCorto, etiquetaDia, etiquetaDiaCompleta, etiquetaMes, fechaCorta, sumarDias, parseFecha, lunesDe, diasDelMes, esFechaValida, } from './src/fechas.js?v=202611262130';
-import { relojDelDispositivo, hoyLocal } from './src/reloj.js?v=202611262130';
-import { CLAVE_PREFIJO, PREFIJO_POR_DEFECTO, prefijoEsValido, prefijoSeguro, conPrefijo } from './src/prefijo.js?v=202611262130';
-import { bloqueContacto } from './src/contacto.js?v=202611262130';
-import { textoCancelacion, destinos, resumenEnvio, linkTexto, linkAvisoVencimiento, } from './src/whatsapp.js?v=202611262130';
+import { horaClase, } from './src/clases.js?v=202611262151';
+import { CLAVE_ESTADO, RepositorioClases, almacenLocalStorage } from './src/repositorio.js?v=202611262151';
+import { alumnosCobrosDemo, datosDemo, fichasDemo } from './src/demo.js?v=202611262151';
+import { resumenCobros, cobrosIndividuales, deudaIndividual as deudaInd, filtrarCobros, ordenarCobros, } from './src/cobros.js?v=202611262151';
+import { precioPrecargado, precio } from './src/tarifas.js?v=202611262151';
+import { construirVista, filtrarYOrdenar, puntoEstadoVence, textoEstadoVence, validarAlumno, iniciales, colorPorId, nombreCompleto, } from './src/alumnos.js?v=202611262151';
+import { resumenHoy, clasesDelDia, clasesDeLaSemana } from './src/resumen.js?v=202611262151';
+import { registrarToqueFecha, mesDe } from './src/agenda.js?v=202611262151';
+import { primerDiaDeMes, diaSeleccionadoAlCargar } from './src/agenda-mes.js?v=202611262151';
+import { decisionDeGesto, decisionDeAperturaDeMenu, DURACION_TOQUE_LARGO, UMBRAL_MOVIMIENTO_GESTO, etiquetaProximoPaso } from './src/toque-clase.js?v=202611262151';
+import { destinoDeEnlace, vistaInicial, vistasActivas } from './src/navegacion.js?v=202611262151';
+import { pistaDeTira } from './src/scroll-pista.js?v=202611262151';
+import { actualizarBarra, estadoBarraInicial, debeReaparecerPorQuietud, REAPARECER_TRAS_MS, } from './src/barra-scroll.js?v=202611262151';
+import { ajustarLock, debeBloquearScroll, estiloSheet, debeCerrarPorToqueFuera, esToqueFuera, debeSuprimirClickTrasCierre, decisionCierreSheetsPorNavegacion, debeCerrarPorDeslizar, FRANJA_CIERRE, } from './src/sheets.js?v=202611262151';
+import { diaCorto, mesCorto, etiquetaDia, etiquetaDiaCompleta, etiquetaMes, fechaCorta, sumarDias, parseFecha, lunesDe, diasDelMes, esFechaValida, } from './src/fechas.js?v=202611262151';
+import { relojDelDispositivo, hoyLocal } from './src/reloj.js?v=202611262151';
+import { CLAVE_PREFIJO, PREFIJO_POR_DEFECTO, prefijoEsValido, prefijoSeguro, conPrefijo } from './src/prefijo.js?v=202611262151';
+import { bloqueContacto } from './src/contacto.js?v=202611262151';
+import { textoCancelacion, destinos, resumenEnvio, linkTexto, linkAvisoVencimiento, } from './src/whatsapp.js?v=202611262151';
 /* ------------------------------------------------- estado persistente (local) */
 const reloj = relojDelDispositivo();
 /** Quién opera la app hoy: único dueño. En Fase 4 sale de la sesión. */
@@ -2615,7 +2615,7 @@ function abrirPagoIndividual(cobro, origen) {
       <div><p class="al-nombre">${esc(alumno.nombre)}</p><p class="al-sub">Clase individual · ${esc(fechaCorta(clase.fecha))}</p></div>
       <div class="cobros-panel-dato"><strong class="${faltaTarifa ? 'cobro-sin-tarifa' : ''}">${importeResumen}</strong><span class="al-sub">UYU</span></div>
     </div>
-    <p class="cobros-panel-nota">${pago ? `Registrado el ${esc(fechaCorta(pago.fecha))} por ${esc(pago.quien)}. El importe de este pago no se reescribe.` : faltaTarifa ? 'Falta cargar la tarifa de esta clase. Ingresá el importe en UYU; se guarda en la ficha para las próximas clases. No se usa ningún precio de ejemplo.' : 'La reserva no crea deuda: acá se cobra la clase que ya diste. Corregí la Tarifa en UYU si hace falta: se guarda en la ficha para las próximas clases.'}</p>
+    <p class="cobros-panel-nota">${pago ? `Registrado el ${esc(fechaCorta(pago.fecha))} por ${esc(pago.quien)}. El importe de este pago no se reescribe.` : faltaTarifa ? 'Se guarda en la ficha para las próximas clases.' : 'La reserva no crea deuda: acá se cobra la clase que ya diste. Corregí la Tarifa en UYU si hace falta: se guarda en la ficha para las próximas clases.'}</p>
     <form>
       ${pago ? `<label class="campo"><span>Fecha del pago (día / mes / año)</span></label>${selectorFecha('pago', pago.fecha)}`
         : `<label class="campo"><span>Tarifa en UYU *</span><input name="tarifaUYU" type="number" min="1" step="1" inputmode="numeric" required value="${tarifaEntrada}"></label>

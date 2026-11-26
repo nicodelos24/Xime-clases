@@ -76,7 +76,7 @@ test('ficha individual: sin tarifa propia avisa falta cargar, nunca usa $6500 ni
   assert.deepEqual(deuda, { clases: 1, montoUYU: 0, sinTarifa: true });
   const ui = await readFile(new URL('../propuesta.ts', import.meta.url), 'utf8');
   assert.match(ui, /Falta cargar la tarifa/);
-  assert.match(ui, /No se usa ningún precio de ejemplo/);
+  assert.match(ui, /Se guarda en la ficha para las próximas clases\./);
   assert.match(ui, /registrarPagoConTarifa\(alumno\.id, tarifa/);
   assert.doesNotMatch(ui, /6500/);
 });
