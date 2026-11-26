@@ -216,7 +216,7 @@ try {
     await pagina.waitForTimeout(150);
     etiquetas.push((await chipCiclo.innerText()).trim());
     if (etiquetas.at(-1) === 'Cancelada') {
-      // Sin aviso de WhatsApp, el menú diferido entra a los ~4 s: esperarlo.
+      // Sin aviso de WhatsApp, el menú diferido entra a los ~2 s: esperarlo.
       await pagina.waitForSelector('div.sheet[role="alertdialog"]:not(.cerrando)', { state: 'attached', timeout: 8000 });
       await pagina.locator('div.sheet[role="alertdialog"]:not(.cerrando) [data-mc="deshacer"]').click();
       await esperarCeroHojas();
