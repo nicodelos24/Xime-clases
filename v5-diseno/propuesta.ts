@@ -1018,11 +1018,11 @@ function abrirAgendar(fechaDesdeDia?: string, disparador?: string) {
   });
   cuadro.querySelector('[data-mod="semanal"]')?.addEventListener('click', () => {
     cerrarCuadro(cuadro);
-    abrirFormularioSemanal(fechaDesdeDia ?? diaMesSeleccionado ?? undefined);
+    abrirFormularioSemanal(fechaDesdeDia ?? diaMesSeleccionado ?? undefined, disparador);
   });
   cuadro.querySelector('[data-mod="suelta"]')?.addEventListener('click', () => {
     cerrarCuadro(cuadro);
-    abrirFormularioSuelta(fechaDesdeDia ?? diaMesSeleccionado ?? undefined);
+    abrirFormularioSuelta(fechaDesdeDia ?? diaMesSeleccionado ?? undefined, disparador);
   });
   (cuadro.querySelector('[data-mod="semanal"]') as HTMLElement)?.focus();
 }
@@ -1068,14 +1068,14 @@ function cablearFecha(raiz: ParentNode, nombre: string, onChange?: () => void) {
   anio.addEventListener('change', actualizar);
 }
 
-function abrirFormularioSemanal(fechaDesdeDia?: string) {
+function abrirFormularioSemanal(fechaDesdeDia?: string, disparador?: string) {
   const hoy = hoyLocal(reloj.ahora());
   const propuesta = fechaDesdeDia ?? diaMesSeleccionado;
   // No proponer fechas pasadas: si el día elegido ya pasó, arrancar hoy.
   const inicio = propuesta && propuesta >= hoy ? propuesta : hoy;
   const cuadro = document.createElement('div');
   cuadro.className = 'sheet';
-  cuadro.dataset.disparador = 'abrir-agenda';
+  cuadro.dataset.disparador = disparador ?? 'abrir-agenda';
   cuadro.setAttribute('role', 'dialog');
   cuadro.setAttribute('aria-modal', 'true');
   cuadro.setAttribute('aria-labelledby', 'semanal-titulo');
@@ -1217,13 +1217,12 @@ function cablearBajaRutinas(cuadro: HTMLElement): void {
   });
 }
 
-function abrirFormularioSuelta(fechaDesdeDia?: string, origen?: HTMLElement) {
+function abrirFormularioSuelta(fechaDesdeDia?: string, disparador?: string) {
   // Prioridad: día tocado «Agendar acá» > día seleccionado en el mes > hoy.
   const inicial = fechaDesdeDia ?? diaMesSeleccionado ?? hoyLocal(reloj.ahora());
   const cuadro = document.createElement('div');
   cuadro.className = 'sheet';
-  if (origen?.id) cuadro.dataset.disparador = origen.id;
-  else cuadro.dataset.disparador = 'abrir-agenda';
+  cuadro.dataset.disparador = disparador ?? 'abrir-agenda';
   cuadro.setAttribute('role', 'dialog');
   cuadro.setAttribute('aria-modal', 'true');
   cuadro.setAttribute('aria-labelledby', 'suelta-titulo');
