@@ -170,6 +170,7 @@ function pintarHoy() {
           (c) => `<div class="grupo">
             <span class="grupo-hora">${horaClase(c)}</span>
             <span class="grupo-nombre">${esc(c.nombre)}</span>
+            ${accionClase(c)}
             ${chipEstado(c)}
           </div>`,
         )
@@ -528,8 +529,10 @@ function pintarLinea(fecha: string | null) {
             <p class="clase-sub">${c.alumnos.length} alumnos inscriptos${c.estado === 'cancelada' && c.cancelacion ? ` · ${esc(c.cancelacion.motivo)}` : ''}</p>
             ${desplegableAlumnos(c)}
           </div>
-          ${chipEstado(c)}
-          ${accionClase(c)}
+          <div class="clase-acciones">
+            ${accionClase(c)}
+            ${chipEstado(c)}
+          </div>
         </article>`,
       )
       .join('')}
@@ -700,8 +703,10 @@ function pintarTarjetasDiaMes(): void {
             <p class="clase-sub">${c.alumnos.length} alumnos inscriptos${c.estado === 'cancelada' && c.cancelacion ? ` · ${esc(c.cancelacion.motivo)}` : ''}</p>
             ${desplegableAlumnos(c)}
           </div>
-          ${chipEstado(c)}
-          ${accionClase(c)}
+          <div class="clase-acciones">
+            ${accionClase(c)}
+            ${chipEstado(c)}
+          </div>
         </article>`,
       )
       .join('');

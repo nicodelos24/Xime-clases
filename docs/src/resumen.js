@@ -1,4 +1,4 @@
-import { lunesDe, sumarDias } from './fechas.js?v=202611260415';
+import { lunesDe, sumarDias } from './fechas.js?v=202611261100';
 const plural = (n, uno, muchos) => (n === 1 ? uno : muchos);
 /** Resumen de un día concreto (ya reconciliado). */
 export function resumenHoy(clases, fecha) {

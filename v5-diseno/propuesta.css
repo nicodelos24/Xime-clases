@@ -342,6 +342,8 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; width: 0; }
 }
 .linea-fecha { font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--tq-700); margin: 4px 0 10px 14px; }
 
+.clase-acciones { display: flex; align-items: center; gap: 11px; flex: none; flex-wrap: nowrap; }
+
 .clase {
   display: flex; align-items: center; flex-wrap: wrap; gap: 9px 11px;
   background: var(--bg-alt);
