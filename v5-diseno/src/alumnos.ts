@@ -46,6 +46,9 @@ export type AlumnoFicha = {
    * UI no lo muestra ni permite subir/cambiar/eliminar una foto: solo avatar.
    */
   foto?: string;
+  /** Apellido opcional (26-nov). Junto al `nombre` forma el nombre completo
+   *  visible y las iniciales del avatar; sirve también para buscar por apellido. */
+  apellido?: string;
 };
 
 /** Datos que la ficha permite cargar/editar (sin ID, sin fecha de alta).
@@ -65,6 +68,8 @@ export type AlumnoFichaInput = {
   pagado?: boolean;
   /** Tarifa propia en UYU: entero positivo. Opcional en la edición (conserva la vigente); obligatoria al dar de alta. */
   tarifaUYU?: number;
+  /** Apellido opcional: se compone con el nombre para el nombre completo visible. */
+  apellido?: string;
 };
 
 /** Grupos existentes de la demo (seleccionables, sin crear grupos nuevos). */
@@ -83,9 +88,23 @@ export function colorPorId(id: string): string {
 export function iniciales(nombre: string): string {
   const partes = nombre.trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '').split(/\s+/).filter(Boolean);
   if (partes.length === 0) return '?';
+  // Primera letra de la PRIMERA palabra y del ÚLTIMO apellido (no de la
+  // segunda palabra): «Carla T. García» → CG, «Lucía García» → LG.
+  const ultima = partes[partes.length - 1]!;
+  const segunda = partes.length > 1 && ultima !== partes[0] ? ultima : '';
   // Sólo letras: un nombre hostil no puede convertir las iniciales en HTML.
-  const ini = (partes[0]![0]! + (partes[1]?.[0] ?? '')).toUpperCase().replace(/[^A-Z]/g, '');
+  const ini = (partes[0]![0]! + (segunda[0] ?? '')).toUpperCase().replace(/[^A-Z]/g, '');
   return ini || '?';
+}
+
+/** Nombre completo visible: `nombre` + `apellido` (si hay). Sin apellido, solo `nombre`.
+ *  `nombre` puede traer el apellido ya incluido (datos viejos); por eso solo se
+ *  concatena si el apellido no está ya al final, para no duplicarlo. */
+export function nombreCompleto(a: Pick<AlumnoFicha, 'nombre' | 'apellido'>): string {
+  const apellido = (a.apellido ?? '').trim();
+  if (!apellido) return a.nombre.trim();
+  const n = a.nombre.trim();
+  return n.toLowerCase().endsWith(apellido.toLowerCase()) ? n : `${n} ${apellido}`;
 }
 
 function texto(valor: unknown): string {
@@ -139,6 +158,8 @@ export type CamposNormalizados = {
   pagado: boolean;
   /** Tarifa propia explícita; null = sin tarifa (nunca se guarda un default de demo). */
   tarifaUYU: number | null;
+  /** Apellido opcional; vacío si no se dio. */
+  apellido: string;
 };
 
 export type CamposAlta = AlumnoFichaInput;
@@ -153,6 +174,7 @@ export function normalizarAlumno(input: AlumnoFichaInput): CamposNormalizados {
     contacto: texto(input.contacto),
     pagado: input.pagado ?? false,
     tarifaUYU: input.tarifaUYU ?? null,
+    apellido: texto(input.apellido),
   };
 }
 
@@ -216,6 +238,8 @@ export function editarAlumno(alumno: AlumnoFicha, input: AlumnoFichaInput): Alum
     pagado: alumno.pagado,
     // La UI ya no edita fotos: se conserva el dato histórico sin mostrarlo.
     foto: alumno.foto ?? '',
+    // Apellido opcional: si el formulario no lo trae se conserva el vigente.
+    apellido: input.apellido === undefined ? alumno.apellido ?? '' : texto(input.apellido),
   };
 }
 
@@ -249,6 +273,7 @@ export function normalizarFichaGuardada(dato: Partial<AlumnoFicha> & { tipo?: st
     // Fichas v2 sin tarifa: null, nunca el precio de ejemplo de la demo.
     tarifaUYU: Number.isSafeInteger(dato.tarifaUYU) && (dato.tarifaUYU as number) > 0 ? dato.tarifaUYU as number : null,
     foto: esFotoValida(dato.foto) ? dato.foto : '',
+    apellido: typeof dato.apellido === 'string' ? dato.apellido.trim() : '',
   };
 }
 
@@ -316,7 +341,7 @@ export function construirVista(
         : dias < 0 ? 'vencido' : dias === 0 ? 'hoy' : 'pendiente';
     return {
       ...f,
-      ini: iniciales(f.nombre),
+      ini: iniciales(nombreCompleto(f)),
       vence,
       estadoVence,
       deudaIndividual: deuda,
@@ -357,8 +382,11 @@ export function filtrarYOrdenar(
   orden: OrdenAlumnos,
 ): FichaVista[] {
   const q = busqueda.trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  const norm = (x: string) => x.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
   const out = filas.filter((a) => {
-    if (q && !a.nombre.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').includes(q)) return false;
+    // Busca por nombre completo o por apellido por separado (los datos viejos
+    // guardan todo en `nombre`, así que ya cubre ambos casos).
+    if (q && !norm(nombreCompleto(a)).includes(q)) return false;
     // Modalidad se combina con OR: si se eligieron ambas, se muestran todos.
     // El resto de los filtros (aldia, búsqueda) sigue combinándose con AND.
     const modalidades = new Set(['mensual', 'individual'].filter((m) => filtros.has(m)));

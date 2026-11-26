@@ -653,50 +653,6 @@ html[data-tema="oscuro"] .avatar:not(.avatar-2):not(.avatar-3):not(.avatar-4):no
 /* Rediseño 23-nov: estilos de la pieza 2 (ficha + Cobros), sobre tokens v5.
    Nada fuera de la ficha y de Cobros; sin emoji, sin ids nuevos de color. */
 
-/* ---- Foto de alumno (24-nov) ----
-   El círculo es el mismo .avatar en las dos listas y en la ficha: cuando hay
-   foto, una <img> cuadrada llena el círculo (border-radius 50% recorta igual);
-   sin foto quedan las iniciales de siempre. Nada nuevo de color ni tema. */
-.avatar-foto { overflow: hidden; padding: 0; flex: none; display: grid; place-items: center; border: 1px solid var(--linea); }
-.avatar-foto > .avatar { border: 0; }
-.avatar-foto > img { grid-area: 1 / 1; width: 100%; height: 100%; object-fit: cover; object-position: center; display: block; }
-.foto-alumno { display: flex; align-items: flex-start; gap: 12px; margin: 2px 0 10px; }
-.foto-alumno-preview { flex: none; display: grid; place-items: center; width: 64px; height: 64px; }
-.foto-alumno-acciones { display: flex; flex-direction: column; gap: 6px; min-width: 0; flex: 1; }
-/* El error se crea en el formulario, pero se pinta dentro del bloque de foto
-   al que pertenece la acción. Así queda visible junto al control, sin sumar
-   un alert global ni desplazar el flujo de la ficha. */
-.foto-alumno-acciones .foto-alumno-error { margin: 2px 0 0; color: var(--rosa); }
-[data-tema="oscuro"] .foto-alumno-acciones .foto-alumno-error { color: var(--rosa-pastel); }
-.foto-alumno-acciones .ficha-accion {
-  align-self: stretch; justify-content: center; min-height: 44px;
-  border: 1px solid var(--linea); border-radius: var(--r-chico);
-  background: var(--bg-alt); color: var(--tq-700); font-size: 13px;
-  text-decoration: none; transition: background var(--t-rapida) var(--ease), transform var(--t-rapida) var(--ease);
-}
-.foto-alumno-acciones .ficha-accion:first-child { padding-top: 11px; }
-.foto-alumno-acciones .ficha-accion + .ficha-accion { border-top: 1px solid var(--linea); }
-.foto-alumno-acciones .ficha-accion:last-child { padding-bottom: 11px; }
-.foto-alumno-acciones .ficha-accion:hover { background: var(--tq-50); }
-[data-tema="oscuro"] .foto-alumno-acciones .ficha-accion:hover { background: var(--tq-100); }
-.foto-alumno-acciones .ficha-accion:active { transform: scale(.97); }
-.foto-alumno-acciones .ficha-accion:focus-visible { outline: 2px solid var(--tq-600); outline-offset: 2px; }
-[data-tema="oscuro"] .foto-alumno-acciones .ficha-accion { color: var(--tq-700); }
-.foto-alumno-acciones .ficha-foto-quitar { color: var(--rosa); }
-[data-tema="oscuro"] .foto-alumno-acciones .ficha-foto-quitar { color: var(--rosa-pastel); }
-.foto-alumno-nota { font-size: 13px; margin: 0; }
-@media (prefers-reduced-motion: reduce) {
-  .foto-alumno-acciones .ficha-accion { transition: none; }
-  .foto-alumno-acciones .ficha-accion:active { transform: none; }
-}
-@media (max-width: 360px) {
-  .foto-alumno { flex-wrap: wrap; }
-  .foto-alumno-preview { width: 100%; }
-  .foto-alumno-acciones { display: grid; grid-template-columns: 1fr 1fr; }
-  .foto-alumno-acciones .ficha-foto-quitar { justify-self: stretch; text-align: center; }
-  .foto-alumno-nota { grid-column: 1 / -1; text-align: center; }
-  .foto-alumno-acciones .foto-alumno-error { grid-column: 1 / -1; }
-}
 
 /* Zona no interactiva de la tarjeta: presión larga y toque simple (spec 24-nov). */
 .clase, .grupo { touch-action: manipulation; }
@@ -1185,6 +1141,42 @@ html[data-tema="oscuro"] .cobro-fila .cobro-vence.pronto { background: var(--amb
 .campo input:focus, .campo textarea:focus {
   outline: none; border-color: var(--tq-500); box-shadow: 0 0 0 3px var(--tq-100);
 }
+
+/* Apellido opcional (26/11): píldora discreta bajo «Nombre» que despliega el
+   campo. Mismo lenguaje que .dia-chip/.opcion: sombra suave, transición
+   corta, nada de botones grandes (no se tocan tamaños de botones). */
+.apellido-toggle {
+  display: inline-flex; align-items: center; gap: 7px;
+  justify-self: start; margin-top: 9px;
+  border: 1.5px solid var(--linea); background: var(--tq-50); color: var(--tq-700);
+  border-radius: 999px; padding: 7px 12px;
+  font: inherit; font-size: 12.5px; font-weight: 700; cursor: pointer;
+  box-shadow: var(--sombra);
+  transition: background var(--t-rapida) var(--ease), border-color var(--t-rapida) var(--ease),
+    transform var(--t-rapida) var(--ease), box-shadow var(--t-rapida) var(--ease);
+}
+.apellido-toggle:hover { background: var(--tq-100); border-color: var(--tq-100); transform: translateY(-1px); }
+.apellido-toggle:active { transform: scale(.97); }
+.apellido-toggle:focus-visible { outline: 2px solid var(--tq-600); outline-offset: 2px; }
+.apellido-toggle .ico { width: 13px; height: 13px; stroke-width: 2.4; flex: none; transition: transform var(--t-media) var(--ease); }
+.apellido-toggle[aria-expanded="true"] .ico { transform: rotate(45deg); }
+.apellido-toggle .hint { font-weight: 500; color: var(--tinta-2); }
+[data-tema="oscuro"] .apellido-toggle { background: #123C3F; border-color: #1E5257; color: #9FE3DE; }
+[data-tema="oscuro"] .apellido-toggle:hover { background: #17484C; }
+
+/* Campo desplegado: animación de entrada corta + nota de uso. */
+.apellido-campo { animation: subirSheet var(--t-media) var(--ease) both; }
+.campo > span { align-items: baseline; }
+.campo > span .quitar {
+  border: 0; background: transparent; color: var(--tq-700);
+  font: inherit; font-size: 11.5px; font-weight: 700; text-decoration: underline;
+  text-underline-offset: 2px; padding: 3px 4px; margin-left: auto; cursor: pointer;
+  border-radius: 6px;
+  transition: color var(--t-rapida) var(--ease), background var(--t-rapida) var(--ease);
+}
+.campo > span .quitar:hover { color: var(--rosa); background: var(--rosa-tinte); text-decoration: none; }
+.campo > span .quitar:focus-visible { outline: 2px solid var(--tq-600); outline-offset: 1px; }
+.campo-nota { font-size: 11.5px; color: var(--tinta-2); line-height: 1.4; margin: 0; }
 
 .opciones { display: grid; gap: 8px; }
 .opcion {

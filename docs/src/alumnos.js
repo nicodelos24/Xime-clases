@@ -26,9 +26,23 @@ export function iniciales(nombre) {
     const partes = nombre.trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '').split(/\s+/).filter(Boolean);
     if (partes.length === 0)
         return '?';
+    // Primera letra de la PRIMERA palabra y del ÚLTIMO apellido (no de la
+    // segunda palabra): «Carla T. García» → CG, «Lucía García» → LG.
+    const ultima = partes[partes.length - 1];
+    const segunda = partes.length > 1 && ultima !== partes[0] ? ultima : '';
     // Sólo letras: un nombre hostil no puede convertir las iniciales en HTML.
-    const ini = (partes[0][0] + (partes[1]?.[0] ?? '')).toUpperCase().replace(/[^A-Z]/g, '');
+    const ini = (partes[0][0] + (segunda[0] ?? '')).toUpperCase().replace(/[^A-Z]/g, '');
     return ini || '?';
+}
+/** Nombre completo visible: `nombre` + `apellido` (si hay). Sin apellido, solo `nombre`.
+ *  `nombre` puede traer el apellido ya incluido (datos viejos); por eso solo se
+ *  concatena si el apellido no está ya al final, para no duplicarlo. */
+export function nombreCompleto(a) {
+    const apellido = (a.apellido ?? '').trim();
+    if (!apellido)
+        return a.nombre.trim();
+    const n = a.nombre.trim();
+    return n.toLowerCase().endsWith(apellido.toLowerCase()) ? n : `${n} ${apellido}`;
 }
 function texto(valor) {
     return typeof valor === 'string' ? valor.trim() : '';
@@ -84,6 +98,7 @@ export function normalizarAlumno(input) {
         contacto: texto(input.contacto),
         pagado: input.pagado ?? false,
         tarifaUYU: input.tarifaUYU ?? null,
+        apellido: texto(input.apellido),
     };
 }
 const ID_RE = /^al-[a-z0-9]{8,}$/i;
@@ -143,6 +158,8 @@ export function editarAlumno(alumno, input) {
         pagado: alumno.pagado,
         // La UI ya no edita fotos: se conserva el dato histórico sin mostrarlo.
         foto: alumno.foto ?? '',
+        // Apellido opcional: si el formulario no lo trae se conserva el vigente.
+        apellido: input.apellido === undefined ? alumno.apellido ?? '' : texto(input.apellido),
     };
 }
 /**
@@ -178,6 +195,7 @@ export function normalizarFichaGuardada(dato) {
         // Fichas v2 sin tarifa: null, nunca el precio de ejemplo de la demo.
         tarifaUYU: Number.isSafeInteger(dato.tarifaUYU) && dato.tarifaUYU > 0 ? dato.tarifaUYU : null,
         foto: esFotoValida(dato.foto) ? dato.foto : '',
+        apellido: typeof dato.apellido === 'string' ? dato.apellido.trim() : '',
     };
 }
 /**
@@ -215,7 +233,7 @@ export function construirVista(fichas, pagosPorAlumno, hoy, deudasIndividuales =
                 : dias < 0 ? 'vencido' : dias === 0 ? 'hoy' : 'pendiente';
         return {
             ...f,
-            ini: iniciales(f.nombre),
+            ini: iniciales(nombreCompleto(f)),
             vence,
             estadoVence,
             deudaIndividual: deuda,
@@ -247,8 +265,11 @@ export function puntoEstadoVence(f) {
 /** Aplica búsqueda acento-insensible, filtros y orden a la vista. Sin mutar. */
 export function filtrarYOrdenar(filas, busqueda, filtros, orden) {
     const q = busqueda.trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    const norm = (x) => x.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
     const out = filas.filter((a) => {
-        if (q && !a.nombre.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').includes(q))
+        // Busca por nombre completo o por apellido por separado (los datos viejos
+        // guardan todo en `nombre`, así que ya cubre ambos casos).
+        if (q && !norm(nombreCompleto(a)).includes(q))
             return false;
         // Modalidad se combina con OR: si se eligieron ambas, se muestran todos.
         // El resto de los filtros (aldia, búsqueda) sigue combinándose con AND.
