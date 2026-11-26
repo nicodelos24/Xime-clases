@@ -1322,7 +1322,7 @@ function abrirMenuCancelada(id: string): void {
   }
   clasePendienteMenuCancelada = undefined;
   const previo = document.createElement('div');
-  previo.className = 'sheet';
+  previo.className = 'sheet aviso-cancelada';
   previo.setAttribute('role', 'alertdialog');
   previo.setAttribute('aria-label', 'Clase cancelada');
   previo.dataset.menuCancelada = id;
