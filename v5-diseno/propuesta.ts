@@ -446,6 +446,12 @@ function ciclarEstadoDeChip(id: string): void {
     toast.dataset.revertirManual = id;
   } else if (estadoAnterior === 'cancelada') {
     avisar('Clase vuelta a Por dar', 3000);
+  } else if (estadoAnterior === 'dada') {
+    // Cancelación directa desde el chip: mismo aviso que en el panel, sin
+    // envío inmediato. El sheet diferido se encarga de Deshacer / WhatsApp.
+    avisar('Clase cancelada (estaba dada) · Deshacer', 6000);
+    toast.dataset.deshacer = '1';
+    toast.dataset.clase = id;
   }
 }
 

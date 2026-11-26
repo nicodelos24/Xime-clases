@@ -1,25 +1,25 @@
 // Clases v5 · navegación + funcionamiento (auto-marcado, Cancelar clase, WhatsApp)
 // La estética vive en tokens.css/propuesta.css; acá solo se cambian estados,
 // textos y el flujo de cancelación. Sin emoji: solo SVG de icons.js.
-import { horaClase, } from './src/clases.js?v=202611261412';
-import { CLAVE_ESTADO, RepositorioClases, almacenLocalStorage } from './src/repositorio.js?v=202611261412';
-import { alumnosCobrosDemo, datosDemo, fichasDemo } from './src/demo.js?v=202611261412';
-import { resumenCobros, cobrosIndividuales, deudaIndividual as deudaInd, filtrarCobros, ordenarCobros, } from './src/cobros.js?v=202611261412';
-import { precioPrecargado, precio } from './src/tarifas.js?v=202611261412';
-import { construirVista, filtrarYOrdenar, puntoEstadoVence, textoEstadoVence, validarAlumno, iniciales, colorPorId, } from './src/alumnos.js?v=202611261412';
-import { resumenHoy, clasesDelDia, clasesDeLaSemana } from './src/resumen.js?v=202611261412';
-import { registrarToqueFecha, mesDe } from './src/agenda.js?v=202611261412';
-import { primerDiaDeMes, diaSeleccionadoAlCargar } from './src/agenda-mes.js?v=202611261412';
-import { decisionDeGesto, decisionDeAperturaDeMenu, DURACION_TOQUE_LARGO, UMBRAL_MOVIMIENTO_GESTO, etiquetaProximoPaso } from './src/toque-clase.js?v=202611261412';
-import { destinoDeEnlace, vistaInicial, vistasActivas } from './src/navegacion.js?v=202611261412';
-import { pistaDeTira } from './src/scroll-pista.js?v=202611261412';
-import { actualizarBarra, estadoBarraInicial, debeReaparecerPorQuietud, REAPARECER_TRAS_MS, } from './src/barra-scroll.js?v=202611261412';
-import { ajustarLock, debeBloquearScroll, estiloSheet, debeCerrarPorToqueFuera, esToqueFuera, debeSuprimirClickTrasCierre, decisionCierreSheetsPorNavegacion, debeCerrarPorDeslizar, FRANJA_CIERRE, } from './src/sheets.js?v=202611261412';
-import { diaCorto, mesCorto, etiquetaDia, etiquetaDiaCompleta, etiquetaMes, fechaCorta, sumarDias, parseFecha, lunesDe, diasDelMes, esFechaValida, } from './src/fechas.js?v=202611261412';
-import { relojDelDispositivo, hoyLocal } from './src/reloj.js?v=202611261412';
-import { CLAVE_PREFIJO, PREFIJO_POR_DEFECTO, prefijoEsValido, prefijoSeguro, conPrefijo } from './src/prefijo.js?v=202611261412';
-import { bloqueContacto } from './src/contacto.js?v=202611261412';
-import { textoCancelacion, destinos, resumenEnvio, linkTexto, linkAvisoVencimiento, } from './src/whatsapp.js?v=202611261412';
+import { horaClase, } from './src/clases.js?v=202611260415';
+import { CLAVE_ESTADO, RepositorioClases, almacenLocalStorage } from './src/repositorio.js?v=202611260415';
+import { alumnosCobrosDemo, datosDemo, fichasDemo } from './src/demo.js?v=202611260415';
+import { resumenCobros, cobrosIndividuales, deudaIndividual as deudaInd, filtrarCobros, ordenarCobros, } from './src/cobros.js?v=202611260415';
+import { precioPrecargado, precio } from './src/tarifas.js?v=202611260415';
+import { construirVista, filtrarYOrdenar, puntoEstadoVence, textoEstadoVence, validarAlumno, iniciales, colorPorId, } from './src/alumnos.js?v=202611260415';
+import { resumenHoy, clasesDelDia, clasesDeLaSemana } from './src/resumen.js?v=202611260415';
+import { registrarToqueFecha, mesDe } from './src/agenda.js?v=202611260415';
+import { primerDiaDeMes, diaSeleccionadoAlCargar } from './src/agenda-mes.js?v=202611260415';
+import { decisionDeGesto, decisionDeAperturaDeMenu, DURACION_TOQUE_LARGO, UMBRAL_MOVIMIENTO_GESTO, etiquetaProximoPaso } from './src/toque-clase.js?v=202611260415';
+import { destinoDeEnlace, vistaInicial, vistasActivas } from './src/navegacion.js?v=202611260415';
+import { pistaDeTira } from './src/scroll-pista.js?v=202611260415';
+import { actualizarBarra, estadoBarraInicial, debeReaparecerPorQuietud, REAPARECER_TRAS_MS, } from './src/barra-scroll.js?v=202611260415';
+import { ajustarLock, debeBloquearScroll, estiloSheet, debeCerrarPorToqueFuera, esToqueFuera, debeSuprimirClickTrasCierre, decisionCierreSheetsPorNavegacion, debeCerrarPorDeslizar, FRANJA_CIERRE, } from './src/sheets.js?v=202611260415';
+import { diaCorto, mesCorto, etiquetaDia, etiquetaDiaCompleta, etiquetaMes, fechaCorta, sumarDias, parseFecha, lunesDe, diasDelMes, esFechaValida, } from './src/fechas.js?v=202611260415';
+import { relojDelDispositivo, hoyLocal } from './src/reloj.js?v=202611260415';
+import { CLAVE_PREFIJO, PREFIJO_POR_DEFECTO, prefijoEsValido, prefijoSeguro, conPrefijo } from './src/prefijo.js?v=202611260415';
+import { bloqueContacto } from './src/contacto.js?v=202611260415';
+import { textoCancelacion, destinos, resumenEnvio, linkTexto, linkAvisoVencimiento, } from './src/whatsapp.js?v=202611260415';
 /* ------------------------------------------------- estado persistente (local) */
 const reloj = relojDelDispositivo();
 /** Quién opera la app hoy: único dueño. En Fase 4 sale de la sesión. */
@@ -421,6 +421,13 @@ function ciclarEstadoDeChip(id) {
     }
     else if (estadoAnterior === 'cancelada') {
         avisar('Clase vuelta a Por dar', 3000);
+    }
+    else if (estadoAnterior === 'dada') {
+        // Cancelación directa desde el chip: mismo aviso que en el panel, sin
+        // envío inmediato. El sheet diferido se encarga de Deshacer / WhatsApp.
+        avisar('Clase cancelada (estaba dada) · Deshacer', 6000);
+        toast.dataset.deshacer = '1';
+        toast.dataset.clase = id;
     }
 }
 /** Cablea los chips y botones de un bloque de tarjetas (mes o semana). */

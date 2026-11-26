@@ -15,9 +15,9 @@
  *    días. Al avanzar el reloj se generan las nuevas, sin corte fijo invisible
  *    y sin borrar las ya generadas (incluido el historial).
  */
-import { crearClase } from './clases.js?v=202611261412';
-import { diaSemanaIndex, diasDeFecha, esFechaValida, sumarDias } from './fechas.js?v=202611261412';
-import { hoyLocal, parsearMinutos } from './reloj.js?v=202611261412';
+import { crearClase } from './clases.js?v=202611260415';
+import { diaSemanaIndex, diasDeFecha, esFechaValida, sumarDias } from './fechas.js?v=202611260415';
+import { hoyLocal, parsearMinutos } from './reloj.js?v=202611260415';
 /** Cuántos días por delante se materializan las ocurrencias de una rutina. */
 export const HORIZONTE_DIAS = 60;
 const ID_RUTINA = /^rut-[A-Za-z0-9-]+$/;
