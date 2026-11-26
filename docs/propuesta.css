@@ -728,31 +728,33 @@ html[data-tema="oscuro"] .avatar:not(.avatar-2):not(.avatar-3):not(.avatar-4):no
 .ficha-chip-vence:not(:empty) { font-weight: 650; }
 .ficha-chip-ok { color: var(--verde); background: var(--verde-tinte); border-color: transparent; }
 
-/* ---- Burbujas «?» con ayuda accesible (A1) ---- */
+/* ---- Ayudas contextuales (26-nov): ícono SVG sutil, sin «?» plano ---- */
 .ayuda { display: inline-flex; align-items: center; gap: 2px; }
 .ayuda-btn {
   position: relative;               /* ancla del ::before de área táctil */
   display: inline-grid; place-items: center;
-  width: 32px; height: 32px;              /* visual 32×32 (spec §1.1) */
+  width: 22px; height: 22px;              /* discreto junto al texto, no compite */
   border-radius: 50%; overflow: visible;
-  background: var(--tq-100); color: var(--tq-700);
+  background: transparent; color: var(--tinta-2);
   border: 1px solid var(--linea); font: 700 15px/1 system-ui, sans-serif;
-  flex: none;
+  vertical-align: middle; flex: none;
   transition: background var(--t-rapida) var(--ease), transform var(--t-rapida) var(--ease);
 }
 .ayuda-btn::before {
   content: ""; position: absolute;        /* área táctil 44×44 sin agrandar el círculo */
-  inset: -6px; border-radius: 50%;
+  inset: -11px; border-radius: 50%;
 }
-[data-tema="oscuro"] .ayuda-btn { background: var(--tq-100); color: var(--tq-300); border-color: var(--tq-200); }
-.ayuda-btn:hover { background: var(--tq-200); }
+[data-tema="oscuro"] .ayuda-btn { color: var(--tinta-2); border-color: var(--linea); }
+.ayuda-btn:hover { background: var(--tq-100); color: var(--tq-700); border-color: var(--tq-100); }
 .ayuda-btn:active { transform: scale(.9); }
 .ayuda-btn:focus-visible { outline: 2px solid var(--tq-600); outline-offset: 2px; }
+.ayuda-btn .ayuda-ico { width: 14px; height: 14px; stroke-width: 2; }
+.ayuda-btn[aria-expanded="true"] { background: var(--tq-100); color: var(--tq-700); border-color: var(--tq-100); }
 .ayuda-texto {
   display: block; width: 100%; margin-top: 6px;
   color: var(--tinta-2); font-size: 12.5px; line-height: 1.45;
 }
-.ayuda-btn[aria-expanded="true"] { background: var(--tq-200); }
+
 
 /* ---- WhatsApp con ícono SVG (A3): botón PRIMARIO estilo .btn-wa ---- */
 .ficha-accion-wa {
@@ -779,10 +781,9 @@ html[data-tema="oscuro"] .avatar:not(.avatar-2):not(.avatar-3):not(.avatar-4):no
 @media (prefers-reduced-motion: reduce) {
   .ayuda-btn, .ficha-acciones .ficha-accion-wa { transition: none; transform: none; }
 }
-.ayuda-btn .ico { stroke-width: 2.2; }
 
-.ficha-accion-ayuda { margin-top: 8px; }
-.ficha-accion-ayuda .ayuda-texto { width: auto; margin-top: 4px; }
+
+.ficha-accion-ayuda { margin-top: 8px; color: var(--tinta-2); font-size: 12px; line-height: 1.45; }
 
 /* ---------- Cobros ---------- */
 .kpis-cobros { grid-template-columns: repeat(2, 1fr); }

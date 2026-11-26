@@ -1,25 +1,25 @@
 // Clases v5 · navegación + funcionamiento (auto-marcado, Cancelar clase, WhatsApp)
 // La estética vive en tokens.css/propuesta.css; acá solo se cambian estados,
 // textos y el flujo de cancelación. Sin emoji: solo SVG de icons.js.
-import { horaClase, } from './src/clases.js?v=202611261815';
-import { CLAVE_ESTADO, RepositorioClases, almacenLocalStorage } from './src/repositorio.js?v=202611261815';
-import { alumnosCobrosDemo, datosDemo, fichasDemo } from './src/demo.js?v=202611261815';
-import { resumenCobros, cobrosIndividuales, deudaIndividual as deudaInd, filtrarCobros, ordenarCobros, } from './src/cobros.js?v=202611261815';
-import { precioPrecargado, precio } from './src/tarifas.js?v=202611261815';
-import { construirVista, filtrarYOrdenar, puntoEstadoVence, textoEstadoVence, validarAlumno, iniciales, colorPorId, nombreCompleto, } from './src/alumnos.js?v=202611261815';
-import { resumenHoy, clasesDelDia, clasesDeLaSemana } from './src/resumen.js?v=202611261815';
-import { registrarToqueFecha, mesDe } from './src/agenda.js?v=202611261815';
-import { primerDiaDeMes, diaSeleccionadoAlCargar } from './src/agenda-mes.js?v=202611261815';
-import { decisionDeGesto, decisionDeAperturaDeMenu, DURACION_TOQUE_LARGO, UMBRAL_MOVIMIENTO_GESTO, etiquetaProximoPaso } from './src/toque-clase.js?v=202611261815';
-import { destinoDeEnlace, vistaInicial, vistasActivas } from './src/navegacion.js?v=202611261815';
-import { pistaDeTira } from './src/scroll-pista.js?v=202611261815';
-import { actualizarBarra, estadoBarraInicial, debeReaparecerPorQuietud, REAPARECER_TRAS_MS, } from './src/barra-scroll.js?v=202611261815';
-import { ajustarLock, debeBloquearScroll, estiloSheet, debeCerrarPorToqueFuera, esToqueFuera, debeSuprimirClickTrasCierre, decisionCierreSheetsPorNavegacion, debeCerrarPorDeslizar, FRANJA_CIERRE, } from './src/sheets.js?v=202611261815';
-import { diaCorto, mesCorto, etiquetaDia, etiquetaDiaCompleta, etiquetaMes, fechaCorta, sumarDias, parseFecha, lunesDe, diasDelMes, esFechaValida, } from './src/fechas.js?v=202611261815';
-import { relojDelDispositivo, hoyLocal } from './src/reloj.js?v=202611261815';
-import { CLAVE_PREFIJO, PREFIJO_POR_DEFECTO, prefijoEsValido, prefijoSeguro, conPrefijo } from './src/prefijo.js?v=202611261815';
-import { bloqueContacto } from './src/contacto.js?v=202611261815';
-import { textoCancelacion, destinos, resumenEnvio, linkTexto, linkAvisoVencimiento, } from './src/whatsapp.js?v=202611261815';
+import { horaClase, } from './src/clases.js?v=202611262130';
+import { CLAVE_ESTADO, RepositorioClases, almacenLocalStorage } from './src/repositorio.js?v=202611262130';
+import { alumnosCobrosDemo, datosDemo, fichasDemo } from './src/demo.js?v=202611262130';
+import { resumenCobros, cobrosIndividuales, deudaIndividual as deudaInd, filtrarCobros, ordenarCobros, } from './src/cobros.js?v=202611262130';
+import { precioPrecargado, precio } from './src/tarifas.js?v=202611262130';
+import { construirVista, filtrarYOrdenar, puntoEstadoVence, textoEstadoVence, validarAlumno, iniciales, colorPorId, nombreCompleto, } from './src/alumnos.js?v=202611262130';
+import { resumenHoy, clasesDelDia, clasesDeLaSemana } from './src/resumen.js?v=202611262130';
+import { registrarToqueFecha, mesDe } from './src/agenda.js?v=202611262130';
+import { primerDiaDeMes, diaSeleccionadoAlCargar } from './src/agenda-mes.js?v=202611262130';
+import { decisionDeGesto, decisionDeAperturaDeMenu, DURACION_TOQUE_LARGO, UMBRAL_MOVIMIENTO_GESTO, etiquetaProximoPaso } from './src/toque-clase.js?v=202611262130';
+import { destinoDeEnlace, vistaInicial, vistasActivas } from './src/navegacion.js?v=202611262130';
+import { pistaDeTira } from './src/scroll-pista.js?v=202611262130';
+import { actualizarBarra, estadoBarraInicial, debeReaparecerPorQuietud, REAPARECER_TRAS_MS, } from './src/barra-scroll.js?v=202611262130';
+import { ajustarLock, debeBloquearScroll, estiloSheet, debeCerrarPorToqueFuera, esToqueFuera, debeSuprimirClickTrasCierre, decisionCierreSheetsPorNavegacion, debeCerrarPorDeslizar, FRANJA_CIERRE, } from './src/sheets.js?v=202611262130';
+import { diaCorto, mesCorto, etiquetaDia, etiquetaDiaCompleta, etiquetaMes, fechaCorta, sumarDias, parseFecha, lunesDe, diasDelMes, esFechaValida, } from './src/fechas.js?v=202611262130';
+import { relojDelDispositivo, hoyLocal } from './src/reloj.js?v=202611262130';
+import { CLAVE_PREFIJO, PREFIJO_POR_DEFECTO, prefijoEsValido, prefijoSeguro, conPrefijo } from './src/prefijo.js?v=202611262130';
+import { bloqueContacto } from './src/contacto.js?v=202611262130';
+import { textoCancelacion, destinos, resumenEnvio, linkTexto, linkAvisoVencimiento, } from './src/whatsapp.js?v=202611262130';
 /* ------------------------------------------------- estado persistente (local) */
 const reloj = relojDelDispositivo();
 /** Quién opera la app hoy: único dueño. En Fase 4 sale de la sesión. */
@@ -1989,15 +1989,14 @@ function textoCobroFicha(dias, montoUYU, fecha) {
     return `<span class="ficha-cobro-estado ${clase}">${esc(estado)}</span> · <span class="ficha-cobro-monto">${uyu(montoUYU)}</span> (vence ${esc(fechaCorta(fecha))}).`;
 }
 /**
- * Burbuja «?» con ayuda accesible (rediseño 23-nov, A1): reemplaza los textos
- * informativos corridos de la ficha. Un botón real (foco + área táctil) que
- * abre y cierra su texto, sin tooltip nativo (no hay hover en celular) y sin
- * depender de title. Cero emoji. Solo un «?» visible: lo demás es aria.
+ * Ayuda contextual discreta (26-nov): botón real con ícono SVG de información
+ * en lugar del «?» plano. Abre y cierra su texto sin tooltip nativo (no hay
+ * hover en celular). El SVG es aria-hidden: el nombre accesible va en aria-label.
  */
 function burbujaAyuda(texto) {
     const id = `ayuda-${Math.random().toString(36).slice(2, 8)}`;
     return `<span class="ayuda">
-    <button type="button" class="ayuda-btn" aria-expanded="false" aria-controls="${id}" aria-label="Ayuda: más información sobre este dato">?</button>
+    <button type="button" class="ayuda-btn" aria-expanded="false" aria-controls="${id}" aria-label="Ayuda: más información sobre este dato"><svg class="ico ayuda-ico" width="15" height="15" aria-hidden="true"><use href="#i-ayuda"/></svg></button>
     <span class="ayuda-texto" id="${id}" role="note" hidden>${esc(texto)}</span>
   </span>`;
 }
@@ -2092,7 +2091,7 @@ function abrirFichaConCobro(ficha, origen, alCrear) {
       ${avisoLink ? `<a class="cobros-link ficha-accion" href="${avisoLink}" target="_blank" rel="noopener" data-avisar>Avisar por WhatsApp (por vencer)</a>` : ''}
       <button type="button" class="cobros-link ficha-accion" data-editar-cobro>${individualPendiente ? 'Registrar pago individual' : ultimo ? 'Editar fecha del pago' : deuda ? 'Registrar pago' : 'Ver cobros'}</button>
     </div>
-    ${contacto.link ? `<p class="ficha-accion-ayuda">${burbujaAyuda('Los links abren WhatsApp con el mensaje escrito; el envío lo confirmás vos.')}</p>` : ''}`;
+    ${contacto.link ? `<p class="ficha-accion-ayuda">Los links abren WhatsApp con el mensaje escrito; el envío lo confirmás vos.</p>` : ''}`;
     dialogo.querySelector('form')?.before(resumen);
     cablearAyudas(resumen);
     resumen.querySelector('[data-editar-cobro]')?.addEventListener('click', () => {
@@ -2124,7 +2123,9 @@ function abrirFicha(ficha, origen, alCrear) {
     <div><p class="al-nombre">${esNueva ? 'Nuevo alumno' : esc(nombreCompleto(ficha))}</p>
     <p class="al-sub">${esNueva ? 'Ficha real · se guarda en este dispositivo' : `Alta ${esc(fechaCorta(ficha.fechaAlta))}`}</p></div>
     <div class="cobros-panel-dato">${esNueva ? '' : `<span class="ficha-id">ID ${esc(ficha.id)}</span>`}</div></div>
-    <p class="cobros-panel-nota">${esNueva ? 'Completá los datos para dar de alta. Nada se envía ni crea grupos.' : burbujaAyuda('Podés corregir nombre, forma de pago, precio, día de vencimiento y teléfono. La identidad y la fecha de alta no se cambian.')}</p>
+    <p class="cobros-panel-nota">${esNueva
+        ? 'Completá los datos para dar de alta. Nada se envía ni crea grupos.'
+        : 'La identidad y la fecha de alta no se cambian.'}</p>
     <form novalidate>
       <label class="campo"><span>Nombre *</span><input name="nombre" required maxlength="80" autocomplete="off" value="${esNueva ? '' : esc(ficha.nombre)}" placeholder="Nombre y apellido"></label>
       <button type="button" class="apellido-toggle" data-apellido-toggle aria-expanded="${ficha?.apellido ? 'true' : 'false'}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Apellido <span class="hint">(opcional)</span></button>
@@ -2136,9 +2137,9 @@ function abrirFicha(ficha, origen, alCrear) {
         <button type="button" class="ficha-grupo" data-forma-pago="otro" aria-pressed="false" aria-controls="precio-manual-campo" aria-expanded="false">Otro precio (manual)</button>
       </div>
       <div class="precio-manual" id="precio-manual-campo" ${ficha?.formaPago === 'otro' ? '' : 'hidden'}>
-        <label class="campo"><span>Precio manual en UYU *${burbujaAyuda('Precio acordado para esta alumna: descuento u otro monto. Se guarda y se usa en cobros y avisos. El cálculo de descuento se agregará en otra tarea.')}</span><input name="tarifaManualUYU" type="number" min="1" step="1" inputmode="numeric" required value="${ficha?.formaPago === 'otro' ? ficha.tarifaUYU ?? '' : ''}" placeholder="Ej.: 4800"></label>
+        <label class="campo"><span>Precio manual en UYU *</span><input name="tarifaManualUYU" type="number" min="1" step="1" inputmode="numeric" required value="${ficha?.formaPago === 'otro' ? ficha.tarifaUYU ?? '' : ''}" placeholder="Ej.: 4800"></label>
       </div>
-      <label class="campo" id="precio-fijo-campo" ${ficha?.formaPago === 'otro' ? 'hidden' : ''}><span>Precio en UYU *${burbujaAyuda('Se guarda en la ficha y se usa en los cobros. No se usa ningún precio de ejemplo.')}</span><input name="tarifaUYU" type="number" min="1" step="1" inputmode="numeric" required value="${ficha?.tarifaUYU ?? ''}" placeholder="Ej.: 2500"></label>
+      <label class="campo" id="precio-fijo-campo" ${ficha?.formaPago === 'otro' ? 'hidden' : ''}><span>Precio en UYU *</span><input name="tarifaUYU" type="number" min="1" step="1" inputmode="numeric" required value="${ficha?.tarifaUYU ?? ''}" placeholder="Ej.: 2500"></label>
       ${esNueva ? `<p class="campo"><span>Fecha de registro *</span></p>${selectorFecha('alta', hoy)}` : ''}
       ${esNueva ? `<p class="campo"><span>¿Pagó la primera mensualidad? *</span></p>
       <div class="ficha-grupo-opciones" role="group" aria-label="Estado del pago">
@@ -2146,7 +2147,7 @@ function abrirFicha(ficha, origen, alCrear) {
         <button type="button" class="ficha-grupo" data-pago="no" aria-pressed="false">Va a pagar</button>
       </div>` : ''}
       <label class="campo"><span>Día de vencimiento (1–31)</span><input name="ancla" type="number" min="1" max="31" inputmode="numeric" value="${ficha?.ancla ?? 21}"></label>
-      <label class="campo"><span>Grupo (opcional)${burbujaAyuda('Solo una etiqueta para agrupar alumnas. No crea grupos ni manda mensajes.')}</span><input name="grupo" list="${listaGrupos.id}" maxlength="40" autocomplete="off" value="${esNueva ? '' : esc(ficha.grupo)}" placeholder="Ej.: Martes A"></label>
+      <label class="campo"><span>Grupo (opcional)</span><input name="grupo" list="${listaGrupos.id}" maxlength="40" autocomplete="off" value="${esNueva ? '' : esc(ficha.grupo)}" placeholder="Ej.: Martes A"></label>
       ${listaGrupos.html}
       <label class="campo"><span>Teléfono / WhatsApp</span><input name="contacto" type="tel" maxlength="120" autocomplete="tel" value="${esNueva ? '' : esc(ficha.contacto)}" placeholder="099 123 456"></label>
       <p class="cobros-panel-error" role="alert"></p>

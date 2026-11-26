@@ -1978,15 +1978,14 @@ function textoCobroFicha(dias: number, montoUYU: number, fecha: string): string 
 }
 
 /**
- * Burbuja «?» con ayuda accesible (rediseño 23-nov, A1): reemplaza los textos
- * informativos corridos de la ficha. Un botón real (foco + área táctil) que
- * abre y cierra su texto, sin tooltip nativo (no hay hover en celular) y sin
- * depender de title. Cero emoji. Solo un «?» visible: lo demás es aria.
+ * Ayuda contextual discreta (26-nov): botón real con ícono SVG de información
+ * en lugar del «?» plano. Abre y cierra su texto sin tooltip nativo (no hay
+ * hover en celular). El SVG es aria-hidden: el nombre accesible va en aria-label.
  */
 function burbujaAyuda(texto: string): string {
   const id = `ayuda-${Math.random().toString(36).slice(2, 8)}`;
   return `<span class="ayuda">
-    <button type="button" class="ayuda-btn" aria-expanded="false" aria-controls="${id}" aria-label="Ayuda: más información sobre este dato">?</button>
+    <button type="button" class="ayuda-btn" aria-expanded="false" aria-controls="${id}" aria-label="Ayuda: más información sobre este dato"><svg class="ico ayuda-ico" width="15" height="15" aria-hidden="true"><use href="#i-ayuda"/></svg></button>
     <span class="ayuda-texto" id="${id}" role="note" hidden>${esc(texto)}</span>
   </span>`;
 }
@@ -2079,7 +2078,7 @@ function abrirFichaConCobro(ficha: AlumnoFicha | null, origen: HTMLElement, alCr
       ${avisoLink ? `<a class="cobros-link ficha-accion" href="${avisoLink}" target="_blank" rel="noopener" data-avisar>Avisar por WhatsApp (por vencer)</a>` : ''}
       <button type="button" class="cobros-link ficha-accion" data-editar-cobro>${individualPendiente ? 'Registrar pago individual' : ultimo ? 'Editar fecha del pago' : deuda ? 'Registrar pago' : 'Ver cobros'}</button>
     </div>
-    ${contacto.link ? `<p class="ficha-accion-ayuda">${burbujaAyuda('Los links abren WhatsApp con el mensaje escrito; el envío lo confirmás vos.')}</p>` : ''}`;
+    ${contacto.link ? `<p class="ficha-accion-ayuda">Los links abren WhatsApp con el mensaje escrito; el envío lo confirmás vos.</p>` : ''}`;
   dialogo.querySelector('form')?.before(resumen);
   cablearAyudas(resumen);
   resumen.querySelector('[data-editar-cobro]')?.addEventListener('click', () => {
@@ -2109,7 +2108,9 @@ function abrirFicha(ficha: AlumnoFicha | null, origen: HTMLElement, alCrear?: (c
     <div><p class="al-nombre">${esNueva ? 'Nuevo alumno' : esc(nombreCompleto(ficha!))}</p>
     <p class="al-sub">${esNueva ? 'Ficha real · se guarda en este dispositivo' : `Alta ${esc(fechaCorta(ficha!.fechaAlta))}`}</p></div>
     <div class="cobros-panel-dato">${esNueva ? '' : `<span class="ficha-id">ID ${esc(ficha!.id)}</span>`}</div></div>
-    <p class="cobros-panel-nota">${esNueva ? 'Completá los datos para dar de alta. Nada se envía ni crea grupos.' : burbujaAyuda('Podés corregir nombre, forma de pago, precio, día de vencimiento y teléfono. La identidad y la fecha de alta no se cambian.')}</p>
+    <p class="cobros-panel-nota">${esNueva
+      ? 'Completá los datos para dar de alta. Nada se envía ni crea grupos.'
+      : 'La identidad y la fecha de alta no se cambian.'}</p>
     <form novalidate>
       <label class="campo"><span>Nombre *</span><input name="nombre" required maxlength="80" autocomplete="off" value="${esNueva ? '' : esc(ficha!.nombre)}" placeholder="Nombre y apellido"></label>
       <button type="button" class="apellido-toggle" data-apellido-toggle aria-expanded="${ficha?.apellido ? 'true' : 'false'}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Apellido <span class="hint">(opcional)</span></button>
@@ -2121,9 +2122,9 @@ function abrirFicha(ficha: AlumnoFicha | null, origen: HTMLElement, alCrear?: (c
         <button type="button" class="ficha-grupo" data-forma-pago="otro" aria-pressed="false" aria-controls="precio-manual-campo" aria-expanded="false">Otro precio (manual)</button>
       </div>
       <div class="precio-manual" id="precio-manual-campo" ${ficha?.formaPago === 'otro' ? '' : 'hidden'}>
-        <label class="campo"><span>Precio manual en UYU *${burbujaAyuda('Precio acordado para esta alumna: descuento u otro monto. Se guarda y se usa en cobros y avisos. El cálculo de descuento se agregará en otra tarea.')}</span><input name="tarifaManualUYU" type="number" min="1" step="1" inputmode="numeric" required value="${ficha?.formaPago === 'otro' ? ficha.tarifaUYU ?? '' : ''}" placeholder="Ej.: 4800"></label>
+        <label class="campo"><span>Precio manual en UYU *</span><input name="tarifaManualUYU" type="number" min="1" step="1" inputmode="numeric" required value="${ficha?.formaPago === 'otro' ? ficha.tarifaUYU ?? '' : ''}" placeholder="Ej.: 4800"></label>
       </div>
-      <label class="campo" id="precio-fijo-campo" ${ficha?.formaPago === 'otro' ? 'hidden' : ''}><span>Precio en UYU *${burbujaAyuda('Se guarda en la ficha y se usa en los cobros. No se usa ningún precio de ejemplo.')}</span><input name="tarifaUYU" type="number" min="1" step="1" inputmode="numeric" required value="${ficha?.tarifaUYU ?? ''}" placeholder="Ej.: 2500"></label>
+      <label class="campo" id="precio-fijo-campo" ${ficha?.formaPago === 'otro' ? 'hidden' : ''}><span>Precio en UYU *</span><input name="tarifaUYU" type="number" min="1" step="1" inputmode="numeric" required value="${ficha?.tarifaUYU ?? ''}" placeholder="Ej.: 2500"></label>
       ${esNueva ? `<p class="campo"><span>Fecha de registro *</span></p>${selectorFecha('alta', hoy)}` : ''}
       ${esNueva ? `<p class="campo"><span>¿Pagó la primera mensualidad? *</span></p>
       <div class="ficha-grupo-opciones" role="group" aria-label="Estado del pago">
@@ -2131,7 +2132,7 @@ function abrirFicha(ficha: AlumnoFicha | null, origen: HTMLElement, alCrear?: (c
         <button type="button" class="ficha-grupo" data-pago="no" aria-pressed="false">Va a pagar</button>
       </div>` : ''}
       <label class="campo"><span>Día de vencimiento (1–31)</span><input name="ancla" type="number" min="1" max="31" inputmode="numeric" value="${ficha?.ancla ?? 21}"></label>
-      <label class="campo"><span>Grupo (opcional)${burbujaAyuda('Solo una etiqueta para agrupar alumnas. No crea grupos ni manda mensajes.')}</span><input name="grupo" list="${listaGrupos.id}" maxlength="40" autocomplete="off" value="${esNueva ? '' : esc(ficha!.grupo)}" placeholder="Ej.: Martes A"></label>
+      <label class="campo"><span>Grupo (opcional)</span><input name="grupo" list="${listaGrupos.id}" maxlength="40" autocomplete="off" value="${esNueva ? '' : esc(ficha!.grupo)}" placeholder="Ej.: Martes A"></label>
       ${listaGrupos.html}
       <label class="campo"><span>Teléfono / WhatsApp</span><input name="contacto" type="tel" maxlength="120" autocomplete="tel" value="${esNueva ? '' : esc(ficha!.contacto)}" placeholder="099 123 456"></label>
       <p class="cobros-panel-error" role="alert"></p>
