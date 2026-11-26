@@ -41,9 +41,9 @@ export type AlumnoFicha = {
    */
   tarifaUYU: number | null;
   /**
-   * Foto opcional elegida por la dueña (24-nov): dataURL chico (<~150 KB),
-   * se confirma al Guardar la ficha y se ve en Alumnos y Cobros. Vacío/ausente
-   * = sin foto, quedan las iniciales del avatar.
+   * Dato histórico de foto (24-nov). Se conserva al leer/editar para no
+   * migrar ni borrar datos ajenos, pero desde el replanteo de Nico 26-nov la
+   * UI no lo muestra ni permite subir/cambiar/eliminar una foto: solo avatar.
    */
   foto?: string;
 };
@@ -214,7 +214,7 @@ export function editarAlumno(alumno: AlumnoFicha, input: AlumnoFichaInput): Alum
     // Alta y pago inicial se congelan: la edición no reescribe la identidad.
     fechaAlta: alumno.fechaAlta,
     pagado: alumno.pagado,
-    // La foto pendiente la confirma el repositorio al Guardar la ficha.
+    // La UI ya no edita fotos: se conserva el dato histórico sin mostrarlo.
     foto: alumno.foto ?? '',
   };
 }
@@ -253,10 +253,9 @@ export function normalizarFichaGuardada(dato: Partial<AlumnoFicha> & { tipo?: st
 }
 
 /**
- * Valida la foto guardada/elegida (24-nov): dataURL de imagen chico. Defensa
- * al leer: un valor enorme o de otro tipo no rompe la ficha, se descarta y el
- * alumno vuelve a verse con sus iniciales. Techo 150_000 caracteres: una foto
- * de 480px JPEG calidad .72 suele quedar bajo este techo; más no es un avatar.
+ * Compatibilidad al leer datos históricos (24-nov): valida un dataURL de
+ * imagen chico sin migrar ni borrar datos. La UI vigente (26-nov) no muestra
+ * ni edita fotos; el avatar generado se usa siempre.
  */
 export const MAX_CARACTERES_FOTO = 150_000;
 

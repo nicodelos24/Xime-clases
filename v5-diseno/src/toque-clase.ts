@@ -1,10 +1,10 @@
 /**
- * Toque en las tarjetas de clase (pedido de Nico 24-nov):
- *  - TOQUE SIMPLE en zona no interactiva: Por dar ↔ Dada, con Deshacer;
- *  - MANTENER EL DEDO (~450 ms): abre el menú que ya existía
+ * Interacción de las tarjetas de clase (replanteo de Nico 26-nov):
+ *  - TOQUE EN EL CHIP de estado: cicla Por dar → Dada → Cancelada → Por dar.
+ *  - TOQUE SIMPLE en la zona no interactiva de la TARJETA: abre/cierra el
+ *    desplegable «quiénes van» (no cambia estado).
+ *  - MANTENER EL DEDO (~450 ms) sobre la tarjeta: abre el menú completo
  *    (Marcar dada / Volver a Por dar / Cancelar clase / Cambiar de día).
- *  - CANCELADA: el toque simple no cambia ni abre un menú vacío; conserva
- *    el botón Revertir existente.
  *
  * Acá sólo la POLÍTICA (pura, testeable sin navegador): qué decidir con los
  * datos del gesto. La UI (propuesta.ts) escucha pointerdown/up/cancel y
@@ -31,24 +31,36 @@ export type GestoClase = {
   cancelado: boolean;
 };
 
-/** El toque simple puede cambiar o abrir el flujo de cancelación en estos estados. */
+/** El ciclo del chip siempre tiene un estado siguiente (es un ciclo cerrado). */
 export function toqueSimpleCambiaEstado(estado: EstadoClaseGesto): boolean {
-  return estado === 'programada' || estado === 'dada';
+  return estado === 'programada' || estado === 'dada' || estado === 'cancelada';
 }
 
-export type ResultadoToqueSimple = 'dada' | 'por-dar';
+export type ResultadoCiclo = 'dada' | 'cancelada' | 'por-dar';
 
-/** Mismo repositorio y Deshacer que la acción manual; sin regla visual paralela. */
-export function resultadoDeToqueSimple(estado: EstadoClaseGesto): ResultadoToqueSimple | 'nada' {
+/**
+ * Siguiente estado del ciclo que pisa el chip: Por dar → Dada → Cancelada
+ * → Por dar. La cancelación por chip es directa (sin sheet ni WhatsApp);
+ * el aviso diferido de cancelación la cubre por si fue un error.
+ */
+export function resultadoDeCicloDeChip(estado: EstadoClaseGesto): ResultadoCiclo {
   if (estado === 'programada') return 'dada';
-  if (estado === 'dada') return 'por-dar';
-  return 'nada';
+  if (estado === 'dada') return 'cancelada';
+  return 'por-dar';
+}
+
+/** Etiqueta del próximo paso del ciclo, para el aria-label del chip. */
+export function etiquetaProximoPaso(estado: EstadoClaseGesto): string {
+  const proximo = resultadoDeCicloDeChip(estado);
+  if (proximo === 'dada') return 'marcar dada';
+  if (proximo === 'cancelada') return 'cancelar clase';
+  return 'volver a Por dar';
 }
 
 /**
  * Decisiones puras de los eventos del gesto de una tarjeta. La UI junta
- * pointerdown/up y el click posterior: esta política evita que un mismo
- * toque cambie asistencia dos veces y reserva el click para teclado/AT.
+ * pointerdown/up y el click posterior: esta política evita que un gesto
+ * dispare dos acciones y reserva el click para teclado/AT.
  */
 export type EventoToque = {
   tipo: 'pointerup' | 'click';
@@ -71,22 +83,21 @@ export function decisionDeEventoToque(
   if (evento.consumido) return 'nada';
   if (evento.tipo === 'pointerup') return origen === 'tarjeta' ? 'evaluar-gesto' : 'nada';
   // Sólo un click accesible explícito abre el menú. El click físico del chip
-  // lo maneja su propio botón, sin iniciar el gesto simple/largo de tarjeta.
+  // lo maneja su propio botón (ciclo de estados), sin iniciar el gesto.
   if (evento.fisico) return 'nada';
-  return origen === 'chip' && estado !== 'cancelada' ? 'menu' : 'nada';
+  return origen === 'chip' ? 'menu' : 'nada';
 }
 
 /**
- * Qué hace el gesto al soltar:
+ * Qué hace el gesto sobre la TARJETA al soltar:
  *  - cancelado o arrastrado: nada (era scroll);
- *  - mantuvo ≥ 450 ms dentro del radio: abrir el menú solo en programada/dada;
- *  - toque corto y quieto en zona vacía: Por dar ↔ Dada, ambos con Deshacer;
- *  - cancelada: no cambia con toque simple ni abre un menú vacío.
+ *  - mantuvo ≥ 450 ms dentro del radio: abrir el menú;
+ *  - toque corto y quieto en zona vacía: abrir/cerrar «quiénes van»
+ *    (la tarjeta ya NO cambia estado: eso es del chip).
  */
-export function decisionDeGesto(gesto: GestoClase, estado: EstadoClaseGesto): 'menu' | 'estado' | 'nada' {
+export function decisionDeGesto(gesto: GestoClase, _estado: EstadoClaseGesto): 'menu' | 'desplegar' | 'nada' {
   if (gesto.cancelado) return 'nada';
   if (gesto.maxDesplazamiento > UMBRAL_MOVIMIENTO_GESTO) return 'nada';
-  if (estado === 'cancelada') return 'nada';
   if (gesto.duracionMs >= DURACION_TOQUE_LARGO) return 'menu';
-  return toqueSimpleCambiaEstado(estado) ? 'estado' : 'nada';
+  return 'desplegar';
 }

@@ -332,9 +332,9 @@ export class RepositorioClases implements RepositorioDeClases {
   }
 
   /**
-   * Foto del alumno (24-nov): acepta dataURL de imagen chico (lo valida el
-   * dominio con `esFotoValida`) o '' para quitarla. Persiste en la MISMA
-   * ficha, así Alumnos y Cobros comparten la foto con un solo dato guardado.
+   * Compatibilidad con datos históricos de foto (24-nov). La UI vigente
+   * (26-nov) no llama a este método: las fotos guardadas quedan intactas,
+   * fuera de la vista, y no se pueden subir/cambiar/quitar desde la ficha.
    */
   asignarFotoAlumno(id: string, foto: string): AlumnoFicha {
     const estado = this.cargar();
