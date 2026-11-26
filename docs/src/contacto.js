@@ -10,7 +10,7 @@
  *
  * Sin DOM y sin reloj: solo texto y URL, para poder probarlo.
  */
-import { conPrefijo, PREFIJO_POR_DEFECTO } from './prefijo.js?v=202611261419';
+import { conPrefijo, PREFIJO_POR_DEFECTO } from './prefijo.js?v=202611262015';
 /** Formato del deep link: solo dígitos, con el prefijo de país ya aplicado. */
 export function numeroWaMe(telefono, prefijo = PREFIJO_POR_DEFECTO) {
     return conPrefijo(telefono, prefijo).replace(/[^\d]/g, '');

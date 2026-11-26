@@ -159,6 +159,16 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; width: 0; }
 .anillo-texto { position: absolute; display: flex; align-items: baseline; gap: 3px; }
 .anillo-texto strong { font-size: 30px; font-weight: 700; letter-spacing: -.03em; }
 .anillo-texto span { font-size: 14px; opacity: .8; }
+/* El número cambia con un fundido + micro-escalado; WAAPI en JS la dispara. */
+.anillo-texto.cambia strong { animation: anillo-num 560ms cubic-bezier(.22,.9,.36,1.02); }
+@keyframes anillo-num {
+  0% { transform: translateY(0); opacity: 1; }
+  35% { transform: translateY(-9px); opacity: 0; }
+  36% { transform: translateY(9px); opacity: 0; }
+  100% { transform: translateY(0); opacity: 1; }
+}
+/* Brillo corto en el trazo al llenarse (brillo pasado por JS). */
+.anillo-brillo { fill: none; stroke: rgba(255,255,255,.9); stroke-width: 8; stroke-linecap: round; opacity: 0; }
 
 .hero-grupos { position: relative; display: grid; gap: 8px; margin-top: 8px; }
 .grupo {
@@ -191,6 +201,13 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; width: 0; }
   100% { transform: scale(1); filter: brightness(1); }
 }
 .chip-boton.chip-cicla { animation: chip-ciclar 360ms cubic-bezier(.22,.9,.36,1.02); }
+/* El ícono del chip se re-entra con un giro corto al cambiar de estado. */
+.chip-boton.chip-cicla .ico { animation: chip-ico 360ms cubic-bezier(.22,.9,.36,1.02); }
+@keyframes chip-ico {
+  0%   { transform: rotate(-45deg) scale(.4); opacity: 0; }
+  60%  { transform: rotate(0deg) scale(1.1); opacity: 1; }
+  100% { transform: rotate(0deg) scale(1); opacity: 1; }
+}
 .chip-por  { background: rgba(255,255,255,.9); color: var(--tq-900); }
 /* Replanteo 26-nov: el chip cicla Por dar → Dada → Cancelada → Por dar; los
    tres estados son el mismo botón (chip-boton) con sus colores de siempre. */

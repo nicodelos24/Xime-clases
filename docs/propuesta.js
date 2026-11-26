@@ -1,25 +1,25 @@
 // Clases v5 · navegación + funcionamiento (auto-marcado, Cancelar clase, WhatsApp)
 // La estética vive en tokens.css/propuesta.css; acá solo se cambian estados,
 // textos y el flujo de cancelación. Sin emoji: solo SVG de icons.js.
-import { horaClase, } from './src/clases.js?v=202611261419';
-import { CLAVE_ESTADO, RepositorioClases, almacenLocalStorage } from './src/repositorio.js?v=202611261419';
-import { alumnosCobrosDemo, datosDemo, fichasDemo } from './src/demo.js?v=202611261419';
-import { resumenCobros, cobrosIndividuales, deudaIndividual as deudaInd, filtrarCobros, ordenarCobros, } from './src/cobros.js?v=202611261419';
-import { precioPrecargado, precio } from './src/tarifas.js?v=202611261419';
-import { construirVista, filtrarYOrdenar, puntoEstadoVence, textoEstadoVence, validarAlumno, iniciales, colorPorId, nombreCompleto, } from './src/alumnos.js?v=202611261419';
-import { resumenHoy, clasesDelDia, clasesDeLaSemana } from './src/resumen.js?v=202611261419';
-import { registrarToqueFecha, mesDe } from './src/agenda.js?v=202611261419';
-import { primerDiaDeMes, diaSeleccionadoAlCargar } from './src/agenda-mes.js?v=202611261419';
-import { decisionDeGesto, decisionDeAperturaDeMenu, DURACION_TOQUE_LARGO, UMBRAL_MOVIMIENTO_GESTO, etiquetaProximoPaso } from './src/toque-clase.js?v=202611261419';
-import { destinoDeEnlace, vistaInicial, vistasActivas } from './src/navegacion.js?v=202611261419';
-import { pistaDeTira } from './src/scroll-pista.js?v=202611261419';
-import { actualizarBarra, estadoBarraInicial, debeReaparecerPorQuietud, REAPARECER_TRAS_MS, } from './src/barra-scroll.js?v=202611261419';
-import { ajustarLock, debeBloquearScroll, estiloSheet, debeCerrarPorToqueFuera, esToqueFuera, debeSuprimirClickTrasCierre, decisionCierreSheetsPorNavegacion, debeCerrarPorDeslizar, FRANJA_CIERRE, } from './src/sheets.js?v=202611261419';
-import { diaCorto, mesCorto, etiquetaDia, etiquetaDiaCompleta, etiquetaMes, fechaCorta, sumarDias, parseFecha, lunesDe, diasDelMes, esFechaValida, } from './src/fechas.js?v=202611261419';
-import { relojDelDispositivo, hoyLocal } from './src/reloj.js?v=202611261419';
-import { CLAVE_PREFIJO, PREFIJO_POR_DEFECTO, prefijoEsValido, prefijoSeguro, conPrefijo } from './src/prefijo.js?v=202611261419';
-import { bloqueContacto } from './src/contacto.js?v=202611261419';
-import { textoCancelacion, destinos, resumenEnvio, linkTexto, linkAvisoVencimiento, } from './src/whatsapp.js?v=202611261419';
+import { horaClase, } from './src/clases.js?v=202611262015';
+import { CLAVE_ESTADO, RepositorioClases, almacenLocalStorage } from './src/repositorio.js?v=202611262015';
+import { alumnosCobrosDemo, datosDemo, fichasDemo } from './src/demo.js?v=202611262015';
+import { resumenCobros, cobrosIndividuales, deudaIndividual as deudaInd, filtrarCobros, ordenarCobros, } from './src/cobros.js?v=202611262015';
+import { precioPrecargado, precio } from './src/tarifas.js?v=202611262015';
+import { construirVista, filtrarYOrdenar, puntoEstadoVence, textoEstadoVence, validarAlumno, iniciales, colorPorId, nombreCompleto, } from './src/alumnos.js?v=202611262015';
+import { resumenHoy, clasesDelDia, clasesDeLaSemana } from './src/resumen.js?v=202611262015';
+import { registrarToqueFecha, mesDe } from './src/agenda.js?v=202611262015';
+import { primerDiaDeMes, diaSeleccionadoAlCargar } from './src/agenda-mes.js?v=202611262015';
+import { decisionDeGesto, decisionDeAperturaDeMenu, DURACION_TOQUE_LARGO, UMBRAL_MOVIMIENTO_GESTO, etiquetaProximoPaso } from './src/toque-clase.js?v=202611262015';
+import { destinoDeEnlace, vistaInicial, vistasActivas } from './src/navegacion.js?v=202611262015';
+import { pistaDeTira } from './src/scroll-pista.js?v=202611262015';
+import { actualizarBarra, estadoBarraInicial, debeReaparecerPorQuietud, REAPARECER_TRAS_MS, } from './src/barra-scroll.js?v=202611262015';
+import { ajustarLock, debeBloquearScroll, estiloSheet, debeCerrarPorToqueFuera, esToqueFuera, debeSuprimirClickTrasCierre, decisionCierreSheetsPorNavegacion, debeCerrarPorDeslizar, FRANJA_CIERRE, } from './src/sheets.js?v=202611262015';
+import { diaCorto, mesCorto, etiquetaDia, etiquetaDiaCompleta, etiquetaMes, fechaCorta, sumarDias, parseFecha, lunesDe, diasDelMes, esFechaValida, } from './src/fechas.js?v=202611262015';
+import { relojDelDispositivo, hoyLocal } from './src/reloj.js?v=202611262015';
+import { CLAVE_PREFIJO, PREFIJO_POR_DEFECTO, prefijoEsValido, prefijoSeguro, conPrefijo } from './src/prefijo.js?v=202611262015';
+import { bloqueContacto } from './src/contacto.js?v=202611262015';
+import { textoCancelacion, destinos, resumenEnvio, linkTexto, linkAvisoVencimiento, } from './src/whatsapp.js?v=202611262015';
 /* ------------------------------------------------- estado persistente (local) */
 const reloj = relojDelDispositivo();
 /** Quién opera la app hoy: único dueño. En Fase 4 sale de la sesión. */
@@ -93,6 +93,19 @@ function accionClase(c) {
 /* ------------------------------------------------------- vista Hoy (hero) */
 /** El anillo anima su llenado una sola vez, al abrir la app. */
 let anilloArranque = true;
+/** Último `stroke-dashoffset` pintado: arranca en vacío para que el primer
+ *  cambio de estado (p. ej. 0/1 → 1/1) anime desde ahí. */
+let anilloOffsetPrevio = 2 * Math.PI * 38;
+/** Brillo sutil que recorre el trazo recién llenado (nunca infantil). */
+function brilloAnillo(anillo, offset) {
+    const brillo = document.querySelector('.anillo-brillo');
+    if (!brillo)
+        return;
+    const circ = 2 * Math.PI * 38;
+    brillo.style.strokeDasharray = String(circ);
+    brillo.style.strokeDashoffset = String(offset);
+    brillo.animate([{ opacity: 0 }, { opacity: .85, offset: .45 }, { opacity: 0 }], { duration: 700, easing: 'cubic-bezier(.22,.9,.36,1.02)', fill: 'both' });
+}
 function pintarHoy() {
     const hoy = hoyLocal(reloj.ahora());
     const r = resumenHoy(clases, hoy);
@@ -107,29 +120,39 @@ function pintarHoy() {
     const anilloValor = $('.anillo-valor');
     if (anilloValor) {
         const fraccion = total === 0 ? 0 : dadas / total;
+        const offset = circ * (1 - fraccion);
         anilloValor.style.strokeDasharray = String(circ);
-        anilloValor.style.strokeDashoffset = String(circ * (1 - fraccion));
-        // "El anillo que se llena" (LEEME v5): solo en el primer pintado, y
-        // siempre desde el estado real del anillo (no al 0/2 fijo de la hoja).
-        // Después de arrancar, el estado manda: sin animación que lo contradiga.
+        anilloValor.style.strokeDashoffset = String(offset);
+        // "El anillo que se llena" (LEEME v5): primer pintado desde el vacío;
+        // después, cada cambio de estado (p. ej. 0/1 → 1/1) anima el trazo con
+        // WAAPI: `stroke-dashoffset` es una propiedad del SVG que el CSS no anima
+        // con fiabilidad entre versiones de Chrome.
         if (anilloArranque) {
-            // Del vacío al estado real que pinta el JS. Se hace con la Web Animations
-            // API: `stroke-dashoffset` es una propiedad del SVG que el CSS no anima
-            // con fiabilidad entre versiones de Chrome.
             anilloValor.style.animation = 'none';
-            anilloValor.animate([{ strokeDashoffset: String(circ) }, { strokeDashoffset: String(circ * (1 - fraccion)) }], 
+            anilloValor.animate([{ strokeDashoffset: String(circ) }, { strokeDashoffset: String(offset) }], 
             // `fill: 'both'`: al terminar queda el estado real (igual que el estilo
             // inline) y la animación se puede inspeccionar después en QA.
             { duration: 900, delay: 260, easing: 'cubic-bezier(.22,.9,.36,1.02)', fill: 'both' });
             anilloArranque = false;
         }
-        else {
+        else if (offset !== anilloOffsetPrevio) {
             anilloValor.style.animation = 'none';
+            anilloValor.animate([{ strokeDashoffset: String(anilloOffsetPrevio) }, { strokeDashoffset: String(offset) }], { duration: 700, easing: 'cubic-bezier(.22,.9,.36,1.02)', fill: 'both' });
+            brilloAnillo(anilloValor, offset);
         }
+        anilloOffsetPrevio = offset;
     }
     const anilloTexto = $('.anillo-texto');
-    if (anilloTexto)
-        anilloTexto.innerHTML = `<strong>${dadas}</strong><span>/ ${total}</span>`;
+    if (anilloTexto) {
+        const textoNuevo = `<strong>${dadas}</strong><span>/ ${total}</span>`;
+        if (anilloTexto.innerHTML !== textoNuevo) {
+            anilloTexto.innerHTML = textoNuevo;
+            // El número transita (fundido + micro-escalado) en cada cambio real.
+            anilloTexto.classList.remove('cambia');
+            void anilloTexto.offsetWidth;
+            anilloTexto.classList.add('cambia');
+        }
+    }
     const grupos = $('.hero-grupos');
     if (grupos) {
         if (r.clases.length === 0) {
@@ -665,7 +688,7 @@ function pintarTarjetasDiaMes() {
     cabecera.innerHTML = `<p>${esc(etiquetaDia(fecha))}</p><span class="dia-acciones-head"><button class="dia-agendar" id="dia-agendar" type="button" aria-label="Agendar clase el ${esc(etiquetaDiaCompleta(fecha))}">Agendar acá<svg class="ico" width="13" height="13" aria-hidden="true"><use href="#i-mas2"/></svg></button><button class="dia-ver-semana" type="button">Ver semana<svg class="ico" width="13" height="13" aria-hidden="true"><use href="#i-agenda"/></svg></button></span>`;
     cabecera.querySelector('.dia-ver-semana')?.addEventListener('click', () => abrirSemanaDe(fecha));
     // Desde un día de otro mes (incluso vacío), agendar una suelta ahí mismo.
-    cabecera.querySelector('.dia-agendar')?.addEventListener('click', (e) => abrirFormularioSuelta(fecha, e.currentTarget));
+    cabecera.querySelector('.dia-agendar')?.addEventListener('click', (e) => abrirAgendar(fecha, e.currentTarget.id));
     caja.appendChild(cabecera);
     if (delDia.length === 0) {
         const vacio = document.createElement('p');
@@ -942,11 +965,11 @@ function validarClase(error, campos) {
     }
     return true;
 }
-function abrirAgendar() {
+function abrirAgendar(fechaDesdeDia, disparador) {
     cerrarSheet();
     const cuadro = document.createElement('div');
     cuadro.className = 'sheet';
-    cuadro.dataset.disparador = 'abrir-agenda';
+    cuadro.dataset.disparador = disparador ?? 'abrir-agenda';
     cuadro.setAttribute('role', 'dialog');
     cuadro.setAttribute('aria-modal', 'true');
     cuadro.setAttribute('aria-labelledby', 'agendar-titulo');
@@ -977,15 +1000,15 @@ function abrirAgendar() {
     cuadro.querySelector('.sheet-cerrar')?.addEventListener('click', () => cerrarCuadro(cuadro));
     cuadro.querySelector('[data-mod="alumno"]')?.addEventListener('click', () => {
         cerrarCuadro(cuadro);
-        abrirFichaAltaParaAgendar(diaMesSeleccionado ?? undefined);
+        abrirFichaAltaParaAgendar(fechaDesdeDia ?? diaMesSeleccionado ?? undefined);
     });
     cuadro.querySelector('[data-mod="semanal"]')?.addEventListener('click', () => {
         cerrarCuadro(cuadro);
-        abrirFormularioSemanal(diaMesSeleccionado ?? undefined);
+        abrirFormularioSemanal(fechaDesdeDia ?? diaMesSeleccionado ?? undefined, disparador);
     });
     cuadro.querySelector('[data-mod="suelta"]')?.addEventListener('click', () => {
         cerrarCuadro(cuadro);
-        abrirFormularioSuelta(diaMesSeleccionado ?? undefined);
+        abrirFormularioSuelta(fechaDesdeDia ?? diaMesSeleccionado ?? undefined, disparador);
     });
     cuadro.querySelector('[data-mod="semanal"]')?.focus();
 }
@@ -1029,14 +1052,14 @@ function cablearFecha(raiz, nombre, onChange) {
     mes.addEventListener('change', actualizar);
     anio.addEventListener('change', actualizar);
 }
-function abrirFormularioSemanal(fechaDesdeDia) {
+function abrirFormularioSemanal(fechaDesdeDia, disparador) {
     const hoy = hoyLocal(reloj.ahora());
     const propuesta = fechaDesdeDia ?? diaMesSeleccionado;
     // No proponer fechas pasadas: si el día elegido ya pasó, arrancar hoy.
     const inicio = propuesta && propuesta >= hoy ? propuesta : hoy;
     const cuadro = document.createElement('div');
     cuadro.className = 'sheet';
-    cuadro.dataset.disparador = 'abrir-agenda';
+    cuadro.dataset.disparador = disparador ?? 'abrir-agenda';
     cuadro.setAttribute('role', 'dialog');
     cuadro.setAttribute('aria-modal', 'true');
     cuadro.setAttribute('aria-labelledby', 'semanal-titulo');
@@ -1191,15 +1214,12 @@ function cablearBajaRutinas(cuadro) {
         });
     });
 }
-function abrirFormularioSuelta(fechaDesdeDia, origen) {
+function abrirFormularioSuelta(fechaDesdeDia, disparador) {
     // Prioridad: día tocado «Agendar acá» > día seleccionado en el mes > hoy.
     const inicial = fechaDesdeDia ?? diaMesSeleccionado ?? hoyLocal(reloj.ahora());
     const cuadro = document.createElement('div');
     cuadro.className = 'sheet';
-    if (origen?.id)
-        cuadro.dataset.disparador = origen.id;
-    else
-        cuadro.dataset.disparador = 'abrir-agenda';
+    cuadro.dataset.disparador = disparador ?? 'abrir-agenda';
     cuadro.setAttribute('role', 'dialog');
     cuadro.setAttribute('aria-modal', 'true');
     cuadro.setAttribute('aria-labelledby', 'suelta-titulo');
@@ -1284,14 +1304,14 @@ let modoEnvio = 'masivo';
 /* --------------------------------------------------- aviso de cancelación */
 /**
  * Aviso diferido «Clase cancelada · ¿Avisamos por WhatsApp?» (replanteo de
- * Nico 26-nov): al cancelar (sin envío inmediato), a los ~4 s o al salir de
+ * Nico 26-nov): al cancelar (sin envío inmediato), a los ~2 s o al salir de
  * la sección aparece el menú con Deshacer y Avisar por WhatsApp. Hoy es solo
  * visual/local; cuando haya base de datos y notificaciones reales, este mismo
  * punto (`agendarMenuCancelada`) es donde se dispara la notificación.
  */
 let clasePendienteMenuCancelada;
 let temporizadorMenuCancelada;
-const RETRASO_MENU_CANCELADA = 4000;
+const RETRASO_MENU_CANCELADA = 2000;
 function agendarMenuCancelada(id) {
     clearTimeout(temporizadorMenuCancelada);
     temporizadorMenuCancelada = undefined;
@@ -1370,7 +1390,7 @@ function abrirMenuCancelada(id) {
     });
 }
 /** Al salir de la sección (Hoy/Clases/…): si había una cancelación sin avisar,
- *  el menú entra al momento en vez de esperar el vencimiento de los 4 s. */
+ *  el menú entra al momento en vez de esperar el vencimiento de los 2 s. */
 function menuCanceladaPorNavegacion() {
     const id = clasePendienteMenuCancelada;
     if (!id)
@@ -1761,7 +1781,7 @@ function confirmarCancelacion(c, motivo) {
     toast.dataset.deshacer = '1';
     toast.dataset.clase = c.id;
     // Sin envío inmediato: el aviso «Clase cancelada · ¿Avisamos por WhatsApp?»
-    // entra a los ~4 s (o al salir de la sección, ver menuCanceladaPorNavegacion).
+    // entra a los ~2 s (o al salir de la sección, ver menuCanceladaPorNavegacion).
     if (lista.length === 0)
         agendarMenuCancelada(c.id);
     // El panel confirmado se destruye. Su click tardío (o el de un F5 justo
