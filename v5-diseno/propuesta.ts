@@ -714,7 +714,7 @@ function pintarTarjetasDiaMes(): void {
   cabecera.innerHTML = `<p>${esc(etiquetaDia(fecha))}</p><span class="dia-acciones-head"><button class="dia-agendar" id="dia-agendar" type="button" aria-label="Agendar clase el ${esc(etiquetaDiaCompleta(fecha))}">Agendar acá<svg class="ico" width="13" height="13" aria-hidden="true"><use href="#i-mas2"/></svg></button><button class="dia-ver-semana" type="button">Ver semana<svg class="ico" width="13" height="13" aria-hidden="true"><use href="#i-agenda"/></svg></button></span>`;
   cabecera.querySelector('.dia-ver-semana')?.addEventListener('click', () => abrirSemanaDe(fecha));
   // Desde un día de otro mes (incluso vacío), agendar una suelta ahí mismo.
-  cabecera.querySelector('.dia-agendar')?.addEventListener('click', (e) => abrirFormularioSuelta(fecha, e.currentTarget as HTMLElement));
+  cabecera.querySelector('.dia-agendar')?.addEventListener('click', (e) => abrirAgendar(fecha, (e.currentTarget as HTMLElement).id));
   caja.appendChild(cabecera);
   if (delDia.length === 0) {
     const vacio = document.createElement('p');
@@ -979,11 +979,11 @@ function validarClase(error: HTMLElement, campos: { nombre: string; fecha: strin
   if (!/^\d{1,2}:\d{2}$/.test(campos.hora)) { avisarError(error, 'Elegí la hora de inicio.'); return false; }
   return true;
 }
-function abrirAgendar() {
+function abrirAgendar(fechaDesdeDia?: string, disparador?: string) {
   cerrarSheet();
   const cuadro = document.createElement('div');
   cuadro.className = 'sheet';
-  cuadro.dataset.disparador = 'abrir-agenda';
+  cuadro.dataset.disparador = disparador ?? 'abrir-agenda';
   cuadro.setAttribute('role', 'dialog');
   cuadro.setAttribute('aria-modal', 'true');
   cuadro.setAttribute('aria-labelledby', 'agendar-titulo');
@@ -1014,15 +1014,15 @@ function abrirAgendar() {
   cuadro.querySelector('.sheet-cerrar')?.addEventListener('click', () => cerrarCuadro(cuadro));
   cuadro.querySelector('[data-mod="alumno"]')?.addEventListener('click', () => {
     cerrarCuadro(cuadro);
-    abrirFichaAltaParaAgendar(diaMesSeleccionado ?? undefined);
+    abrirFichaAltaParaAgendar(fechaDesdeDia ?? diaMesSeleccionado ?? undefined);
   });
   cuadro.querySelector('[data-mod="semanal"]')?.addEventListener('click', () => {
     cerrarCuadro(cuadro);
-    abrirFormularioSemanal(diaMesSeleccionado ?? undefined);
+    abrirFormularioSemanal(fechaDesdeDia ?? diaMesSeleccionado ?? undefined);
   });
   cuadro.querySelector('[data-mod="suelta"]')?.addEventListener('click', () => {
     cerrarCuadro(cuadro);
-    abrirFormularioSuelta(diaMesSeleccionado ?? undefined);
+    abrirFormularioSuelta(fechaDesdeDia ?? diaMesSeleccionado ?? undefined);
   });
   (cuadro.querySelector('[data-mod="semanal"]') as HTMLElement)?.focus();
 }
