@@ -1305,14 +1305,14 @@ let modoEnvio: 'masivo' | 'individual' | 'ninguno' = 'masivo';
 /* --------------------------------------------------- aviso de cancelación */
 /**
  * Aviso diferido «Clase cancelada · ¿Avisamos por WhatsApp?» (replanteo de
- * Nico 26-nov): al cancelar (sin envío inmediato), a los ~4 s o al salir de
+ * Nico 26-nov): al cancelar (sin envío inmediato), a los ~2 s o al salir de
  * la sección aparece el menú con Deshacer y Avisar por WhatsApp. Hoy es solo
  * visual/local; cuando haya base de datos y notificaciones reales, este mismo
  * punto (`agendarMenuCancelada`) es donde se dispara la notificación.
  */
 let clasePendienteMenuCancelada: string | undefined;
 let temporizadorMenuCancelada: ReturnType<typeof setTimeout> | undefined;
-const RETRASO_MENU_CANCELADA = 4000;
+const RETRASO_MENU_CANCELADA = 2000;
 
 function agendarMenuCancelada(id: string): void {
   clearTimeout(temporizadorMenuCancelada);
@@ -1389,7 +1389,7 @@ function abrirMenuCancelada(id: string): void {
 }
 
 /** Al salir de la sección (Hoy/Clases/…): si había una cancelación sin avisar,
- *  el menú entra al momento en vez de esperar el vencimiento de los 4 s. */
+ *  el menú entra al momento en vez de esperar el vencimiento de los 2 s. */
 function menuCanceladaPorNavegacion(): void {
   const id = clasePendienteMenuCancelada;
   if (!id) return;
@@ -1776,7 +1776,7 @@ function confirmarCancelacion(c: Clase, motivo: string) {
   toast.dataset.deshacer = '1';
   toast.dataset.clase = c.id;
   // Sin envío inmediato: el aviso «Clase cancelada · ¿Avisamos por WhatsApp?»
-  // entra a los ~4 s (o al salir de la sección, ver menuCanceladaPorNavegacion).
+  // entra a los ~2 s (o al salir de la sección, ver menuCanceladaPorNavegacion).
   if (lista.length === 0) agendarMenuCancelada(c.id);
   // El panel confirmado se destruye. Su click tardío (o el de un F5 justo
   // entre pointerup y click) no puede reabrir las acciones de esa clase.
