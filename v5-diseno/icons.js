@@ -19,7 +19,7 @@
     flor: '<circle cx="12" cy="12" r="2.6"/><path d="M12 9.4c-2.4-1.2-2.4-5.6 0-6.4 2.4.8 2.4 5.2 0 6.4zM14.6 12c1.2-2.4 5.6-2.4 6.4 0-.8 2.4-5.2 2.4-6.4 0zM12 14.6c2.4 1.2 2.4 5.6 0 6.4-2.4-.8-2.4-5.2 0-6.4zM9.4 12c-1.2 2.4-5.6 2.4-6.4 0 .8-2.4 5.2-2.4 6.4 0z"/>',
     mensual: '<circle fill="currentColor" stroke="none" cx="12" cy="12" r="6.5"/>',
     individual: '<path fill="currentColor" stroke="none" d="M12 4.5 19.5 12 12 19.5 4.5 12z"/>',
-    ajustes: '<circle cx="12" cy="12" r="3"/>&lt;path d="M12 3.2v2M12 18.8v2M4.8 7.6l1.7 1M17.5 15.4l1.7 1M4.8 16.4l1.7-1M17.5 8.6l1.7-1"/>&lt;path d="M10 3.2h4M6.2 5.4 8.4 7M17.6 5.4 15.4 7M6.2 18.6 8.4 17M17.6 18.6 15.4 17"/>',
+    ajustes: '<path d="M12 2.9l1.4.5.9 1.5 1.6-.2.9 1.5-.7 1.4.7 1.4-.9 1.5-1.6-.2-.9 1.5-1.4.5-1.4-.5-.9-1.5-1.6.2-.9-1.5.7-1.4-.7-1.4.9-1.5 1.6.2.9-1.5z"/><circle cx="12" cy="12" r="2.6"/>',
     /* En desuso: las burbujas «?» usan el carácter literal (A1, 23-nov).
        Se conserva el símbolo por si otra vista lo usa; nada lo cita hoy. */
     ayuda: '<circle cx="12" cy="12" r="8.6"/><path d="M9.6 9.8c.2-1.3 1.1-2.1 2.4-2.1 1.4 0 2.4.9 2.4 2.1 0 1.9-2.4 1.7-2.4 3.4v.4"/><circle fill="currentColor" stroke="none" cx="12" cy="16.6" r="1"/>',
