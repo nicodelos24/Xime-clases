@@ -122,6 +122,22 @@ function accionClase(c: Clase): string {
 /* ------------------------------------------------------- vista Hoy (hero) */
 /** El anillo anima su llenado una sola vez, al abrir la app. */
 let anilloArranque = true;
+/** Último `stroke-dashoffset` pintado: arranca en vacío para que el primer
+ *  cambio de estado (p. ej. 0/1 → 1/1) anime desde ahí. */
+let anilloOffsetPrevio = 2 * Math.PI * 38;
+
+/** Brillo sutil que recorre el trazo recién llenado (nunca infantil). */
+function brilloAnillo(anillo: SVGElement, offset: number): void {
+  const brillo = document.querySelector('.anillo-brillo') as SVGElement | null;
+  if (!brillo) return;
+  const circ = 2 * Math.PI * 38;
+  brillo.style.strokeDasharray = String(circ);
+  brillo.style.strokeDashoffset = String(offset);
+  brillo.animate(
+    [{ opacity: 0 }, { opacity: .85, offset: .45 }, { opacity: 0 }],
+    { duration: 700, easing: 'cubic-bezier(.22,.9,.36,1.02)', fill: 'both' },
+  );
+}
 
 function pintarHoy() {
   const hoy = hoyLocal(reloj.ahora());
@@ -136,29 +152,43 @@ function pintarHoy() {
   const anilloValor = $('.anillo-valor') as SVGElement | null;
   if (anilloValor) {
     const fraccion = total === 0 ? 0 : dadas / total;
+    const offset = circ * (1 - fraccion);
     anilloValor.style.strokeDasharray = String(circ);
-    anilloValor.style.strokeDashoffset = String(circ * (1 - fraccion));
-    // "El anillo que se llena" (LEEME v5): solo en el primer pintado, y
-    // siempre desde el estado real del anillo (no al 0/2 fijo de la hoja).
-    // Después de arrancar, el estado manda: sin animación que lo contradiga.
+    anilloValor.style.strokeDashoffset = String(offset);
+    // "El anillo que se llena" (LEEME v5): primer pintado desde el vacío;
+    // después, cada cambio de estado (p. ej. 0/1 → 1/1) anima el trazo con
+    // WAAPI: `stroke-dashoffset` es una propiedad del SVG que el CSS no anima
+    // con fiabilidad entre versiones de Chrome.
     if (anilloArranque) {
-      // Del vacío al estado real que pinta el JS. Se hace con la Web Animations
-      // API: `stroke-dashoffset` es una propiedad del SVG que el CSS no anima
-      // con fiabilidad entre versiones de Chrome.
       anilloValor.style.animation = 'none';
       anilloValor.animate(
-        [{ strokeDashoffset: String(circ) }, { strokeDashoffset: String(circ * (1 - fraccion)) }],
+        [{ strokeDashoffset: String(circ) }, { strokeDashoffset: String(offset) }],
         // `fill: 'both'`: al terminar queda el estado real (igual que el estilo
         // inline) y la animación se puede inspeccionar después en QA.
         { duration: 900, delay: 260, easing: 'cubic-bezier(.22,.9,.36,1.02)', fill: 'both' },
       );
       anilloArranque = false;
-    } else {
+    } else if (offset !== anilloOffsetPrevio) {
       anilloValor.style.animation = 'none';
+      anilloValor.animate(
+        [{ strokeDashoffset: String(anilloOffsetPrevio) }, { strokeDashoffset: String(offset) }],
+        { duration: 700, easing: 'cubic-bezier(.22,.9,.36,1.02)', fill: 'both' },
+      );
+      brilloAnillo(anilloValor, offset);
     }
+    anilloOffsetPrevio = offset;
   }
   const anilloTexto = $('.anillo-texto');
-  if (anilloTexto) anilloTexto.innerHTML = `<strong>${dadas}</strong><span>/ ${total}</span>`;
+  if (anilloTexto) {
+    const textoNuevo = `<strong>${dadas}</strong><span>/ ${total}</span>`;
+    if (anilloTexto.innerHTML !== textoNuevo) {
+      anilloTexto.innerHTML = textoNuevo;
+      // El número transita (fundido + micro-escalado) en cada cambio real.
+      anilloTexto.classList.remove('cambia');
+      void (anilloTexto as HTMLElement).offsetWidth;
+      anilloTexto.classList.add('cambia');
+    }
+  }
 
   const grupos = $('.hero-grupos');
   if (grupos) {
