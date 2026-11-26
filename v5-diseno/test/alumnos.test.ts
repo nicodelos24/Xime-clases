@@ -56,6 +56,13 @@ test('iniciales: 1–2 letras, sin acentos', () => {
   assert.equal(iniciales(''), '?');
 });
 
+test('iniciales: con el apellido opcional usa el ÚLTIMO apellido (avatar CG/LG)', () => {
+  assert.equal(iniciales('Carla T. García'), 'CG', 'nombre con inicial intermedia + apellido');
+  assert.equal(iniciales('Lucía García'), 'LG');
+  assert.equal(iniciales('Carla T.'), 'CT', 'sin apellido explícito: la última palabra cuenta');
+  assert.equal(iniciales('Ana María López'), 'AL', 'primer nombre + último apellido');
+});
+
 /* --------------------------------------------------------------- alta */
 
 test('alta: ID estable y único, fecha de alta local, contacto opcional', () => {

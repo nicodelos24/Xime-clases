@@ -14,7 +14,7 @@ import {
 import { precioPrecargado, precio } from './src/tarifas.ts';
 import {
   construirVista, filtrarYOrdenar, puntoEstadoVence, textoEstadoVence, validarAlumno,
-  iniciales, colorPorId, type AlumnoFicha, type AlumnoFichaInput, type FichaVista, type OrdenAlumnos,
+  iniciales, colorPorId, nombreCompleto, type AlumnoFicha, type AlumnoFichaInput, type FichaVista, type OrdenAlumnos,
 } from './src/alumnos.ts';
 import { resumenHoy, clasesDelDia, clasesDeLaSemana } from './src/resumen.ts';
 import { registrarToqueFecha, mesDe, type ToqueFecha } from './src/agenda.ts';
@@ -1846,10 +1846,11 @@ function vencimientosDeCobros(): Map<string, number> {
  * funciones que ya existían (`iniciales`/`colorPorId`, sin nada nuevo).
  * Sin foto de perfil (replanteo 26-nov): siempre iniciales generadas.
  */
-function avatarAlumno(nombre: string, id: string, _foto?: string, tamano = 38): string {
+function avatarAlumno(nombre: string, id: string, _foto?: string, tamano = 38, apellido = ''): string {
   const clase = colorPorId(id);
   const estilo = `width:${tamano}px;height:${tamano}px;font-size:${Math.round(tamano * 0.34)}px`;
-  return `<span class="avatar ${clase}" style="${estilo}" aria-hidden="true">${esc(iniciales(nombre))}</span>`;
+  const ini = iniciales(apellido ? `${nombre} ${apellido}` : nombre);
+  return `<span class="avatar ${clase}" style="${estilo}" aria-hidden="true">${esc(ini)}</span>`;
 }
 
 function filasAlumnos(): FichaVista[] {
@@ -1894,8 +1895,8 @@ function pintarAlumnos(): void {
   lista.innerHTML = out.length
     ? out.map((a) => {
         const punto = puntoEstadoVence(a);
-        return `<li class="fila-alumno"><button type="button" class="alumno-fila-btn" data-ficha="${esc(a.id)}" aria-label="Abrir ficha de ${esc(a.nombre)}">
-          ${avatarAlumno(a.nombre, a.id, a.foto)}<div><p class="al-nombre">${esc(a.nombre)}</p>${alumnoSub(a)}</div><span class="punto ${punto}"></span>
+        return `<li class="fila-alumno"><button type="button" class="alumno-fila-btn" data-ficha="${esc(a.id)}" aria-label="Abrir ficha de ${esc(nombreCompleto(a))}">
+          ${avatarAlumno(a.nombre, a.id, a.foto, 38, a.apellido)}<div><p class="al-nombre">${esc(nombreCompleto(a))}</p>${alumnoSub(a)}</div><span class="punto ${punto}"></span>
         </button></li>`;
       }).join('')
     : `<p class="pv-vacio">${todas.length === 0 ? 'Todavía no hay alumnos. Tocá «Nuevo alumno» para cargar el primero.' : 'Ningún alumno con estos filtros'}</p>`;
@@ -2036,7 +2037,7 @@ function abrirFichaConCobro(ficha: AlumnoFicha | null, origen: HTMLElement, alCr
     ? 'Cada clase dada sin pago genera un cobro individual. Reservar, programar o cancelar no genera deuda.'
     : 'La mensualidad vence el mismo día del mes siguiente al alta. Si pagó después, corregí la fecha del pago: queda registrado con su motivo.';
   resumen.innerHTML = `<div class="ficha-chips">
-      <span class="ficha-chip ficha-chip-alumno">${avatarAlumno(ficha.nombre, ficha.id, ficha.foto, 22)}${esc(ficha.nombre)}</span>
+      <span class="ficha-chip ficha-chip-alumno">${avatarAlumno(ficha.nombre, ficha.id, ficha.foto, 22, ficha.apellido)}${esc(nombreCompleto(ficha))}</span>
       ${chipDeuda}${chipVence}
     </div>
     <p>${texto}${ultimo || deuda || individualPendiente ? burbujaAyuda(ayudaCobro) : ''}</p>
@@ -2075,12 +2076,14 @@ function abrirFicha(ficha: AlumnoFicha | null, origen: HTMLElement, alCrear?: (c
   const hoy = hoyLocal(reloj.ahora());
   const listaGrupos = listaGruposHtml();
   const contenido = `<div class="cobros-panel-resumen">
-    <div><p class="al-nombre">${esNueva ? 'Nuevo alumno' : esc(ficha!.nombre)}</p>
+    <div><p class="al-nombre">${esNueva ? 'Nuevo alumno' : esc(nombreCompleto(ficha!))}</p>
     <p class="al-sub">${esNueva ? 'Ficha real · se guarda en este dispositivo' : `Alta ${esc(fechaCorta(ficha!.fechaAlta))}`}</p></div>
     <div class="cobros-panel-dato">${esNueva ? '' : `<span class="ficha-id">ID ${esc(ficha!.id)}</span>`}</div></div>
     <p class="cobros-panel-nota">${esNueva ? 'Completá los datos para dar de alta. Nada se envía ni crea grupos.' : burbujaAyuda('Podés corregir nombre, modalidad, día de vencimiento y teléfono. La identidad y la fecha de alta no se cambian.')}</p>
     <form novalidate>
       <label class="campo"><span>Nombre *</span><input name="nombre" required maxlength="80" autocomplete="off" value="${esNueva ? '' : esc(ficha!.nombre)}" placeholder="Nombre y apellido"></label>
+      <button type="button" class="apellido-toggle" data-apellido-toggle aria-expanded="${ficha?.apellido ? 'true' : 'false'}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Apellido <span class="hint">(opcional)</span></button>
+      <label class="campo apellido-campo" data-apellido-campo ${ficha?.apellido ? '' : 'hidden'}><span>Apellido (opcional) <button type="button" class="quitar" data-apellido-quitar>Quitar</button></span><input name="apellido" maxlength="80" autocomplete="off" value="${esNueva ? '' : esc(ficha?.apellido ?? '')}" placeholder="Ej.: García"><p class="campo-nota">Se usa junto al nombre para buscar y distinguir alumnas</p></label>
       <label class="campo"><span>Tarifa en UYU *${burbujaAyuda('Se guarda en la ficha. No se usa ningún precio de ejemplo.')}</span><input name="tarifaUYU" type="number" min="1" step="1" inputmode="numeric" required value="${ficha?.tarifaUYU ?? ''}" placeholder="Ej.: 2500"></label>
       ${esNueva ? `<p class="campo"><span>Fecha de registro *</span></p>${selectorFecha('alta', hoy)}` : ''}
       <p class="campo"><span>Modalidad *</span></p>
@@ -2128,6 +2131,21 @@ function abrirFicha(ficha: AlumnoFicha | null, origen: HTMLElement, alCrear?: (c
     b.setAttribute('aria-pressed', String(on));
   });
   dialogo.querySelectorAll<HTMLButtonElement>('[data-pago]').forEach((b) => b.addEventListener('click', () => { pagado = b.dataset.pago === 'si'; pintarPago(); }));
+  // Apellido opcional desplegable (26-nov): el botón abre/cierra el campo;
+  // «Quitar» lo cierra y limpia el valor sin tocar ID ni color del avatar.
+  const campoApellido = dialogo.querySelector<HTMLElement>('[data-apellido-campo]')!;
+  const toggleApellido = dialogo.querySelector<HTMLButtonElement>('[data-apellido-toggle]')!;
+  const inputApellido = campoApellido.querySelector<HTMLInputElement>('input[name="apellido"]')!;
+  const setApellidoAbierto = (abierto: boolean) => {
+    campoApellido.hidden = !abierto;
+    toggleApellido.setAttribute('aria-expanded', String(abierto));
+  };
+  toggleApellido.addEventListener('click', () => setApellidoAbierto(campoApellido.hasAttribute('hidden')));
+  dialogo.querySelector<HTMLButtonElement>('[data-apellido-quitar]')?.addEventListener('click', () => {
+    inputApellido.value = '';
+    setApellidoAbierto(false);
+    inputApellido.focus();
+  });
 
   const form = dialogo.querySelector('form')!;
   const error = form.querySelector<HTMLElement>('[role="alert"]')!;
@@ -2145,6 +2163,9 @@ function abrirFicha(ficha: AlumnoFicha | null, origen: HTMLElement, alCrear?: (c
     const tarifaRaw = String(datos.get('tarifaUYU') ?? '').trim();
     const input = {
       nombre: String(datos.get('nombre') ?? ''),
+      // Apellido opcional: si el campo está oculto el form no lo manda, y
+      // editarAlumno solo lo pisa cuando viene definido (conserva el vigente).
+      apellido: String(datos.get('apellido') ?? '').trim(),
       modalidad,
       tarifaUYU: tarifaRaw === '' ? 0 : Number(tarifaRaw),
       contacto: String(datos.get('contacto') ?? ''),
@@ -2309,16 +2330,17 @@ function pintarCobros() {
   listaCobros.innerHTML = [
     ...individualesVisibles.map((f) => {
       const fichaFila = repo.listarAlumnos().find((a) => a.id === f.alumno.id);
-      const avatar = avatarAlumno(f.alumno.nombre, fichaFila?.id ?? f.alumno.id, fichaFila?.foto, 32);
+      const nomCobro = fichaFila ? nombreCompleto(fichaFila) : f.alumno.nombre;
+      const avatar = avatarAlumno(f.alumno.nombre, fichaFila?.id ?? f.alumno.id, fichaFila?.foto, 32, fichaFila?.apellido);
       const monto = f.pago ? f.pago.montoUYU : precioPrecargado(f.alumno, 'clase-individual', f.fecha);
       const sinTarifa = !f.pago && f.alumno.montoUYU <= 0;
       const importe = f.pago ? uyu(monto) : sinTarifa ? 'Falta cargar la tarifa' : uyu(monto);
       return `<li>
     <button type="button" class="cobro-fila" data-clase-cobro="${esc(`${f.alumno.id}|${f.clase.id}`)}" aria-haspopup="dialog"
-      aria-label="${f.pago ? 'Ver ficha de' : 'Ver ficha de'} ${esc(f.alumno.nombre)}, ${f.pago ? `pagado el ${fechaBreve(f.pago.fecha)}, ${uyu(f.pago.montoUYU)}` : `clase del ${fechaBreve(f.fecha)}, ${importe}`}">
+      aria-label="${f.pago ? 'Ver ficha de' : 'Ver ficha de'} ${esc(nomCobro)}, ${f.pago ? `pagado el ${fechaBreve(f.pago.fecha)}, ${uyu(f.pago.montoUYU)}` : `clase del ${fechaBreve(f.fecha)}, ${importe}`}">
       ${avatar}
       <span class="cobro-row">
-        <span class="al-nombre">${esc(f.alumno.nombre)}</span>
+        <span class="al-nombre">${esc(nomCobro)}</span>
         <span class="cobro-meta">Clase individual · ${esc(fechaCorta(f.fecha))}</span>
       </span>
       <span class="cobro-importe"><b class="${sinTarifa ? 'cobro-sin-tarifa' : ''}">${importe}</b><small class="${f.pago ? 'pagado' : ''}">${f.pago ? 'Pagado' : 'Debe'}</small></span>
@@ -2329,13 +2351,14 @@ function pintarCobros() {
     ...filasVisibles.map((f) => {
     // Avatar idéntico al de Alumnos: mismo ID, mismo color, misma foto.
     const fichaFila = repo.listarAlumnos().find((a) => a.id === f.alumno.id);
-    const avatar = avatarAlumno(f.alumno.nombre, fichaFila?.id ?? f.alumno.id, fichaFila?.foto, 32);
+    const nomCobro = fichaFila ? nombreCompleto(fichaFila) : f.alumno.nombre;
+    const avatar = avatarAlumno(f.alumno.nombre, fichaFila?.id ?? f.alumno.id, fichaFila?.foto, 32, fichaFila?.apellido);
     return `<li>
     <button type="button" class="cobro-fila" data-fila="${esc(`${f.alumno.id}|${f.periodo}`)}" aria-haspopup="dialog"
-      aria-label="${f.pago ? 'Ver ficha de' : 'Ver ficha de'} ${esc(f.alumno.nombre)}, ${f.pago ? `pagado el ${fechaBreve(f.pago.fecha)}, ${uyu(f.alumno.montoUYU)}` : `deuda ${uyu(f.alumno.montoUYU)}, ${textoVence(f.dias)}`}">
+      aria-label="${f.pago ? 'Ver ficha de' : 'Ver ficha de'} ${esc(nomCobro)}, ${f.pago ? `pagado el ${fechaBreve(f.pago.fecha)}, ${uyu(f.alumno.montoUYU)}` : `deuda ${uyu(f.alumno.montoUYU)}, ${textoVence(f.dias)}`}">
       ${avatar}
       <span class="cobro-row">
-        <span class="al-nombre">${esc(f.alumno.nombre)}</span>
+        <span class="al-nombre">${esc(nomCobro)}</span>
         <span class="cobro-meta">${f.pago ? `Pagado el ${fechaBreve(f.pago.fecha)} · ${esc(f.alumno.grupo)}` : `${esc(f.alumno.grupo)}`}</span>
       </span>
       ${f.pago

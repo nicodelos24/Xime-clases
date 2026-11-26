@@ -59,7 +59,7 @@ test('alta y edición parcial de tarifa validan enteros positivos y conservan id
   assert.equal(editada.fechaAlta, ALTA);
   assert.equal(editada.id, ficha.id);
   assert.deepEqual(normalizarAlumno({ nombre: 'Otra', modalidad: 'mensual' }), {
-    nombre: 'Otra', modalidad: 'mensual', grupo: '', ancla: 21, contacto: '', pagado: false, tarifaUYU: null,
+    nombre: 'Otra', modalidad: 'mensual', grupo: '', ancla: 21, contacto: '', pagado: false, tarifaUYU: null, apellido: '',
   });
 });
 

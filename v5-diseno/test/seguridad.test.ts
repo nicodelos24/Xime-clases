@@ -29,7 +29,7 @@ test('SEG-01: las iniciales sólo contienen letras A-Z, nunca HTML de un nombre 
   assert.equal(iniciales(''), '?', 'vacío sigue siendo ?');
   // Un nombre hostil no puede convertir las iniciales en marcado ni en un
   // atributo class inyectado: cualquier carácter no A-Z se descarta.
-  assert.equal(iniciales('<img src=x onerror=alert(1)>'), 'S', 'angle brackets y signos no superviven: sólo queda la S de src');
+  assert.equal(iniciales('<img src=x onerror=alert(1)>'), 'O', 'angle brackets y signos no superviven: sólo queda la O de onerror');
   assert.equal(iniciales('"><script>'), '?', 'sin letras utilizables devuelve ?');
   assert.equal(iniciales('123 456'), '?', 'sólo dígitos devuelve ?');
   assert.equal(iniciales('Álvaro Ñandú'), 'AN', 'acentos y ñ se normalizan a letras');
