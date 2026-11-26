@@ -24,6 +24,7 @@ export function precioDemo(concepto, _fecha) {
 export function precio(alumno, concepto, _fecha) {
     if (concepto !== 'mensualidad' && concepto !== 'clase-individual')
         return null;
+    // El precio manual es la tarifa acordada: manda en el cobro de esa alumna.
     const tarifa = alumno.tarifaUYU;
     return typeof tarifa === 'number' && Number.isSafeInteger(tarifa) && tarifa > 0 ? tarifa : null;
 }

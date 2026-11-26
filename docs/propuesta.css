@@ -1159,6 +1159,12 @@ html[data-tema="oscuro"] .cobro-fila .cobro-vence.pronto { background: var(--amb
   outline: none; border-color: var(--tq-500); box-shadow: 0 0 0 3px var(--tq-100);
 }
 
+/* Precio manual (26/11): el campo se despliega bajo la forma de pago con la
+   misma animación que el apellido; no superpone ni cambia tamaños de botones. */
+.precio-manual:not([hidden]) { animation: subirSheet var(--t-media) var(--ease) both; }
+.precio-manual .campo { margin-top: 11px; }
+[data-tema="oscuro"] .precio-manual .campo input { background: #123C3F; }
+
 /* Apellido opcional (26/11): píldora discreta bajo «Nombre» que despliega el
    campo. Mismo lenguaje que .dia-chip/.opcion: sombra suave, transición
    corta, nada de botones grandes (no se tocan tamaños de botones). */

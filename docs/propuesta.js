@@ -1,25 +1,25 @@
 // Clases v5 · navegación + funcionamiento (auto-marcado, Cancelar clase, WhatsApp)
 // La estética vive en tokens.css/propuesta.css; acá solo se cambian estados,
 // textos y el flujo de cancelación. Sin emoji: solo SVG de icons.js.
-import { horaClase, } from './src/clases.js?v=202611261756';
-import { CLAVE_ESTADO, RepositorioClases, almacenLocalStorage } from './src/repositorio.js?v=202611261756';
-import { alumnosCobrosDemo, datosDemo, fichasDemo } from './src/demo.js?v=202611261756';
-import { resumenCobros, cobrosIndividuales, deudaIndividual as deudaInd, filtrarCobros, ordenarCobros, } from './src/cobros.js?v=202611261756';
-import { precioPrecargado, precio } from './src/tarifas.js?v=202611261756';
-import { construirVista, filtrarYOrdenar, puntoEstadoVence, textoEstadoVence, validarAlumno, iniciales, colorPorId, nombreCompleto, } from './src/alumnos.js?v=202611261756';
-import { resumenHoy, clasesDelDia, clasesDeLaSemana } from './src/resumen.js?v=202611261756';
-import { registrarToqueFecha, mesDe } from './src/agenda.js?v=202611261756';
-import { primerDiaDeMes, diaSeleccionadoAlCargar } from './src/agenda-mes.js?v=202611261756';
-import { decisionDeGesto, decisionDeAperturaDeMenu, DURACION_TOQUE_LARGO, UMBRAL_MOVIMIENTO_GESTO, etiquetaProximoPaso } from './src/toque-clase.js?v=202611261756';
-import { destinoDeEnlace, vistaInicial, vistasActivas } from './src/navegacion.js?v=202611261756';
-import { pistaDeTira } from './src/scroll-pista.js?v=202611261756';
-import { actualizarBarra, estadoBarraInicial, debeReaparecerPorQuietud, REAPARECER_TRAS_MS, } from './src/barra-scroll.js?v=202611261756';
-import { ajustarLock, debeBloquearScroll, estiloSheet, debeCerrarPorToqueFuera, esToqueFuera, debeSuprimirClickTrasCierre, decisionCierreSheetsPorNavegacion, debeCerrarPorDeslizar, FRANJA_CIERRE, } from './src/sheets.js?v=202611261756';
-import { diaCorto, mesCorto, etiquetaDia, etiquetaDiaCompleta, etiquetaMes, fechaCorta, sumarDias, parseFecha, lunesDe, diasDelMes, esFechaValida, } from './src/fechas.js?v=202611261756';
-import { relojDelDispositivo, hoyLocal } from './src/reloj.js?v=202611261756';
-import { CLAVE_PREFIJO, PREFIJO_POR_DEFECTO, prefijoEsValido, prefijoSeguro, conPrefijo } from './src/prefijo.js?v=202611261756';
-import { bloqueContacto } from './src/contacto.js?v=202611261756';
-import { textoCancelacion, destinos, resumenEnvio, linkTexto, linkAvisoVencimiento, } from './src/whatsapp.js?v=202611261756';
+import { horaClase, } from './src/clases.js?v=202611261815';
+import { CLAVE_ESTADO, RepositorioClases, almacenLocalStorage } from './src/repositorio.js?v=202611261815';
+import { alumnosCobrosDemo, datosDemo, fichasDemo } from './src/demo.js?v=202611261815';
+import { resumenCobros, cobrosIndividuales, deudaIndividual as deudaInd, filtrarCobros, ordenarCobros, } from './src/cobros.js?v=202611261815';
+import { precioPrecargado, precio } from './src/tarifas.js?v=202611261815';
+import { construirVista, filtrarYOrdenar, puntoEstadoVence, textoEstadoVence, validarAlumno, iniciales, colorPorId, nombreCompleto, } from './src/alumnos.js?v=202611261815';
+import { resumenHoy, clasesDelDia, clasesDeLaSemana } from './src/resumen.js?v=202611261815';
+import { registrarToqueFecha, mesDe } from './src/agenda.js?v=202611261815';
+import { primerDiaDeMes, diaSeleccionadoAlCargar } from './src/agenda-mes.js?v=202611261815';
+import { decisionDeGesto, decisionDeAperturaDeMenu, DURACION_TOQUE_LARGO, UMBRAL_MOVIMIENTO_GESTO, etiquetaProximoPaso } from './src/toque-clase.js?v=202611261815';
+import { destinoDeEnlace, vistaInicial, vistasActivas } from './src/navegacion.js?v=202611261815';
+import { pistaDeTira } from './src/scroll-pista.js?v=202611261815';
+import { actualizarBarra, estadoBarraInicial, debeReaparecerPorQuietud, REAPARECER_TRAS_MS, } from './src/barra-scroll.js?v=202611261815';
+import { ajustarLock, debeBloquearScroll, estiloSheet, debeCerrarPorToqueFuera, esToqueFuera, debeSuprimirClickTrasCierre, decisionCierreSheetsPorNavegacion, debeCerrarPorDeslizar, FRANJA_CIERRE, } from './src/sheets.js?v=202611261815';
+import { diaCorto, mesCorto, etiquetaDia, etiquetaDiaCompleta, etiquetaMes, fechaCorta, sumarDias, parseFecha, lunesDe, diasDelMes, esFechaValida, } from './src/fechas.js?v=202611261815';
+import { relojDelDispositivo, hoyLocal } from './src/reloj.js?v=202611261815';
+import { CLAVE_PREFIJO, PREFIJO_POR_DEFECTO, prefijoEsValido, prefijoSeguro, conPrefijo } from './src/prefijo.js?v=202611261815';
+import { bloqueContacto } from './src/contacto.js?v=202611261815';
+import { textoCancelacion, destinos, resumenEnvio, linkTexto, linkAvisoVencimiento, } from './src/whatsapp.js?v=202611261815';
 /* ------------------------------------------------- estado persistente (local) */
 const reloj = relojDelDispositivo();
 /** Quién opera la app hoy: único dueño. En Fase 4 sale de la sesión. */
@@ -1904,7 +1904,8 @@ function alumnoSub(a) {
     const v = textoEstadoVence(a);
     const porClase = a.formaPago === 'por-clase';
     const et = porClase ? 'et-individual' : 'et-mensual';
-    return `<p class="al-sub">${esc(a.grupo)} · ${v} <span class="etiqueta ${et}">${porClase ? 'Por clase' : 'Mensual fijo'}</span></p><span class="al-fecha">Alta ${esc(fechaCorta(a.fechaAlta))}</span>`;
+    const etiqueta = a.formaPago === 'otro' ? 'Precio manual' : porClase ? 'Por clase' : 'Mensual fijo';
+    return `<p class="al-sub">${esc(a.grupo)} · ${v} <span class="etiqueta ${et}">${etiqueta}</span></p><span class="al-fecha">Alta ${esc(fechaCorta(a.fechaAlta))}</span>`;
 }
 function pintarChipsAlumnos() {
     $$('#filtros-alumnos [data-orden]').forEach((b) => {
@@ -2132,8 +2133,12 @@ function abrirFicha(ficha, origen, alCrear) {
       <div class="ficha-grupo-opciones" role="group" aria-label="Forma de pago">
         <button type="button" class="ficha-grupo" data-forma-pago="mensual-fijo" aria-pressed="false">Mensual fijo</button>
         <button type="button" class="ficha-grupo" data-forma-pago="por-clase" aria-pressed="false">Por clase</button>
+        <button type="button" class="ficha-grupo" data-forma-pago="otro" aria-pressed="false" aria-controls="precio-manual-campo" aria-expanded="false">Otro precio (manual)</button>
       </div>
-      <label class="campo"><span>Precio en UYU *${burbujaAyuda('Se guarda en la ficha y se usa en los cobros. No se usa ningún precio de ejemplo.')}</span><input name="tarifaUYU" type="number" min="1" step="1" inputmode="numeric" required value="${ficha?.tarifaUYU ?? ''}" placeholder="Ej.: 2500"></label>
+      <div class="precio-manual" id="precio-manual-campo" ${ficha?.formaPago === 'otro' ? '' : 'hidden'}>
+        <label class="campo"><span>Precio manual en UYU *${burbujaAyuda('Precio acordado para esta alumna: descuento u otro monto. Se guarda y se usa en cobros y avisos. El cálculo de descuento se agregará en otra tarea.')}</span><input name="tarifaManualUYU" type="number" min="1" step="1" inputmode="numeric" required value="${ficha?.formaPago === 'otro' ? ficha.tarifaUYU ?? '' : ''}" placeholder="Ej.: 4800"></label>
+      </div>
+      <label class="campo" id="precio-fijo-campo" ${ficha?.formaPago === 'otro' ? 'hidden' : ''}><span>Precio en UYU *${burbujaAyuda('Se guarda en la ficha y se usa en los cobros. No se usa ningún precio de ejemplo.')}</span><input name="tarifaUYU" type="number" min="1" step="1" inputmode="numeric" required value="${ficha?.tarifaUYU ?? ''}" placeholder="Ej.: 2500"></label>
       ${esNueva ? `<p class="campo"><span>Fecha de registro *</span></p>${selectorFecha('alta', hoy)}` : ''}
       ${esNueva ? `<p class="campo"><span>¿Pagó la primera mensualidad? *</span></p>
       <div class="ficha-grupo-opciones" role="group" aria-label="Estado del pago">
@@ -2156,17 +2161,36 @@ function abrirFicha(ficha, origen, alCrear) {
     // Las fotos ya guardadas en el repo dejan de mostrarse y de poder cambiarse.
     let formaPago = ficha?.formaPago ?? 'mensual-fijo';
     let pagado = false;
-    const pintarFormaPago = () => dialogo.querySelectorAll('[data-forma-pago]').forEach((b) => {
-        const on = b.dataset.formaPago === formaPago;
-        b.classList.toggle('activo', on);
-        b.setAttribute('aria-pressed', String(on));
-    });
+    const campoManual = dialogo.querySelector('#precio-manual-campo');
+    const campoFijo = dialogo.querySelector('#precio-fijo-campo');
+    const inputTarifa = dialogo.querySelector('input[name="tarifaUYU"]');
+    const inputManual = dialogo.querySelector('input[name="tarifaManualUYU"]');
+    const pintarFormaPago = () => {
+        dialogo.querySelectorAll('[data-forma-pago]').forEach((b) => {
+            const on = b.dataset.formaPago === formaPago;
+            b.classList.toggle('activo', on);
+            b.setAttribute('aria-pressed', String(on));
+            if (b.dataset.formaPago === 'otro')
+                b.setAttribute('aria-expanded', String(on));
+        });
+        const esManual = formaPago === 'otro';
+        campoManual.hidden = !esManual;
+        campoFijo.hidden = esManual;
+        // El precio manual manda cuando está abierto; al volver al fijo se conserva su valor.
+        if (esManual)
+            inputTarifa.value = inputManual.value;
+    };
     dialogo.querySelectorAll('[data-forma-pago]').forEach((b) => b.addEventListener('click', () => {
-        if (b.dataset.formaPago === 'mensual-fijo' || b.dataset.formaPago === 'por-clase') {
-            formaPago = b.dataset.formaPago;
+        const destino = b.dataset.formaPago;
+        if (destino !== 'mensual-fijo' && destino !== 'por-clase' && destino !== 'otro')
+            return;
+        if (destino === 'otro' && formaPago !== 'otro') {
+            inputManual.value = inputTarifa.value;
         }
+        formaPago = destino;
         pintarFormaPago();
     }));
+    inputManual.addEventListener('input', () => { inputTarifa.value = inputManual.value; });
     pintarFormaPago();
     const pintarPago = () => dialogo.querySelectorAll('[data-pago]').forEach((b) => {
         const on = b.dataset.pago === (pagado ? 'si' : 'no');
@@ -2317,6 +2341,7 @@ function alumnosParaCobros() {
         tarifaUYU: f.tarifaUYU,
         montoUYU: precio(f, f.formaPago === 'por-clase' ? 'clase-individual' : 'mensualidad', hoyLocal(reloj.ahora())) ?? 0,
         individual: f.formaPago === 'por-clase',
+        formaPago: f.formaPago,
     }));
 }
 const verCobros = () => resumenCobros(alumnosParaCobros(), repo.listarPagos(), hoyLocal(reloj.ahora()));

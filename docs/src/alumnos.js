@@ -83,7 +83,7 @@ export function validarAlumno(input) {
     if (input.tarifaUYU !== undefined && (!Number.isSafeInteger(input.tarifaUYU) || input.tarifaUYU <= 0)) {
         errores.tarifaUYU = 'Ingresá una tarifa entera en UYU (mayor a 0)';
     }
-    if (input.formaPago !== undefined && input.formaPago !== 'mensual-fijo' && input.formaPago !== 'por-clase') {
+    if (input.formaPago !== undefined && input.formaPago !== 'mensual-fijo' && input.formaPago !== 'por-clase' && input.formaPago !== 'otro') {
         errores.formaPago = 'Elegí la forma de pago';
     }
     return errores;
@@ -200,7 +200,7 @@ export function normalizarFichaGuardada(dato) {
         // Fichas v2 sin tarifa: null, nunca el precio de ejemplo de la demo.
         tarifaUYU: Number.isSafeInteger(dato.tarifaUYU) && dato.tarifaUYU > 0 ? dato.tarifaUYU : null,
         // Ficha guardada antes de este campo: su tarifa siempre era mensual.
-        formaPago: dato.formaPago === 'por-clase' ? 'por-clase' : 'mensual-fijo',
+        formaPago: dato.formaPago === 'por-clase' ? 'por-clase' : dato.formaPago === 'otro' ? 'otro' : 'mensual-fijo',
         foto: esFotoValida(dato.foto) ? dato.foto : '',
         apellido: typeof dato.apellido === 'string' ? dato.apellido.trim() : '',
     };
