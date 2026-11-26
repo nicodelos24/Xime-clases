@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { mkdir, writeFile } from 'node:fs/promises';
-import { chromium } from '/home/nico/.cache/apx-scratch-yuma/traza-lab/node_modules/playwright/index.mjs';
+import { chromium } from '/home/nico/.npm/_npx/e41f203b7505f1fb/node_modules/playwright/index.mjs';
 
 const SALIDA = process.argv[2] ?? '../docs/qa/integracion-avatar-seguridad-20261124';
 const BASE = process.env.XIME_URL ?? 'http://localhost:8879/index.html';
@@ -40,14 +40,34 @@ async function comprobarF5(etiqueta) {
   assert.equal(await pagina.evaluate(() => window.ximeV5.hojaAbierta), false, `${etiqueta}: ximeV5.hojaAbierta=false`);
   return observaciones;
 }
+/**
+ * El menú completo ya NO lo abre un toque/click en el chip (ese toque cicla
+ * Por dar → Dada → Cancelada → Por dar). Queda para teclado/AT: enfocar el
+ * chip y mandar Enter abre la hoja de acciones.
+ */
 async function abrirAcciones(control) {
-  await control.click({ force: true });
+  await control.evaluate((el) => el.focus());
+  await pagina.keyboard.press('Enter');
   await pagina.waitForSelector(HABIERTA, { state: 'attached' });
   assert.equal(await hojasVivas(), 1, 'abre exactamente una hoja viva');
 }
 async function cerrarAcciones() {
   await pagina.locator(`${HABIERTA} .sheet-cerrar`).click();
   await esperarCeroHojas();
+}
+/**
+ * El anclaje del día de la semana NO sobrevive un F5 (es estado de pantalla,
+ * `diaSemanaAnclado` vive sólo en memoria): tras recargar la línea vuelve al
+ * día de hoy. Cada vez que hace falta un segundo chip se vuelve a elegir el
+ * día de dos clases.
+ */
+async function elegirDiaConDosClases() {
+  await pagina.waitForSelector('#v-semana .tira-dia', { state: 'attached' });
+  await pagina.locator('#v-semana .tira-dia[data-fecha="2026-11-24"]').click();
+  // El 24-nov tiene dos clases; al cancelar una de ellas queda una sola viva.
+  // Acá se pide al menos un chip vivo (los pasos siguientes usan el primero).
+  await pagina.waitForFunction(() =>
+    document.querySelectorAll('#v-semana .clase:not(.cancelada) .chip-boton').length >= 1);
 }
 async function abrirCancelacion() {
   await abrirAcciones(pagina.locator(CHIP_VIVO).first());
@@ -74,30 +94,44 @@ try {
 
   await pagina.locator('#lista-alumnos .alumno-fila-btn').first().click();
   await pagina.waitForSelector('dialog.sheet[open]');
-  assert.ok(await pagina.locator('dialog.sheet [data-ficha-foto]').count(), 'la ficha incluye avatar/foto');
+  // Sin foto de perfil (replanteo de Nico 26-nov): la ficha ya no trae campo
+  // de foto; queda el avatar generado con las iniciales del nombre.
+  assert.ok(await pagina.locator('dialog.sheet .avatar').count(), 'la ficha muestra el avatar generado');
   await pagina.screenshot({ path: `${SALIDA}/02-ficha.png`, fullPage: true });
-
-  await pagina.locator('[data-entrada-foto="galeria"]').setInputFiles({
-    name: 'avatar.png', mimeType: 'image/png',
-    buffer: Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+a9WQAAAAASUVORK5CYII=', 'base64'),
-  });
-  await pagina.waitForFunction(() => document.querySelector('dialog.sheet [data-ficha-foto] .avatar-foto img'));
-  const srcFoto = await pagina.locator('dialog.sheet [data-ficha-foto] img').getAttribute('src');
-  assert.match(srcFoto ?? '', /^data:image\/jpeg;base64,/);
-  assert.ok((srcFoto ?? '').length < 150_000);
   await pagina.locator('dialog.sheet button[type="submit"]').click();
   await pagina.waitForFunction(() => !document.querySelector('dialog.sheet[open]'));
-  assert.ok(await pagina.locator('#lista-alumnos .avatar-foto img').count(), 'la foto aparece en la lista');
+  assert.ok(await pagina.locator('#lista-alumnos .avatar').count(), 'el avatar aparece en la lista');
   await pagina.reload({ waitUntil: 'networkidle' });
   await pagina.waitForSelector('#lista-alumnos .alumno-fila-btn', { state: 'attached' });
-  assert.ok(await pagina.locator('#lista-alumnos .avatar-foto img').count(), 'la foto sobrevive el refresh');
-  await pagina.screenshot({ path: `${SALIDA}/03-foto-persistida.png`, fullPage: true });
+  assert.ok(await pagina.locator('#lista-alumnos .avatar').count(), 'el avatar sobrevive el refresh');
+  await pagina.screenshot({ path: `${SALIDA}/03-avatar-persistido.png`, fullPage: true });
 
   await pagina.locator('nav a[href="#v-semana"]').click();
   await pagina.waitForFunction(() => location.hash === '#v-semana');
   await pagina.locator('#v-semana .tira-dia').nth(1).click();
   await pagina.waitForSelector('#v-semana .clase');
   assert.ok(await pagina.locator(CHIP_VIVO).first().isVisible(), 'chip de clase visible');
+  // La línea del día muestra TODAS sus tarjetas (24-nov tiene dos). El
+  // segundo paso del smoke necesita un segundo chip en pantalla.
+  assert.ok(await pagina.locator(CHIP_VIVO).count() >= 2,
+    `el día elegido debe tener al menos dos clases con chip (hay ${await pagina.locator(CHIP_VIVO).count()})`);
+  await pagina.locator('#v-semana .tira-dia:not(.tiene)').first().click();
+  await pagina.waitForFunction(() => document.querySelectorAll('#v-semana .clase').length === 0);
+  assert.equal(await hojasVivas(), 0, 'cambiar de día no deja hojas vivas');
+  await pagina.locator('#v-semana .tira-dia[data-fecha="2026-11-24"]').click();
+  await pagina.waitForSelector('#v-semana .clase');
+  // Enter en el chip abre el menú sin tocar el estado (el click nativo que
+  // genera el Enter no debe ciclar).
+  await pagina.locator('#v-semana .clase:not(.cancelada) .chip-boton').first().evaluate((el) => el.focus());
+  const estadoAntesEnter = await pagina.locator('#v-semana .clase:not(.cancelada) .chip-boton').first().innerText();
+  await pagina.keyboard.press('Enter');
+  await pagina.waitForSelector(HABIERTA, { state: 'attached' });
+  assert.equal(await hojasVivas(), 1, 'Enter abre exactamente una hoja viva');
+  assert.equal(await pagina.locator('#v-semana .clase:not(.cancelada) .chip-boton').first().innerText(), estadoAntesEnter,
+    'Enter NO cambia el estado del chip');
+  await cerrarAcciones();
+  await pagina.locator('#v-semana .tira-dia[data-fecha="2026-11-24"]').click();
+  await pagina.waitForSelector('#v-semana .clase');
 
   // F5 con acciones abiertas y luego el segundo chip.
   await abrirAcciones(pagina.locator(CHIP_VIVO).first());
@@ -112,7 +146,10 @@ try {
     disparador: el.dataset.disparador ?? null, cancelacion: el.dataset.cancelacion ?? null,
   })));
   await pagina.screenshot({ path: `${SALIDA}/06-f5-sin-hojas.png`, fullPage: true });
-  const segundoChip = pagina.locator(CHIP_VIVO).nth(1);
+  // Antes del F5 el smoke había cancelado c-mar-a, así que el 24-nov queda con
+  // una sola clase viva (c-mar-b). Se busca el chip vivo que haya.
+  await elegirDiaConDosClases();
+  const segundoChip = pagina.locator(CHIP_VIVO).first();
   const idSegundo = await segundoChip.getAttribute('data-acciones');
   await abrirAcciones(segundoChip);
   assert.equal(await pagina.locator(HABIERTA).getAttribute('data-disparador'), `clase-acciones-${idSegundo}`);
@@ -121,10 +158,12 @@ try {
   // F5 tras cierre limpio y reapertura de ese mismo segundo chip.
   f5.trasCerrarAcciones = await comprobarF5('tras cerrar acciones');
   assert.equal(await pagina.locator('#v-semana .clase.cancelada').count(), 0);
+  await elegirDiaConDosClases();
   await abrirAcciones(pagina.locator(`#v-semana [data-acciones="${idSegundo}"]`));
   await cerrarAcciones();
 
   // Hashchange con acciones: cierre inmediato.
+  await elegirDiaConDosClases();
   await abrirAcciones(pagina.locator(CHIP_VIVO).first());
   await pagina.evaluate(() => { location.hash = 'v-alumnos'; });
   await pagina.waitForFunction(() => location.hash === '#v-alumnos');
@@ -151,29 +190,53 @@ try {
   assert.match(await pagina.locator('#v-semana .clase.cancelada').first().innerText(), /Smoke headless de integración/);
   await pagina.screenshot({ path: `${SALIDA}/07-cancelacion-persistida.png`, fullPage: true });
 
-  // Reapertura normal y toque corto en zona vacía.
+  // El toque en la TARJETA no cambia estado: solo abre/cierra quiénes van.
+  // La clase del día de hoy quedó cancelada más arriba, así que se elige un
+  // día con clases vivas antes de probar el gesto de la tarjeta.
+  await elegirDiaConDosClases();
   const chipNormal = pagina.locator(CHIP_VIVO).first();
   await abrirAcciones(chipNormal);
   await cerrarAcciones();
   const tarjeta = chipNormal.locator('xpath=ancestor::article[contains(@class,"clase")]');
   const caja = await tarjeta.boundingBox();
   assert.ok(caja, 'tarjeta visible');
+  const estadoAntes = await chipNormal.innerText();
   await pagina.touchscreen.tap(caja.x + caja.width * 0.55, caja.y + 32);
-  await pagina.waitForTimeout(100);
-  const estadoTrasTap = await chipNormal.innerText();
-  assert.match(estadoTrasTap, /Dada|Por dar/);
+  await pagina.waitForTimeout(150);
+  const estadoTrasTapTarjeta = await chipNormal.innerText();
+  assert.equal(estadoTrasTapTarjeta, estadoAntes, 'el toque en la tarjeta NO cambia el estado del chip');
   assert.equal(await hojasVivas(), 0, 'el tap en zona vacía no abre menú');
+
+  // El toque en el CHIP sí cicla: Por dar → Dada → Cancelada → Por dar.
+  await elegirDiaConDosClases();
+  const chipCiclo = pagina.locator(CHIP_VIVO).first();
+  const etiquetas = [];
+  for (let paso = 0; paso < 4; paso++) {
+    await chipCiclo.click({ force: true });
+    await pagina.waitForTimeout(150);
+    etiquetas.push((await chipCiclo.innerText()).trim());
+    if (etiquetas.at(-1) === 'Cancelada') {
+      // Sin aviso de WhatsApp, el menú diferido entra a los ~4 s: esperarlo.
+      await pagina.waitForSelector('div.sheet[role="alertdialog"]:not(.cerrando)', { state: 'attached', timeout: 8000 });
+      await pagina.locator('div.sheet[role="alertdialog"]:not(.cerrando) [data-mc="deshacer"]').click();
+      await esperarCeroHojas();
+      await pagina.waitForSelector('#v-semana .clase:not(.cancelada)', { state: 'attached' });
+    }
+  }
+  assert.deepEqual(etiquetas.slice(0, 3), ['Dada', 'Cancelada', 'Por dar'], 'el chip cicla Por dar → Dada → Cancelada → Por dar');
+  assert.equal(etiquetas[3], 'Dada', 'el ciclo vuelve a empezar');
+  assert.equal(await hojasVivas(), 0, 'el ciclo no deja hojas vivas');
   await pagina.screenshot({ path: `${SALIDA}/05-toque-clase.png`, fullPage: true });
 
   assert.deepEqual(errores, [], 'sin errores de JavaScript');
   assert.deepEqual(consola, [], 'sin errores de consola');
   const resultado = {
-    ok: true, base: BASE, alumnos, estadoTrasTap, srcFotoBytes: (srcFoto ?? '').length,
+    ok: true, base: BASE, alumnos, estadoTrasTapTarjeta, cicloChip: etiquetas, 
     cancelacionPersistida: true, descarteCancelacionPersistido: true, segundoChipTrasF5: true, f5,
     pageErrors: errores, consoleErrors: consola,
   };
   await writeFile(`${SALIDA}/resultado.json`, JSON.stringify(resultado, null, 2) + '\n');
-  console.log(JSON.stringify({ ok: true, alumnos, estadoTrasTap, cancelacionPersistida: true, f5 }, null, 2));
+  console.log(JSON.stringify({ ok: true, alumnos, estadoTrasTapTarjeta, cicloChip: etiquetas, cancelacionPersistida: true, f5 }, null, 2));
 } catch (e) {
   await mkdir(SALIDA, { recursive: true });
   if (pagina) await pagina.screenshot({ path: `${SALIDA}/fallo.png`, fullPage: true }).catch(() => {});

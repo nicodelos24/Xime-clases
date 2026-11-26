@@ -9,7 +9,7 @@ const capturas = process.argv[3];
 if (!url || !capturas) throw new Error('Uso: node smoke-tactil.mjs URL_DIRECTORIO_CAPTURAS');
 await mkdir(capturas, { recursive: true });
 const browser = await chromium.launch({
-  executablePath: process.env.CHROME_PATH || '/home/nico/.cache/ms-playwright/chromium-1243/chrome-linux64/chrome',
+  executablePath: process.env.CHROME_PATH || '/home/nico/.cache/ms-playwright/chromium-1255/chrome-linux64/chrome',
   headless: true, args: ['--no-sandbox'],
 });
 const context = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true, reducedMotion: 'reduce', serviceWorkers: 'block' });

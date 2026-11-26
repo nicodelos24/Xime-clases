@@ -15,11 +15,11 @@
  *    cancelaciones, reversiones, reprogramaciones y el estado por hora.
  *  - Nunca se borra una clase: el historial de eventos queda en la clase.
  */
-import { cancelarClase, crearClase, deshacerCancelacion, deshacerMarcada, marcarDada, reconciliar, registrarMensajeEnviado, reprogramarClase, } from './clases.js?v=202611261410';
-import { hoyLocal } from './reloj.js?v=202611261410';
-import { anularPago as anularPagoDominio, corregirFechaPago as corregirFechaPagoDominio, normalizarPagosGuardados, registrarPago as registrarPagoDominio, } from './cobros.js?v=202611261410';
-import { crearAlumno, editarAlumno, esFotoValida, esIdAlumno, normalizarFichaGuardada, } from './alumnos.js?v=202611261410';
-import { conExcepcion, crearClaseSuelta, crearRutina, generarOcurrencias, generarOcurrenciasEnRango, } from './agendar.js?v=202611261410';
+import { cancelarClase, crearClase, deshacerCancelacion, deshacerMarcada, marcarDada, reconciliar, registrarMensajeEnviado, reprogramarClase, } from './clases.js?v=202611261412';
+import { hoyLocal } from './reloj.js?v=202611261412';
+import { anularPago as anularPagoDominio, corregirFechaPago as corregirFechaPagoDominio, normalizarPagosGuardados, registrarPago as registrarPagoDominio, } from './cobros.js?v=202611261412';
+import { crearAlumno, editarAlumno, esFotoValida, esIdAlumno, normalizarFichaGuardada, } from './alumnos.js?v=202611261412';
+import { conExcepcion, crearClaseSuelta, crearRutina, generarOcurrencias, generarOcurrenciasEnRango, } from './agendar.js?v=202611261412';
 /**
  * Versión del formato guardado. v2 agregó `alumnos` (Pieza C); las rutinas
  * semanales (20/11) se guardan como campo ADITIVO `rutinas` SIN subir la
@@ -243,9 +243,9 @@ export class RepositorioClases {
         }
     }
     /**
-     * Foto del alumno (24-nov): acepta dataURL de imagen chico (lo valida el
-     * dominio con `esFotoValida`) o '' para quitarla. Persiste en la MISMA
-     * ficha, así Alumnos y Cobros comparten la foto con un solo dato guardado.
+     * Compatibilidad con datos históricos de foto (24-nov). La UI vigente
+     * (26-nov) no llama a este método: las fotos guardadas quedan intactas,
+     * fuera de la vista, y no se pueden subir/cambiar/quitar desde la ficha.
      */
     asignarFotoAlumno(id, foto) {
         const estado = this.cargar();

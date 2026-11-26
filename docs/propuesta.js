@@ -1,25 +1,25 @@
 // Clases v5 · navegación + funcionamiento (auto-marcado, Cancelar clase, WhatsApp)
 // La estética vive en tokens.css/propuesta.css; acá solo se cambian estados,
 // textos y el flujo de cancelación. Sin emoji: solo SVG de icons.js.
-import { horaClase, } from './src/clases.js?v=202611261410';
-import { CLAVE_ESTADO, RepositorioClases, almacenLocalStorage } from './src/repositorio.js?v=202611261410';
-import { alumnosCobrosDemo, datosDemo, fichasDemo } from './src/demo.js?v=202611261410';
-import { resumenCobros, cobrosIndividuales, deudaIndividual as deudaInd, filtrarCobros, ordenarCobros, } from './src/cobros.js?v=202611261410';
-import { precioPrecargado, precio } from './src/tarifas.js?v=202611261410';
-import { construirVista, filtrarYOrdenar, puntoEstadoVence, textoEstadoVence, validarAlumno, iniciales, colorPorId, } from './src/alumnos.js?v=202611261410';
-import { resumenHoy, clasesDelDia, clasesDeLaSemana } from './src/resumen.js?v=202611261410';
-import { registrarToqueFecha, mesDe } from './src/agenda.js?v=202611261410';
-import { primerDiaDeMes, diaSeleccionadoAlCargar } from './src/agenda-mes.js?v=202611261410';
-import { decisionDeGesto, decisionDeAperturaDeMenu, DURACION_TOQUE_LARGO, UMBRAL_MOVIMIENTO_GESTO, etiquetaProximoPaso } from './src/toque-clase.js?v=202611261410';
-import { destinoDeEnlace, vistaInicial, vistasActivas } from './src/navegacion.js?v=202611261410';
-import { pistaDeTira } from './src/scroll-pista.js?v=202611261410';
-import { actualizarBarra, estadoBarraInicial, debeReaparecerPorQuietud, REAPARECER_TRAS_MS, } from './src/barra-scroll.js?v=202611261410';
-import { ajustarLock, debeBloquearScroll, estiloSheet, debeCerrarPorToqueFuera, esToqueFuera, debeSuprimirClickTrasCierre, decisionCierreSheetsPorNavegacion, debeCerrarPorDeslizar, FRANJA_CIERRE, } from './src/sheets.js?v=202611261410';
-import { diaCorto, mesCorto, etiquetaDia, etiquetaDiaCompleta, etiquetaMes, fechaCorta, sumarDias, parseFecha, lunesDe, diasDelMes, esFechaValida, } from './src/fechas.js?v=202611261410';
-import { relojDelDispositivo, hoyLocal } from './src/reloj.js?v=202611261410';
-import { CLAVE_PREFIJO, PREFIJO_POR_DEFECTO, prefijoEsValido, prefijoSeguro, conPrefijo } from './src/prefijo.js?v=202611261410';
-import { bloqueContacto } from './src/contacto.js?v=202611261410';
-import { textoCancelacion, destinos, resumenEnvio, linkTexto, linkAvisoVencimiento, } from './src/whatsapp.js?v=202611261410';
+import { horaClase, } from './src/clases.js?v=202611261412';
+import { CLAVE_ESTADO, RepositorioClases, almacenLocalStorage } from './src/repositorio.js?v=202611261412';
+import { alumnosCobrosDemo, datosDemo, fichasDemo } from './src/demo.js?v=202611261412';
+import { resumenCobros, cobrosIndividuales, deudaIndividual as deudaInd, filtrarCobros, ordenarCobros, } from './src/cobros.js?v=202611261412';
+import { precioPrecargado, precio } from './src/tarifas.js?v=202611261412';
+import { construirVista, filtrarYOrdenar, puntoEstadoVence, textoEstadoVence, validarAlumno, iniciales, colorPorId, } from './src/alumnos.js?v=202611261412';
+import { resumenHoy, clasesDelDia, clasesDeLaSemana } from './src/resumen.js?v=202611261412';
+import { registrarToqueFecha, mesDe } from './src/agenda.js?v=202611261412';
+import { primerDiaDeMes, diaSeleccionadoAlCargar } from './src/agenda-mes.js?v=202611261412';
+import { decisionDeGesto, decisionDeAperturaDeMenu, DURACION_TOQUE_LARGO, UMBRAL_MOVIMIENTO_GESTO, etiquetaProximoPaso } from './src/toque-clase.js?v=202611261412';
+import { destinoDeEnlace, vistaInicial, vistasActivas } from './src/navegacion.js?v=202611261412';
+import { pistaDeTira } from './src/scroll-pista.js?v=202611261412';
+import { actualizarBarra, estadoBarraInicial, debeReaparecerPorQuietud, REAPARECER_TRAS_MS, } from './src/barra-scroll.js?v=202611261412';
+import { ajustarLock, debeBloquearScroll, estiloSheet, debeCerrarPorToqueFuera, esToqueFuera, debeSuprimirClickTrasCierre, decisionCierreSheetsPorNavegacion, debeCerrarPorDeslizar, FRANJA_CIERRE, } from './src/sheets.js?v=202611261412';
+import { diaCorto, mesCorto, etiquetaDia, etiquetaDiaCompleta, etiquetaMes, fechaCorta, sumarDias, parseFecha, lunesDe, diasDelMes, esFechaValida, } from './src/fechas.js?v=202611261412';
+import { relojDelDispositivo, hoyLocal } from './src/reloj.js?v=202611261412';
+import { CLAVE_PREFIJO, PREFIJO_POR_DEFECTO, prefijoEsValido, prefijoSeguro, conPrefijo } from './src/prefijo.js?v=202611261412';
+import { bloqueContacto } from './src/contacto.js?v=202611261412';
+import { textoCancelacion, destinos, resumenEnvio, linkTexto, linkAvisoVencimiento, } from './src/whatsapp.js?v=202611261412';
 /* ------------------------------------------------- estado persistente (local) */
 const reloj = relojDelDispositivo();
 /** Quién opera la app hoy: único dueño. En Fase 4 sale de la sesión. */
@@ -65,7 +65,8 @@ function chipEstado(c) {
  * Solo muestra QUIÉN va; no permite editar la lista ni envía nada. Los nombres
  * se resuelven desde las fichas por ID estable (si el nombre cambia, se ve el
  * vigente; si la ficha ya no existe, se conserva el nombre de la clase).
- * Viene ABIERTO por defecto: el toque en la tarjeta lo abre/cierra.
+ * Viene ABIERTO por defecto para que se vea la información al entrar; el
+ * toque en la tarjeta lo abre/cierra.
  */
 function desplegableAlumnos(c) {
     const alumnos = c.alumnos;
@@ -141,11 +142,11 @@ function pintarHoy() {
           </div>`)
                 .join('');
         }
-        // El chip conserva su acción actual de abrir menú; el gesto no nace acá.
-        grupos.querySelectorAll('[data-acciones]').forEach((b) => {
-            b.addEventListener('click', () => abrirAcciones(b.dataset.acciones));
+        // El chip toca el ciclo de estados; el gesto largo/teclado conserva el menú.
+        grupos.querySelectorAll('[data-ciclo]').forEach((b) => {
+            b.addEventListener('click', () => ciclarEstadoDeChip(b.dataset.ciclo));
         });
-        // El gesto de toque (simple = cambiar, largo = menú) también en el hero.
+        // El gesto de la fila abre/cierra «quiénes van»; mantener abre el menú.
         grupos.querySelectorAll('.grupo').forEach((g) => {
             const chip = g.querySelector('[data-acciones]');
             const id = chip?.dataset.acciones;
@@ -287,7 +288,7 @@ function cablearGestoClase(tarjeta) {
         if (e.target instanceof Element && e.target.closest('button, a, input, select, textarea, details, summary, [data-reversa], [role="button"]'))
             return;
         const c = clases.find((x) => x.id === id);
-        if (!c || c.estado === 'cancelada')
+        if (!c)
             return;
         const gestoPrevio = TOQUES_CLASE.get(e.pointerId);
         if (gestoPrevio)
@@ -384,6 +385,10 @@ function ciclarEstadoDeChip(id) {
             repo.registrarMensajeEnviado(id, 'ninguno');
         }
         else if (c.estado === 'cancelada') {
+            clearTimeout(temporizadorMenuCancelada);
+            temporizadorMenuCancelada = undefined;
+            if (clasePendienteMenuCancelada === id)
+                clasePendienteMenuCancelada = undefined;
             repo.revertir(id, { motivo: 'error del dueño', quien: QUIEN, ahora });
         }
         else
@@ -393,33 +398,54 @@ function ciclarEstadoDeChip(id) {
         avisar(err instanceof Error ? err.message : 'No se pudo cambiar el estado', 3000);
         return;
     }
+    // Estate ORIGINAL (c es la clase previa al write). Programar el aviso
+    // ANTES de refrescar evita que el repintado cancele el temporizador.
+    const estadoAnterior = c.estado;
+    const claseVigente = () => clases.find((x) => x.id === id);
+    const canceladaAhora = () => estadoAnterior === 'dada' || claseVigente()?.estado === 'cancelada';
+    if (canceladaAhora())
+        agendarMenuCancelada(id);
+    else if (estadoAnterior === 'cancelada') {
+        clearTimeout(temporizadorMenuCancelada);
+        temporizadorMenuCancelada = undefined;
+        clasePendienteMenuCancelada = undefined;
+    }
     clases = repo.listar();
     refrescar();
     const chipNuevo = document.querySelector(`[data-ciclo="${id}"]`);
     chipNuevo?.focus({ preventScroll: true });
-    if (c.estado === 'dada') {
-        // Cancelada desde el chip: el aviso emergente entra a los ~4 s (ver abajo).
-        agendarMenuCancelada(id);
-        return;
+    if (estadoAnterior === 'programada') {
+        avisar('Clase marcada dada · Deshacer', 6000);
+        toast.dataset.deshacer = '1';
+        toast.dataset.revertirManual = id;
     }
-    delete toast.dataset.revertirManual;
-    avisar(c.estado === 'programada' ? 'Clase marcada dada · Deshacer'
-        : 'Clase vuelta a Por dar · Deshacer', 6000);
-    toast.dataset.deshacer = '1';
-    toast.dataset.revertirManual = id;
+    else if (estadoAnterior === 'cancelada') {
+        avisar('Clase vuelta a Por dar', 3000);
+    }
 }
 /** Cablea los chips y botones de un bloque de tarjetas (mes o semana). */
 function cablearTarjetas(raiz) {
     raiz.querySelectorAll('.clase[data-clase]').forEach((t) => cablearGestoClase(t));
     raiz.querySelectorAll('[data-ciclo]').forEach((b) => {
         // Replanteo 26-nov: tocar el CHIP cicla Por dar → Dada → Cancelada → Por dar.
-        b.addEventListener('click', () => ciclarEstadoDeChip(b.dataset.ciclo));
+        b.addEventListener('click', (e) => {
+            // El Enter del teclado también genera un click nativo en el botón. Sin
+            // esta guarda, el menú que abre el keydown se dispara un instante después
+            // y el click lo ciclaría encima (menú abierto + estado cambiado).
+            if (b.dataset.teclado === '1')
+                return;
+            ciclarEstadoDeChip(b.dataset.ciclo);
+        });
     });
     raiz.querySelectorAll('[data-acciones]').forEach((b) => {
         // El menú completo queda para teclado/AT (click no físico) y contexto.
         b.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' || e.key === ' ')
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                b.dataset.teclado = '1';
+                window.setTimeout(() => { delete b.dataset.teclado; }, 0);
                 abrirAcciones(b.dataset.acciones);
+            }
         });
     });
     raiz.querySelectorAll('[data-cancelar]').forEach((b) => {
@@ -1243,21 +1269,47 @@ let modoEnvio = 'masivo';
  * visual/local; cuando haya base de datos y notificaciones reales, este mismo
  * punto (`agendarMenuCancelada`) es donde se dispara la notificación.
  */
+let clasePendienteMenuCancelada;
 let temporizadorMenuCancelada;
+const RETRASO_MENU_CANCELADA = 4000;
 function agendarMenuCancelada(id) {
     clearTimeout(temporizadorMenuCancelada);
-    temporizadorMenuCancelada = setTimeout(() => abrirMenuCancelada(id), 4000);
+    temporizadorMenuCancelada = undefined;
+    clasePendienteMenuCancelada = id;
+    temporizadorMenuCancelada = setTimeout(abrirMenuCanceladaPendiente, RETRASO_MENU_CANCELADA);
+}
+function abrirMenuCanceladaPendiente() {
+    clearTimeout(temporizadorMenuCancelada);
+    temporizadorMenuCancelada = undefined;
+    const id = clasePendienteMenuCancelada;
+    clasePendienteMenuCancelada = undefined;
+    if (id)
+        abrirMenuCancelada(id);
 }
 function abrirMenuCancelada(id) {
-    clearTimeout(temporizadorMenuCancelada);
-    const c = clases.find((x) => x.id === id);
-    // Ya deshizo, o ya registró un envío real (masivo/individual): callar.
-    if (!c || c.estado !== 'cancelada')
+    const c = clases.find((x) => x.id === id) ?? repo.listar().find((x) => x.id === id);
+    if (c)
+        clases = repo.listar();
+    if (!c || c.estado !== 'cancelada') {
+        if (clasePendienteMenuCancelada === id)
+            clasePendienteMenuCancelada = undefined;
         return;
-    if (c.cancelacion?.mensajesEnviados && c.cancelacion.mensajesEnviados !== 'ninguno')
+    }
+    if (c.cancelacion?.mensajesEnviados && c.cancelacion.mensajesEnviados !== 'ninguno') {
+        if (clasePendienteMenuCancelada === id)
+            clasePendienteMenuCancelada = undefined;
         return;
-    if (document.querySelector('.sheet:not(.cerrando)'))
+    }
+    // No interrumpir un cuadro abierto: reintentar en cuanto se cierre.
+    if (document.querySelector('.sheet:not(.cerrando), dialog[open]')) {
+        temporizadorMenuCancelada = setTimeout(() => abrirMenuCancelada(id), 1000);
         return;
+    }
+    if (!document.querySelector(`[data-ciclo="${id}"]`)) {
+        temporizadorMenuCancelada = setTimeout(() => abrirMenuCancelada(id), 1000);
+        return;
+    }
+    clasePendienteMenuCancelada = undefined;
     const previo = document.createElement('div');
     previo.className = 'sheet';
     previo.setAttribute('role', 'alertdialog');
@@ -1272,17 +1324,23 @@ function abrirMenuCancelada(id) {
       <button class="sheet-cerrar" type="button" aria-label="Cerrar"><svg class="ico" width="18" height="18"><use href="#i-mas2"/></svg></button>
     </div>
     <p class="sheet-clase"><strong>${esc(c.nombre)}</strong> · ${c.alumnos.length} alumnos</p>
-    <p class="sheet-paso">¿Avisamos a las alumnas por WhatsApp?</p>
+    <p class="sheet-paso">${c.alumnos.length === 1 ? '¿Avisamos a la alumna por WhatsApp?' : '¿Avisamos a las alumnas por WhatsApp?'}</p>
     <div class="sheet-acciones">
       <button class="btn-secundario" type="button" data-mc="deshacer">Deshacer</button>
       <button class="btn-primario" type="button" data-mc="whatsapp"><svg class="ico" width="15" height="15" aria-hidden="true"><use href="#i-wa"/></svg>Avisar por WhatsApp</button>
     </div>`;
-    document.querySelector('.cel')?.appendChild(previo);
+    document.body.appendChild(previo);
     abrirSheet(previo);
+    sheet = previo;
+    previo.dataset.retornoFoco = document.querySelector(`[data-ciclo="${id}"]`)?.id ?? '';
     previo.querySelector('.sheet-cerrar')?.addEventListener('click', () => cerrarSheet());
     previo.querySelector('[data-mc="deshacer"]')?.addEventListener('click', () => {
-        revertirCancelacion(id);
+        if (!revertirCancelacion(id))
+            return;
+        // Cerrar antes de repintar: si el repintado roba el foco, el cierre
+        // tardío no se come el toque ni deja el aviso colgado.
         cerrarSheet();
+        refrescar();
     });
     previo.querySelector('[data-mc="whatsapp"]')?.addEventListener('click', () => {
         cerrarSheet();
@@ -1294,14 +1352,13 @@ function abrirMenuCancelada(id) {
 /** Al salir de la sección (Hoy/Clases/…): si había una cancelación sin avisar,
  *  el menú entra al momento en vez de esperar el vencimiento de los 4 s. */
 function menuCanceladaPorNavegacion() {
-    if (!temporizadorMenuCancelada)
+    const id = clasePendienteMenuCancelada;
+    if (!id)
         return;
-    const pendiente = clases.find((x) => x.estado === 'cancelada'
-        && !(x.cancelacion?.mensajesEnviados && x.cancelacion.mensajesEnviados !== 'ninguno'));
     clearTimeout(temporizadorMenuCancelada);
     temporizadorMenuCancelada = undefined;
-    if (pendiente)
-        abrirMenuCancelada(pendiente.id);
+    clasePendienteMenuCancelada = undefined;
+    abrirMenuCancelada(id);
 }
 let elegidos = new Set();
 let textoEnviado = '';
@@ -1312,6 +1369,13 @@ function cerrarSheet() {
     sheet = null;
     claseEnSheet = null;
     cerrarCuadro(s);
+    // El cuadro diferido quedó pendiente si el aviso abrió mientras el chip
+    // seguía en pantalla; al cerrarlo, completar el aviso pendiente.
+    if (clasePendienteMenuCancelada && !temporizadorMenuCancelada) {
+        const id = clasePendienteMenuCancelada;
+        clasePendienteMenuCancelada = undefined;
+        setTimeout(() => abrirMenuCancelada(id), 0);
+    }
 }
 /** Cierre de las acciones de Por dar / Dada con aviso si se tocó la fecha. */
 function cerrarAcciones() {
@@ -1688,6 +1752,10 @@ function revertirCancelacion(id) {
     const c = clases.find((x) => x.id === id);
     if (!c)
         return false;
+    clearTimeout(temporizadorMenuCancelada);
+    temporizadorMenuCancelada = undefined;
+    if (clasePendienteMenuCancelada === id)
+        clasePendienteMenuCancelada = undefined;
     // El toast es reutilizable: si algo falla, se limpia igual para que no
     // quede un "Deshacer" que vuelve a lanzar el mismo error.
     try {
@@ -1707,8 +1775,13 @@ toast.addEventListener('click', () => {
         const id = toast.dataset.revertirManual;
         const estado = clases.find((c) => c.id === id)?.estado;
         try {
-            if (estado === 'dada')
+            if (estado === 'dada') {
+                clearTimeout(temporizadorMenuCancelada);
+                temporizadorMenuCancelada = undefined;
+                if (clasePendienteMenuCancelada === id)
+                    clasePendienteMenuCancelada = undefined;
                 repo.deshacerMarcada(id, { quien: QUIEN, ahora: reloj.ahora() });
+            }
             else if (estado === 'programada')
                 repo.marcarDada(id, { quien: QUIEN, ahora: reloj.ahora() });
             else

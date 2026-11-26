@@ -454,12 +454,23 @@ function cablearTarjetas(raiz: ParentNode): void {
   raiz.querySelectorAll<HTMLElement>('.clase[data-clase]').forEach((t) => cablearGestoClase(t));
   raiz.querySelectorAll<HTMLButtonElement>('[data-ciclo]').forEach((b) => {
     // Replanteo 26-nov: tocar el CHIP cicla Por dar → Dada → Cancelada → Por dar.
-    b.addEventListener('click', () => ciclarEstadoDeChip(b.dataset.ciclo as string));
+    b.addEventListener('click', (e) => {
+      // El Enter del teclado también genera un click nativo en el botón. Sin
+      // esta guarda, el menú que abre el keydown se dispara un instante después
+      // y el click lo ciclaría encima (menú abierto + estado cambiado).
+      if (b.dataset.teclado === '1') return;
+      ciclarEstadoDeChip(b.dataset.ciclo as string);
+    });
   });
   raiz.querySelectorAll<HTMLButtonElement>('[data-acciones]').forEach((b) => {
     // El menú completo queda para teclado/AT (click no físico) y contexto.
     b.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' || e.key === ' ') abrirAcciones(b.dataset.acciones as string);
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        b.dataset.teclado = '1';
+        window.setTimeout(() => { delete b.dataset.teclado; }, 0);
+        abrirAcciones(b.dataset.acciones as string);
+      }
     });
   });
   raiz.querySelectorAll<HTMLButtonElement>('[data-cancelar]').forEach((b) => {
@@ -1260,14 +1271,12 @@ function agendarMenuCancelada(id: string): void {
   temporizadorMenuCancelada = undefined;
   clasePendienteMenuCancelada = id;
   temporizadorMenuCancelada = setTimeout(abrirMenuCanceladaPendiente, RETRASO_MENU_CANCELADA);
-  console.log('DEBUG agendar', id, Date.now(), 'pend', clasePendienteMenuCancelada, 'timer', temporizadorMenuCancelada);
 }
 
 function abrirMenuCanceladaPendiente(): void {
   clearTimeout(temporizadorMenuCancelada);
   temporizadorMenuCancelada = undefined;
   const id = clasePendienteMenuCancelada;
-  console.log('DEBUG disparar', clasePendienteMenuCancelada, Date.now(), 'timer', temporizadorMenuCancelada);
   clasePendienteMenuCancelada = undefined;
   if (id) abrirMenuCancelada(id);
 }
@@ -1334,7 +1343,6 @@ function abrirMenuCancelada(id: string): void {
 /** Al salir de la sección (Hoy/Clases/…): si había una cancelación sin avisar,
  *  el menú entra al momento en vez de esperar el vencimiento de los 4 s. */
 function menuCanceladaPorNavegacion(): void {
-  console.log('DEBUG nav pendiente', clasePendienteMenuCancelada, Date.now(), 'timer', temporizadorMenuCancelada);
   const id = clasePendienteMenuCancelada;
   if (!id) return;
   clearTimeout(temporizadorMenuCancelada);
