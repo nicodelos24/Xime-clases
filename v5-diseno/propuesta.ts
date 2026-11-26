@@ -78,14 +78,17 @@ function esc(s: string): string {
  */
 function chipEstado(c: Clase): string {
   const siguiente = etiquetaProximoPaso(c.estado as EstadoClaseGesto);
-  const base = `class="chip chip-boton" type="button" data-ciclo="${esc(c.id)}" data-acciones="${esc(c.id)}" aria-label="Clase ${esc(c.nombre)}, `;
+  // Color por estado (chip-por-dar / chip-dada / chip-cancelada) + ícono SVG.
+  const clase = c.estado === 'dada' ? 'chip-dada'
+    : c.estado === 'cancelada' ? 'chip-cancelada' : 'chip-por-dar';
+  const base = `class="chip chip-boton ${clase}" type="button" data-ciclo="${esc(c.id)}" data-acciones="${esc(c.id)}" aria-label="Clase ${esc(c.nombre)}, `;
   if (c.estado === 'dada') {
     return `<button ${base}dada. Tocá para ${esc(siguiente)}"><svg class="ico" width="13" height="13"><use href="#i-check"/></svg>Dada</button>`;
   }
   if (c.estado === 'cancelada') {
     return `<button ${base}cancelada. Tocá para ${esc(siguiente)}"><svg class="ico" width="13" height="13"><use href="#i-alerta"/></svg>Cancelada</button>`;
   }
-  return `<button ${base}por dar. Tocá para ${esc(siguiente)}">Por dar</button>`;
+  return `<button ${base}por dar. Tocá para ${esc(siguiente)}"><svg class="ico" width="13" height="13"><use href="#i-reloj"/></svg>Por dar</button>`;
 }
 
 /**
@@ -93,15 +96,14 @@ function chipEstado(c: Clase): string {
  * Solo muestra QUIÉN va; no permite editar la lista ni envía nada. Los nombres
  * se resuelven desde las fichas por ID estable (si el nombre cambia, se ve el
  * vigente; si la ficha ya no existe, se conserva el nombre de la clase).
- * Viene ABIERTO por defecto para que se vea la información al entrar; el
- * toque en la tarjeta lo abre/cierra.
+ * Viene CERRADO por defecto: compacto; el toque en la tarjeta lo abre/cierra.
  */
 function desplegableAlumnos(c: Clase): string {
   const alumnos = c.alumnos;
   if (alumnos.length === 0) return '';
   const fichas = repo.listarAlumnos();
   const nombres = alumnos.map((a) => fichas.find((f) => f.id === a.id)?.nombre ?? a.nombre);
-  return `<details class="clase-alumnos" open>
+  return `<details class="clase-alumnos">
     <summary>Ver quiénes van</summary>
     <ul>${nombres.map((n) => `<li>${esc(n)}</li>`).join('')}</ul>
   </details>`;
@@ -168,6 +170,7 @@ function pintarHoy() {
           (c) => `<div class="grupo">
             <span class="grupo-hora">${horaClase(c)}</span>
             <span class="grupo-nombre">${esc(c.nombre)}</span>
+            ${accionClase(c)}
             ${chipEstado(c)}
           </div>`,
         )
@@ -439,6 +442,12 @@ function ciclarEstadoDeChip(id: string): void {
   clases = repo.listar();
   refrescar();
   const chipNuevo = document.querySelector<HTMLElement>(`[data-ciclo="${id}"]`);
+  if (chipNuevo) {
+    chipNuevo.classList.remove('chip-cicla');
+    // Reiniciar la animación aunque ya estuviera corriendo.
+    void chipNuevo.offsetWidth;
+    chipNuevo.classList.add('chip-cicla');
+  }
   chipNuevo?.focus({ preventScroll: true });
   if (estadoAnterior === 'programada') {
     avisar('Clase marcada dada · Deshacer', 6000);
@@ -520,8 +529,10 @@ function pintarLinea(fecha: string | null) {
             <p class="clase-sub">${c.alumnos.length} alumnos inscriptos${c.estado === 'cancelada' && c.cancelacion ? ` · ${esc(c.cancelacion.motivo)}` : ''}</p>
             ${desplegableAlumnos(c)}
           </div>
-          ${chipEstado(c)}
-          ${accionClase(c)}
+          <div class="clase-acciones">
+            ${accionClase(c)}
+            ${chipEstado(c)}
+          </div>
         </article>`,
       )
       .join('')}
@@ -692,8 +703,10 @@ function pintarTarjetasDiaMes(): void {
             <p class="clase-sub">${c.alumnos.length} alumnos inscriptos${c.estado === 'cancelada' && c.cancelacion ? ` · ${esc(c.cancelacion.motivo)}` : ''}</p>
             ${desplegableAlumnos(c)}
           </div>
-          ${chipEstado(c)}
-          ${accionClase(c)}
+          <div class="clase-acciones">
+            ${accionClase(c)}
+            ${chipEstado(c)}
+          </div>
         </article>`,
       )
       .join('');
