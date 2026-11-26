@@ -14,8 +14,8 @@
   .vista.activa { display: block; }
 </style>
 <noscript><style>#v-mes, #v-semana, #v-alumnos, #v-cobros { display: none !important; }</style></noscript>
-<link rel="stylesheet" href="tokens.css?v=202611262151">
-<link rel="stylesheet" href="propuesta.css?v=202611262151">
+<link rel="stylesheet" href="tokens.css?v=202611261935">
+<link rel="stylesheet" href="propuesta.css?v=202611261935">
 </head>
 <body>
 <p class="marca">XIME CLASES · V5</p>
@@ -247,6 +247,10 @@
           </button>
         </div>
       </div>
+      <div class="cobros-modos" role="group" aria-label="Vista de cobros">
+        <button class="cobros-modo activo" data-modo="lista" type="button" aria-pressed="true">Lista</button>
+        <button class="cobros-modo" data-modo="calendario" type="button" aria-pressed="false">Calendario</button>
+      </div>
       <div class="kpis kpis-cobros">
         <article class="kpi kpi-cobrado">
           <span class="kpi-ico"><svg class="ico" width="16" height="16"><use href="#i-cobros"/></svg></span>
@@ -259,6 +263,18 @@
           <p class="kpi-titulo">Vencen hoy</p>
         </article>
       </div>
+      <div id="v-cobros-calendario" hidden>
+        <div class="agenda-titulo cobros-titulo-semana">
+          <div class="mes-titulo-nav">
+            <button class="flecha" id="cobros-semana-anterior" type="button" aria-label="Semana anterior"><svg class="ico" width="20" height="20" aria-hidden="true"><use href="#i-izq"/></svg></button>
+            <h2>Esta semana</h2>
+            <button class="flecha" id="cobros-semana-siguiente" type="button" aria-label="Semana siguiente"><svg class="ico" width="20" height="20" aria-hidden="true"><use href="#i-der"/></svg></button>
+          </div>
+        </div>
+        <div class="tira tira-cobros" id="tira-cobros" role="group" aria-label="Días de la semana"></div>
+        <ol class="linea linea-cobros" id="linea-cobros"></ol>
+      </div>
+      <div id="v-cobros-lista">
       <div class="filtros" id="filtros-cobros" role="group" aria-label="Filtrar y ordenar cobros">
         <button class="f-chip activo" data-todos type="button" aria-pressed="true">Todos</button>
         <button class="f-chip" data-estado="deben" type="button" aria-pressed="false">Deben <span class="n"></span></button>
@@ -269,6 +285,7 @@
         <button class="f-chip" data-orden-cobro="alumno" type="button" aria-pressed="false">Alumno</button>
       </div>
       <ul class="lista-cobros" id="lista-cobros"></ul>
+      </div>
     </section>
   </main>
 
@@ -313,7 +330,7 @@
     });
   })();
 </script>
-<script src="icons.js?v=202611262151"></script>
-<script type="module" src="propuesta.js?v=202611262151"></script>
+<script src="icons.js?v=202611261935"></script>
+<script type="module" src="propuesta.js?v=202611261935"></script>
 </body>
 </html>

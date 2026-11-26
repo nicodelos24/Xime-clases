@@ -1,25 +1,26 @@
 // Clases v5 · navegación + funcionamiento (auto-marcado, Cancelar clase, WhatsApp)
 // La estética vive en tokens.css/propuesta.css; acá solo se cambian estados,
 // textos y el flujo de cancelación. Sin emoji: solo SVG de icons.js.
-import { horaClase, } from './src/clases.js?v=202611262151';
-import { CLAVE_ESTADO, RepositorioClases, almacenLocalStorage } from './src/repositorio.js?v=202611262151';
-import { alumnosCobrosDemo, datosDemo, fichasDemo } from './src/demo.js?v=202611262151';
-import { resumenCobros, cobrosIndividuales, deudaIndividual as deudaInd, filtrarCobros, ordenarCobros, } from './src/cobros.js?v=202611262151';
-import { precioPrecargado, precio } from './src/tarifas.js?v=202611262151';
-import { construirVista, filtrarYOrdenar, puntoEstadoVence, textoEstadoVence, validarAlumno, iniciales, colorPorId, nombreCompleto, } from './src/alumnos.js?v=202611262151';
-import { resumenHoy, clasesDelDia, clasesDeLaSemana } from './src/resumen.js?v=202611262151';
-import { registrarToqueFecha, mesDe } from './src/agenda.js?v=202611262151';
-import { primerDiaDeMes, diaSeleccionadoAlCargar } from './src/agenda-mes.js?v=202611262151';
-import { decisionDeGesto, decisionDeAperturaDeMenu, DURACION_TOQUE_LARGO, UMBRAL_MOVIMIENTO_GESTO, etiquetaProximoPaso } from './src/toque-clase.js?v=202611262151';
-import { destinoDeEnlace, vistaInicial, vistasActivas } from './src/navegacion.js?v=202611262151';
-import { pistaDeTira } from './src/scroll-pista.js?v=202611262151';
-import { actualizarBarra, estadoBarraInicial, debeReaparecerPorQuietud, REAPARECER_TRAS_MS, } from './src/barra-scroll.js?v=202611262151';
-import { ajustarLock, debeBloquearScroll, estiloSheet, debeCerrarPorToqueFuera, esToqueFuera, debeSuprimirClickTrasCierre, decisionCierreSheetsPorNavegacion, debeCerrarPorDeslizar, FRANJA_CIERRE, } from './src/sheets.js?v=202611262151';
-import { diaCorto, mesCorto, etiquetaDia, etiquetaDiaCompleta, etiquetaMes, fechaCorta, sumarDias, parseFecha, lunesDe, diasDelMes, esFechaValida, } from './src/fechas.js?v=202611262151';
-import { relojDelDispositivo, hoyLocal } from './src/reloj.js?v=202611262151';
-import { CLAVE_PREFIJO, PREFIJO_POR_DEFECTO, prefijoEsValido, prefijoSeguro, conPrefijo } from './src/prefijo.js?v=202611262151';
-import { bloqueContacto } from './src/contacto.js?v=202611262151';
-import { textoCancelacion, destinos, resumenEnvio, linkTexto, linkAvisoVencimiento, } from './src/whatsapp.js?v=202611262151';
+import { horaClase, } from './src/clases.js?v=202611261935';
+import { CLAVE_ESTADO, RepositorioClases, almacenLocalStorage } from './src/repositorio.js?v=202611261935';
+import { alumnosCobrosDemo, datosDemo, fichasDemo } from './src/demo.js?v=202611261935';
+import { resumenCobros, cobrosIndividuales, deudaIndividual as deudaInd, filtrarCobros, ordenarCobros, } from './src/cobros.js?v=202611261935';
+import { cobrosDeLaSemana, estadoCobro, tieneCobros } from './src/agenda-cobros.js?v=202611261935';
+import { precioPrecargado, precio } from './src/tarifas.js?v=202611261935';
+import { construirVista, filtrarYOrdenar, puntoEstadoVence, textoEstadoVence, validarAlumno, iniciales, colorPorId, nombreCompleto, } from './src/alumnos.js?v=202611261935';
+import { resumenHoy, clasesDelDia, clasesDeLaSemana } from './src/resumen.js?v=202611261935';
+import { registrarToqueFecha, mesDe } from './src/agenda.js?v=202611261935';
+import { primerDiaDeMes, diaSeleccionadoAlCargar } from './src/agenda-mes.js?v=202611261935';
+import { decisionDeGesto, decisionDeAperturaDeMenu, DURACION_TOQUE_LARGO, UMBRAL_MOVIMIENTO_GESTO, etiquetaProximoPaso } from './src/toque-clase.js?v=202611261935';
+import { destinoDeEnlace, vistaInicial, vistasActivas } from './src/navegacion.js?v=202611261935';
+import { pistaDeTira } from './src/scroll-pista.js?v=202611261935';
+import { actualizarBarra, estadoBarraInicial, debeReaparecerPorQuietud, REAPARECER_TRAS_MS, } from './src/barra-scroll.js?v=202611261935';
+import { ajustarLock, debeBloquearScroll, estiloSheet, debeCerrarPorToqueFuera, esToqueFuera, debeSuprimirClickTrasCierre, decisionCierreSheetsPorNavegacion, debeCerrarPorDeslizar, FRANJA_CIERRE, } from './src/sheets.js?v=202611261935';
+import { diaCorto, mesCorto, etiquetaDia, etiquetaDiaCompleta, etiquetaMes, fechaCorta, sumarDias, parseFecha, lunesDe, diasDelMes, esFechaValida, } from './src/fechas.js?v=202611261935';
+import { relojDelDispositivo, hoyLocal } from './src/reloj.js?v=202611261935';
+import { CLAVE_PREFIJO, PREFIJO_POR_DEFECTO, prefijoEsValido, prefijoSeguro, conPrefijo } from './src/prefijo.js?v=202611261935';
+import { bloqueContacto } from './src/contacto.js?v=202611261935';
+import { textoCancelacion, destinos, resumenEnvio, linkTexto, linkAvisoVencimiento, } from './src/whatsapp.js?v=202611261935';
 /* ------------------------------------------------- estado persistente (local) */
 const reloj = relojDelDispositivo();
 /** Quién opera la app hoy: único dueño. En Fase 4 sale de la sesión. */
@@ -2352,6 +2353,10 @@ const verCobrosIndividuales = () => cobrosIndividuales(alumnosParaCobros().filte
    En memoria, como los de Alumnos: no se guardan en localStorage. */
 let estadoCobros = 'todos';
 let ordenCobros = 'vencimiento';
+/** Semana mirada en la agenda de Cobros (lunes "AAAA-MM-DD"). */
+let lunesCobros = null;
+/** Día elegido en la tira de Cobros; si no, se resalta el de hoy. */
+let diaCobrosSeleccionado = null;
 function fechaBreve(fecha) {
     return fechaCorta(fecha);
 }
@@ -2360,6 +2365,94 @@ function textoVence(dias) {
         return 'Vence hoy';
     const n = Math.abs(dias);
     return `${dias < 0 ? 'Venció hace' : 'Vence en'} ${n} ${n === 1 ? 'día' : 'días'}`;
+}
+function filasAgendaCobros(r) {
+    const individuales = verCobrosIndividuales().map((f) => ({
+        fecha: f.fecha, alumno: f.alumno, estado: estadoCobro(-1, Boolean(f.pago)),
+    }));
+    const mensuales = r.filas.map((f) => ({
+        fecha: f.fecha, alumno: f.alumno, estado: estadoCobro(f.dias, Boolean(f.pago)),
+    }));
+    // Misma fuente que la lista: se respeta el filtro si el dueño eligió uno.
+    return [...individuales, ...mensuales].filter((f) => estadoCobros === 'todos'
+        || (estadoCobros === 'pagado' ? f.estado === 'pagado' : f.estado !== 'pagado'));
+}
+/** Agenda semanal de Cobros: tarjetas de ALUMNO por día de vencimiento. */
+function pintarAgendaCobros() {
+    const hoy = hoyLocal(reloj.ahora());
+    const lunes = lunesCobros ?? lunesDe(hoy);
+    const dias = cobrosDeLaSemana(filasAgendaCobros(verCobros()), lunes);
+    const seleccionado = diaCobrosSeleccionado ?? hoy;
+    const h2 = $('#v-cobros-calendario .cobros-titulo-semana h2');
+    if (h2) {
+        const corto = (f) => `${parseFecha(f).d} ${MESES_CORTOS[parseFecha(f).m - 1]}`;
+        const rango = `${corto(lunes)}–${corto(sumarDias(lunes, 6))}`;
+        const propia = lunes === lunesDe(hoy);
+        h2.textContent = propia ? `Esta semana · ${rango}` : `Semana del ${rango}`;
+        h2.setAttribute('aria-label', `Del ${etiquetaDiaCompleta(lunes)} al ${etiquetaDiaCompleta(sumarDias(lunes, 6))}`);
+    }
+    const tira = $('#tira-cobros');
+    if (tira) {
+        tira.innerHTML = dias.map((d) => {
+            const dia = parseFecha(d.fecha);
+            const activo = d.fecha === seleccionado ? ' activo' : '';
+            const puntos = d.cobros.filter((c) => c.estado === 'vencido').length
+                ? ' vencido' : tieneCobros(d) ? ' tiene' : '';
+            return `<button class="tira-dia${puntos}${activo}" type="button" data-fecha="${d.fecha}"
+        aria-label="${esc(etiquetaDiaCompleta(d.fecha))}: ${d.cobros.length} ${d.cobros.length === 1 ? 'cobro' : 'cobros'}">
+        <span><i>${diaCorto(d.fecha)}</i><em>${mesCorto(d.fecha)}</em></span><b>${dia.d}</b></button>`;
+        }).join('');
+        tira.querySelectorAll('.tira-dia').forEach((b) => b.addEventListener('click', () => {
+            diaCobrosSeleccionado = b.dataset.fecha;
+            $$('#tira-cobros .tira-dia').forEach((o) => o.classList.remove('activo'));
+            b.classList.add('activo');
+            pintarLineaCobros(dias, diaCobrosSeleccionado);
+        }));
+    }
+    pintarLineaCobros(dias, seleccionado);
+}
+/** Día elegido primero; el resto de la semana sigue debajo, como en Clases. */
+function pintarLineaCobros(dias, elegido) {
+    const linea = $('#linea-cobros');
+    if (!linea)
+        return;
+    const elegidoIdx = Math.max(0, dias.findIndex((d) => d.fecha === elegido));
+    const orden = [...dias.slice(elegidoIdx), ...dias.slice(0, elegidoIdx)];
+    const hoy = hoyLocal(reloj.ahora());
+    const tarjetas = (dia) => dia.cobros.map((c) => {
+        const ficha = repo.listarAlumnos().find((f) => f.id === c.alumno.id) ?? null;
+        const nomCobro = ficha ? nombreCompleto(ficha) : c.alumno.nombre;
+        const avatar = avatarAlumno(c.alumno.nombre, ficha?.id ?? c.alumno.id, ficha?.foto, 30, ficha?.apellido);
+        const monto = ficha ? (precio(ficha, ficha.formaPago === 'por-clase' ? 'clase-individual' : 'mensualidad', dia.fecha) ?? 0) : 0;
+        const estado = c.estado === 'pagado' ? 'pagado' : c.estado === 'vencido' ? 'vencido'
+            : c.estado === 'hoy' ? 'hoy' : 'porvencer';
+        const etiqueta = estado === 'pagado' ? 'Pagado' : estado === 'vencido' ? 'Vencido'
+            : estado === 'hoy' ? 'Vence hoy' : 'Por vencer';
+        return `<li>
+      <button type="button" class="cobro-tarjeta ${estado}" data-cobro="${esc(c.alumno.id)}" aria-haspopup="dialog"
+        aria-label="${esc(nomCobro)}, ${uyu(monto)}, ${etiqueta} el ${esc(fechaCorta(dia.fecha))}">
+        ${avatar}
+        <span class="cobro-tarjeta-datos">
+          <span class="al-nombre">${esc(nomCobro)}</span>
+          <span class="cobro-meta">${esc(ficha?.grupo ? `Grupo ${ficha.grupo} · ` : '')}${uyu(monto)}</span>
+        </span>
+        <span class="cobro-tarjeta-estado">${etiqueta}</span>
+        <svg class="ico" width="13" height="13" aria-hidden="true"><use href="#i-der"/></svg>
+      </button>
+    </li>`;
+    }).join('');
+    linea.innerHTML = orden.map((dia) => {
+        const etiqueta = `${etiquetaDia(dia.fecha)}${dia.fecha === hoy ? ' · hoy' : ''}`;
+        return `<li class="linea-dia">
+      <p class="linea-fecha">${esc(etiqueta)}</p>
+      ${dia.cobros.length ? `<ul class="cobro-tarjetas">${tarjetas(dia)}</ul>`
+            : '<p class="cobro-dia-vacio">Sin vencimientos</p>'}
+    </li>`;
+    }).join('');
+    linea.querySelectorAll('[data-cobro]').forEach((b) => b.addEventListener('click', () => {
+        const ficha = repo.listarAlumnos().find((f) => f.id === b.dataset.cobro) ?? null;
+        abrirFichaConCobro(ficha, b);
+    }));
 }
 function pintarCobros() {
     const pagos = repo.listarPagos();
@@ -2480,7 +2573,40 @@ function pintarCobros() {
     const chipDeben = $('#filtros-cobros [data-estado="deben"] .n');
     if (chipDeben)
         chipDeben.textContent = debo ? String(debo) : '';
+    pintarAgendaCobros();
 }
+/* Modo Lista / Calendario dentro de Cobros (pedido de Nico 26/11). */
+function aplicarModoCobros(modo) {
+    const lista = $('#v-cobros-lista');
+    const agenda = $('#v-cobros-calendario');
+    if (lista)
+        lista.hidden = modo !== 'lista';
+    if (agenda)
+        agenda.hidden = modo !== 'calendario';
+    $$('#v-cobros .cobros-modo').forEach((b) => {
+        const on = b.dataset.modo === modo;
+        b.classList.toggle('activo', on);
+        b.setAttribute('aria-pressed', String(on));
+    });
+    if (modo === 'calendario')
+        pintarAgendaCobros();
+    actualizarPistaCobros();
+}
+$$('#v-cobros .cobros-modo').forEach((b) => b.addEventListener('click', () => {
+    aplicarModoCobros(b.dataset.modo);
+}));
+$('#cobros-semana-anterior')?.addEventListener('click', () => {
+    const lunes = lunesCobros ?? lunesDe(hoyLocal(reloj.ahora()));
+    lunesCobros = sumarDias(lunes, -7);
+    diaCobrosSeleccionado = null;
+    pintarAgendaCobros();
+});
+$('#cobros-semana-siguiente')?.addEventListener('click', () => {
+    const lunes = lunesCobros ?? lunesDe(hoyLocal(reloj.ahora()));
+    lunesCobros = sumarDias(lunes, 7);
+    diaCobrosSeleccionado = null;
+    pintarAgendaCobros();
+});
 /* Filtro y orden de Cobros (rediseño 23-nov, B6): mismos chips que Alumnos,
    con «Todos» que limpia. El orden es un par de chips exclusivos. */
 $('#filtros-cobros')?.addEventListener('click', (e) => {
@@ -3367,6 +3493,8 @@ setInterval(() => {
     const hoy = hoyLocal(reloj.ahora());
     if (hoy !== diaCobros) {
         diaCobros = hoy;
+        lunesCobros = null;
+        diaCobrosSeleccionado = null;
         pintarCobros();
         pintarAlumnos();
     }

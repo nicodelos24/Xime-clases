@@ -1,5 +1,5 @@
-import { diasDeFecha, diasDelMes, esFechaValida, parseFecha } from './fechas.js?v=202611262151';
-import { precio } from './tarifas.js?v=202611262151';
+import { diasDeFecha, diasDelMes, esFechaValida, parseFecha } from './fechas.js?v=202611261935';
+import { precio } from './tarifas.js?v=202611261935';
 function textoNoVacio(valor) {
     return typeof valor === 'string' && valor.trim().length > 0;
 }
