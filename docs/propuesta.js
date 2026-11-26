@@ -1,25 +1,25 @@
 // Clases v5 · navegación + funcionamiento (auto-marcado, Cancelar clase, WhatsApp)
 // La estética vive en tokens.css/propuesta.css; acá solo se cambian estados,
 // textos y el flujo de cancelación. Sin emoji: solo SVG de icons.js.
-import { horaClase, } from './src/clases.js?v=202611262015';
-import { CLAVE_ESTADO, RepositorioClases, almacenLocalStorage } from './src/repositorio.js?v=202611262015';
-import { alumnosCobrosDemo, datosDemo, fichasDemo } from './src/demo.js?v=202611262015';
-import { resumenCobros, cobrosIndividuales, deudaIndividual as deudaInd, filtrarCobros, ordenarCobros, } from './src/cobros.js?v=202611262015';
-import { precioPrecargado, precio } from './src/tarifas.js?v=202611262015';
-import { construirVista, filtrarYOrdenar, puntoEstadoVence, textoEstadoVence, validarAlumno, iniciales, colorPorId, nombreCompleto, } from './src/alumnos.js?v=202611262015';
-import { resumenHoy, clasesDelDia, clasesDeLaSemana } from './src/resumen.js?v=202611262015';
-import { registrarToqueFecha, mesDe } from './src/agenda.js?v=202611262015';
-import { primerDiaDeMes, diaSeleccionadoAlCargar } from './src/agenda-mes.js?v=202611262015';
-import { decisionDeGesto, decisionDeAperturaDeMenu, DURACION_TOQUE_LARGO, UMBRAL_MOVIMIENTO_GESTO, etiquetaProximoPaso } from './src/toque-clase.js?v=202611262015';
-import { destinoDeEnlace, vistaInicial, vistasActivas } from './src/navegacion.js?v=202611262015';
-import { pistaDeTira } from './src/scroll-pista.js?v=202611262015';
-import { actualizarBarra, estadoBarraInicial, debeReaparecerPorQuietud, REAPARECER_TRAS_MS, } from './src/barra-scroll.js?v=202611262015';
-import { ajustarLock, debeBloquearScroll, estiloSheet, debeCerrarPorToqueFuera, esToqueFuera, debeSuprimirClickTrasCierre, decisionCierreSheetsPorNavegacion, debeCerrarPorDeslizar, FRANJA_CIERRE, } from './src/sheets.js?v=202611262015';
-import { diaCorto, mesCorto, etiquetaDia, etiquetaDiaCompleta, etiquetaMes, fechaCorta, sumarDias, parseFecha, lunesDe, diasDelMes, esFechaValida, } from './src/fechas.js?v=202611262015';
-import { relojDelDispositivo, hoyLocal } from './src/reloj.js?v=202611262015';
-import { CLAVE_PREFIJO, PREFIJO_POR_DEFECTO, prefijoEsValido, prefijoSeguro, conPrefijo } from './src/prefijo.js?v=202611262015';
-import { bloqueContacto } from './src/contacto.js?v=202611262015';
-import { textoCancelacion, destinos, resumenEnvio, linkTexto, linkAvisoVencimiento, } from './src/whatsapp.js?v=202611262015';
+import { horaClase, } from './src/clases.js?v=202611261756';
+import { CLAVE_ESTADO, RepositorioClases, almacenLocalStorage } from './src/repositorio.js?v=202611261756';
+import { alumnosCobrosDemo, datosDemo, fichasDemo } from './src/demo.js?v=202611261756';
+import { resumenCobros, cobrosIndividuales, deudaIndividual as deudaInd, filtrarCobros, ordenarCobros, } from './src/cobros.js?v=202611261756';
+import { precioPrecargado, precio } from './src/tarifas.js?v=202611261756';
+import { construirVista, filtrarYOrdenar, puntoEstadoVence, textoEstadoVence, validarAlumno, iniciales, colorPorId, nombreCompleto, } from './src/alumnos.js?v=202611261756';
+import { resumenHoy, clasesDelDia, clasesDeLaSemana } from './src/resumen.js?v=202611261756';
+import { registrarToqueFecha, mesDe } from './src/agenda.js?v=202611261756';
+import { primerDiaDeMes, diaSeleccionadoAlCargar } from './src/agenda-mes.js?v=202611261756';
+import { decisionDeGesto, decisionDeAperturaDeMenu, DURACION_TOQUE_LARGO, UMBRAL_MOVIMIENTO_GESTO, etiquetaProximoPaso } from './src/toque-clase.js?v=202611261756';
+import { destinoDeEnlace, vistaInicial, vistasActivas } from './src/navegacion.js?v=202611261756';
+import { pistaDeTira } from './src/scroll-pista.js?v=202611261756';
+import { actualizarBarra, estadoBarraInicial, debeReaparecerPorQuietud, REAPARECER_TRAS_MS, } from './src/barra-scroll.js?v=202611261756';
+import { ajustarLock, debeBloquearScroll, estiloSheet, debeCerrarPorToqueFuera, esToqueFuera, debeSuprimirClickTrasCierre, decisionCierreSheetsPorNavegacion, debeCerrarPorDeslizar, FRANJA_CIERRE, } from './src/sheets.js?v=202611261756';
+import { diaCorto, mesCorto, etiquetaDia, etiquetaDiaCompleta, etiquetaMes, fechaCorta, sumarDias, parseFecha, lunesDe, diasDelMes, esFechaValida, } from './src/fechas.js?v=202611261756';
+import { relojDelDispositivo, hoyLocal } from './src/reloj.js?v=202611261756';
+import { CLAVE_PREFIJO, PREFIJO_POR_DEFECTO, prefijoEsValido, prefijoSeguro, conPrefijo } from './src/prefijo.js?v=202611261756';
+import { bloqueContacto } from './src/contacto.js?v=202611261756';
+import { textoCancelacion, destinos, resumenEnvio, linkTexto, linkAvisoVencimiento, } from './src/whatsapp.js?v=202611261756';
 /* ------------------------------------------------- estado persistente (local) */
 const reloj = relojDelDispositivo();
 /** Quién opera la app hoy: único dueño. En Fase 4 sale de la sesión. */
@@ -852,7 +852,7 @@ function observarCambios(el, onCambio) {
         // «Cerrar» no cuentan como cambio.
         if (!(e.target instanceof Element))
             return;
-        if (e.target.closest('button[aria-pressed],button[data-modo],button[data-modalidad],button[data-grupo],button[data-dia]'))
+        if (e.target.closest('button[aria-pressed],button[data-modo],button[data-forma-pago],button[data-grupo],button[data-dia]'))
             marcar();
     });
 }
@@ -1894,16 +1894,17 @@ function avatarAlumno(nombre, id, _foto, tamano = 38, apellido = '') {
 }
 function filasAlumnos() {
     const deudas = new Map();
-    for (const alumno of repo.listarAlumnos().filter((f) => f.modalidad === 'individual')) {
+    for (const alumno of repo.listarAlumnos().filter((f) => f.formaPago === 'por-clase')) {
         const fila = { ...alumno, montoUYU: precio(alumno, 'clase-individual', hoyLocal(reloj.ahora())) ?? 0 };
         deudas.set(alumno.id, deudaInd(alumno, cobrosIndividuales([fila], repo.listarPagos(), clases, hoyLocal(reloj.ahora()))));
     }
-    return construirVista(repo.listarAlumnos(), vencimientosDeCobros(), hoyLocal(reloj.ahora()), deudas);
+    return construirVista(repo.listarAlumnos(), vencimientosDeCobros(), hoyLocal(reloj.ahora()), new Map(), deudas);
 }
 function alumnoSub(a) {
     const v = textoEstadoVence(a);
-    const et = a.modalidad === 'mensual' ? 'et-mensual' : 'et-individual';
-    return `<p class="al-sub">${esc(a.grupo)} · ${v} <span class="etiqueta ${et}">${a.modalidad === 'mensual' ? 'Mensual' : 'Individual'}</span></p><span class="al-fecha">Alta ${esc(fechaCorta(a.fechaAlta))}</span>`;
+    const porClase = a.formaPago === 'por-clase';
+    const et = porClase ? 'et-individual' : 'et-mensual';
+    return `<p class="al-sub">${esc(a.grupo)} · ${v} <span class="etiqueta ${et}">${porClase ? 'Por clase' : 'Mensual fijo'}</span></p><span class="al-fecha">Alta ${esc(fechaCorta(a.fechaAlta))}</span>`;
 }
 function pintarChipsAlumnos() {
     $$('#filtros-alumnos [data-orden]').forEach((b) => {
@@ -2030,14 +2031,13 @@ function abrirFichaConCobro(ficha, origen, alCrear) {
     const dialogo = document.querySelector('dialog.sheet.cobros-panel[open]');
     if (!dialogo)
         return;
+    const porClase = ficha.formaPago === 'por-clase';
     const individuales = verCobrosIndividuales().filter((f) => f.alumno.id === ficha.id);
     const individualPendiente = individuales.find((f) => !f.pago);
-    const deudaIndividual = ficha.modalidad === 'individual'
-        ? deudaInd(ficha, verCobrosIndividuales())
-        : null;
+    const deudaIndividual = porClase ? deudaInd(ficha, verCobrosIndividuales()) : null;
     const r = verCobros();
-    // Una individual NUNCA toma el vencimiento ni el KPI de mensualidad.
-    const filas = ficha.modalidad === 'individual' ? [] : r.filas.filter((f) => f.alumno.id === ficha.id);
+    // Un cobro por clase NUNCA toma el vencimiento ni el KPI de mensualidad.
+    const filas = porClase ? [] : r.filas.filter((f) => f.alumno.id === ficha.id);
     const deuda = filas.find((f) => !f.pago && f.dias >= 0) ?? filas.find((f) => !f.pago);
     const pagos = repo.listarPagos().filter((p) => p.alumnoId === ficha.id && !p.anulado);
     const ultimo = pagos.at(-1);
@@ -2047,7 +2047,7 @@ function abrirFichaConCobro(ficha, origen, alCrear) {
         ? deudaIndividual?.sinTarifa
             ? `<span class="ficha-cobro-monto">Falta cargar la tarifa</span>. ${uyu(0)} no es una deuda: cargá el importe al registrar el pago.`
             : `<span class="ficha-cobro-estado vencido">${deudaIndividual.clases} ${deudaIndividual.clases === 1 ? 'clase individual pendiente' : 'clases individuales pendientes'}</span> · <span class="ficha-cobro-monto">${uyu(deudaIndividual.montoUYU)}</span>.`
-        : ultimo && ficha.modalidad === 'individual'
+        : ultimo && porClase
             ? `Último pago individual: ${esc(fechaCorta(ultimo.fecha))} · ${uyu(ultimo.montoUYU)}.`
             : ultimo
                 ? `Último pago: ${esc(fechaCorta(ultimo.fecha))} · ${uyu(ultimo.montoUYU)}. Renovación: mismo día del mes siguiente.`
@@ -2058,7 +2058,7 @@ function abrirFichaConCobro(ficha, origen, alCrear) {
     // abre wa.me con ESE número. Sin número no se muestra un link falso.
     const contacto = bloqueContacto(ficha.nombre, ficha.contacto ?? '', prefijoMovil);
     const avisoLink = deuda && contacto.link
-        ? linkAvisoVencimiento({ telefono: conPrefijo(ficha.contacto, prefijoMovil), nombre: ficha.nombre, vencimiento: deuda.fecha })
+        ? linkAvisoVencimiento({ telefono: conPrefijo(ficha.contacto, prefijoMovil), nombre: ficha.nombre, vencimiento: deuda.fecha, montoUYU: deuda.alumno.montoUYU })
         : null;
     // Cabecera con chips (rediseño 23-nov, A4/B8): alumno + deuda + vencimiento
     // a la vista, cada dato en su chip. Deuda solo si la hay; sin deuda, el
@@ -2075,7 +2075,7 @@ function abrirFichaConCobro(ficha, origen, alCrear) {
         : deuda
             ? `<span class="ficha-chip ficha-chip-vence">${esc(textoVence(deuda.dias))}</span>`
             : '';
-    const ayudaCobro = ficha.modalidad === 'individual'
+    const ayudaCobro = porClase
         ? 'Cada clase dada sin pago genera un cobro individual. Reservar, programar o cancelar no genera deuda.'
         : 'La mensualidad vence el mismo día del mes siguiente al alta. Si pagó después, corregí la fecha del pago: queda registrado con su motivo.';
     resumen.innerHTML = `<div class="ficha-chips">
@@ -2123,18 +2123,18 @@ function abrirFicha(ficha, origen, alCrear) {
     <div><p class="al-nombre">${esNueva ? 'Nuevo alumno' : esc(nombreCompleto(ficha))}</p>
     <p class="al-sub">${esNueva ? 'Ficha real · se guarda en este dispositivo' : `Alta ${esc(fechaCorta(ficha.fechaAlta))}`}</p></div>
     <div class="cobros-panel-dato">${esNueva ? '' : `<span class="ficha-id">ID ${esc(ficha.id)}</span>`}</div></div>
-    <p class="cobros-panel-nota">${esNueva ? 'Completá los datos para dar de alta. Nada se envía ni crea grupos.' : burbujaAyuda('Podés corregir nombre, modalidad, día de vencimiento y teléfono. La identidad y la fecha de alta no se cambian.')}</p>
+    <p class="cobros-panel-nota">${esNueva ? 'Completá los datos para dar de alta. Nada se envía ni crea grupos.' : burbujaAyuda('Podés corregir nombre, forma de pago, precio, día de vencimiento y teléfono. La identidad y la fecha de alta no se cambian.')}</p>
     <form novalidate>
       <label class="campo"><span>Nombre *</span><input name="nombre" required maxlength="80" autocomplete="off" value="${esNueva ? '' : esc(ficha.nombre)}" placeholder="Nombre y apellido"></label>
       <button type="button" class="apellido-toggle" data-apellido-toggle aria-expanded="${ficha?.apellido ? 'true' : 'false'}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Apellido <span class="hint">(opcional)</span></button>
       <label class="campo apellido-campo" data-apellido-campo ${ficha?.apellido ? '' : 'hidden'}><span>Apellido (opcional) <button type="button" class="quitar" data-apellido-quitar>Quitar</button></span><input name="apellido" maxlength="80" autocomplete="off" value="${esNueva ? '' : esc(ficha?.apellido ?? '')}" placeholder="Ej.: García"><p class="campo-nota">Se usa junto al nombre para buscar y distinguir alumnas</p></label>
-      <label class="campo"><span>Tarifa en UYU *${burbujaAyuda('Se guarda en la ficha. No se usa ningún precio de ejemplo.')}</span><input name="tarifaUYU" type="number" min="1" step="1" inputmode="numeric" required value="${ficha?.tarifaUYU ?? ''}" placeholder="Ej.: 2500"></label>
-      ${esNueva ? `<p class="campo"><span>Fecha de registro *</span></p>${selectorFecha('alta', hoy)}` : ''}
-      <p class="campo"><span>Modalidad *</span></p>
-      <div class="ficha-grupo-opciones" role="group" aria-label="Modalidad">
-        <button type="button" class="ficha-grupo" data-modalidad="mensual" aria-pressed="false">Mensual</button>
-        <button type="button" class="ficha-grupo" data-modalidad="individual" aria-pressed="false">Individual</button>
+      <p class="campo"><span>Forma de pago *</span></p>
+      <div class="ficha-grupo-opciones" role="group" aria-label="Forma de pago">
+        <button type="button" class="ficha-grupo" data-forma-pago="mensual-fijo" aria-pressed="false">Mensual fijo</button>
+        <button type="button" class="ficha-grupo" data-forma-pago="por-clase" aria-pressed="false">Por clase</button>
       </div>
+      <label class="campo"><span>Precio en UYU *${burbujaAyuda('Se guarda en la ficha y se usa en los cobros. No se usa ningún precio de ejemplo.')}</span><input name="tarifaUYU" type="number" min="1" step="1" inputmode="numeric" required value="${ficha?.tarifaUYU ?? ''}" placeholder="Ej.: 2500"></label>
+      ${esNueva ? `<p class="campo"><span>Fecha de registro *</span></p>${selectorFecha('alta', hoy)}` : ''}
       ${esNueva ? `<p class="campo"><span>¿Pagó la primera mensualidad? *</span></p>
       <div class="ficha-grupo-opciones" role="group" aria-label="Estado del pago">
         <button type="button" class="ficha-grupo" data-pago="si" aria-pressed="false">Pagó</button>
@@ -2154,22 +2154,20 @@ function abrirFicha(ficha, origen, alCrear) {
     cablearAyudas(dialogo);
     // Sin foto de perfil (Nico 26-nov): solo el avatar generado por nombre.
     // Las fotos ya guardadas en el repo dejan de mostrarse y de poder cambiarse.
-    let modalidad = ficha?.modalidad ?? 'mensual';
+    let formaPago = ficha?.formaPago ?? 'mensual-fijo';
     let pagado = false;
-    const pintarSeleccion = () => {
-        dialogo.querySelectorAll('[data-modalidad]').forEach((b) => {
-            const on = b.dataset.modalidad === modalidad;
-            b.classList.toggle('activo', on);
-            b.setAttribute('aria-pressed', String(on));
-        });
-    };
-    dialogo.querySelectorAll('[data-modalidad]').forEach((b) => b.addEventListener('click', () => {
-        const valor = b.dataset.modalidad;
-        if (valor === 'mensual' || valor === 'individual')
-            modalidad = valor;
-        pintarSeleccion();
+    const pintarFormaPago = () => dialogo.querySelectorAll('[data-forma-pago]').forEach((b) => {
+        const on = b.dataset.formaPago === formaPago;
+        b.classList.toggle('activo', on);
+        b.setAttribute('aria-pressed', String(on));
+    });
+    dialogo.querySelectorAll('[data-forma-pago]').forEach((b) => b.addEventListener('click', () => {
+        if (b.dataset.formaPago === 'mensual-fijo' || b.dataset.formaPago === 'por-clase') {
+            formaPago = b.dataset.formaPago;
+        }
+        pintarFormaPago();
     }));
-    pintarSeleccion();
+    pintarFormaPago();
     const pintarPago = () => dialogo.querySelectorAll('[data-pago]').forEach((b) => {
         const on = b.dataset.pago === (pagado ? 'si' : 'no');
         b.classList.toggle('activo', on);
@@ -2211,7 +2209,7 @@ function abrirFicha(ficha, origen, alCrear) {
             // Apellido opcional: si el campo está oculto el form no lo manda, y
             // editarAlumno solo lo pisa cuando viene definido (conserva el vigente).
             apellido: String(datos.get('apellido') ?? '').trim(),
-            modalidad,
+            formaPago,
             tarifaUYU: tarifaRaw === '' ? 0 : Number(tarifaRaw),
             contacto: String(datos.get('contacto') ?? ''),
             ancla: anclaRaw === '' ? undefined : Number(anclaRaw),
@@ -2317,8 +2315,8 @@ function alumnosParaCobros() {
     return repo.listarAlumnos().map((f) => ({
         id: f.id, nombre: f.nombre, grupo: f.grupo, ancla: f.ancla,
         tarifaUYU: f.tarifaUYU,
-        montoUYU: precio(f, f.modalidad === 'individual' ? 'clase-individual' : 'mensualidad', hoyLocal(reloj.ahora())) ?? 0,
-        individual: f.modalidad === 'individual',
+        montoUYU: precio(f, f.formaPago === 'por-clase' ? 'clase-individual' : 'mensualidad', hoyLocal(reloj.ahora())) ?? 0,
+        individual: f.formaPago === 'por-clase',
     }));
 }
 const verCobros = () => resumenCobros(alumnosParaCobros(), repo.listarPagos(), hoyLocal(reloj.ahora()));
@@ -2733,8 +2731,9 @@ campana.addEventListener('click', () => {
     const { avisos } = verCobros();
     const fichas = new Map(repo.listarAlumnos().map((f) => [f.id, f]));
     const avisarLink = (f) => {
-        const tel = fichas.get(f.alumno.id)?.contacto ?? '';
-        return tel ? linkAvisoVencimiento({ telefono: conPrefijo(tel, prefijoMovil), nombre: f.alumno.nombre, vencimiento: f.fecha }) : null;
+        const ficha = fichas.get(f.alumno.id);
+        const tel = ficha?.contacto ?? '';
+        return tel ? linkAvisoVencimiento({ telefono: conPrefijo(tel, prefijoMovil), nombre: f.alumno.nombre, vencimiento: f.fecha, montoUYU: ficha?.tarifaUYU }) : null;
     };
     const dlg = abrirDialogoCobros('Avisos de cobro', 'Mensualidades', 'campana', avisos.length ? `<p class="cobros-panel-nota">${burbujaAyuda('Mensualidades sin pagar que vencen hoy o en los próximos 7 días. «Avisar por WhatsApp» abre el chat con el mensaje ya escrito: el envío lo confirmás vos en WhatsApp.')}</p>
     <ul class="cobros-panel-lista">${avisos.map((f, i) => `<li>

@@ -9,7 +9,7 @@
  *    texto en el grupo de la clase); "individual" = link por alumno elegido.
  *  - Números: solo se normalizan al formato del deep link; jamás se inventan.
  */
-import { etiquetaDia, horaClase } from './clases.js?v=202611262015';
+import { etiquetaDia, horaClase } from './clases.js?v=202611261756';
 /** Plantilla por defecto configurable por el dueño (plan §2.2). */
 export const PLANTILLA_CANCELACION = 'Hola, la clase de hoy se canceló. La reprogramamos.';
 /** Normaliza un teléfono uruguayo a "59899123456" (sin + ni espacios). */
@@ -50,10 +50,13 @@ export function destinos(c, modo, elegidos, texto) {
 }
 /** Plantilla sugerida para avisar que la mensualidad está por vencer. */
 export const PLANTILLA_VENCIMIENTO = 'Hola, tu mensualidad está por vencer. ¿Podés confirmar el pago?';
-/** Mensaje sugerido con el nombre y la fecha de vencimiento (día/mes). */
+/** Mensaje sugerido con el nombre, el importe real de la ficha y la fecha de vencimiento (día/mes). */
 export function textoAvisoVencimiento(a, plantilla = PLANTILLA_VENCIMIENTO) {
     const [y, m, d] = a.vencimiento.split('-').map(Number);
-    return `${(plantilla || PLANTILLA_VENCIMIENTO).trim()}\n${a.nombre} · vence ${String(d).padStart(2, '0')}/${String(m).padStart(2, '0')}/${y}`;
+    const importe = typeof a.montoUYU === 'number' && Number.isSafeInteger(a.montoUYU) && a.montoUYU > 0
+        ? ` · $${new Intl.NumberFormat('es-UY').format(a.montoUYU)}`
+        : '';
+    return `${(plantilla || PLANTILLA_VENCIMIENTO).trim()}\n${a.nombre}${importe} · vence ${String(d).padStart(2, '0')}/${String(m).padStart(2, '0')}/${y}`;
 }
 /** Deep link wa.me con el aviso de «por vencer» ya precargado. */
 export function linkAvisoVencimiento(a, plantilla) {
