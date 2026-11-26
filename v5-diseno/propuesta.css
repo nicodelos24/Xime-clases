@@ -351,7 +351,7 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; width: 0; }
   margin-bottom: 9px;
   box-shadow: var(--sombra-crema);
   cursor: pointer; /* toque en la tarjeta abre/cierra quiénes van (26-11) */
-  transition: transform var(--t-rapida) var(--ease), box-shadow var(--t-rapida) var(--ease), border-color var(--t-rapida) var(--ease);
+  transition: transform var(--t-rapida) var(--ease), box-shadow var(--t-rapida) var(--ease), border-color var(--t-rapida) var(--ease), background var(--t-media) var(--ease), opacity var(--t-media) var(--ease);
 }
 .clase:hover { transform: translateY(-2px); box-shadow: var(--sombra-crema); }
 /* Nico 19/11 (v2): inversión literal de estilos — "Por dar / Cancelar clase" toma el
@@ -379,7 +379,7 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; width: 0; }
 .clase-alumnos summary::before { content: '▸'; font-size: 10px; }
 .clase-alumnos[open] summary::before { content: '▾'; }
 .clase-alumnos summary:focus-visible { outline: 2px solid var(--tq-600); outline-offset: 2px; }
-.clase-alumnos ul { margin: 6px 0 2px; padding-left: 18px; line-height: 1.55; }
+.clase-alumnos ul { margin: 6px 0 2px; padding-left: 18px; line-height: 1.55; overflow: hidden; }
 .clase-alumnos li::marker { color: var(--tq-600); }
 
 .marcar {
@@ -1043,11 +1043,16 @@ html[data-tema="oscuro"] .cobro-fila .cobro-vence.pronto { background: var(--amb
 /* Chip "Cancelada": mismo molde que chip-por / chip-dada. */
 .chip-cancelada { background: var(--rosa-tinte); color: var(--rosa); }
 
-/* Fila cancelada: tinta apagada, sin sombra de "hecha". */
-.clase.cancelada { background: #FFFAF2; border-color: #F2DCC3; opacity: .88; }
+/* Fila cancelada: tinta apagada, sin sombra de "hecha". Compacta y prolija. */
+.clase.cancelada { background: #FFFAF2; border-color: #F2DCC3; opacity: .88; display: flex; flex-wrap: wrap; align-items: center; gap: 9px 11px; transition: background var(--t-media) var(--ease), border-color var(--t-media) var(--ease), opacity var(--t-media) var(--ease); }
 .clase.cancelada .chip-cancelada { background: #FBE9D2; color: #8F4E12; }
-.clase.cancelada .clase-nombre { text-decoration: line-through; text-decoration-color: var(--rosa-pastel); }
+.clase.cancelada .clase-nombre { text-decoration: line-through; text-decoration-color: var(--rosa-pastel); opacity: .78; }
 .clase.cancelada .clase-sub { color: var(--tinta-2); }
+/* Título legible: no se apila palabra por palabra. */
+.clase.cancelada .clase-datos { min-width: 120px; }
+.clase.cancelada .clase-nombre { white-space: normal; word-break: keep-all; overflow-wrap: break-word; line-height: 1.25; }
+/* Lista/alumnos solo al pedir: ocultar el desplegable cuando está cerrado. */
+.clase.cancelada .clase-alumnos:not([open]) ul { display: none; }
 
 /* Acción de fila: reemplaza a "Marcar dada". */
 .marcar-cancelar { border-color: var(--rosa); color: var(--rosa); }
