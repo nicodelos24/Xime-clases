@@ -78,14 +78,17 @@ function esc(s: string): string {
  */
 function chipEstado(c: Clase): string {
   const siguiente = etiquetaProximoPaso(c.estado as EstadoClaseGesto);
-  const base = `class="chip chip-boton" type="button" data-ciclo="${esc(c.id)}" data-acciones="${esc(c.id)}" aria-label="Clase ${esc(c.nombre)}, `;
+  // Color por estado (chip-por-dar / chip-dada / chip-cancelada) + ícono SVG.
+  const clase = c.estado === 'dada' ? 'chip-dada'
+    : c.estado === 'cancelada' ? 'chip-cancelada' : 'chip-por-dar';
+  const base = `class="chip chip-boton ${clase}" type="button" data-ciclo="${esc(c.id)}" data-acciones="${esc(c.id)}" aria-label="Clase ${esc(c.nombre)}, `;
   if (c.estado === 'dada') {
     return `<button ${base}dada. Tocá para ${esc(siguiente)}"><svg class="ico" width="13" height="13"><use href="#i-check"/></svg>Dada</button>`;
   }
   if (c.estado === 'cancelada') {
     return `<button ${base}cancelada. Tocá para ${esc(siguiente)}"><svg class="ico" width="13" height="13"><use href="#i-alerta"/></svg>Cancelada</button>`;
   }
-  return `<button ${base}por dar. Tocá para ${esc(siguiente)}">Por dar</button>`;
+  return `<button ${base}por dar. Tocá para ${esc(siguiente)}"><svg class="ico" width="13" height="13"><use href="#i-reloj"/></svg>Por dar</button>`;
 }
 
 /**
@@ -439,6 +442,12 @@ function ciclarEstadoDeChip(id: string): void {
   clases = repo.listar();
   refrescar();
   const chipNuevo = document.querySelector<HTMLElement>(`[data-ciclo="${id}"]`);
+  if (chipNuevo) {
+    chipNuevo.classList.remove('chip-cicla');
+    // Reiniciar la animación aunque ya estuviera corriendo.
+    void chipNuevo.offsetWidth;
+    chipNuevo.classList.add('chip-cicla');
+  }
   chipNuevo?.focus({ preventScroll: true });
   if (estadoAnterior === 'programada') {
     avisar('Clase marcada dada · Deshacer', 6000);
