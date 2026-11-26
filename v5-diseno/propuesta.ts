@@ -1895,7 +1895,8 @@ function alumnoSub(a: FichaVista): string {
   const v = textoEstadoVence(a);
   const porClase = a.formaPago === 'por-clase';
   const et = porClase ? 'et-individual' : 'et-mensual';
-  return `<p class="al-sub">${esc(a.grupo)} · ${v} <span class="etiqueta ${et}">${porClase ? 'Por clase' : 'Mensual fijo'}</span></p><span class="al-fecha">Alta ${esc(fechaCorta(a.fechaAlta))}</span>`;
+  const etiqueta = a.formaPago === 'otro' ? 'Precio manual' : porClase ? 'Por clase' : 'Mensual fijo';
+  return `<p class="al-sub">${esc(a.grupo)} · ${v} <span class="etiqueta ${et}">${etiqueta}</span></p><span class="al-fecha">Alta ${esc(fechaCorta(a.fechaAlta))}</span>`;
 }
 
 function pintarChipsAlumnos(): void {
@@ -2117,8 +2118,12 @@ function abrirFicha(ficha: AlumnoFicha | null, origen: HTMLElement, alCrear?: (c
       <div class="ficha-grupo-opciones" role="group" aria-label="Forma de pago">
         <button type="button" class="ficha-grupo" data-forma-pago="mensual-fijo" aria-pressed="false">Mensual fijo</button>
         <button type="button" class="ficha-grupo" data-forma-pago="por-clase" aria-pressed="false">Por clase</button>
+        <button type="button" class="ficha-grupo" data-forma-pago="otro" aria-pressed="false" aria-controls="precio-manual-campo" aria-expanded="false">Otro precio (manual)</button>
       </div>
-      <label class="campo"><span>Precio en UYU *${burbujaAyuda('Se guarda en la ficha y se usa en los cobros. No se usa ningún precio de ejemplo.')}</span><input name="tarifaUYU" type="number" min="1" step="1" inputmode="numeric" required value="${ficha?.tarifaUYU ?? ''}" placeholder="Ej.: 2500"></label>
+      <div class="precio-manual" id="precio-manual-campo" ${ficha?.formaPago === 'otro' ? '' : 'hidden'}>
+        <label class="campo"><span>Precio manual en UYU *${burbujaAyuda('Precio acordado para esta alumna: descuento u otro monto. Se guarda y se usa en cobros y avisos. El cálculo de descuento se agregará en otra tarea.')}</span><input name="tarifaManualUYU" type="number" min="1" step="1" inputmode="numeric" required value="${ficha?.formaPago === 'otro' ? ficha.tarifaUYU ?? '' : ''}" placeholder="Ej.: 4800"></label>
+      </div>
+      <label class="campo" id="precio-fijo-campo" ${ficha?.formaPago === 'otro' ? 'hidden' : ''}><span>Precio en UYU *${burbujaAyuda('Se guarda en la ficha y se usa en los cobros. No se usa ningún precio de ejemplo.')}</span><input name="tarifaUYU" type="number" min="1" step="1" inputmode="numeric" required value="${ficha?.tarifaUYU ?? ''}" placeholder="Ej.: 2500"></label>
       ${esNueva ? `<p class="campo"><span>Fecha de registro *</span></p>${selectorFecha('alta', hoy)}` : ''}
       ${esNueva ? `<p class="campo"><span>¿Pagó la primera mensualidad? *</span></p>
       <div class="ficha-grupo-opciones" role="group" aria-label="Estado del pago">
@@ -2141,17 +2146,33 @@ function abrirFicha(ficha: AlumnoFicha | null, origen: HTMLElement, alCrear?: (c
 
   let formaPago: NonNullable<AlumnoFichaInput['formaPago']> = ficha?.formaPago ?? 'mensual-fijo';
   let pagado = false;
-  const pintarFormaPago = () => dialogo.querySelectorAll<HTMLButtonElement>('[data-forma-pago]').forEach((b) => {
-    const on = b.dataset.formaPago === formaPago;
-    b.classList.toggle('activo', on);
-    b.setAttribute('aria-pressed', String(on));
-  });
+  const campoManual = dialogo.querySelector<HTMLElement>('#precio-manual-campo')!;
+  const campoFijo = dialogo.querySelector<HTMLElement>('#precio-fijo-campo')!;
+  const inputTarifa = dialogo.querySelector<HTMLInputElement>('input[name="tarifaUYU"]')!;
+  const inputManual = dialogo.querySelector<HTMLInputElement>('input[name="tarifaManualUYU"]')!;
+  const pintarFormaPago = () => {
+    dialogo.querySelectorAll<HTMLButtonElement>('[data-forma-pago]').forEach((b) => {
+      const on = b.dataset.formaPago === formaPago;
+      b.classList.toggle('activo', on);
+      b.setAttribute('aria-pressed', String(on));
+      if (b.dataset.formaPago === 'otro') b.setAttribute('aria-expanded', String(on));
+    });
+    const esManual = formaPago === 'otro';
+    campoManual.hidden = !esManual;
+    campoFijo.hidden = esManual;
+    // El precio manual manda cuando está abierto; al volver al fijo se conserva su valor.
+    if (esManual) inputTarifa.value = inputManual.value;
+  };
   dialogo.querySelectorAll<HTMLButtonElement>('[data-forma-pago]').forEach((b) => b.addEventListener('click', () => {
-    if (b.dataset.formaPago === 'mensual-fijo' || b.dataset.formaPago === 'por-clase') {
-      formaPago = b.dataset.formaPago;
+    const destino = b.dataset.formaPago;
+    if (destino !== 'mensual-fijo' && destino !== 'por-clase' && destino !== 'otro') return;
+    if (destino === 'otro' && formaPago !== 'otro') {
+      inputManual.value = inputTarifa.value;
     }
+    formaPago = destino;
     pintarFormaPago();
   }));
+  inputManual.addEventListener('input', () => { inputTarifa.value = inputManual.value; });
   pintarFormaPago();
   const pintarPago = () => dialogo.querySelectorAll<HTMLButtonElement>('[data-pago]').forEach((b) => {
     const on = b.dataset.pago === (pagado ? 'si' : 'no');
@@ -2303,6 +2324,7 @@ function alumnosParaCobros() {
     tarifaUYU: f.tarifaUYU,
     montoUYU: precio(f, f.formaPago === 'por-clase' ? 'clase-individual' : 'mensualidad', hoyLocal(reloj.ahora())) ?? 0,
     individual: f.formaPago === 'por-clase',
+    formaPago: f.formaPago,
   }));
 }
 const verCobros = () => resumenCobros(alumnosParaCobros(), repo.listarPagos(), hoyLocal(reloj.ahora()));

@@ -8,7 +8,7 @@
  */
 
 export type Concepto = 'mensualidad' | 'clase-individual';
-export type AlumnoTarifa = { tarifaUYU?: number | null; [clave: string]: unknown };
+export type AlumnoTarifa = { tarifaUYU?: number | null; formaPago?: string; [clave: string]: unknown };
 
 /** Precios de ejemplo, SOLO para la demo sembrada. Nunca se guardan en una ficha real. */
 export const PRECIOS_DEMO: Readonly<Record<Concepto, number>> = {
@@ -33,6 +33,7 @@ export function precio(
   _fecha: string,
 ): number | null {
   if (concepto !== 'mensualidad' && concepto !== 'clase-individual') return null;
+  // El precio manual es la tarifa acordada: manda en el cobro de esa alumna.
   const tarifa = alumno.tarifaUYU;
   return typeof tarifa === 'number' && Number.isSafeInteger(tarifa) && tarifa > 0 ? tarifa : null;
 }
