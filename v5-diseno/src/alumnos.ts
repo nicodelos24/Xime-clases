@@ -14,6 +14,9 @@
 
 export type Modalidad = 'mensual' | 'individual';
 
+/** Forma de pago elegida en la ficha: define si la tarifa se cobra por mes o por clase. */
+export type FormaPago = 'mensual-fijo' | 'por-clase';
+
 import type { DeudaIndividual } from './cobros.ts';
 
 /** Ficha persistida. `id` estable: lo usan los pagos y la agenda histórica. */
@@ -40,6 +43,11 @@ export type AlumnoFicha = {
    * null = sin tarifa propia (nunca se inventa el precio de la demo).
    */
   tarifaUYU: number | null;
+  /**
+   * Forma de pago de la tarifa. Aditiva: una ficha vieja sin este campo se
+   * lee como 'mensual-fijo' para conservar su tarifa y su deuda mensual.
+   */
+  formaPago?: FormaPago;
   /**
    * Dato histórico de foto (24-nov). Se conserva al leer/editar para no
    * migrar ni borrar datos ajenos, pero desde el replanteo de Nico 26-nov la
@@ -68,6 +76,8 @@ export type AlumnoFichaInput = {
   pagado?: boolean;
   /** Tarifa propia en UYU: entero positivo. Opcional en la edición (conserva la vigente); obligatoria al dar de alta. */
   tarifaUYU?: number;
+  /** Forma de pago: mensual fijo o por clase. Opcional en la edición (conserva la vigente). */
+  formaPago?: FormaPago;
   /** Apellido opcional: se compone con el nombre para el nombre completo visible. */
   apellido?: string;
 };
@@ -141,6 +151,9 @@ export function validarAlumno(input: AlumnoFichaInput): Record<string, string> {
   if (input.tarifaUYU !== undefined && (!Number.isSafeInteger(input.tarifaUYU) || input.tarifaUYU <= 0)) {
     errores.tarifaUYU = 'Ingresá una tarifa entera en UYU (mayor a 0)';
   }
+  if (input.formaPago !== undefined && input.formaPago !== 'mensual-fijo' && input.formaPago !== 'por-clase') {
+    errores.formaPago = 'Elegí la forma de pago';
+  }
   return errores;
 }
 
@@ -158,6 +171,8 @@ export type CamposNormalizados = {
   pagado: boolean;
   /** Tarifa propia explícita; null = sin tarifa (nunca se guarda un default de demo). */
   tarifaUYU: number | null;
+  /** Forma de pago; la ficha vieja sin dato se lee como mensual fijo. */
+  formaPago: FormaPago;
   /** Apellido opcional; vacío si no se dio. */
   apellido: string;
 };
@@ -174,6 +189,7 @@ export function normalizarAlumno(input: AlumnoFichaInput): CamposNormalizados {
     contacto: texto(input.contacto),
     pagado: input.pagado ?? false,
     tarifaUYU: input.tarifaUYU ?? null,
+    formaPago: input.formaPago ?? 'mensual-fijo',
     apellido: texto(input.apellido),
   };
 }
@@ -198,7 +214,7 @@ export function crearAlumno(
 ): AlumnoFicha {
   const errores = validarAlumno(input);
   if (input.nombre === undefined) errores.nombre = 'Ingresá el nombre del alumno';
-  if (input.modalidad === undefined) errores.modalidad = 'Elegí una modalidad';
+  if (input.formaPago === undefined && input.modalidad === undefined) errores.modalidad = 'Elegí una modalidad';
   if (Object.keys(errores).length > 0) throw new Error(Object.values(errores)[0]!);
   const norm = normalizarAlumno(input);
   const id = nuevoIdAlumno(yaExiste, azar);
@@ -233,6 +249,7 @@ export function editarAlumno(alumno: AlumnoFicha, input: AlumnoFichaInput): Alum
     contacto: input.contacto === undefined ? alumno.contacto : texto(input.contacto),
     // Tarifa propia: si el formulario no la trae se conserva; null sigue null.
     tarifaUYU: input.tarifaUYU === undefined ? alumno.tarifaUYU ?? null : input.tarifaUYU,
+    formaPago: input.formaPago ?? alumno.formaPago ?? 'mensual-fijo',
     // Alta y pago inicial se congelan: la edición no reescribe la identidad.
     fechaAlta: alumno.fechaAlta,
     pagado: alumno.pagado,
@@ -272,6 +289,8 @@ export function normalizarFichaGuardada(dato: Partial<AlumnoFicha> & { tipo?: st
     pagado: typeof dato.pagado === 'boolean' ? dato.pagado : false,
     // Fichas v2 sin tarifa: null, nunca el precio de ejemplo de la demo.
     tarifaUYU: Number.isSafeInteger(dato.tarifaUYU) && (dato.tarifaUYU as number) > 0 ? dato.tarifaUYU as number : null,
+    // Ficha guardada antes de este campo: su tarifa siempre era mensual.
+    formaPago: dato.formaPago === 'por-clase' ? 'por-clase' : 'mensual-fijo',
     foto: esFotoValida(dato.foto) ? dato.foto : '',
     apellido: typeof dato.apellido === 'string' ? dato.apellido.trim() : '',
   };
@@ -328,11 +347,15 @@ export function construirVista(
   pagosPorAlumno: ReadonlyMap<string, number>,
   hoy: string,
   deudasIndividuales: ReadonlyMap<string, DeudaIndividual> = new Map(),
+  cobrosPorClase: ReadonlyMap<string, DeudaIndividual> = new Map(),
 ): FichaVista[] {
   const dia = Date.parse(`${hoy}T00:00:00Z`);
   return fichas.map((f) => {
-    const dias = f.modalidad === 'individual' ? undefined : pagosPorAlumno.get(f.id);
-    const deuda = f.modalidad === 'individual' ? deudasIndividuales.get(f.id) ?? null : null;
+    // La deuda la define la forma de pago: mensual fijo → vencimiento mensual;
+    // por clase → cada clase dada sin pagar (nunca una mensualidad por reservar).
+    const porClase = f.formaPago === 'por-clase';
+    const dias = porClase ? undefined : pagosPorAlumno.get(f.id);
+    const deuda = porClase ? cobrosPorClase.get(f.id) ?? deudasIndividuales.get(f.id) ?? null : null;
     const vence = dias ?? null;
     const estadoVence: EstadoVence = deuda && deuda.clases > 0
       ? 'vencido'

@@ -5,6 +5,7 @@ import { alumnosCobrosDemo, datosDemo } from '../src/demo.ts';
 import { hoyLocal, relojFalso } from '../src/reloj.ts';
 import { almacenLocalStorage, almacenMemoria, RepositorioClases, VERSION_ESTADO } from '../src/repositorio.ts';
 import { precio } from '../src/tarifas.ts';
+import { construirVista } from '../src/alumnos.ts';
 import type { Clase } from '../src/clases.ts';
 
 // Con la regla del mismo día del mes siguiente, la mensualidad del período
@@ -242,6 +243,26 @@ test('filtro Cobros no muta la lista original y «deben» con aviso 7 coincide c
   filtrarCobros(datos, 'vencido' as EstadoCobro);
   ordenarCobros(datos, 'alumno' as OrdenCobro);
   assert.deepEqual(datos, original);
+});
+
+test('forma de pago define la deuda: por clase no genera mensualidad y viceversa', () => {
+  const mensual = { ...alumnaIndividual, id: 'al-mensual000', individual: false, formaPago: 'mensual-fijo' } as const;
+  const porClase = { ...alumnaIndividual, formaPago: 'por-clase' } as const;
+  const vencimientos = new Map([['al-mensual000', 3], [porClase.id, 3]]);
+  const deudasClase = new Map([[porClase.id, { clases: 2, montoUYU: 5500, sinTarifa: false }]]);
+  const vistas = construirVista([mensual, porClase] as never[], vencimientos, ALTA, new Map(), deudasClase);
+  assert.equal(vistas[0]!.estadoVence, 'pendiente', 'mensual fijo sigue cobrando por mes aunque sea individual');
+  assert.equal(vistas[0]!.vence, 3);
+  assert.equal(vistas[1]!.estadoVence, 'vencido', 'por clase cobra las clases dadas, no el vencimiento mensual');
+  assert.equal(vistas[1]!.vence, null);
+  assert.equal(vistas[1]!.deudaIndividual?.clases, 2);
+  // La vista de Cobros excluye las mensualidades de quien paga por clase.
+  const alumnos = [
+    { id: porClase.id, nombre: porClase.nombre, grupo: '', ancla: 21, montoUYU: 2500, individual: true },
+    { id: 'al-mensual000', nombre: 'Mensual', grupo: '', ancla: 21, montoUYU: 2500, individual: false },
+  ];
+  const filas = resumenCobros(alumnos, [], ALTA).filas;
+  assert.deepEqual(filas.map((f) => f.alumno.id), ['al-mensual000']);
 });
 
 test('orden Cobros: vencimiento (vencidos primero, luego por días) o alumno (A→Z)', () => {

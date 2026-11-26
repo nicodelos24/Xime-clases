@@ -128,7 +128,7 @@ test('flujo real: cargar tarifa y confirmar el pago deja al día y sobrevive rec
 test('contrato UI: ficha individual usa deuda compartida y excluye mensualidad; Cobros no muestra $0 normal', async () => {
   const ui = await readFile(new URL('../propuesta.ts', import.meta.url), 'utf8');
   assert.match(ui, /deudaInd\(ficha, verCobrosIndividuales\(\)\)/);
-  assert.match(ui, /const filas = ficha\.modalidad === 'individual' \? \[\] : r\.filas/);
+  assert.match(ui, /const filas = porClase \? \[\] : r\.filas\.filter/);
   assert.match(ui, /function filasAlumnos\(\): FichaVista\[\]/);
   assert.match(ui, /const importe = f\.pago \? uyu\(monto\) : sinTarifa \? 'Falta cargar la tarifa' : uyu\(monto\)/);
   assert.match(ui, /const monto = f\.pago \? f\.pago\.montoUYU : precioPrecargado\(f\.alumno/);

@@ -84,6 +84,8 @@ export function fichasDemo(hoy: string): AlumnoFicha[] {
     id: a.id,
     nombre: a.nombre,
     modalidad: (i % 3 === 2 ? 'individual' : 'mensual') as AlumnoFicha['modalidad'],
+    // La demo siembra la forma de pago acorde a su modalidad histórica.
+    formaPago: i % 3 === 2 ? 'por-clase' : 'mensual-fijo',
     // `alumnosCobrosDemo.grupo` trae prefijo "Grupo " para Cobros; la ficha
     // guarda el nombre llano que usa el editor y la validación ("Martes A").
     grupo: a.grupo.replace(/^Grupo\s+/, ''),

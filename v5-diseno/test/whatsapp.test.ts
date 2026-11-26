@@ -30,6 +30,14 @@ function clase(): Clase {
   return crearClase({ id: 'c1', nombre: 'Grupo Martes A', fecha: '2026-11-18', hora: '15:00', alumnos });
 }
 
+test('aviso de vencimiento usa el importe guardado en la ficha, nunca un precio de ejemplo', () => {
+  const aviso = { telefono: '099 123 456', nombre: 'Carla', vencimiento: '2026-12-01', montoUYU: 7300 };
+  const texto = textoAvisoVencimiento(aviso);
+  assert.match(texto, /Carla · \$7\.300 · vence 01\/12\/2026/);
+  assert.doesNotMatch(texto, /6\.500|2\.500/);
+  assert.equal(textoAvisoVencimiento({ ...aviso, montoUYU: null }), textoAvisoVencimiento({ ...aviso, montoUYU: undefined }));
+});
+
 test('normalizarTelefono deja el formato del deep link', () => {
   assert.equal(normalizarTelefono('099 123 456'), '59899123456');
   assert.equal(normalizarTelefono('+598 99 987 654'), '59899987654');

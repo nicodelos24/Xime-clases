@@ -59,7 +59,7 @@ test('alta y edición parcial de tarifa validan enteros positivos y conservan id
   assert.equal(editada.fechaAlta, ALTA);
   assert.equal(editada.id, ficha.id);
   assert.deepEqual(normalizarAlumno({ nombre: 'Otra', modalidad: 'mensual' }), {
-    nombre: 'Otra', modalidad: 'mensual', grupo: '', ancla: 21, contacto: '', pagado: false, tarifaUYU: null, apellido: '',
+    nombre: 'Otra', modalidad: 'mensual', grupo: '', ancla: 21, contacto: '', pagado: false, tarifaUYU: null, formaPago: 'mensual-fijo', apellido: '',
   });
 });
 
@@ -70,6 +70,31 @@ test('ficha guardada sin tarifa se lee como null; no se completa con 6500', () =
   for (const tarifaUYU of [0, -10, 2.5, '6500', null]) {
     assert.equal(normalizarFichaGuardada({ ...guardada, tarifaUYU })?.tarifaUYU, null);
   }
+});
+
+test('forma de pago: alta guarda la elegida, defecto mensual y migración suave de fichas viejas', () => {
+  const porClase = crearAlumno({ ...input(2500), formaPago: 'por-clase' }, ALTA, () => false, () => 0.5);
+  assert.equal(porClase.formaPago, 'por-clase');
+  assert.equal(porClase.tarifaUYU, 2500);
+  assert.equal(crearAlumno(input(2750), ALTA, () => false, () => 0.5).formaPago, 'mensual-fijo');
+  assert.match(validarAlumno({ ...input(2500), formaPago: 'otra' as never }).formaPago ?? '', /forma de pago/);
+
+  const guardada = JSON.parse(JSON.stringify(porClase));
+  delete guardada.formaPago;
+  const migrada = normalizarFichaGuardada(guardada);
+  assert.equal(migrada?.formaPago, 'mensual-fijo', 'la tarifa vieja era mensual: no cambia su cobro');
+  assert.equal(migrada?.tarifaUYU, 2500);
+  assert.equal(normalizarFichaGuardada({ ...guardada, formaPago: 'por-clase' })?.formaPago, 'por-clase');
+  assert.equal(normalizarFichaGuardada({ ...guardada, formaPago: 'rara' })?.formaPago, 'mensual-fijo');
+
+  const almacen = almacenMemoria(JSON.stringify({ version: 3, guardadoEn: '', clases: [], pagos: [], alumnos: [guardada] }));
+  const repo = new RepositorioClases(almacen, reloj);
+  const cargada = repo.listarAlumnos()[0]!;
+  assert.equal(cargada.formaPago, 'mensual-fijo');
+  assert.equal(repo.editarAlumno(cargada.id, { tarifaUYU: 3100 }).formaPago, 'mensual-fijo', 'editar conserva la migración');
+  const elegida = repo.crearAlumno({ ...input(2800), formaPago: 'por-clase' });
+  const recargada = new RepositorioClases(almacen, reloj);
+  assert.equal(recargada.listarAlumnos().find((a) => a.id === elegida.id)?.formaPago, 'por-clase', 'se persiste y sobrevive la recarga');
 });
 
 test('repositorio: la tarifa propia y su corrección sobreviven una recarga; no reescriben pagos', () => {

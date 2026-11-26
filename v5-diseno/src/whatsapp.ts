@@ -62,12 +62,15 @@ export function destinos(
 export const PLANTILLA_VENCIMIENTO = 'Hola, tu mensualidad está por vencer. ¿Podés confirmar el pago?';
 
 /** Datos mínimos para armar el deep link de aviso (sin depender de la BD). */
-export type AvisoVencimiento = { telefono: string; nombre: string; vencimiento: string };
+export type AvisoVencimiento = { telefono: string; nombre: string; vencimiento: string; montoUYU?: number | null };
 
-/** Mensaje sugerido con el nombre y la fecha de vencimiento (día/mes). */
+/** Mensaje sugerido con el nombre, el importe real de la ficha y la fecha de vencimiento (día/mes). */
 export function textoAvisoVencimiento(a: AvisoVencimiento, plantilla = PLANTILLA_VENCIMIENTO): string {
   const [y, m, d] = a.vencimiento.split('-').map(Number);
-  return `${(plantilla || PLANTILLA_VENCIMIENTO).trim()}\n${a.nombre} · vence ${String(d).padStart(2, '0')}/${String(m).padStart(2, '0')}/${y}`;
+  const importe = typeof a.montoUYU === 'number' && Number.isSafeInteger(a.montoUYU) && a.montoUYU > 0
+    ? ` · $${new Intl.NumberFormat('es-UY').format(a.montoUYU)}`
+    : '';
+  return `${(plantilla || PLANTILLA_VENCIMIENTO).trim()}\n${a.nombre}${importe} · vence ${String(d).padStart(2, '0')}/${String(m).padStart(2, '0')}/${y}`;
 }
 
 /** Deep link wa.me con el aviso de «por vencer» ya precargado. */
