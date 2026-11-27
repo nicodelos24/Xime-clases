@@ -199,7 +199,7 @@ function pintarHoy() {
       grupos.innerHTML = r.clases
         .map(
           (c) => `<div class="grupo">
-            <span class="grupo-hora">${horaClase(c)}</span>
+            <span class="grupo-hora"><svg class="ico" width="13" height="13" aria-hidden="true"><use href="#i-reloj"/></svg>${horaClase(c)}</span>
             <span class="grupo-nombre">${esc(c.nombre)}</span>
             ${accionClase(c)}
             ${chipEstado(c)}
@@ -626,7 +626,10 @@ function pintarMes() {
     const tiene = delDia.length > 0 ? ' tiene' : '';
     const activo = f === hoy ? ' activo' : '';
     const seleccionado = f === diaMesSeleccionado ? ' seleccionado' : '';
-    celdas.push(`<button class="mes-dia${tiene}${claseEstado}${activo}${seleccionado}" type="button" data-fecha="${f}" aria-label="${parseFecha(f).d} de ${etiquetaMes(f)}${tiene ? ', con clases' : ''}"${seleccionado ? ' aria-current="date"' : ''}>${parseFecha(f).d}</button>`);
+    /** Barrita 3px bajo el número: el estado se lee sin depender de la leyenda. */
+      const puntos: string = delDia.some((c) => c.estado === 'cancelada') ? 'cancelada'
+        : delDia.every((c) => c.estado === 'dada') ? 'dada' : 'por-dar';
+      celdas.push(`<button class="mes-dia${tiene}${claseEstado}${activo}${seleccionado}" type="button" data-fecha="${f}" aria-label="${parseFecha(f).d} de ${etiquetaMes(f)}${tiene ? `, con clases ${puntos === 'cancelada' ? 'canceladas' : puntos === 'dada' ? 'dadas' : 'por dar'}` : ''}"${seleccionado ? ' aria-current="date"' : ''}>${parseFecha(f).d}${tiene ? `<i class="mes-barra ${puntos}"></i>` : ''}</button>`);
   }
   cont.innerHTML = celdas.join('');
   // Punto 4: referencias coloridas sobrias, acordes a los tokens v5.
@@ -1191,7 +1194,7 @@ function rutinasExistentesHtml(): string {
   return `<div class="rutinas-config">
     <p class="sheet-paso">Tus clases semanales</p>
     <ul class="cobros-panel-lista">${filas}</ul>
-    <p class="al-sub">Dar de baja una rutina cancela sus clases futuras que sigan por dar. Las ya dadas quedan en el historial.${burbujaAyuda('Dar de baja una rutina cancela sus clases futuras que sigan por dar. Las ya dadas quedan en el historial.')}</p>
+    <p class="al-sub">Dar de baja una rutina cancela sus clases futuras que sigan por dar. Las ya dadas quedan en el historial.</p>
   </div>`;
 }
 
@@ -2040,7 +2043,7 @@ function abrirFichaConCobro(ficha: AlumnoFicha | null, origen: HTMLElement, alCr
       : ultimo
         ? `Último pago: ${esc(fechaCorta(ultimo.fecha))} · ${uyu(ultimo.montoUYU)}. Renovación: mismo día del mes siguiente.`
         : deuda
-          ? textoCobroFicha(deuda.dias, deuda.alumno.montoUYU, deuda.fecha)
+          ? `Vence ${esc(fechaCorta(deuda.fecha))}.`
           : 'Sin cobros registrados.';
   // Contacto (arreglo funcional): el número real se VE en la ficha y el botón
   // abre wa.me con ESE número. Sin número no se muestra un link falso.
@@ -2066,11 +2069,14 @@ function abrirFichaConCobro(ficha: AlumnoFicha | null, origen: HTMLElement, alCr
   const ayudaCobro = porClase
     ? 'Cada clase dada sin pago genera un cobro individual. Reservar, programar o cancelar no genera deuda.'
     : 'La mensualidad vence el mismo día del mes siguiente al alta. Si pagó después, corregí la fecha del pago: queda registrado con su motivo.';
-  resumen.innerHTML = `<div class="ficha-chips">
+  resumen.innerHTML = `<div class="ficha-cobro-bloque">
+    <div class="ficha-chips">
       <span class="ficha-chip ficha-chip-alumno">${avatarAlumno(ficha.nombre, ficha.id, ficha.foto, 22, ficha.apellido)}${esc(nombreCompleto(ficha))}</span>
       ${chipDeuda}${chipVence}
     </div>
-    <p>${texto}${ultimo || deuda || individualPendiente ? burbujaAyuda(ayudaCobro) : ''}</p>
+    <p>${texto}</p>
+    ${ultimo || deuda || individualPendiente ? burbujaAyuda(ayudaCobro) : ''}
+    </div>
     ${contacto.visible
       ? `<p class="ficha-contacto"><span class="ficha-contacto-rotulo">WhatsApp</span> <b>${esc(contacto.visible)}</b></p>`
       : `<p class="al-sub">${esc(contacto.ayuda ?? '')}</p>`}
@@ -2489,7 +2495,7 @@ function pintarCobros() {
         <span class="al-nombre">${esc(nomCobro)}</span>
         <span class="cobro-meta">Clase individual · ${esc(fechaCorta(f.fecha))}</span>
       </span>
-      <span class="cobro-importe"><b class="${sinTarifa ? 'cobro-sin-tarifa' : ''}">${importe}</b><small class="${f.pago ? 'pagado' : ''}">${f.pago ? 'Pagado' : 'Debe'}</small></span>
+      <span class="cobro-importe"><b class="${sinTarifa ? 'cobro-sin-tarifa' : ''}">${importe}</b><small class="cobro-estado ${f.pago ? 'pagado' : ''}"><svg class="ico" width="9" height="9" aria-hidden="true"><use href="#i-punto-lleno"/></svg>${f.pago ? 'Pagado' : 'Debe'}</small></span>
       <svg class="ico" width="13" height="13" aria-hidden="true"><use href="#i-der"/></svg>
     </button>
   </li>`;
@@ -2509,7 +2515,7 @@ function pintarCobros() {
       </span>
       ${f.pago
         ? `<span class="cobro-importe"><b>${uyu(f.alumno.montoUYU)}</b><small class="pagado">Pagado</small></span>`
-        : `<span class="cobro-importe"><b>${uyu(f.alumno.montoUYU)}</b><small>Debe</small></span><span class="cobro-vence ${f.dias < 0 ? 'vencido' : f.dias <= 7 ? 'pronto' : ''}">${textoVence(f.dias)}</span>`}
+        : `<span class="cobro-importe"><b>${uyu(f.alumno.montoUYU)}</b><small>Debe</small></span><span class="cobro-vence ${f.dias < 0 ? 'vencido' : f.dias <= 7 ? 'pronto' : ''}"><svg class="ico" width="9" height="9" aria-hidden="true"><use href="#i-punto-lleno"/></svg>${textoVence(f.dias)}</span>`}
       <svg class="ico" width="13" height="13" aria-hidden="true"><use href="#i-der"/></svg>
     </button>
   </li>`;
@@ -2796,7 +2802,7 @@ function abrirPago(nombre: string, periodo: string, monto: number, origen: HTMLE
     <form novalidate>
       ${pago ? `<label class="campo"><span>Fecha del pago (día / mes / año)</span></label>${selectorFecha('pago', pago.fecha)}
       <label class="campo"><span>Motivo de anulación (opcional)</span><input name="motivo" maxlength="160"></label>`
-      : `<label class="campo"><span>Tarifa en UYU *${burbujaAyuda('Corregí la tarifa si hace falta: se guarda en la ficha para las próximas clases. Este pago usa el importe confirmado acá.')}</span><input name="tarifaUYU" type="number" min="1" step="1" inputmode="numeric" required value="${tarifaEntrada}"></label>
+      : `<label class="campo"><span>Tarifa en UYU *</span><input name="tarifaUYU" type="number" min="1" step="1" inputmode="numeric" required value="${tarifaEntrada}">${burbujaAyuda('Corregí la tarifa si hace falta: se guarda en la ficha para las próximas clases. Este pago usa el importe confirmado acá.')}</label>
       <label class="campo"><span>¿Cuándo pagó/renovó? *</span></label>${selectorFecha('pago', hoyLocal(reloj.ahora()))}`}
       <p class="cobros-panel-error" role="alert"></p>
       <div class="sheet-acciones"><button type="button" class="btn-secundario">Volver</button>
