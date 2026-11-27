@@ -180,6 +180,10 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; width: 0; }
 .chip-dada { background: var(--verde-tinte); color: var(--verde); }
 /* Punto 2: chip "Dada" tocable → abre Cancelar / Cambiar de día. */
 .chip-boton { cursor: pointer; border: 0; font: inherit; }
+/* El chip es un <button>: `font: inherit` pisa el `font-size: 11.5px` del .chip
+   y lo deja a 16px (el chip Cancelada medía 112px y forzaba la fila a 2 renglones).
+   Va DESPUÉS de `.chip` y de `.chip-boton` para que gane sobre la herencia. */
+.chip.chip-boton { font-size: 11.5px; }
 .chip-boton:hover { filter: brightness(.96); box-shadow: var(--sombra); }
 .chip-boton:focus-visible { outline: 2px solid var(--tq-600); outline-offset: 2px; }
 /* Microanimación premium al ciclar: el chip repinta color + ícono con un
@@ -519,7 +523,7 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; width: 0; }
   border-radius: var(--r-med); padding: 14px;
 }
 /* El chip "Por dar" también abre el cuadro de acciones. */
-.chip-por-dar.chip-boton { cursor: pointer; border: 0; font: inherit; }
+.chip-por-dar.chip-boton { cursor: pointer; border: 0; font: inherit; font-size: 11.5px; }
 .chip-por-dar.chip-boton:focus-visible { outline: 2px solid var(--tq-600); outline-offset: 2px; }
 .accion-clase[data-acc="marcar"] .ico { color: var(--verde); }
 .accion-clase small { font-size: 11.5px; color: var(--tinta-2); }
