@@ -14,8 +14,8 @@
   .vista.activa { display: block; }
 </style>
 <noscript><style>#v-mes, #v-semana, #v-alumnos, #v-cobros { display: none !important; }</style></noscript>
-<link rel="stylesheet" href="tokens.css?v=202611261935">
-<link rel="stylesheet" href="propuesta.css?v=202611261935">
+<link rel="stylesheet" href="tokens.css?v=202611262100">
+<link rel="stylesheet" href="propuesta.css?v=202611262100">
 </head>
 <body>
 <p class="marca">XIME CLASES · V5</p>
@@ -56,6 +56,7 @@
             <circle class="anillo-brillo" cx="46" cy="46" r="38"/>
           </svg>
           <div class="anillo-texto"><strong>1</strong><span>/ 2</span></div>
+          <span class="anillo-etiqueta">clases dadas</span>
         </div>
         <div class="hero-grupos">
           <div class="grupo">
@@ -167,8 +168,11 @@
         </div>
         <a href="#v-semana" class="link-suave" aria-label="Ver vista semanal"><svg class="ico" width="14" height="14" aria-hidden="true"><use href="#i-agenda"></use></svg><span class="link-txt">Ver semana</span></a>
       </div>
+      <div class="mes-modalidades" aria-label="Modalidades de clase">
+        <span><i class="mod-mensual"></i>Mensual</span><span><i class="mod-individual"></i>Individual</span>
+      </div>
       <div class="mes">
-        <p class="mes-dow">LU</p><p class="mes-dow">MA</p><p class="mes-dow">MI</p><p class="mes-dow">JU</p><p class="mes-dow">VI</p><p class="mes-dow">SÁ</p><p class="mes-dow">DO</p>
+<p class="mes-dow">LU</p><p class="mes-dow">MA</p><p class="mes-dow">MI</p><p class="mes-dow">JU</p><p class="mes-dow">VI</p><p class="mes-dow">SÁ</p><p class="mes-dow">DO</p>
         <button class="mes-dia vacio" type="button" disabled></button>
         <button class="mes-dia" type="button">1</button>
         <button class="mes-dia" type="button">2</button>
@@ -330,7 +334,7 @@
     });
   })();
 </script>
-<script src="icons.js?v=202611261935"></script>
-<script type="module" src="propuesta.js?v=202611261935"></script>
+<script src="icons.js?v=202611262100"></script>
+<script type="module" src="propuesta.js?v=202611262100"></script>
 </body>
 </html>

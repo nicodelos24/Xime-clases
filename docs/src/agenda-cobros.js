@@ -7,7 +7,7 @@
  * Los días son siempre los siete de lunes a domingo, con el vencimiento ya
  * calculado por `resumenCobros` (misma regla que la lista de Cobros).
  */
-import { sumarDias } from './fechas.js?v=202611261935';
+import { sumarDias } from './fechas.js?v=202611262100';
 /** Siete días, lunes a domingo, con sus cobros ordenados por nombre. */
 export function cobrosDeLaSemana(filas, lunes) {
     return Array.from({ length: 7 }, (_, i) => {
