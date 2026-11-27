@@ -1015,8 +1015,21 @@ html[data-tema="oscuro"] .cobro-fila .cobro-vence.pronto { background: var(--amb
 /* Acción de fila: reemplaza a "Marcar dada". */
 .marcar-cancelar { border-color: var(--rosa); color: var(--rosa); }
 .marcar-cancelar:hover { background: var(--rosa-tinte); }
-.marcar-reversa { border-color: var(--tinta-2); color: var(--tinta-2); }
-.marcar-reversa:hover { background: var(--bg); }
+/* "Revertir": en la fila cancelada (crema) la tinta apagada ya no alcanza y en
+   el hero oscuro era casi invisible. Se aclara el texto, se refuerza el borde y
+   se anima el hover/active. Sin tocar medidas ni areas tactiles. */
+.marcar-reversa { border-color: #4E5C61; color: #2E3B40; background: rgba(255,255,255,.72); }
+.marcar-reversa:hover { background: #fff; color: var(--tinta); border-color: var(--tinta-2); }
+.marcar-reversa:active { transform: scale(.96); }
+
+/* Sobre el gradiente oscuro del hero: texto claro y borde visible. */
+.hero .marcar-reversa { color: #FFF6EA; border-color: rgba(255,255,255,.55); background: rgba(255,255,255,.16); }
+.hero .marcar-reversa:hover { background: rgba(255,255,255,.3); border-color: rgba(255,255,255,.85); color: #fff; }
+
+/* Tema oscuro (fila crema sobre fondo oscuro): reversa clara. */
+[data-tema="oscuro"] .marcar-reversa { color: #F3EADA; border-color: #6B6257; background: rgba(255,255,255,.07); }
+[data-tema="oscuro"] .marcar-reversa:hover { background: rgba(255,255,255,.16); color: #fff; border-color: #9A8E80; }
+[data-tema="oscuro"] .marcar-reversa:active { transform: scale(.96); }
 
 /* Estados vacíos */
 .linea-vacia, .grupo-vacio {
