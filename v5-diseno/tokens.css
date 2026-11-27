@@ -47,6 +47,41 @@
   /* Animación: sobria, 150–350 ms */
   --t-rapida: 150ms; --t-media: 220ms; --t-larga: 320ms;
   --ease: cubic-bezier(.22, .9, .36, 1.02);
+
+  /* =======================================================
+     Fase A — Frutiger Aero moderno (27/11). Capas reutilizables.
+     No cambia la paleta: cambia CÓMO se aplica luz y profundidad.
+     Superficie = base de app · tarjeta = cristal · acción = hero.
+     Nada de burbujas 3D ni fondos ruidosos.
+     ======================================================= */
+
+  /* Cristal/tarjeta: blanco-menta translúcido con luz arriba. La base opaca
+     evita leer texto sobre blur (regla de contraste del informe). */
+  --aero-cristal: linear-gradient(180deg, rgba(255,255,255,.96) 0%, #FFFFFF 58%);
+  --aero-cristal-borde: rgba(255,255,255,.85);
+  --aero-brillo: inset 0 1px 0 rgba(255,255,255,.95); /* highlight superior 1px */
+  --aero-borde-luz: 0 0 0 1px rgba(255,255,255,.55);
+
+  /* Sombras en capas: contacto + difusión + luz; elevación al interactuar. */
+  --aero-sombra-1: 0 1px 2px rgba(8,69,74,.08), 0 4px 12px rgba(8,69,74,.10);
+  --aero-sombra-2: 0 2px 4px rgba(8,69,74,.09), 0 8px 20px rgba(8,69,74,.14);
+  --aero-sombra-3: 0 4px 8px rgba(8,69,74,.10), 0 14px 34px rgba(8,69,74,.22);
+  --aero-sombra-color: 0 8px 22px rgba(11,107,106,.22); /* difusión turquesa */
+
+  /* Hero/acción: gradiente con luz superior izquierda y reflejo sutil. */
+  --aero-hero: linear-gradient(155deg, #17ADA8 0%, var(--tq-600) 42%, var(--tq-900) 100%);
+  --aero-hero-luz: radial-gradient(130px 120px at 82% -12%, rgba(255,255,255,.22), transparent 72%),
+                   radial-gradient(170px 150px at -12% 112%, rgba(168,222,217,.30), transparent 72%);
+  --aero-boton: linear-gradient(180deg, var(--tq-600) 0%, var(--tq-700) 100%);
+
+  /* Motion: 150–220 ms respuesta · 220–320 ms cambio de vista; easing único. */
+  --aero-motion-respuesta: var(--t-rapida);
+  --aero-motion-vista: var(--t-larga);
+  --aero-ease: var(--ease);
+
+  /* Target táctil mínimo y foco visible con halo (contraste AA). */
+  --aero-target: 44px;
+  --aero-foco: 0 0 0 2px var(--bg-alt), 0 0 0 4px var(--tq-700);
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -371,6 +406,18 @@ body {
   --rosa-tinte: #3A2230;
   --verde-tinte: #1E3A2C;
   --ambar-suave-tinte: #3A3020;
+  /* Aero en oscuro: el cristal es superficie elevada, no blanco; la luz del
+     baje queda fría y las sombras se deepen. Mismo lenguaje, otro valor. */
+  --aero-cristal: linear-gradient(180deg, #1A2D31 0%, #16272B 60%);
+  --aero-cristal-borde: rgba(232,242,241,.10);
+  --aero-brillo: inset 0 1px 0 rgba(232,242,241,.12);
+  --aero-borde-luz: 0 0 0 1px rgba(232,242,241,.08);
+  --aero-sombra-1: 0 1px 2px rgba(0,0,0,.44), 0 4px 12px rgba(0,0,0,.34);
+  --aero-sombra-2: 0 2px 4px rgba(0,0,0,.46), 0 8px 20px rgba(0,0,0,.40);
+  --aero-sombra-3: 0 4px 8px rgba(0,0,0,.50), 0 14px 34px rgba(0,0,0,.56);
+  --aero-sombra-color: 0 8px 22px rgba(79,209,197,.12);
+  --aero-hero: linear-gradient(155deg, #1B8A86 0%, #0B6B6A 48%, #06383D 100%);
+  --aero-boton: linear-gradient(180deg, var(--tq-600) 0%, #0B6B6A 100%);
 }
 [data-tema="oscuro"] body { background: var(--bg-crema) !important; }
 [data-tema="oscuro"] .tabbar {

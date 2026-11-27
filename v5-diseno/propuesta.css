@@ -1318,6 +1318,98 @@ html[data-tema="oscuro"] .cobro-fila .cobro-vence.pronto { background: var(--amb
   color: var(--tq-300); text-decoration: underline;
 }
 
+/* =========================================================
+   FASE A — Frutiger Aero moderno (27/11). Aplicación de tokens.
+   Se sobreescriben superficialmente las reglas anteriores: no cambia
+   ningún texto, flujo ni color de estado; solo luz, profundidad,
+   motion coherente y targets táctiles. Todo con tokens de tokens.css.
+   ========================================================= */
+
+/* Capa base: el panel respira con una luz muy tenue arriba-izquierda. */
+html, body { background-image: radial-gradient(120% 70% at 50% -10%, rgba(168,222,217,.22), transparent 70%) !important; }
+[data-tema="oscuro"] html, [data-tema="oscuro"] body { background-image: radial-gradient(120% 70% at 50% -10%, rgba(79,209,197,.08), transparent 70%) !important; }
+
+/* Hero: luz superior + reflejo, borde luminoso, sombra turquesa difusa. */
+.hero {
+  background: var(--aero-hero);
+  border-color: var(--aero-cristal-borde);
+  box-shadow: var(--aero-brillo), var(--aero-sombra-3), var(--aero-sombra-color);
+}
+.hero-topo { background: var(--aero-hero-luz); }
+.grupo {
+  border-color: rgba(255,255,255,.24);
+  box-shadow: var(--aero-brillo), 0 6px 16px rgba(8,69,74,.12);
+  transition: transform var(--t-rapida) var(--ease), background var(--t-rapida) var(--ease), box-shadow var(--t-rapida) var(--ease);
+}
+.grupo:hover { background: rgba(255,255,255,.2); box-shadow: var(--aero-brillo), 0 8px 20px rgba(8,69,74,.18); }
+.chip-boton { min-height: 36px; box-shadow: var(--aero-brillo), 0 1px 3px rgba(8,69,74,.12); }
+.chip-boton.chip-cicla { animation: chip-ciclar 260ms var(--ease); }
+.chip-boton.chip-cicla .ico { animation: chip-ico 260ms var(--ease); }
+
+/* Cristal en superficies y tarjetas: brillo de borde + sombra en capas. */
+.kpi, .aviso, .aviso.vacio, .tira-dia, .clase, .cobro-tarjeta, .cobro-fila,
+.lista-alumnos li, .accion-clase, .dia-vacio, .linea-vacia, .grupo-vacio,
+.resumen-fecha, .confirmar-cambios-caja, .buscador {
+  background-image: var(--aero-cristal);
+  box-shadow: var(--aero-brillo), var(--aero-sombra-1);
+}
+.kpi:hover, .clase:hover, .cobro-tarjeta:hover, .accion-clase:hover {
+  box-shadow: var(--aero-brillo), var(--aero-sombra-2), var(--aero-sombra-color);
+}
+.kpi, .aviso, .tira-dia, .clase, .cobro-tarjeta, .accion-clase, .buscador { border-color: var(--aero-cristal-borde); }
+.aviso { background-color: var(--ambar-suave-tinte); }
+.aviso.vacio { background-color: var(--tq-50); }
+.link-suave { min-height: var(--aero-target); box-shadow: var(--aero-brillo), var(--aero-sombra-1); }
+.tabbar {
+  background: linear-gradient(180deg, #FFFFFF 0%, #FAFDFC 100%);
+  box-shadow: var(--aero-brillo), 0 10px 30px rgba(8,69,74,.16), 0 2px 8px rgba(11,107,106,.08);
+}
+[data-tema="oscuro"] .tabbar { background: linear-gradient(180deg, #1A2D31 0%, #16272B 100%); }
+[data-tema="oscuro"] .aviso { background-color: var(--ambar-suave-tinte); }
+
+/* Botones y acciones con bisel sutil (no degradados chillones). */
+.btn-primario, .btn-secundario, .marcar, .dia-agendar, .cobros-modo,
+.f-chip, .tema-toggle, .campana, .flecha, .link-suave {
+  box-shadow: var(--aero-brillo), var(--aero-sombra-1);
+}
+.btn-primario { background-image: var(--aero-boton); border: 0; min-height: var(--aero-target); }
+.btn-primario:hover { background-image: var(--aero-boton); box-shadow: var(--aero-brillo), var(--aero-sombra-2), var(--aero-sombra-color); }
+.btn-primario.cobros-anular { background-image: linear-gradient(180deg, #A04460 0%, var(--rosa) 100%); }
+.btn-primario.cobros-anular:hover { background-image: linear-gradient(180deg, #A04460 0%, #7C2C47 100%); }
+.btn-secundario { min-height: var(--aero-target); }
+.fab { min-height: var(--aero-target); box-shadow: var(--aero-brillo), var(--aero-sombra-3), var(--aero-sombra-color); }
+.fab:hover { box-shadow: var(--aero-brillo), var(--aero-sombra-3), 0 14px 30px rgba(8,69,74,.36); }
+
+/* Targets táctiles ≥44px sin agrandar la forma visual de chips ni flechas:
+   el área se da con min-height / padding invisible y se conserva el dibujo. */
+.marcar, .dia-agendar, .cobros-modo, .flecha, .tema-toggle, .campana,
+.f-chip, .link-suave, .btn-primario, .btn-secundario, .fab { min-height: var(--aero-target); }
+.tab { min-height: var(--aero-target); }
+.chip-boton { position: relative; }
+.chip-boton::after { content: ""; position: absolute; left: 0; right: 0; top: 50%; height: var(--aero-target); transform: translateY(-50%); }
+.campo input, .campo select, .fecha-elegir select, .buscador input { min-height: var(--aero-target); }
+
+/* Bottom sheet y diálogo: cristal elevado con luz superior. */
+.sheet {
+  background: var(--aero-cristal);
+  border-color: var(--aero-cristal-borde);
+  box-shadow: 0 0 0 100vmax rgb(14 27 30 / 28%), var(--aero-brillo), 0 -10px 30px rgba(8,69,74,.16), var(--aero-sombra-3);
+}
+.sheet.aviso-cancelada { box-shadow: var(--aero-brillo), 0 -10px 30px rgba(8,69,74,.16), var(--aero-sombra-2); }
+.confirmar-cambios-caja { background: var(--aero-cristal); box-shadow: var(--aero-brillo), var(--aero-sombra-3); }
+
+/* Foco visible con halo: mismo lenguaje en todos los controles. */
+:where(button, a, summary, input, select, [tabindex]):focus-visible {
+  outline: 2px solid var(--tq-700); outline-offset: 2px;
+  box-shadow: var(--aero-foco); border-radius: 6px;
+}
+
+/* Motion coherente (150–320ms) con el easing único; sin tocar lógica JS. */
+.anillo-valor { animation: llenar var(--t-larga) var(--ease) 260ms forwards; }
+.anillo-texto.cambia strong { animation: anillo-num 320ms var(--ease); }
+.sheet.rebotando { transition: transform var(--t-larga) var(--ease), opacity var(--t-larga) var(--ease) !important; }
+.sheet.saliendo { transition: transform var(--t-media) var(--ease), opacity var(--t-media) var(--ease) !important; }
+
 /* ---------- Movimiento reducido ---------- */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
