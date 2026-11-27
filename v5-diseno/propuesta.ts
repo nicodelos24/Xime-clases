@@ -73,16 +73,22 @@ function esc(s: string): string {
 }
 
 /**
- * Chip de estado de una clase (replanteo de Nico 26-nov): TOCAR el chip cicla
- * Por dar → Dada → Cancelada → Por dar (los tres estados son un botón).
- * Mantener el menú completo accesible por teclado/AT vía data-acciones.
+ * Chip de estado de una clase. TOCAR el chip (dedo, mouse o teclado) abre la
+ * hoja de acciones: Marcar dada / Cancelar clase / Cambiar de día. Decisión
+ * de Nico 27-nov, tras el QA de Valen: en móvil el tap tenía que llegar hasta
+ * «Cancelar clase» con motivo y aviso, y el ciclo directo sobre el chip no lo
+ * permitía (y cancelaba por error con un toque suelto).
+ *
+ * Estado y próximo paso viajan igual en el aria-label (política en
+ * `etiquetaProximoPaso`), y el chip mantiene data-acciones para teclado/AT y
+ * para el retorno de foco al cerrar la hoja.
  */
 function chipEstado(c: Clase): string {
   const siguiente = etiquetaProximoPaso(c.estado as EstadoClaseGesto);
   // Color por estado (chip-por-dar / chip-dada / chip-cancelada) + ícono SVG.
   const clase = c.estado === 'dada' ? 'chip-dada'
     : c.estado === 'cancelada' ? 'chip-cancelada' : 'chip-por-dar';
-  const base = `class="chip chip-boton ${clase}" type="button" data-ciclo="${esc(c.id)}" data-acciones="${esc(c.id)}" aria-label="Clase ${esc(c.nombre)}, `;
+  const base = `class="chip chip-boton ${clase}" type="button" data-acciones="${esc(c.id)}" aria-label="Clase ${esc(c.nombre)}, `;
   if (c.estado === 'dada') {
     return `<button ${base}dada. Tocá para ${esc(siguiente)}"><svg class="ico" width="13" height="13"><use href="#i-check"/></svg>Dada</button>`;
   }
@@ -111,8 +117,9 @@ function desplegableAlumnos(c: Clase): string {
 }
 
 /** Acción de una fila de clase (20/11): ya no hay botón rojo "Cancelar clase".
- *  El chip de estado (Por dar / Dada) abre el cuadro con las acciones;
- *  solo Cancelada conserva su "Revertir" porque no hay chip tocable. */
+ *  El chip de estado abre la hoja con todas las acciones y conserva su
+ *  «Revertir»: es el acceso directo de la fila de Cancelada (en Agenda, donde
+ *  tocar el chip también abre la hoja, se mantiene igual). */
 function accionClase(c: Clase): string {
   if (c.estado === 'cancelada') {
     return `<button class="marcar marcar-reversa" type="button" data-reversa="${esc(c.id)}">Revertir</button>`;
@@ -207,10 +214,8 @@ function pintarHoy() {
         )
         .join('');
     }
-    // El chip toca el ciclo de estados; el gesto largo/teclado conserva el menú.
-    grupos.querySelectorAll<HTMLButtonElement>('[data-ciclo]').forEach((b) => {
-      b.addEventListener('click', () => ciclarEstadoDeChip(b.dataset.ciclo as string));
-    });
+    // El chip (dedo, mouse o teclado) abre la hoja con todas las acciones.
+    cablearChips(grupos);
     // El gesto de la fila abre/cierra «quiénes van»; mantener abre el menú.
     grupos.querySelectorAll<HTMLElement>('.grupo').forEach((g) => {
       const chip = g.querySelector<HTMLElement>('[data-acciones]');
@@ -435,90 +440,33 @@ function alternarQuienesVan(tarjeta: HTMLElement): void {
 }
 
 /**
- * Replanteo de Nico 26-nov: tocar el CHIP cicla el estado (Por dar → Dada →
- * Cancelada → Por dar). La tarjeta NO cambia estado al tocarla. La cancelación
- * por chip es directa, sin sheet: el aviso diferido de cancelación la cubre.
+ * Un solo cableado para el chip de estado, en cualquier vista (Hoy, Clases o
+ * Agenda): un click —dedo, mouse o Enter— abre la hoja de acciones, que es
+ * donde viven «Marcar dada», «Cancelar clase» y «Cambiar de día»; en una clase
+ * cancelada, «Volver a Por dar».
+ * Sin la guarda de `data-teclado`, el Enter dispararía dos aperturas seguidas
+ * (la del keydown y la del click sintético) y la segunda se perdería.
  */
-function ciclarEstadoDeChip(id: string): void {
-  const c = clases.find((x) => x.id === id);
-  if (!c) return;
-  const ahora = reloj.ahora();
-  try {
-    if (c.estado === 'programada') {
-      repo.marcarDada(id, { quien: QUIEN, ahora });
-    } else if (c.estado === 'dada') {
-      repo.cancelar(id, { motivo: 'cancelada desde el chip', quien: QUIEN, ahora });
-      repo.registrarMensajeEnviado(id, 'ninguno');
-    } else if (c.estado === 'cancelada') {
-      clearTimeout(temporizadorMenuCancelada);
-      temporizadorMenuCancelada = undefined;
-      if (clasePendienteMenuCancelada === id) clasePendienteMenuCancelada = undefined;
-      repo.revertir(id, { motivo: 'error del dueño', quien: QUIEN, ahora });
-    } else return;
-  } catch (err) {
-    avisar(err instanceof Error ? err.message : 'No se pudo cambiar el estado', 3000);
-    return;
-  }
-  // Estate ORIGINAL (c es la clase previa al write). Programar el aviso
-  // ANTES de refrescar evita que el repintado cancele el temporizador.
-  const estadoAnterior = c.estado;
-  const claseVigente = () => clases.find((x) => x.id === id);
-  const canceladaAhora = () => estadoAnterior === 'dada' || claseVigente()?.estado === 'cancelada';
-  if (canceladaAhora()) agendarMenuCancelada(id);
-  else if (estadoAnterior === 'cancelada') {
-    clearTimeout(temporizadorMenuCancelada);
-    temporizadorMenuCancelada = undefined;
-    clasePendienteMenuCancelada = undefined;
-  }
-  clases = repo.listar();
-  refrescar();
-  const chipNuevo = document.querySelector<HTMLElement>(`[data-ciclo="${id}"]`);
-  if (chipNuevo) {
-    chipNuevo.classList.remove('chip-cicla');
-    // Reiniciar la animación aunque ya estuviera corriendo.
-    void chipNuevo.offsetWidth;
-    chipNuevo.classList.add('chip-cicla');
-  }
-  chipNuevo?.focus({ preventScroll: true });
-  if (estadoAnterior === 'programada') {
-    avisar('Clase marcada dada · Deshacer', 6000);
-    toast.dataset.deshacer = '1';
-    toast.dataset.revertirManual = id;
-  } else if (estadoAnterior === 'cancelada') {
-    avisar('Clase vuelta a Por dar', 3000);
-  } else if (estadoAnterior === 'dada') {
-    // Cancelación directa desde el chip: mismo aviso que en el panel, sin
-    // envío inmediato. El sheet diferido se encarga de Deshacer / WhatsApp.
-    avisar('Clase cancelada (estaba dada) · Deshacer', 6000);
-    toast.dataset.deshacer = '1';
-    toast.dataset.clase = id;
-  }
+function cablearChips(raiz: ParentNode): void {
+  raiz.querySelectorAll<HTMLButtonElement>('[data-acciones]').forEach((b) => {
+    b.addEventListener('click', () => {
+      if (b.dataset.teclado === '1') return;
+      abrirAcciones(b.dataset.acciones as string);
+    });
+    b.addEventListener('keydown', (e) => {
+      if (e.key !== 'Enter' && e.key !== ' ') return;
+      e.preventDefault();
+      b.dataset.teclado = '1';
+      window.setTimeout(() => { delete b.dataset.teclado; }, 0);
+      abrirAcciones(b.dataset.acciones as string);
+    });
+  });
 }
 
 /** Cablea los chips y botones de un bloque de tarjetas (mes o semana). */
 function cablearTarjetas(raiz: ParentNode): void {
   raiz.querySelectorAll<HTMLElement>('.clase[data-clase]').forEach((t) => cablearGestoClase(t));
-  raiz.querySelectorAll<HTMLButtonElement>('[data-ciclo]').forEach((b) => {
-    // Replanteo 26-nov: tocar el CHIP cicla Por dar → Dada → Cancelada → Por dar.
-    b.addEventListener('click', (e) => {
-      // El Enter del teclado también genera un click nativo en el botón. Sin
-      // esta guarda, el menú que abre el keydown se dispara un instante después
-      // y el click lo ciclaría encima (menú abierto + estado cambiado).
-      if (b.dataset.teclado === '1') return;
-      ciclarEstadoDeChip(b.dataset.ciclo as string);
-    });
-  });
-  raiz.querySelectorAll<HTMLButtonElement>('[data-acciones]').forEach((b) => {
-    // El menú completo queda para teclado/AT (click no físico) y contexto.
-    b.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' || e.key === ' ') {
-        e.preventDefault();
-        b.dataset.teclado = '1';
-        window.setTimeout(() => { delete b.dataset.teclado; }, 0);
-        abrirAcciones(b.dataset.acciones as string);
-      }
-    });
-  });
+  cablearChips(raiz);
   raiz.querySelectorAll<HTMLButtonElement>('[data-cancelar]').forEach((b) => {
     b.addEventListener('click', () => abrirCancelacion(b.dataset.cancelar as string));
   });
@@ -1349,7 +1297,7 @@ function abrirMenuCancelada(id: string): void {
     temporizadorMenuCancelada = setTimeout(() => abrirMenuCancelada(id), 1000);
     return;
   }
-  if (!document.querySelector(`[data-ciclo="${id}"]`)) {
+  if (!document.querySelector(`[data-acciones="${id}"]`)) {
     temporizadorMenuCancelada = setTimeout(() => abrirMenuCancelada(id), 1000);
     return;
   }
@@ -1376,7 +1324,7 @@ function abrirMenuCancelada(id: string): void {
   document.body.appendChild(previo);
   abrirSheet(previo);
   sheet = previo;
-  previo.dataset.retornoFoco = document.querySelector<HTMLElement>(`[data-ciclo="${id}"]`)?.id ?? '';
+  previo.dataset.retornoFoco = document.querySelector<HTMLElement>(`[data-acciones="${id}"]`)?.id ?? '';
   previo.querySelector('.sheet-cerrar')?.addEventListener('click', () => cerrarSheet());
   previo.querySelector('[data-mc="deshacer"]')?.addEventListener('click', () => {
     if (!revertirCancelacion(id)) return;
@@ -1445,12 +1393,13 @@ function cerrarAcciones(): void {
 }
 
 /** Cuadro de acciones (20/11): lo abre el chip de estado de la clase
- *  («Por dar» o «Dada»). Abrir NO cambia el estado. */
+ *  («Por dar», «Dada» o «Cancelada») con un toque, un click o Enter.
+ *  Abrir NO cambia el estado. */
 function abrirAcciones(id: string) {
   // Un gesto nunca reabre una hoja ya abierta (doble apertura del chip).
   if (cancelacionPendiente || decisionDeAperturaDeMenu(!!document.querySelector('.sheet:not(.cerrando)')) === 'nada') return;
   const c = clases.find((x) => x.id === id);
-  if (!c || c.estado === 'cancelada') return;
+  if (!c) return;
   cerrarSheet();
   const previo = document.createElement('div');
   previo.className = 'sheet';
@@ -1472,7 +1421,7 @@ function abrirAcciones(id: string) {
     <div class="sheet-head">
       <div>
         <p class="sheet-eyebrow">${esc(etiquetaDia(c.fecha))} · ${horaClase(c)}</p>
-        <h3>${c.estado === 'dada' ? 'Clase dada' : 'Clase por dar'}</h3>
+        <h3>${c.estado === 'dada' ? 'Clase dada' : c.estado === 'cancelada' ? 'Clase cancelada' : 'Clase por dar'}</h3>
       </div>
       <button class="sheet-cerrar" type="button" aria-label="Cerrar"><svg class="ico" width="18" height="18"><use href="#i-mas2"/></svg></button>
     </div>
@@ -1488,6 +1437,12 @@ function abrirAcciones(id: string) {
         <svg class="ico" width="19" height="19"><use href="#i-reloj"/></svg>
         <span><b>Volver a Por dar</b><small>Deshacer la marca manual</small></span>
       </button>` : ''}
+      ${c.estado === 'cancelada' ? `
+      <button class="accion-clase" type="button" data-acc="revertir">
+        <svg class="ico" width="19" height="19"><use href="#i-reloj"/></svg>
+        <span><b>Volver a Por dar</b><small>Se anula la cancelación</small></span>
+      </button>` : ''}
+      ${c.estado === 'cancelada' ? '' : `
       <button class="accion-clase" type="button" data-acc="cancelar">
         <svg class="ico" width="19" height="19"><use href="#i-alerta"/></svg>
         <span><b>Cancelar clase</b><small>Avisar por WhatsApp (opcional)</small></span>
@@ -1495,7 +1450,7 @@ function abrirAcciones(id: string) {
       <button class="accion-clase" type="button" data-acc="cambiar">
         <svg class="ico" width="19" height="19"><use href="#i-agenda"/></svg>
         <span><b>Cambiar de día</b><small>Reprogramar la clase</small></span>
-      </button>
+      </button>`}
     </div>
     <div class="cambiar-dia" hidden>
       <p class="sheet-paso">Elegí la nueva fecha</p>
@@ -1517,6 +1472,10 @@ function abrirAcciones(id: string) {
   previo.querySelector('.sheet-cerrar')?.addEventListener('click', cerrarAcciones);
   previo.querySelector('[data-accion="volver"]')?.addEventListener('click', cerrarAcciones);
   previo.querySelector('[data-acc="cancelar"]')?.addEventListener('click', () => abrirCancelacion(id));
+  previo.querySelector('[data-acc="revertir"]')?.addEventListener('click', () => {
+    if (!revertirCancelacion(id)) return;
+    cerrarSheet();
+  });
   previo.querySelector('[data-acc="marcar"]')?.addEventListener('click', () => {
     repo.marcarDada(id, { quien: QUIEN, ahora: reloj.ahora() });
     clases = repo.listar();
