@@ -1893,7 +1893,7 @@ function pintarAlumnos(): void {
           ${avatarAlumno(a.nombre, a.id, a.foto, 38, a.apellido)}<div><p class="al-nombre">${esc(nombreCompleto(a))}</p>${alumnoSub(a)}</div><span class="punto ${punto}"></span>
         </button></li>`;
       }).join('')
-    : `<p class="pv-vacio">${todas.length === 0 ? 'Todavía no hay alumnos. Tocá «Nuevo alumno» para cargar el primero.' : 'Ningún alumno con estos filtros'}</p>`;
+    : `<p class="pv-vacio"><svg class="ico" width="20" height="20" aria-hidden="true"><use href="#i-alumnos"></svg><span>${todas.length === 0 ? 'Todavía no hay alumnos. Tocá «Nuevo alumno» para cargar el primero.' : 'Ningún alumno con estos filtros'}</span></p>`;
   lista.querySelectorAll<HTMLButtonElement>('[data-ficha]').forEach((b) => {
     b.addEventListener('click', () => abrirFichaConCobro(repo.listarAlumnos().find((f) => f.id === b.dataset.ficha) ?? null, b));
   });
@@ -2403,7 +2403,7 @@ function pintarLineaCobros(dias: ReturnType<typeof cobrosDeLaSemana>, elegido: s
     return `<li class="linea-dia">
       <p class="linea-fecha">${esc(etiqueta)}</p>
       ${dia.cobros.length ? `<ul class="cobro-tarjetas">${tarjetas(dia)}</ul>`
-        : '<p class="cobro-dia-vacio">Sin vencimientos</p>'}
+        : '<p class="cobro-dia-vacio"><svg class="ico" width="14" height="14" aria-hidden="true"><use href="#i-cobros"></svg>Sin vencimientos</p>'}
     </li>`;
   }).join('');
   linea.querySelectorAll<HTMLButtonElement>('[data-cobro]').forEach((b) => b.addEventListener('click', () => {
@@ -2505,9 +2505,9 @@ function pintarCobros() {
   const total = r.filas.length + filasIndividuales.length;
   const filtroActivo = estadoCobros !== 'todos';
   if (visibles === 0 && total > 0 && filtroActivo) {
-    listaCobros.innerHTML = `<li><p class="pv-vacio">Ningún cobro con este filtro</p></li>`;
+    listaCobros.innerHTML = `<li><p class="pv-vacio"><svg class="ico" width="20" height="20" aria-hidden="true"><use href="#i-cobros"></svg><span>Ningún cobro con este filtro</span></p></li>`;
   } else if (total === 0) {
-    listaCobros.innerHTML = `<li><p class="pv-vacio">Todavía no hay alumnos que cobrar</p></li>`;
+    listaCobros.innerHTML = `<li><p class="pv-vacio"><svg class="ico" width="20" height="20" aria-hidden="true"><use href="#i-cobros"></svg><span>Todavía no hay alumnos que cobrar</span></p></li>`;
   }
   // Chips: marca el estado y el orden elegidos; «Todos» activo solo si no hay
   // filtro. El texto del chip muestra cuántas filas hay con el filtro.
