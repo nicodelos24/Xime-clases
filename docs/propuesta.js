@@ -1,26 +1,26 @@
 // Clases v5 · navegación + funcionamiento (auto-marcado, Cancelar clase, WhatsApp)
 // La estética vive en tokens.css/propuesta.css; acá solo se cambian estados,
 // textos y el flujo de cancelación. Sin emoji: solo SVG de icons.js.
-import { horaClase, } from './src/clases.js?v=202611262100';
-import { CLAVE_ESTADO, RepositorioClases, almacenLocalStorage } from './src/repositorio.js?v=202611262100';
-import { alumnosCobrosDemo, datosDemo, fichasDemo } from './src/demo.js?v=202611262100';
-import { resumenCobros, cobrosIndividuales, deudaIndividual as deudaInd, filtrarCobros, ordenarCobros, } from './src/cobros.js?v=202611262100';
-import { cobrosDeLaSemana, estadoCobro, tieneCobros } from './src/agenda-cobros.js?v=202611262100';
-import { precioPrecargado, precio } from './src/tarifas.js?v=202611262100';
-import { construirVista, filtrarYOrdenar, puntoEstadoVence, textoEstadoVence, validarAlumno, iniciales, colorPorId, nombreCompleto, } from './src/alumnos.js?v=202611262100';
-import { resumenHoy, clasesDelDia, clasesDeLaSemana } from './src/resumen.js?v=202611262100';
-import { registrarToqueFecha, mesDe } from './src/agenda.js?v=202611262100';
-import { primerDiaDeMes, diaSeleccionadoAlCargar } from './src/agenda-mes.js?v=202611262100';
-import { decisionDeGesto, decisionDeAperturaDeMenu, DURACION_TOQUE_LARGO, UMBRAL_MOVIMIENTO_GESTO, etiquetaProximoPaso } from './src/toque-clase.js?v=202611262100';
-import { destinoDeEnlace, vistaInicial, vistasActivas } from './src/navegacion.js?v=202611262100';
-import { pistaDeTira } from './src/scroll-pista.js?v=202611262100';
-import { actualizarBarra, estadoBarraInicial, debeReaparecerPorQuietud, REAPARECER_TRAS_MS, } from './src/barra-scroll.js?v=202611262100';
-import { ajustarLock, debeBloquearScroll, estiloSheet, debeCerrarPorToqueFuera, esToqueFuera, debeSuprimirClickTrasCierre, decisionCierreSheetsPorNavegacion, debeCerrarPorDeslizar, FRANJA_CIERRE, } from './src/sheets.js?v=202611262100';
-import { diaCorto, mesCorto, etiquetaDia, etiquetaDiaCompleta, etiquetaMes, fechaCorta, sumarDias, parseFecha, lunesDe, diasDelMes, esFechaValida, } from './src/fechas.js?v=202611262100';
-import { relojDelDispositivo, hoyLocal } from './src/reloj.js?v=202611262100';
-import { CLAVE_PREFIJO, PREFIJO_POR_DEFECTO, prefijoEsValido, prefijoSeguro, conPrefijo } from './src/prefijo.js?v=202611262100';
-import { bloqueContacto } from './src/contacto.js?v=202611262100';
-import { textoCancelacion, destinos, resumenEnvio, linkTexto, linkAvisoVencimiento, } from './src/whatsapp.js?v=202611262100';
+import { horaClase, } from './src/clases.js?v=202611280246';
+import { CLAVE_ESTADO, RepositorioClases, almacenLocalStorage } from './src/repositorio.js?v=202611280246';
+import { alumnosCobrosDemo, datosDemo, fichasDemo } from './src/demo.js?v=202611280246';
+import { resumenCobros, cobrosIndividuales, deudaIndividual as deudaInd, filtrarCobros, ordenarCobros, } from './src/cobros.js?v=202611280246';
+import { cobrosDeLaSemana, estadoCobro, tieneCobros } from './src/agenda-cobros.js?v=202611280246';
+import { precioPrecargado, precio } from './src/tarifas.js?v=202611280246';
+import { construirVista, filtrarYOrdenar, puntoEstadoVence, textoEstadoVence, validarAlumno, iniciales, colorPorId, nombreCompleto, } from './src/alumnos.js?v=202611280246';
+import { resumenHoy, clasesDelDia, clasesDeLaSemana } from './src/resumen.js?v=202611280246';
+import { registrarToqueFecha, mesDe } from './src/agenda.js?v=202611280246';
+import { primerDiaDeMes, diaSeleccionadoAlCargar } from './src/agenda-mes.js?v=202611280246';
+import { decisionDeGesto, decisionDeAperturaDeMenu, DURACION_TOQUE_LARGO, UMBRAL_MOVIMIENTO_GESTO, etiquetaProximoPaso } from './src/toque-clase.js?v=202611280246';
+import { destinoDeEnlace, vistaInicial, vistasActivas } from './src/navegacion.js?v=202611280246';
+import { pistaDeTira } from './src/scroll-pista.js?v=202611280246';
+import { actualizarBarra, estadoBarraInicial, debeReaparecerPorQuietud, REAPARECER_TRAS_MS, } from './src/barra-scroll.js?v=202611280246';
+import { ajustarLock, debeBloquearScroll, estiloSheet, debeCerrarPorToqueFuera, esToqueFuera, debeSuprimirClickTrasCierre, decisionCierreSheetsPorNavegacion, debeCerrarPorDeslizar, FRANJA_CIERRE, } from './src/sheets.js?v=202611280246';
+import { diaCorto, mesCorto, etiquetaDia, etiquetaDiaCompleta, etiquetaMes, fechaCorta, sumarDias, parseFecha, lunesDe, diasDelMes, esFechaValida, } from './src/fechas.js?v=202611280246';
+import { relojDelDispositivo, hoyLocal } from './src/reloj.js?v=202611280246';
+import { CLAVE_PREFIJO, PREFIJO_POR_DEFECTO, prefijoEsValido, prefijoSeguro, conPrefijo } from './src/prefijo.js?v=202611280246';
+import { bloqueContacto } from './src/contacto.js?v=202611280246';
+import { textoCancelacion, destinos, resumenEnvio, linkTexto, linkAvisoVencimiento, } from './src/whatsapp.js?v=202611280246';
 /* ------------------------------------------------- estado persistente (local) */
 const reloj = relojDelDispositivo();
 /** Quién opera la app hoy: único dueño. En Fase 4 sale de la sesión. */
@@ -162,7 +162,7 @@ function pintarHoy() {
         else {
             grupos.innerHTML = r.clases
                 .map((c) => `<div class="grupo">
-            <span class="grupo-hora"><svg class="ico" width="13" height="13" aria-hidden="true"><use href="#i-reloj"/></svg>${horaClase(c)}</span>
+            <span class="grupo-hora">${horaClase(c)}</span>
             <span class="grupo-nombre">${esc(c.nombre)}</span>
             ${accionClase(c)}
             ${chipEstado(c)}
@@ -597,10 +597,7 @@ function pintarMes() {
         const tiene = delDia.length > 0 ? ' tiene' : '';
         const activo = f === hoy ? ' activo' : '';
         const seleccionado = f === diaMesSeleccionado ? ' seleccionado' : '';
-        /** Barrita 3px bajo el número: el estado se lee sin depender de la leyenda. */
-        const puntos = delDia.some((c) => c.estado === 'cancelada') ? 'cancelada'
-            : delDia.every((c) => c.estado === 'dada') ? 'dada' : 'por-dar';
-        celdas.push(`<button class="mes-dia${tiene}${claseEstado}${activo}${seleccionado}" type="button" data-fecha="${f}" aria-label="${parseFecha(f).d} de ${etiquetaMes(f)}${tiene ? `, con clases ${puntos === 'cancelada' ? 'canceladas' : puntos === 'dada' ? 'dadas' : 'por dar'}` : ''}"${seleccionado ? ' aria-current="date"' : ''}>${parseFecha(f).d}${tiene ? `<i class="mes-barra ${puntos}"></i>` : ''}</button>`);
+        celdas.push(`<button class="mes-dia${tiene}${claseEstado}${activo}${seleccionado}" type="button" data-fecha="${f}" aria-label="${parseFecha(f).d} de ${etiquetaMes(f)}${tiene ? ', con clases' : ''}"${seleccionado ? ' aria-current="date"' : ''}>${parseFecha(f).d}</button>`);
     }
     cont.innerHTML = celdas.join('');
     // Punto 4: referencias coloridas sobrias, acordes a los tokens v5.
@@ -1190,7 +1187,7 @@ function rutinasExistentesHtml() {
     return `<div class="rutinas-config">
     <p class="sheet-paso">Tus clases semanales</p>
     <ul class="cobros-panel-lista">${filas}</ul>
-    <p class="al-sub">Dar de baja una rutina cancela sus clases futuras que sigan por dar. Las ya dadas quedan en el historial.</p>
+    <p class="al-sub">Dar de baja una rutina cancela sus clases futuras que sigan por dar. Las ya dadas quedan en el historial.${burbujaAyuda('Dar de baja una rutina cancela sus clases futuras que sigan por dar. Las ya dadas quedan en el historial.')}</p>
   </div>`;
 }
 function cablearBajaRutinas(cuadro) {
@@ -2056,7 +2053,7 @@ function abrirFichaConCobro(ficha, origen, alCrear) {
             : ultimo
                 ? `Último pago: ${esc(fechaCorta(ultimo.fecha))} · ${uyu(ultimo.montoUYU)}. Renovación: mismo día del mes siguiente.`
                 : deuda
-                    ? `Vence ${esc(fechaCorta(deuda.fecha))}.`
+                    ? textoCobroFicha(deuda.dias, deuda.alumno.montoUYU, deuda.fecha)
                     : 'Sin cobros registrados.';
     // Contacto (arreglo funcional): el número real se VE en la ficha y el botón
     // abre wa.me con ESE número. Sin número no se muestra un link falso.
@@ -2082,14 +2079,11 @@ function abrirFichaConCobro(ficha, origen, alCrear) {
     const ayudaCobro = porClase
         ? 'Cada clase dada sin pago genera un cobro individual. Reservar, programar o cancelar no genera deuda.'
         : 'La mensualidad vence el mismo día del mes siguiente al alta. Si pagó después, corregí la fecha del pago: queda registrado con su motivo.';
-    resumen.innerHTML = `<div class="ficha-cobro-bloque">
-    <div class="ficha-chips">
+    resumen.innerHTML = `<div class="ficha-chips">
       <span class="ficha-chip ficha-chip-alumno">${avatarAlumno(ficha.nombre, ficha.id, ficha.foto, 22, ficha.apellido)}${esc(nombreCompleto(ficha))}</span>
       ${chipDeuda}${chipVence}
     </div>
-    <p>${texto}</p>
-    ${ultimo || deuda || individualPendiente ? burbujaAyuda(ayudaCobro) : ''}
-    </div>
+    <p>${texto}${ultimo || deuda || individualPendiente ? burbujaAyuda(ayudaCobro) : ''}</p>
     ${contacto.visible
         ? `<p class="ficha-contacto"><span class="ficha-contacto-rotulo">WhatsApp</span> <b>${esc(contacto.visible)}</b></p>`
         : `<p class="al-sub">${esc(contacto.ayuda ?? '')}</p>`}
@@ -2502,7 +2496,7 @@ function pintarCobros() {
         <span class="al-nombre">${esc(nomCobro)}</span>
         <span class="cobro-meta">Clase individual · ${esc(fechaCorta(f.fecha))}</span>
       </span>
-      <span class="cobro-importe"><b class="${sinTarifa ? 'cobro-sin-tarifa' : ''}">${importe}</b><small class="cobro-estado ${f.pago ? 'pagado' : ''}"><svg class="ico" width="9" height="9" aria-hidden="true"><use href="#i-punto-lleno"/></svg>${f.pago ? 'Pagado' : 'Debe'}</small></span>
+      <span class="cobro-importe"><b class="${sinTarifa ? 'cobro-sin-tarifa' : ''}">${importe}</b><small class="${f.pago ? 'pagado' : ''}">${f.pago ? 'Pagado' : 'Debe'}</small></span>
       <svg class="ico" width="13" height="13" aria-hidden="true"><use href="#i-der"/></svg>
     </button>
   </li>`;
@@ -2522,7 +2516,7 @@ function pintarCobros() {
       </span>
       ${f.pago
                 ? `<span class="cobro-importe"><b>${uyu(f.alumno.montoUYU)}</b><small class="pagado">Pagado</small></span>`
-                : `<span class="cobro-importe"><b>${uyu(f.alumno.montoUYU)}</b><small>Debe</small></span><span class="cobro-vence ${f.dias < 0 ? 'vencido' : f.dias <= 7 ? 'pronto' : ''}"><svg class="ico" width="9" height="9" aria-hidden="true"><use href="#i-punto-lleno"/></svg>${textoVence(f.dias)}</span>`}
+                : `<span class="cobro-importe"><b>${uyu(f.alumno.montoUYU)}</b><small>Debe</small></span><span class="cobro-vence ${f.dias < 0 ? 'vencido' : f.dias <= 7 ? 'pronto' : ''}">${textoVence(f.dias)}</span>`}
       <svg class="ico" width="13" height="13" aria-hidden="true"><use href="#i-der"/></svg>
     </button>
   </li>`;
@@ -2822,7 +2816,7 @@ function abrirPago(nombre, periodo, monto, origen, pago, fila) {
     <form novalidate>
       ${pago ? `<label class="campo"><span>Fecha del pago (día / mes / año)</span></label>${selectorFecha('pago', pago.fecha)}
       <label class="campo"><span>Motivo de anulación (opcional)</span><input name="motivo" maxlength="160"></label>`
-        : `<label class="campo"><span>Tarifa en UYU *</span><input name="tarifaUYU" type="number" min="1" step="1" inputmode="numeric" required value="${tarifaEntrada}">${burbujaAyuda('Corregí la tarifa si hace falta: se guarda en la ficha para las próximas clases. Este pago usa el importe confirmado acá.')}</label>
+        : `<label class="campo"><span>Tarifa en UYU *${burbujaAyuda('Corregí la tarifa si hace falta: se guarda en la ficha para las próximas clases. Este pago usa el importe confirmado acá.')}</span><input name="tarifaUYU" type="number" min="1" step="1" inputmode="numeric" required value="${tarifaEntrada}"></label>
       <label class="campo"><span>¿Cuándo pagó/renovó? *</span></label>${selectorFecha('pago', hoyLocal(reloj.ahora()))}`}
       <p class="cobros-panel-error" role="alert"></p>
       <div class="sheet-acciones"><button type="button" class="btn-secundario">Volver</button>

@@ -77,7 +77,10 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; width: 0; }
 }
 .barra-hola { font-size: 13px; color: var(--tinta-2); }
 .barra-titulo { font-size: 27px; letter-spacing: -.02em; margin-top: 2px; }
-.barra-titulo { animation: subir var(--t-larga) var(--ease) both; }
+/* Hallazgo 4 (revisión visual 28-nov): cascada de entrada con una sola
+   cadencia entre pantallas — barra 0ms, bloque 60ms, tarjetas 120ms,
+   acciones 180ms. */
+.barra-titulo { animation: subir var(--t-larga) var(--ease) 0ms both; }
 
 .campana {
   position: relative;
@@ -96,9 +99,11 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; width: 0; }
 .campana-punto {
   position: absolute; top: 8px; right: 9px;
   width: 9px; height: 9px; border-radius: 50%;
+  /* Hallazgo 1 (revisión visual 28-nov): el punto de la campana deja de
+     latir para siempre. `latir` no tenía @keyframes, así que el punto nunca
+     se movía; ahora fija el estado (opacidad plena) sin animación infinita. */
   background: var(--rosa);
   border: 2px solid var(--bg-alt);
-  animation: latir 2.6s var(--ease) infinite;
 }
 
 /* ---------- Vistas ---------- */
@@ -221,13 +226,11 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; width: 0; }
   border-radius: var(--r-med);
   padding: 11px 11px 13px;
   box-shadow: var(--sombra-crema);
-  animation: subir var(--t-larga) var(--ease) both;
+  /* Hallazgo 4: tarjetas (KPI) a 120ms en la cadencia 0/60/120/180. */
+  animation: subir var(--t-larga) var(--ease) 120ms both;
   transition: transform var(--t-rapida) var(--ease), box-shadow var(--t-rapida) var(--ease);
 }
 .kpi:hover { transform: translateY(-3px); box-shadow: var(--sombra-crema); }
-.kpi:nth-child(1) { animation-delay: 130ms; }
-.kpi:nth-child(2) { animation-delay: 190ms; }
-.kpi:nth-child(3) { animation-delay: 250ms; }
 .kpi-ico {
   display: grid; place-items: center;
   width: 26px; height: 26px; border-radius: 8px;
@@ -253,7 +256,8 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; width: 0; }
   padding: 12px 13px;
   color: var(--ambar-suave);
   box-shadow: var(--sombra-crema);
-  animation: subir var(--t-larga) var(--ease) 310ms both;
+  /* Hallazgo 4: acciones/aviso a 180ms en la cadencia 0/60/120/180. */
+  animation: subir var(--t-larga) var(--ease) 180ms both;
 }
 .aviso-ico { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 9px; background: rgba(138,90,18,.14); flex: none; }
 .aviso-ico-ok { display: none; }
@@ -612,7 +616,18 @@ button[data-orden-cobro].activo {
 .etiqueta { font-size:10.5px; font-weight:700; padding:2px 7px; border-radius:999px; }
 .et-mensual { background:var(--lila-tinte); color:var(--lila); }
 .et-individual { background:var(--azul-tinte); color:var(--azul); }
-.pv-vacio { text-align:center; color:var(--tinta-2); font-size:13px; padding:24px 0; }
+/* Hallazgo 3 (revisión visual 28-nov): los estados vacíos usan la caja común
+   (borde punteado + sombra) con ícono SVG, no solo texto gris. Mismo patrón
+   que .linea-vacia / .grupo-vacio / .dia-vacio. */
+.pv-vacio {
+  text-align: center; color: var(--tinta-2); font-size: 13px;
+  background: var(--bg-alt); border: 1px dashed var(--borde-crema);
+  border-radius: var(--r-med); padding: 18px 14px;
+  box-shadow: var(--sombra-crema);
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+}
+.pv-vacio .ico { color: var(--tq-600); }
+.pv-vacio span { display: block; }
 .al-fecha { font-size:10.5px; color:var(--tinta-2); }
 
 .lista-alumnos, .lista-cobros { list-style: none; margin-top: 12px; display: grid; gap: 8px; }
@@ -1091,8 +1106,16 @@ html[data-tema="oscuro"] .cobro-fila .cobro-vence.pronto { background: var(--amb
   overscroll-behavior: contain; /* el dedo no sigue deslizando la página */
   -webkit-overflow-scrolling: touch;
   touch-action: pan-y;
+  /* Hallazgo 6 (revisión visual 28-nov): barra de scroll visible en el sheet.
+     `html`/`body` la ocultan (scrollbar-width:none); el sheet necesita la suya
+     para que se note que hay más contenido. */
+  scrollbar-width: thin;
+  scrollbar-color: var(--tq-300) transparent;
   animation: subirSheet var(--t-larga) var(--ease) both;
 }
+.sheet::-webkit-scrollbar { width: 5px; }
+.sheet::-webkit-scrollbar-thumb { background: var(--tq-300); border-radius: 999px; }
+.sheet::-webkit-scrollbar-track { background: transparent; }
 .sheet.cerrando { animation: bajarSheet var(--t-media) var(--ease) both; }
 /* Aviso «Clase cancelada»: sin velo oscuro y un poco más arriba, para no tapar
    la tarjeta de mensualidades de Hoy. Mismo radio, borde y estética premium. */
@@ -1381,9 +1404,21 @@ html[data-tema="oscuro"] .cobro-fila .cobro-vence.pronto { background: var(--amb
 .cobro-tarjeta.pagado { border-left-color: var(--verde); }
 .cobro-tarjeta.pagado .cobro-tarjeta-estado { background: var(--verde-tinte); color: var(--verde); }
 .cobro-tarjeta .ico { flex: none; color: var(--tinta-2); }
-.cobro-dia-vacio { font-size: 11.5px; color: var(--tinta-2); margin-left: 14px; }
-[data-tema="oscuro"] .cobro-tarjeta.vencido .cobro-tarjeta-estado { color: var(--rosa-pastel); }
-[data-tema="oscuro"] .cobro-tarjeta.pagado .cobro-tarjeta-estado { color: var(--verde-tinte); }
+.cobro-dia-vacio {
+  font-size: 12px; color: var(--tinta-2); margin-left: 14px;
+  background: var(--bg-alt); border: 1px dashed var(--borde-crema);
+  border-radius: var(--r-med); padding: 12px 14px; text-align: center;
+  box-shadow: var(--sombra-crema);
+  display: flex; align-items: center; justify-content: center; gap: 7px;
+}
+.cobro-dia-vacio .ico { color: var(--tq-600); flex: none; }
+/* Hallazgo 2 (revisión visual 28-nov): en oscuro los chips de estado sin
+   override heredaban el tinte claro y bajaban de AA. Mismo criterio que
+   `.cobro-fila .cobro-vence`: fondo del tema + tinta pastel legible. */
+[data-tema="oscuro"] .cobro-tarjeta-estado { background: var(--ambar-tinte); color: var(--tq-900); }
+[data-tema="oscuro"] .cobro-tarjeta.vencido .cobro-tarjeta-estado { background: var(--rosa-tinte); color: var(--rosa-pastel); }
+[data-tema="oscuro"] .cobro-tarjeta.hoy .cobro-tarjeta-estado { background: var(--ambar-tinte); color: var(--tq-900); }
+[data-tema="oscuro"] .cobro-tarjeta.pagado .cobro-tarjeta-estado { background: var(--verde-tinte); color: #9FE3C0; }
 
 /* Fila de dos campos (hora + duración). */
 .campo-duo { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
