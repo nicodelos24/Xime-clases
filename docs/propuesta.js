@@ -1,26 +1,26 @@
 // Clases v5 · navegación + funcionamiento (auto-marcado, Cancelar clase, WhatsApp)
 // La estética vive en tokens.css/propuesta.css; acá solo se cambian estados,
 // textos y el flujo de cancelación. Sin emoji: solo SVG de icons.js.
-import { horaClase, } from './src/clases.js?v=202611262100';
-import { CLAVE_ESTADO, RepositorioClases, almacenLocalStorage } from './src/repositorio.js?v=202611262100';
-import { alumnosCobrosDemo, datosDemo, fichasDemo } from './src/demo.js?v=202611262100';
-import { resumenCobros, cobrosIndividuales, deudaIndividual as deudaInd, filtrarCobros, ordenarCobros, } from './src/cobros.js?v=202611262100';
-import { cobrosDeLaSemana, estadoCobro, tieneCobros } from './src/agenda-cobros.js?v=202611262100';
-import { precioPrecargado, precio } from './src/tarifas.js?v=202611262100';
-import { construirVista, filtrarYOrdenar, puntoEstadoVence, textoEstadoVence, validarAlumno, iniciales, colorPorId, nombreCompleto, } from './src/alumnos.js?v=202611262100';
-import { resumenHoy, clasesDelDia, clasesDeLaSemana } from './src/resumen.js?v=202611262100';
-import { registrarToqueFecha, mesDe } from './src/agenda.js?v=202611262100';
-import { primerDiaDeMes, diaSeleccionadoAlCargar } from './src/agenda-mes.js?v=202611262100';
-import { decisionDeGesto, decisionDeAperturaDeMenu, DURACION_TOQUE_LARGO, UMBRAL_MOVIMIENTO_GESTO, etiquetaProximoPaso } from './src/toque-clase.js?v=202611262100';
-import { destinoDeEnlace, vistaInicial, vistasActivas } from './src/navegacion.js?v=202611262100';
-import { pistaDeTira } from './src/scroll-pista.js?v=202611262100';
-import { actualizarBarra, estadoBarraInicial, debeReaparecerPorQuietud, REAPARECER_TRAS_MS, } from './src/barra-scroll.js?v=202611262100';
-import { ajustarLock, debeBloquearScroll, estiloSheet, debeCerrarPorToqueFuera, esToqueFuera, debeSuprimirClickTrasCierre, decisionCierreSheetsPorNavegacion, debeCerrarPorDeslizar, FRANJA_CIERRE, } from './src/sheets.js?v=202611262100';
-import { diaCorto, mesCorto, etiquetaDia, etiquetaDiaCompleta, etiquetaMes, fechaCorta, sumarDias, parseFecha, lunesDe, diasDelMes, esFechaValida, } from './src/fechas.js?v=202611262100';
-import { relojDelDispositivo, hoyLocal } from './src/reloj.js?v=202611262100';
-import { CLAVE_PREFIJO, PREFIJO_POR_DEFECTO, prefijoEsValido, prefijoSeguro, conPrefijo } from './src/prefijo.js?v=202611262100';
-import { bloqueContacto } from './src/contacto.js?v=202611262100';
-import { textoCancelacion, destinos, resumenEnvio, linkTexto, linkAvisoVencimiento, } from './src/whatsapp.js?v=202611262100';
+import { horaClase, } from './src/clases.js?v=202611280356';
+import { CLAVE_ESTADO, RepositorioClases, almacenLocalStorage } from './src/repositorio.js?v=202611280356';
+import { alumnosCobrosDemo, datosDemo, fichasDemo } from './src/demo.js?v=202611280356';
+import { resumenCobros, cobrosIndividuales, deudaIndividual as deudaInd, filtrarCobros, ordenarCobros, } from './src/cobros.js?v=202611280356';
+import { cobrosDeLaSemana, estadoCobro, tieneCobros } from './src/agenda-cobros.js?v=202611280356';
+import { precioPrecargado, precio } from './src/tarifas.js?v=202611280356';
+import { construirVista, filtrarYOrdenar, puntoEstadoVence, textoEstadoVence, validarAlumno, iniciales, colorPorId, nombreCompleto, } from './src/alumnos.js?v=202611280356';
+import { resumenHoy, clasesDelDia, clasesDeLaSemana } from './src/resumen.js?v=202611280356';
+import { registrarToqueFecha, mesDe } from './src/agenda.js?v=202611280356';
+import { primerDiaDeMes, diaSeleccionadoAlCargar } from './src/agenda-mes.js?v=202611280356';
+import { decisionDeGesto, decisionDeAperturaDeMenu, DURACION_TOQUE_LARGO, UMBRAL_MOVIMIENTO_GESTO, etiquetaProximoPaso } from './src/toque-clase.js?v=202611280356';
+import { destinoDeEnlace, vistaInicial, vistasActivas } from './src/navegacion.js?v=202611280356';
+import { pistaDeTira } from './src/scroll-pista.js?v=202611280356';
+import { actualizarBarra, estadoBarraInicial, debeReaparecerPorQuietud, REAPARECER_TRAS_MS, } from './src/barra-scroll.js?v=202611280356';
+import { ajustarLock, debeBloquearScroll, estiloSheet, debeCerrarPorToqueFuera, esToqueFuera, debeSuprimirClickTrasCierre, decisionCierreSheetsPorNavegacion, debeCerrarPorDeslizar, FRANJA_CIERRE, } from './src/sheets.js?v=202611280356';
+import { diaCorto, mesCorto, etiquetaDia, etiquetaDiaCompleta, etiquetaMes, fechaCorta, sumarDias, parseFecha, lunesDe, diasDelMes, esFechaValida, } from './src/fechas.js?v=202611280356';
+import { relojDelDispositivo, hoyLocal } from './src/reloj.js?v=202611280356';
+import { CLAVE_PREFIJO, PREFIJO_POR_DEFECTO, prefijoEsValido, prefijoSeguro, conPrefijo } from './src/prefijo.js?v=202611280356';
+import { bloqueContacto } from './src/contacto.js?v=202611280356';
+import { textoCancelacion, destinos, resumenEnvio, linkTexto, linkAvisoVencimiento, } from './src/whatsapp.js?v=202611280356';
 /* ------------------------------------------------- estado persistente (local) */
 const reloj = relojDelDispositivo();
 /** Quién opera la app hoy: único dueño. En Fase 4 sale de la sesión. */
@@ -46,16 +46,22 @@ function esc(s) {
     return s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', '\'': '&#39;' })[c]);
 }
 /**
- * Chip de estado de una clase (replanteo de Nico 26-nov): TOCAR el chip cicla
- * Por dar → Dada → Cancelada → Por dar (los tres estados son un botón).
- * Mantener el menú completo accesible por teclado/AT vía data-acciones.
+ * Chip de estado de una clase. TOCAR el chip (dedo, mouse o teclado) abre la
+ * hoja de acciones: Marcar dada / Cancelar clase / Cambiar de día. Decisión
+ * de Nico 27-nov, tras el QA de Valen: en móvil el tap tenía que llegar hasta
+ * «Cancelar clase» con motivo y aviso, y el ciclo directo sobre el chip no lo
+ * permitía (y cancelaba por error con un toque suelto).
+ *
+ * Estado y próximo paso viajan igual en el aria-label (política en
+ * `etiquetaProximoPaso`), y el chip mantiene data-acciones para teclado/AT y
+ * para el retorno de foco al cerrar la hoja.
  */
 function chipEstado(c) {
     const siguiente = etiquetaProximoPaso(c.estado);
     // Color por estado (chip-por-dar / chip-dada / chip-cancelada) + ícono SVG.
     const clase = c.estado === 'dada' ? 'chip-dada'
         : c.estado === 'cancelada' ? 'chip-cancelada' : 'chip-por-dar';
-    const base = `class="chip chip-boton ${clase}" type="button" data-ciclo="${esc(c.id)}" data-acciones="${esc(c.id)}" aria-label="Clase ${esc(c.nombre)}, `;
+    const base = `class="chip chip-boton ${clase}" type="button" data-acciones="${esc(c.id)}" aria-label="Clase ${esc(c.nombre)}, `;
     if (c.estado === 'dada') {
         return `<button ${base}dada. Tocá para ${esc(siguiente)}"><svg class="ico" width="13" height="13"><use href="#i-check"/></svg>Dada</button>`;
     }
@@ -83,8 +89,9 @@ function desplegableAlumnos(c) {
   </details>`;
 }
 /** Acción de una fila de clase (20/11): ya no hay botón rojo "Cancelar clase".
- *  El chip de estado (Por dar / Dada) abre el cuadro con las acciones;
- *  solo Cancelada conserva su "Revertir" porque no hay chip tocable. */
+ *  El chip de estado abre la hoja con todas las acciones y conserva su
+ *  «Revertir»: es el acceso directo de la fila de Cancelada (en Agenda, donde
+ *  tocar el chip también abre la hoja, se mantiene igual). */
 function accionClase(c) {
     if (c.estado === 'cancelada') {
         return `<button class="marcar marcar-reversa" type="button" data-reversa="${esc(c.id)}">Revertir</button>`;
@@ -169,10 +176,8 @@ function pintarHoy() {
           </div>`)
                 .join('');
         }
-        // El chip toca el ciclo de estados; el gesto largo/teclado conserva el menú.
-        grupos.querySelectorAll('[data-ciclo]').forEach((b) => {
-            b.addEventListener('click', () => ciclarEstadoDeChip(b.dataset.ciclo));
-        });
+        // El chip (dedo, mouse o teclado) abre la hoja con todas las acciones.
+        cablearChips(grupos);
         // El gesto de la fila abre/cierra «quiénes van»; mantener abre el menú.
         grupos.querySelectorAll('.grupo').forEach((g) => {
             const chip = g.querySelector('[data-acciones]');
@@ -394,100 +399,34 @@ function alternarQuienesVan(tarjeta) {
     detalle.open = !detalle.open;
 }
 /**
- * Replanteo de Nico 26-nov: tocar el CHIP cicla el estado (Por dar → Dada →
- * Cancelada → Por dar). La tarjeta NO cambia estado al tocarla. La cancelación
- * por chip es directa, sin sheet: el aviso diferido de cancelación la cubre.
+ * Un solo cableado para el chip de estado, en cualquier vista (Hoy, Clases o
+ * Agenda): un click —dedo, mouse o Enter— abre la hoja de acciones, que es
+ * donde viven «Marcar dada», «Cancelar clase» y «Cambiar de día»; en una clase
+ * cancelada, «Volver a Por dar».
+ * Sin la guarda de `data-teclado`, el Enter dispararía dos aperturas seguidas
+ * (la del keydown y la del click sintético) y la segunda se perdería.
  */
-function ciclarEstadoDeChip(id) {
-    const c = clases.find((x) => x.id === id);
-    if (!c)
-        return;
-    const ahora = reloj.ahora();
-    try {
-        if (c.estado === 'programada') {
-            repo.marcarDada(id, { quien: QUIEN, ahora });
-        }
-        else if (c.estado === 'dada') {
-            repo.cancelar(id, { motivo: 'cancelada desde el chip', quien: QUIEN, ahora });
-            repo.registrarMensajeEnviado(id, 'ninguno');
-        }
-        else if (c.estado === 'cancelada') {
-            clearTimeout(temporizadorMenuCancelada);
-            temporizadorMenuCancelada = undefined;
-            if (clasePendienteMenuCancelada === id)
-                clasePendienteMenuCancelada = undefined;
-            repo.revertir(id, { motivo: 'error del dueño', quien: QUIEN, ahora });
-        }
-        else
-            return;
-    }
-    catch (err) {
-        avisar(err instanceof Error ? err.message : 'No se pudo cambiar el estado', 3000);
-        return;
-    }
-    // Estate ORIGINAL (c es la clase previa al write). Programar el aviso
-    // ANTES de refrescar evita que el repintado cancele el temporizador.
-    const estadoAnterior = c.estado;
-    const claseVigente = () => clases.find((x) => x.id === id);
-    const canceladaAhora = () => estadoAnterior === 'dada' || claseVigente()?.estado === 'cancelada';
-    if (canceladaAhora())
-        agendarMenuCancelada(id);
-    else if (estadoAnterior === 'cancelada') {
-        clearTimeout(temporizadorMenuCancelada);
-        temporizadorMenuCancelada = undefined;
-        clasePendienteMenuCancelada = undefined;
-    }
-    clases = repo.listar();
-    refrescar();
-    const chipNuevo = document.querySelector(`[data-ciclo="${id}"]`);
-    if (chipNuevo) {
-        chipNuevo.classList.remove('chip-cicla');
-        // Reiniciar la animación aunque ya estuviera corriendo.
-        void chipNuevo.offsetWidth;
-        chipNuevo.classList.add('chip-cicla');
-    }
-    chipNuevo?.focus({ preventScroll: true });
-    if (estadoAnterior === 'programada') {
-        avisar('Clase marcada dada · Deshacer', 6000);
-        toast.dataset.deshacer = '1';
-        toast.dataset.revertirManual = id;
-    }
-    else if (estadoAnterior === 'cancelada') {
-        avisar('Clase vuelta a Por dar', 3000);
-    }
-    else if (estadoAnterior === 'dada') {
-        // Cancelación directa desde el chip: mismo aviso que en el panel, sin
-        // envío inmediato. El sheet diferido se encarga de Deshacer / WhatsApp.
-        avisar('Clase cancelada (estaba dada) · Deshacer', 6000);
-        toast.dataset.deshacer = '1';
-        toast.dataset.clase = id;
-    }
+function cablearChips(raiz) {
+    raiz.querySelectorAll('[data-acciones]').forEach((b) => {
+        b.addEventListener('click', () => {
+            if (b.dataset.teclado === '1')
+                return;
+            abrirAcciones(b.dataset.acciones);
+        });
+        b.addEventListener('keydown', (e) => {
+            if (e.key !== 'Enter' && e.key !== ' ')
+                return;
+            e.preventDefault();
+            b.dataset.teclado = '1';
+            window.setTimeout(() => { delete b.dataset.teclado; }, 0);
+            abrirAcciones(b.dataset.acciones);
+        });
+    });
 }
 /** Cablea los chips y botones de un bloque de tarjetas (mes o semana). */
 function cablearTarjetas(raiz) {
     raiz.querySelectorAll('.clase[data-clase]').forEach((t) => cablearGestoClase(t));
-    raiz.querySelectorAll('[data-ciclo]').forEach((b) => {
-        // Replanteo 26-nov: tocar el CHIP cicla Por dar → Dada → Cancelada → Por dar.
-        b.addEventListener('click', (e) => {
-            // El Enter del teclado también genera un click nativo en el botón. Sin
-            // esta guarda, el menú que abre el keydown se dispara un instante después
-            // y el click lo ciclaría encima (menú abierto + estado cambiado).
-            if (b.dataset.teclado === '1')
-                return;
-            ciclarEstadoDeChip(b.dataset.ciclo);
-        });
-    });
-    raiz.querySelectorAll('[data-acciones]').forEach((b) => {
-        // El menú completo queda para teclado/AT (click no físico) y contexto.
-        b.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                b.dataset.teclado = '1';
-                window.setTimeout(() => { delete b.dataset.teclado; }, 0);
-                abrirAcciones(b.dataset.acciones);
-            }
-        });
-    });
+    cablearChips(raiz);
     raiz.querySelectorAll('[data-cancelar]').forEach((b) => {
         b.addEventListener('click', () => abrirCancelacion(b.dataset.cancelar));
     });
@@ -1349,7 +1288,7 @@ function abrirMenuCancelada(id) {
         temporizadorMenuCancelada = setTimeout(() => abrirMenuCancelada(id), 1000);
         return;
     }
-    if (!document.querySelector(`[data-ciclo="${id}"]`)) {
+    if (!document.querySelector(`[data-acciones="${id}"]`)) {
         temporizadorMenuCancelada = setTimeout(() => abrirMenuCancelada(id), 1000);
         return;
     }
@@ -1376,7 +1315,7 @@ function abrirMenuCancelada(id) {
     document.body.appendChild(previo);
     abrirSheet(previo);
     sheet = previo;
-    previo.dataset.retornoFoco = document.querySelector(`[data-ciclo="${id}"]`)?.id ?? '';
+    previo.dataset.retornoFoco = document.querySelector(`[data-acciones="${id}"]`)?.id ?? '';
     previo.querySelector('.sheet-cerrar')?.addEventListener('click', () => cerrarSheet());
     previo.querySelector('[data-mc="deshacer"]')?.addEventListener('click', () => {
         if (!revertirCancelacion(id))
@@ -1449,13 +1388,14 @@ function cerrarAcciones() {
     cerrarSheet();
 }
 /** Cuadro de acciones (20/11): lo abre el chip de estado de la clase
- *  («Por dar» o «Dada»). Abrir NO cambia el estado. */
+ *  («Por dar», «Dada» o «Cancelada») con un toque, un click o Enter.
+ *  Abrir NO cambia el estado. */
 function abrirAcciones(id) {
     // Un gesto nunca reabre una hoja ya abierta (doble apertura del chip).
     if (cancelacionPendiente || decisionDeAperturaDeMenu(!!document.querySelector('.sheet:not(.cerrando)')) === 'nada')
         return;
     const c = clases.find((x) => x.id === id);
-    if (!c || c.estado === 'cancelada')
+    if (!c)
         return;
     cerrarSheet();
     const previo = document.createElement('div');
@@ -1478,7 +1418,7 @@ function abrirAcciones(id) {
     <div class="sheet-head">
       <div>
         <p class="sheet-eyebrow">${esc(etiquetaDia(c.fecha))} · ${horaClase(c)}</p>
-        <h3>${c.estado === 'dada' ? 'Clase dada' : 'Clase por dar'}</h3>
+        <h3>${c.estado === 'dada' ? 'Clase dada' : c.estado === 'cancelada' ? 'Clase cancelada' : 'Clase por dar'}</h3>
       </div>
       <button class="sheet-cerrar" type="button" aria-label="Cerrar"><svg class="ico" width="18" height="18"><use href="#i-mas2"/></svg></button>
     </div>
@@ -1494,6 +1434,12 @@ function abrirAcciones(id) {
         <svg class="ico" width="19" height="19"><use href="#i-reloj"/></svg>
         <span><b>Volver a Por dar</b><small>Deshacer la marca manual</small></span>
       </button>` : ''}
+      ${c.estado === 'cancelada' ? `
+      <button class="accion-clase" type="button" data-acc="revertir">
+        <svg class="ico" width="19" height="19"><use href="#i-reloj"/></svg>
+        <span><b>Volver a Por dar</b><small>Se anula la cancelación</small></span>
+      </button>` : ''}
+      ${c.estado === 'cancelada' ? '' : `
       <button class="accion-clase" type="button" data-acc="cancelar">
         <svg class="ico" width="19" height="19"><use href="#i-alerta"/></svg>
         <span><b>Cancelar clase</b><small>Avisar por WhatsApp (opcional)</small></span>
@@ -1501,7 +1447,7 @@ function abrirAcciones(id) {
       <button class="accion-clase" type="button" data-acc="cambiar">
         <svg class="ico" width="19" height="19"><use href="#i-agenda"/></svg>
         <span><b>Cambiar de día</b><small>Reprogramar la clase</small></span>
-      </button>
+      </button>`}
     </div>
     <div class="cambiar-dia" hidden>
       <p class="sheet-paso">Elegí la nueva fecha</p>
@@ -1523,6 +1469,11 @@ function abrirAcciones(id) {
     previo.querySelector('.sheet-cerrar')?.addEventListener('click', cerrarAcciones);
     previo.querySelector('[data-accion="volver"]')?.addEventListener('click', cerrarAcciones);
     previo.querySelector('[data-acc="cancelar"]')?.addEventListener('click', () => abrirCancelacion(id));
+    previo.querySelector('[data-acc="revertir"]')?.addEventListener('click', () => {
+        if (!revertirCancelacion(id))
+            return;
+        cerrarSheet();
+    });
     previo.querySelector('[data-acc="marcar"]')?.addEventListener('click', () => {
         repo.marcarDada(id, { quien: QUIEN, ahora: reloj.ahora() });
         clases = repo.listar();
@@ -1943,7 +1894,7 @@ function pintarAlumnos() {
           ${avatarAlumno(a.nombre, a.id, a.foto, 38, a.apellido)}<div><p class="al-nombre">${esc(nombreCompleto(a))}</p>${alumnoSub(a)}</div><span class="punto ${punto}"></span>
         </button></li>`;
         }).join('')
-        : `<p class="pv-vacio">${todas.length === 0 ? 'Todavía no hay alumnos. Tocá «Nuevo alumno» para cargar el primero.' : 'Ningún alumno con estos filtros'}</p>`;
+        : `<p class="pv-vacio"><svg class="ico" width="20" height="20" aria-hidden="true"><use href="#i-alumnos"></svg><span>${todas.length === 0 ? 'Todavía no hay alumnos. Tocá «Nuevo alumno» para cargar el primero.' : 'Ningún alumno con estos filtros'}</span></p>`;
     lista.querySelectorAll('[data-ficha]').forEach((b) => {
         b.addEventListener('click', () => abrirFichaConCobro(repo.listarAlumnos().find((f) => f.id === b.dataset.ficha) ?? null, b));
     });
@@ -2383,6 +2334,170 @@ function filasAgendaCobros(r) {
     return [...individuales, ...mensuales].filter((f) => estadoCobros === 'todos'
         || (estadoCobros === 'pagado' ? f.estado === 'pagado' : f.estado !== 'pagado'));
 }
+let modoAgendaCobros = 'lista';
+let mesCobros = null;
+let diaMesCobros = null;
+const etiquetaEstadoCobro = {
+    vencido: 'Vencido', hoy: 'Vence hoy', porvencer: 'Por vencer', pagado: 'Pagado',
+};
+/** Estado predominante del día para el punto: lo que falta manda sobre lo cobrado. */
+function estadoPuntoCobros(cobros) {
+    if (!cobros.length)
+        return null;
+    const pendientes = cobros.filter((c) => c.estado !== 'pagado');
+    const conjunto = pendientes.length ? pendientes : cobros;
+    if (conjunto.some((c) => c.estado === 'vencido'))
+        return 'vencido';
+    if (conjunto.some((c) => c.estado === 'hoy'))
+        return 'hoy';
+    if (conjunto.some((c) => c.estado === 'porvencer'))
+        return 'porvencer';
+    return 'pagado';
+}
+/**
+ * Leyenda de los cuatro estados: mismo criterio que la tira semanal y la
+ * lista. Se pinta una sola vez (llamada desde pintarCobros).
+ */
+function pintarLeyendaCobros() {
+    const items = Object.keys(etiquetaEstadoCobro).map((estado) => `<span class="cobros-leyenda-item ${estado}"><svg class="ico" width="10" height="10" aria-hidden="true"><use href="#i-punto-lleno"/></svg>${etiquetaEstadoCobro[estado]}</span>`);
+    for (const id of ['cobros-leyenda', 'cobros-leyenda-mes']) {
+        const caja = $(`#${id}`);
+        if (caja)
+            caja.innerHTML = items.join('');
+    }
+}
+/** Primer día del mes abierto en Cobros (misma regla que el almanaque de Agenda). */
+function primerDiaMesCobros(delta) {
+    const base = mesCobros ?? (mesDe(hoyLocal(reloj.ahora())) + '-01');
+    return primerDiaDeMes(base, delta);
+}
+/**
+ * Panel del día: toma el día elegido, o el PRÓXIMO vencimiento si no hay
+ * ninguno elegido — así el panel arranca en lo que toca cobrar.
+ */
+function proximoVencimientoCobros(filas, desde) {
+    const futuros = filas
+        .filter((f) => f.fecha >= desde)
+        .sort((a, b) => a.fecha.localeCompare(b.fecha));
+    return futuros[0]?.fecha ?? null;
+}
+/** Calendario mensual de Cobros: punto por día con 1 vs varios y 4 estados. */
+function pintarMesCobros() {
+    const hoy = hoyLocal(reloj.ahora());
+    const primero = primerDiaMesCobros(0);
+    const { y, m } = parseFecha(primero);
+    const filas = filasAgendaCobros(verCobros());
+    const porFecha = new Map();
+    for (const f of filas) {
+        const lista = porFecha.get(f.fecha) ?? [];
+        lista.push(f);
+        porFecha.set(f.fecha, lista);
+    }
+    const h2 = $('#v-cobros-mes .cobros-titulo-mes h2');
+    if (h2) {
+        h2.textContent = etiquetaMes(primero);
+        h2.setAttribute('aria-label', etiquetaMes(primero));
+    }
+    const caja = $('#mes-cobros');
+    if (caja) {
+        const dow = ['LU', 'MA', 'MI', 'JU', 'VI', 'SÁ', 'DO']
+            .map((d) => `<p class="mes-dow">${d}</p>`).join('');
+        const primerLunes = lunesDe(primero);
+        const celdas = Array.from({ length: 42 }, (_, i) => sumarDias(primerLunes, i)).map((f) => {
+            const p = parseFecha(f);
+            const fuera = p.y !== y || p.m !== m;
+            const cobros = porFecha.get(f) ?? [];
+            const estado = estadoPuntoCobros(cobros);
+            const clase = [
+                'mes-dia',
+                fuera ? 'fuera' : '',
+                f === hoy ? 'activo' : '',
+                f === diaMesCobros ? 'seleccionado' : '',
+                estado ? `tiene cobro-${estado}` : '',
+                cobros.length > 1 ? 'varios' : '',
+            ].filter(Boolean).join(' ');
+            const puntos = cobros.length
+                ? `<i class="mes-punto mes-punto-${estado}" aria-hidden="true"></i>`
+                : '';
+            const etiqueta = cobros.length
+                ? `${cobros.length} ${cobros.length === 1 ? 'vencimiento' : 'vencimientos'}: ${cobros.map((c) => etiquetaEstadoCobro[c.estado]).join(', ')}`
+                : 'Sin vencimientos';
+            return `<button class="${clase}" type="button" data-fecha="${f}"${fuera ? ' tabindex="-1" aria-hidden="true"' : ''}
+        aria-label="${esc(etiquetaDiaCompleta(f))}: ${esc(etiqueta)}">${p.d}${puntos}</button>`;
+        }).join('');
+        caja.innerHTML = dow + celdas;
+        caja.querySelectorAll('.mes-dia').forEach((b) => b.addEventListener('click', () => {
+            const f = b.dataset.fecha;
+            const p = parseFecha(f);
+            // Un día de la otra fila de mes cambia el mes abierto, como en Agenda.
+            if (p.y !== y || p.m !== m) {
+                mesCobros = `${String(p.y).padStart(4, '0')}-${String(p.m).padStart(2, '0')}-01`;
+            }
+            diaMesCobros = f;
+            pintarMesCobros();
+        }));
+    }
+    const elegido = diaMesCobros ?? proximoVencimientoCobros(filas, hoy) ?? hoy;
+    diaMesCobros = elegido;
+    pintarLineaCobrosMes(filas, elegido);
+}
+/** Panel del día en la vista mes: tarjetas de alumno, como la semanal. */
+function pintarLineaCobrosMes(filas, elegido) {
+    const linea = $('#linea-cobros-mes');
+    if (!linea)
+        return;
+    const hoy = hoyLocal(reloj.ahora());
+    const porFecha = new Map();
+    for (const f of filas) {
+        if (f.fecha < primerDiaMesCobros(0))
+            continue;
+        const lista = porFecha.get(f.fecha) ?? [];
+        lista.push(f);
+        porFecha.set(f.fecha, lista);
+    }
+    const fechas = [...porFecha.keys()].sort();
+    const orden = fechas.includes(elegido)
+        ? [elegido, ...fechas.filter((f) => f !== elegido)]
+        : fechas;
+    const tarjetas = (fecha) => (porFecha.get(fecha) ?? []).map((c) => {
+        const ficha = repo.listarAlumnos().find((f) => f.id === c.alumno.id) ?? null;
+        const nomCobro = ficha ? nombreCompleto(ficha) : c.alumno.nombre;
+        const avatar = avatarAlumno(c.alumno.nombre, ficha?.id ?? c.alumno.id, ficha?.foto, 30, ficha?.apellido);
+        const monto = ficha ? (precio(ficha, ficha.formaPago === 'por-clase' ? 'clase-individual' : 'mensualidad', fecha) ?? 0) : 0;
+        const etiqueta = etiquetaEstadoCobro[c.estado];
+        return `<li>
+      <button type="button" class="cobro-tarjeta ${c.estado}" data-cobro="${esc(c.alumno.id)}" aria-haspopup="dialog"
+        aria-label="${esc(nomCobro)}, ${uyu(monto)}, ${etiqueta} el ${esc(fechaCorta(fecha))}">
+        ${avatar}
+        <span class="cobro-tarjeta-datos">
+          <span class="al-nombre">${esc(nomCobro)}</span>
+          <span class="cobro-meta">${esc(ficha?.grupo ? `Grupo ${ficha.grupo} · ` : '')}${uyu(monto)}</span>
+        </span>
+        <span class="cobro-tarjeta-estado">${etiqueta}</span>
+        <svg class="ico" width="13" height="13" aria-hidden="true"><use href="#i-der"/></svg>
+      </button>
+    </li>`;
+    }).join('');
+    const bloques = (fecha) => {
+        const etiqueta = `${etiquetaDia(fecha)}${fecha === hoy ? ' · hoy' : ''}`;
+        const cobros = porFecha.get(fecha) ?? [];
+        return `<li class="linea-dia">
+      <p class="linea-fecha">${esc(etiqueta)}</p>
+      ${cobros.length ? `<ul class="cobro-tarjetas">${tarjetas(fecha)}</ul>`
+            : '<p class="cobro-dia-vacio"><svg class="ico" width="14" height="14" aria-hidden="true"><use href="#i-cobros"></svg>Sin vencimientos</p>'}
+    </li>`;
+    };
+    // El día elegido primero; el resto del mes le sigue, como en la semanal.
+    const elegidoIdx = orden.indexOf(elegido);
+    const conElegido = elegidoIdx >= 0
+        ? [elegido, ...orden.filter((f) => f !== elegido)]
+        : [elegido, ...orden];
+    linea.innerHTML = conElegido.map(bloques).join('');
+    linea.querySelectorAll('[data-cobro]').forEach((b) => b.addEventListener('click', () => {
+        const ficha = repo.listarAlumnos().find((f) => f.id === b.dataset.cobro) ?? null;
+        abrirFichaConCobro(ficha, b);
+    }));
+}
 /** Agenda semanal de Cobros: tarjetas de ALUMNO por día de vencimiento. */
 function pintarAgendaCobros() {
     const hoy = hoyLocal(reloj.ahora());
@@ -2452,7 +2567,7 @@ function pintarLineaCobros(dias, elegido) {
         return `<li class="linea-dia">
       <p class="linea-fecha">${esc(etiqueta)}</p>
       ${dia.cobros.length ? `<ul class="cobro-tarjetas">${tarjetas(dia)}</ul>`
-            : '<p class="cobro-dia-vacio">Sin vencimientos</p>'}
+            : '<p class="cobro-dia-vacio"><svg class="ico" width="14" height="14" aria-hidden="true"><use href="#i-cobros"></svg>Sin vencimientos</p>'}
     </li>`;
     }).join('');
     linea.querySelectorAll('[data-cobro]').forEach((b) => b.addEventListener('click', () => {
@@ -2555,10 +2670,10 @@ function pintarCobros() {
     const total = r.filas.length + filasIndividuales.length;
     const filtroActivo = estadoCobros !== 'todos';
     if (visibles === 0 && total > 0 && filtroActivo) {
-        listaCobros.innerHTML = `<li><p class="pv-vacio">Ningún cobro con este filtro</p></li>`;
+        listaCobros.innerHTML = `<li><p class="pv-vacio"><svg class="ico" width="20" height="20" aria-hidden="true"><use href="#i-cobros"></svg><span>Ningún cobro con este filtro</span></p></li>`;
     }
     else if (total === 0) {
-        listaCobros.innerHTML = `<li><p class="pv-vacio">Todavía no hay alumnos que cobrar</p></li>`;
+        listaCobros.innerHTML = `<li><p class="pv-vacio"><svg class="ico" width="20" height="20" aria-hidden="true"><use href="#i-cobros"></svg><span>Todavía no hay alumnos que cobrar</span></p></li>`;
     }
     // Chips: marca el estado y el orden elegidos; «Todos» activo solo si no hay
     // filtro. El texto del chip muestra cuántas filas hay con el filtro.
@@ -2579,23 +2694,33 @@ function pintarCobros() {
     const chipDeben = $('#filtros-cobros [data-estado="deben"] .n');
     if (chipDeben)
         chipDeben.textContent = debo ? String(debo) : '';
-    pintarAgendaCobros();
+    pintarLeyendaCobros();
+    if (modoAgendaCobros === 'semana')
+        pintarAgendaCobros();
+    else if (modoAgendaCobros === 'mes')
+        pintarMesCobros();
 }
-/* Modo Lista / Calendario dentro de Cobros (pedido de Nico 26/11). */
+/* Modo Lista / Semana / Mes dentro de Cobros (pedido de Nico 26/11 y 27/11). */
 function aplicarModoCobros(modo) {
+    modoAgendaCobros = modo;
     const lista = $('#v-cobros-lista');
     const agenda = $('#v-cobros-calendario');
+    const mes = $('#v-cobros-mes');
     if (lista)
         lista.hidden = modo !== 'lista';
     if (agenda)
-        agenda.hidden = modo !== 'calendario';
+        agenda.hidden = modo !== 'semana';
+    if (mes)
+        mes.hidden = modo !== 'mes';
     $$('#v-cobros .cobros-modo').forEach((b) => {
         const on = b.dataset.modo === modo;
         b.classList.toggle('activo', on);
         b.setAttribute('aria-pressed', String(on));
     });
-    if (modo === 'calendario')
+    if (modo === 'semana')
         pintarAgendaCobros();
+    if (modo === 'mes')
+        pintarMesCobros();
     actualizarPistaCobros();
 }
 $$('#v-cobros .cobros-modo').forEach((b) => b.addEventListener('click', () => {
@@ -2612,6 +2737,16 @@ $('#cobros-semana-siguiente')?.addEventListener('click', () => {
     lunesCobros = sumarDias(lunes, 7);
     diaCobrosSeleccionado = null;
     pintarAgendaCobros();
+});
+$('#cobros-mes-anterior')?.addEventListener('click', () => {
+    mesCobros = primerDiaMesCobros(-1);
+    diaMesCobros = null;
+    pintarMesCobros();
+});
+$('#cobros-mes-siguiente')?.addEventListener('click', () => {
+    mesCobros = primerDiaMesCobros(1);
+    diaMesCobros = null;
+    pintarMesCobros();
 });
 /* Filtro y orden de Cobros (rediseño 23-nov, B6): mismos chips que Alumnos,
    con «Todos» que limpia. El orden es un par de chips exclusivos. */
@@ -3501,6 +3636,8 @@ setInterval(() => {
         diaCobros = hoy;
         lunesCobros = null;
         diaCobrosSeleccionado = null;
+        mesCobros = null;
+        diaMesCobros = null;
         pintarCobros();
         pintarAlumnos();
     }

@@ -14,8 +14,8 @@
   .vista.activa { display: block; }
 </style>
 <noscript><style>#v-mes, #v-semana, #v-alumnos, #v-cobros { display: none !important; }</style></noscript>
-<link rel="stylesheet" href="tokens.css?v=202611262100">
-<link rel="stylesheet" href="propuesta.css?v=202611262100">
+<link rel="stylesheet" href="tokens.css?v=202611280356">
+<link rel="stylesheet" href="propuesta.css?v=202611280356">
 </head>
 <body>
 <p class="marca">XIME CLASES · V5</p>
@@ -56,6 +56,7 @@
             <circle class="anillo-brillo" cx="46" cy="46" r="38"/>
           </svg>
           <div class="anillo-texto"><strong>1</strong><span>/ 2</span></div>
+          <span class="anillo-etiqueta">clases dadas</span>
         </div>
         <div class="hero-grupos">
           <div class="grupo">
@@ -167,8 +168,11 @@
         </div>
         <a href="#v-semana" class="link-suave" aria-label="Ver vista semanal"><svg class="ico" width="14" height="14" aria-hidden="true"><use href="#i-agenda"></use></svg><span class="link-txt">Ver semana</span></a>
       </div>
+      <div class="mes-modalidades" aria-label="Modalidades de clase">
+        <span><i class="mod-mensual"></i>Mensual</span><span><i class="mod-individual"></i>Individual</span>
+      </div>
       <div class="mes">
-        <p class="mes-dow">LU</p><p class="mes-dow">MA</p><p class="mes-dow">MI</p><p class="mes-dow">JU</p><p class="mes-dow">VI</p><p class="mes-dow">SÁ</p><p class="mes-dow">DO</p>
+<p class="mes-dow">LU</p><p class="mes-dow">MA</p><p class="mes-dow">MI</p><p class="mes-dow">JU</p><p class="mes-dow">VI</p><p class="mes-dow">SÁ</p><p class="mes-dow">DO</p>
         <button class="mes-dia vacio" type="button" disabled></button>
         <button class="mes-dia" type="button">1</button>
         <button class="mes-dia" type="button">2</button>
@@ -249,7 +253,8 @@
       </div>
       <div class="cobros-modos" role="group" aria-label="Vista de cobros">
         <button class="cobros-modo activo" data-modo="lista" type="button" aria-pressed="true">Lista</button>
-        <button class="cobros-modo" data-modo="calendario" type="button" aria-pressed="false">Calendario</button>
+        <button class="cobros-modo" data-modo="semana" type="button" aria-pressed="false">Semana</button>
+        <button class="cobros-modo" data-modo="mes" type="button" aria-pressed="false">Mes</button>
       </div>
       <div class="kpis kpis-cobros">
         <article class="kpi kpi-cobrado">
@@ -273,6 +278,19 @@
         </div>
         <div class="tira tira-cobros" id="tira-cobros" role="group" aria-label="Días de la semana"></div>
         <ol class="linea linea-cobros" id="linea-cobros"></ol>
+        <div class="cobros-leyenda" id="cobros-leyenda" aria-label="Estados de cobro"></div>
+      </div>
+      <div id="v-cobros-mes" hidden>
+        <div class="agenda-titulo cobros-titulo-mes">
+          <div class="mes-titulo-nav">
+            <button class="flecha" id="cobros-mes-anterior" type="button" aria-label="Mes anterior"><svg class="ico" width="20" height="20" aria-hidden="true"><use href="#i-izq"/></svg></button>
+            <h2></h2>
+            <button class="flecha" id="cobros-mes-siguiente" type="button" aria-label="Mes siguiente"><svg class="ico" width="20" height="20" aria-hidden="true"><use href="#i-der"/></svg></button>
+          </div>
+        </div>
+        <div class="mes mes-cobros" id="mes-cobros" role="grid" aria-label="Vencimientos del mes"></div>
+        <div class="cobros-leyenda" id="cobros-leyenda-mes" aria-label="Estados de cobro"></div>
+        <ol class="linea linea-cobros" id="linea-cobros-mes"></ol>
       </div>
       <div id="v-cobros-lista">
       <div class="filtros" id="filtros-cobros" role="group" aria-label="Filtrar y ordenar cobros">
@@ -330,7 +348,7 @@
     });
   })();
 </script>
-<script src="icons.js?v=202611262100"></script>
-<script type="module" src="propuesta.js?v=202611262100"></script>
+<script src="icons.js?v=202611280356"></script>
+<script type="module" src="propuesta.js?v=202611280356"></script>
 </body>
 </html>

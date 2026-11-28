@@ -77,7 +77,9 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; width: 0; }
 }
 .barra-hola { font-size: 13px; color: var(--tinta-2); }
 .barra-titulo { font-size: 27px; letter-spacing: -.02em; margin-top: 2px; }
-.barra-titulo { animation: subir var(--t-larga) var(--ease) both; }
+/* Hallazgo 4 (revisión 28-nov): una sola cascada entre pantallas —
+   barra 0ms, bloque 60ms, tarjetas 120ms, acciones 180ms. */
+.barra-titulo { animation: subir var(--t-larga) var(--ease) 0ms both; }
 
 .campana {
   position: relative;
@@ -98,7 +100,8 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; width: 0; }
   width: 9px; height: 9px; border-radius: 50%;
   background: var(--rosa);
   border: 2px solid var(--bg-alt);
-  animation: latir 2.6s var(--ease) infinite;
+  /* Hallazgo 1 (revisión 28-nov): el punto de la campana deja de latir para
+     siempre. `latir` no tenía @keyframes; ahora queda fijo, sin infinito. */
 }
 
 /* ---------- Vistas ---------- */
@@ -159,6 +162,12 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; width: 0; }
 .anillo-texto { position: absolute; display: flex; align-items: baseline; gap: 3px; }
 .anillo-texto strong { font-size: 30px; font-weight: 700; letter-spacing: -.03em; }
 .anillo-texto span { font-size: 14px; opacity: .8; }
+/* La cifra se lee: el anillo dice QUÉ mide sin texto de ayuda (26-nov). */
+.anillo-etiqueta {
+  position: absolute; bottom: 20px; left: 0; right: 0; text-align: center;
+  font-size: 9.5px; font-weight: 650; letter-spacing: .06em; text-transform: uppercase;
+  color: rgba(255,255,255,.82); pointer-events: none;
+}
 /* El número cambia con un fundido + micro-escalado; WAAPI en JS la dispara. */
 .anillo-texto.cambia strong { animation: anillo-num 560ms cubic-bezier(.22,.9,.36,1.02); }
 @keyframes anillo-num {
@@ -221,13 +230,10 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; width: 0; }
   border-radius: var(--r-med);
   padding: 11px 11px 13px;
   box-shadow: var(--sombra-crema);
-  animation: subir var(--t-larga) var(--ease) both;
+  animation: subir var(--t-larga) var(--ease) 120ms both;
   transition: transform var(--t-rapida) var(--ease), box-shadow var(--t-rapida) var(--ease);
 }
 .kpi:hover { transform: translateY(-3px); box-shadow: var(--sombra-crema); }
-.kpi:nth-child(1) { animation-delay: 130ms; }
-.kpi:nth-child(2) { animation-delay: 190ms; }
-.kpi:nth-child(3) { animation-delay: 250ms; }
 .kpi-ico {
   display: grid; place-items: center;
   width: 26px; height: 26px; border-radius: 8px;
@@ -238,7 +244,16 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; width: 0; }
 .kpi-vencen .kpi-ico  { background: var(--ambar-suave-tinte); color: var(--ambar-suave); }
 .kpi-valor { font-size: 17px; font-weight: 700; letter-spacing: -.02em; }
 .kpi-titulo { font-size: 11.5px; color: var(--tinta-2); margin-top: 1px; }
-.kpi-punto { position: absolute; top: 11px; right: 11px; width: 8px; height: 8px; border-radius: 50%; }
+/* Rótulo arriba, cifra abajo: la jerarquía se lee sin globos (26-nov). */
+.kpi { display: block; }
+.kpi .kpi-ico { position: absolute; left: 11px; top: 32px; margin: 0; }
+.kpi .kpi-titulo { margin: 0 0 8px 34px; font-size: 10.5px; font-weight: 650; letter-spacing: .02em; }
+.kpi .kpi-valor { margin: 0; padding-left: 34px; min-height: 30px; font-variant-numeric: tabular-nums; }
+/* El punto de color se lee como estado del KPI, sin solaparse con la cifra. */
+.kpi-punto { position: absolute; top: 10px; right: 10px; width: 7px; height: 7px; flex: none; }
+.kpi-punto i { display: block; width: 7px; height: 7px; border-radius: 50%; background: var(--verde); }
+.kpi-por .kpi-punto i { background: var(--tq-500); }
+.kpi-vencen .kpi-punto i { background: var(--ambar); }
 .kpi-cobrado .kpi-punto { background: var(--verde-pastel); }
 .kpi-por .kpi-punto     { background: var(--tq-300); }
 .kpi-vencen .kpi-punto  { background: var(--ambar-pastel); }
@@ -253,7 +268,7 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; width: 0; }
   padding: 12px 13px;
   color: var(--ambar-suave);
   box-shadow: var(--sombra-crema);
-  animation: subir var(--t-larga) var(--ease) 310ms both;
+  animation: subir var(--t-larga) var(--ease) 180ms both;
 }
 .aviso-ico { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 9px; background: rgba(138,90,18,.14); flex: none; }
 .aviso-ico-ok { display: none; }
@@ -471,16 +486,23 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; width: 0; }
 }
 .mes-dia:not(.vacio):hover { background: var(--tq-50); transform: translateY(-2px); }
 .mes-dia:not(.vacio):active { transform: scale(.92); }
-.mes-dia.tiene::after {
-  content: ""; position: absolute; bottom: 5px; left: 50%; transform: translateX(-50%);
-  width: 5px; height: 5px; border-radius: 50%; background: var(--tq-500);
+.mes-dia.tiene { position: relative; }
+/* Barrita bajo el número: se lee el estado sin contar puntos diminutos (26-nov). */
+.mes-barra {
+  position: absolute; bottom: 4px; left: 50%; transform: translateX(-50%);
+  width: 18px; height: 3px; border-radius: 2px; background: var(--tq-500);
+  transition: width var(--t-larga) var(--ease), background var(--t-rapida) var(--ease);
 }
+.mes-barra.dada { background: var(--verde); }
+.mes-barra.cancelada { background: var(--rosa); }
+.mes-dia.tiene.todas-dadas .mes-barra { width: 24px; background: var(--verde); }
+.mes-dia.tiene.tiene-cancelada .mes-barra { width: 24px; background: var(--rosa); }
 .mes-dia.activo {
   background: var(--tq-600); color: #fff; font-weight: 700;
   box-shadow: 0 6px 16px rgba(11,107,106,.32);
   animation: pop var(--t-media) var(--ease);
 }
-.mes-dia.activo::after { background: var(--tq-300); }
+.mes-dia.activo .mes-barra { background: var(--tq-200); }
 /* Un toque selecciona el día (sin salir del mes): borde + "pop" suave. */
 .mes-dia.seleccionado:not(.activo) {
   border-color: var(--tq-500); background: var(--tq-50); font-weight: 700;
@@ -493,11 +515,18 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; width: 0; }
 .mes-dia.tiene.todas-dadas::after { background: var(--verde); }
 .mes-dia.tiene.tiene-cancelada::after { background: var(--rosa); }
 .mes-leyenda { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-top: 10px; padding: 0 2px; }
+.mes-modalidades { order: -1; width: 100%; margin-bottom: 6px; }
 .mes-leyenda span { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; color: var(--tinta-2); }
-.mes-leyenda i { width: 7px; height: 7px; border-radius: 50%; display: inline-block; }
+.mes-leyenda i { width: 16px; height: 3px; border-radius: 2px; display: inline-block; }
 .ley-dada { background: var(--verde); }
 .ley-prog { background: var(--tq-500); }
 .ley-canc { background: var(--rosa); }
+/* Modalidad en la cabecera: mismo color que la franja de la tarjeta de clase. */
+.mes-modalidades { display: flex; flex-wrap: wrap; gap: 5px 12px; margin: 8px 2px 0; }
+.mes-modalidades span { display: inline-flex; align-items: center; gap: 5px; font-size: 10.5px; color: var(--tinta-2); }
+.mes-modalidades i { display: inline-block; width: 14px; height: 3px; border-radius: 2px; }
+.mes-modalidades .mod-mensual { background: var(--lila); }
+.mes-modalidades .mod-individual { background: var(--azul); }
 
 /* Tarjetas de las clases del día tocado, debajo de la leyenda del mes. */
 .dia-tarjetas { margin-top: 14px; animation: aparecer var(--t-media) var(--ease) both; }
@@ -612,7 +641,17 @@ button[data-orden-cobro].activo {
 .etiqueta { font-size:10.5px; font-weight:700; padding:2px 7px; border-radius:999px; }
 .et-mensual { background:var(--lila-tinte); color:var(--lila); }
 .et-individual { background:var(--azul-tinte); color:var(--azul); }
-.pv-vacio { text-align:center; color:var(--tinta-2); font-size:13px; padding:24px 0; }
+/* Hallazgo 3 (revisión 28-nov): los estados vacíos usan la caja común
+   (borde punteado + sombra) con ícono SVG, no solo texto gris. */
+.pv-vacio {
+  text-align: center; color: var(--tinta-2); font-size: 13px;
+  background: var(--bg-alt); border: 1px dashed var(--borde-crema);
+  border-radius: var(--r-med); padding: 22px 16px;
+  box-shadow: var(--sombra-crema);
+  display: flex; flex-direction: column; align-items: center; gap: 9px;
+}
+.pv-vacio .ico { color: var(--tq-600); }
+.pv-vacio span { display: block; }
 .al-fecha { font-size:10.5px; color:var(--tinta-2); }
 
 .lista-alumnos, .lista-cobros { list-style: none; margin-top: 12px; display: grid; gap: 8px; }
@@ -729,14 +768,26 @@ html[data-tema="oscuro"] .avatar:not(.avatar-2):not(.avatar-3):not(.avatar-4):no
 .ficha-chip-ok { color: var(--verde); background: var(--verde-tinte); border-color: transparent; }
 
 /* ---- Ayudas contextuales (26-nov): ícono SVG sutil, sin «?» plano ---- */
-.ayuda { display: inline-flex; align-items: center; gap: 2px; }
+.ayuda { display: inline-flex; align-items: center; gap: 2px; vertical-align: middle; }
+/* Las ayudas que quedan son notas al pie, no globos junto al dato. */
+.ficha-cobro > .ayuda { display: block; margin-top: 8px; }
+/* Un solo bloque de cobro: el dato se lee de un vistazo, sin repetirse. */
+.ficha-cobro-bloque {
+  background: var(--bg); border: 1px solid var(--linea);
+  border-radius: var(--r-med); padding: 10px 12px;
+  box-shadow: var(--sombra-crema);
+}
+.ficha-cobro-bloque .ficha-chips { margin-bottom: 7px; }
+.ficha-cobro-bloque > p { font-size: 12.5px; line-height: 1.45; color: var(--tinta-2); }
+.ficha-cobro-bloque .ficha-cobro-estado { font-size: 13px; }
+.ficha-cobro-bloque .ficha-cobro-monto { font-size: 14px; }
 .ayuda-btn {
   position: relative;               /* ancla del ::before de área táctil */
   display: inline-grid; place-items: center;
   width: 22px; height: 22px;              /* discreto junto al texto, no compite */
   border-radius: 50%; overflow: visible;
   background: transparent; color: var(--tinta-2);
-  border: 1px solid var(--linea); font: 700 15px/1 system-ui, sans-serif;
+  border: 0; font: 700 15px/1 system-ui, sans-serif;
   vertical-align: middle; flex: none;
   transition: background var(--t-rapida) var(--ease), transform var(--t-rapida) var(--ease);
 }
@@ -745,16 +796,21 @@ html[data-tema="oscuro"] .avatar:not(.avatar-2):not(.avatar-3):not(.avatar-4):no
   inset: -11px; border-radius: 50%;
 }
 [data-tema="oscuro"] .ayuda-btn { color: var(--tinta-2); border-color: var(--linea); }
-.ayuda-btn:hover { background: var(--tq-100); color: var(--tq-700); border-color: var(--tq-100); }
+.ayuda-btn:hover { background: var(--tq-100); color: var(--tq-700); }
 .ayuda-btn:active { transform: scale(.9); }
 .ayuda-btn:focus-visible { outline: 2px solid var(--tq-600); outline-offset: 2px; }
 .ayuda-btn .ayuda-ico { width: 14px; height: 14px; stroke-width: 2; }
-.ayuda-btn[aria-expanded="true"] { background: var(--tq-100); color: var(--tq-700); border-color: var(--tq-100); }
+.ayuda-btn[aria-expanded="true"] { background: var(--tq-100); color: var(--tq-700); }
 .ayuda-texto {
   display: block; width: 100%; margin-top: 6px;
   color: var(--tinta-2); font-size: 12.5px; line-height: 1.45;
 }
 
+
+/* Jerarquía Hoy (26-nov): filas separadas por regla y hora con reloj SVG. */
+.hero-grupos .grupo + .grupo { border-top: 1px solid rgba(255,255,255,.2); border-top-left-radius: 0; border-top-right-radius: 0; margin-top: -2px; }
+.grupo-hora { display: inline-flex; align-items: center; gap: 5px; }
+.grupo-hora .ico { opacity: .82; }
 
 /* ---- WhatsApp con ícono SVG (A3): botón PRIMARIO estilo .btn-wa ---- */
 .ficha-accion-wa {
@@ -779,7 +835,9 @@ html[data-tema="oscuro"] .avatar:not(.avatar-2):not(.avatar-3):not(.avatar-4):no
 .ficha-acciones .ficha-accion-wa:active { transform: scale(.98); }
 [data-tema="oscuro"] .ficha-acciones .ficha-accion-wa { color: var(--bg); }
 @media (prefers-reduced-motion: reduce) {
-  .ayuda-btn, .ficha-acciones .ficha-accion-wa { transition: none; transform: none; }
+  .ayuda-btn, .ficha-acciones .ficha-accion-wa,
+  .mes-barra, .hero-grupos .grupo, .cobro-fila .cobro-vence { transition: none; transform: none; }
+  .anillo-etiqueta, .anillo-texto.cambia strong { animation: none; }
 }
 
 
@@ -805,15 +863,25 @@ html[data-tema="oscuro"] .avatar:not(.avatar-2):not(.avatar-3):not(.avatar-4):no
 .cobro-fila .cobro-row { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
 .cobro-fila .cobro-meta { font-size: 11px; color: var(--tinta-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .cobro-fila .cobro-vence {
-  display: inline-block; padding: 2px 7px; border-radius: 999px;
-  background: var(--bg); color: var(--tinta-2); font-weight: 700;
-  font-size: 11px; flex: none; font-variant-numeric: tabular-nums;
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 3px 8px; border: 1px solid var(--linea); border-radius: 999px;
+  background: var(--bg-alt); color: var(--tinta-2); font-weight: 700;
+  font-size: 10.5px; flex: none; font-variant-numeric: tabular-nums;
 }
-.cobro-fila .cobro-vence.vencido { background: var(--rosa-tinte); color: var(--rosa); }
-.cobro-fila .cobro-vence.pronto { background: var(--ambar-tinte); color: var(--ambar); }
+.cobro-fila .cobro-vence .ico { width: 9px; height: 9px; }
+.cobro-fila .cobro-vence.vencido { background: var(--rosa-tinte); border-color: transparent; color: var(--rosa); }
+.cobro-fila .cobro-vence.pronto { background: var(--ambar-tinte); border-color: transparent; color: var(--ambar); }
 .cobro-importe { display: flex; flex-direction: column; align-items: flex-end; flex: none; line-height: 1.15; }
 .cobro-importe b { font-size: 15px; font-weight: 800; color: var(--tinta); font-variant-numeric: tabular-nums; }
 .cobro-importe small { font-size: 10.5px; font-weight: 650; color: var(--tinta-2); }
+.cobro-importe .cobro-estado {
+  display: inline-flex; align-items: center; gap: 4px;
+  margin-top: 2px; padding: 2px 6px; border: 1px solid var(--linea);
+  border-radius: 999px; background: var(--bg-alt); font-size: 10px;
+}
+.cobro-importe .cobro-estado .ico { width: 8px; height: 8px; color: var(--tinta-2); }
+.cobro-importe .cobro-estado.pagado { border-color: transparent; background: var(--verde-tinte); color: var(--verde); }
+.cobro-importe .cobro-estado.pagado .ico { color: var(--verde); }
 .cobro-importe .cobro-sin-tarifa { font-size: 11px; max-width: 16ch; white-space: normal; text-align: right; color: var(--ambar); }
 .cobro-importe .pagado { color: var(--verde); }
 [data-tema="oscuro"] .cobro-fila .cobro-vence { background: var(--bg-alt); color: var(--tinta-2); }
@@ -1091,8 +1159,15 @@ html[data-tema="oscuro"] .cobro-fila .cobro-vence.pronto { background: var(--amb
   overscroll-behavior: contain; /* el dedo no sigue deslizando la página */
   -webkit-overflow-scrolling: touch;
   touch-action: pan-y;
+  /* Hallazgo 6 (revisión 28-nov): barra de scroll visible en el sheet.
+     `html`/`body` la ocultan; acá se vuelve a mostrar. */
+  scrollbar-width: thin;
+  scrollbar-color: var(--tq-300) transparent;
   animation: subirSheet var(--t-larga) var(--ease) both;
 }
+.sheet::-webkit-scrollbar { width: 5px; }
+.sheet::-webkit-scrollbar-thumb { background: var(--tq-300); border-radius: 999px; }
+.sheet::-webkit-scrollbar-track { background: transparent; }
 .sheet.cerrando { animation: bajarSheet var(--t-media) var(--ease) both; }
 /* Aviso «Clase cancelada»: sin velo oscuro y un poco más arriba, para no tapar
    la tarjeta de mensualidades de Hoy. Mismo radio, borde y estética premium. */
@@ -1260,6 +1335,98 @@ html[data-tema="oscuro"] .cobro-fila .cobro-vence.pronto { background: var(--amb
   color: var(--tq-300); text-decoration: underline;
 }
 
+/* =========================================================
+   FASE A — Frutiger Aero moderno (27/11). Aplicación de tokens.
+   Se sobreescriben superficialmente las reglas anteriores: no cambia
+   ningún texto, flujo ni color de estado; solo luz, profundidad,
+   motion coherente y targets táctiles. Todo con tokens de tokens.css.
+   ========================================================= */
+
+/* Capa base: el panel respira con una luz muy tenue arriba-izquierda. */
+html, body { background-image: radial-gradient(120% 70% at 50% -10%, rgba(168,222,217,.22), transparent 70%) !important; }
+[data-tema="oscuro"] html, [data-tema="oscuro"] body { background-image: radial-gradient(120% 70% at 50% -10%, rgba(79,209,197,.08), transparent 70%) !important; }
+
+/* Hero: luz superior + reflejo, borde luminoso, sombra turquesa difusa. */
+.hero {
+  background: var(--aero-hero);
+  border-color: var(--aero-cristal-borde);
+  box-shadow: var(--aero-brillo), var(--aero-sombra-3), var(--aero-sombra-color);
+}
+.hero-topo { background: var(--aero-hero-luz); }
+.grupo {
+  border-color: rgba(255,255,255,.24);
+  box-shadow: var(--aero-brillo), 0 6px 16px rgba(8,69,74,.12);
+  transition: transform var(--t-rapida) var(--ease), background var(--t-rapida) var(--ease), box-shadow var(--t-rapida) var(--ease);
+}
+.grupo:hover { background: rgba(255,255,255,.2); box-shadow: var(--aero-brillo), 0 8px 20px rgba(8,69,74,.18); }
+.chip-boton { min-height: 36px; box-shadow: var(--aero-brillo), 0 1px 3px rgba(8,69,74,.12); }
+.chip-boton.chip-cicla { animation: chip-ciclar 260ms var(--ease); }
+.chip-boton.chip-cicla .ico { animation: chip-ico 260ms var(--ease); }
+
+/* Cristal en superficies y tarjetas: brillo de borde + sombra en capas. */
+.kpi, .aviso, .aviso.vacio, .tira-dia, .clase, .cobro-tarjeta, .cobro-fila,
+.lista-alumnos li, .accion-clase, .dia-vacio, .linea-vacia, .grupo-vacio,
+.resumen-fecha, .confirmar-cambios-caja, .buscador {
+  background-image: var(--aero-cristal);
+  box-shadow: var(--aero-brillo), var(--aero-sombra-1);
+}
+.kpi:hover, .clase:hover, .cobro-tarjeta:hover, .accion-clase:hover {
+  box-shadow: var(--aero-brillo), var(--aero-sombra-2), var(--aero-sombra-color);
+}
+.kpi, .aviso, .tira-dia, .clase, .cobro-tarjeta, .accion-clase, .buscador { border-color: var(--aero-cristal-borde); }
+.aviso { background-color: var(--ambar-suave-tinte); }
+.aviso.vacio { background-color: var(--tq-50); }
+.link-suave { min-height: var(--aero-target); box-shadow: var(--aero-brillo), var(--aero-sombra-1); }
+.tabbar {
+  background: linear-gradient(180deg, #FFFFFF 0%, #FAFDFC 100%);
+  box-shadow: var(--aero-brillo), 0 10px 30px rgba(8,69,74,.16), 0 2px 8px rgba(11,107,106,.08);
+}
+[data-tema="oscuro"] .tabbar { background: linear-gradient(180deg, #1A2D31 0%, #16272B 100%); }
+[data-tema="oscuro"] .aviso { background-color: var(--ambar-suave-tinte); }
+
+/* Botones y acciones con bisel sutil (no degradados chillones). */
+.btn-primario, .btn-secundario, .marcar, .dia-agendar, .cobros-modo,
+.f-chip, .tema-toggle, .campana, .flecha, .link-suave {
+  box-shadow: var(--aero-brillo), var(--aero-sombra-1);
+}
+.btn-primario { background-image: var(--aero-boton); border: 0; min-height: var(--aero-target); }
+.btn-primario:hover { background-image: var(--aero-boton); box-shadow: var(--aero-brillo), var(--aero-sombra-2), var(--aero-sombra-color); }
+.btn-primario.cobros-anular { background-image: linear-gradient(180deg, #A04460 0%, var(--rosa) 100%); }
+.btn-primario.cobros-anular:hover { background-image: linear-gradient(180deg, #A04460 0%, #7C2C47 100%); }
+.btn-secundario { min-height: var(--aero-target); }
+.fab { min-height: var(--aero-target); box-shadow: var(--aero-brillo), var(--aero-sombra-3), var(--aero-sombra-color); }
+.fab:hover { box-shadow: var(--aero-brillo), var(--aero-sombra-3), 0 14px 30px rgba(8,69,74,.36); }
+
+/* Targets táctiles ≥44px sin agrandar la forma visual de chips ni flechas:
+   el área se da con min-height / padding invisible y se conserva el dibujo. */
+.marcar, .dia-agendar, .cobros-modo, .flecha, .tema-toggle, .campana,
+.f-chip, .link-suave, .btn-primario, .btn-secundario, .fab { min-height: var(--aero-target); }
+.tab { min-height: var(--aero-target); }
+.chip-boton { position: relative; }
+.chip-boton::after { content: ""; position: absolute; left: 0; right: 0; top: 50%; height: var(--aero-target); transform: translateY(-50%); }
+.campo input, .campo select, .fecha-elegir select, .buscador input { min-height: var(--aero-target); }
+
+/* Bottom sheet y diálogo: cristal elevado con luz superior. */
+.sheet {
+  background: var(--aero-cristal);
+  border-color: var(--aero-cristal-borde);
+  box-shadow: 0 0 0 100vmax rgb(14 27 30 / 28%), var(--aero-brillo), 0 -10px 30px rgba(8,69,74,.16), var(--aero-sombra-3);
+}
+.sheet.aviso-cancelada { box-shadow: var(--aero-brillo), 0 -10px 30px rgba(8,69,74,.16), var(--aero-sombra-2); }
+.confirmar-cambios-caja { background: var(--aero-cristal); box-shadow: var(--aero-brillo), var(--aero-sombra-3); }
+
+/* Foco visible con halo: mismo lenguaje en todos los controles. */
+:where(button, a, summary, input, select, [tabindex]):focus-visible {
+  outline: 2px solid var(--tq-700); outline-offset: 2px;
+  box-shadow: var(--aero-foco); border-radius: 6px;
+}
+
+/* Motion coherente (150–320ms) con el easing único; sin tocar lógica JS. */
+.anillo-valor { animation: llenar var(--t-larga) var(--ease) 260ms forwards; }
+.anillo-texto.cambia strong { animation: anillo-num 320ms var(--ease); }
+.sheet.rebotando { transition: transform var(--t-larga) var(--ease), opacity var(--t-larga) var(--ease) !important; }
+.sheet.saliendo { transition: transform var(--t-media) var(--ease), opacity var(--t-media) var(--ease) !important; }
+
 /* ---------- Movimiento reducido ---------- */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
@@ -1342,10 +1509,11 @@ html[data-tema="oscuro"] .cobro-fila .cobro-vence.pronto { background: var(--amb
 /* ---------- Agenda semanal de Cobros (26/11) ----------
    Misma tira y línea de tiempo que Clases; las tarjetas son de ALUMNO
    (avatar, grupo, monto, estado), nunca de clase. */
-.cobros-modos { display: flex; gap: 6px; margin: 2px 2px 11px; }
+/* Fila propia del selector (27/11): no se aprieta con la tira semanal. */
+.cobros-modos { display: flex; flex-wrap: wrap; gap: 6px; margin: 2px 2px 11px; }
 .cobros-modo {
-  flex: 1; border: 1px solid var(--borde-crema); background: var(--bg-alt);
-  color: var(--tinta-2); border-radius: 999px; padding: 8px 12px;
+  flex: 0 0 auto; border: 1px solid var(--borde-crema); background: var(--bg-alt);
+  color: var(--tinta-2); border-radius: 999px; padding: 8px 14px;
   font: inherit; font-size: 12.5px; font-weight: 700; cursor: pointer;
   transition: background var(--t-rapida) var(--ease), transform var(--t-rapida) var(--ease);
 }
@@ -1354,9 +1522,56 @@ html[data-tema="oscuro"] .cobro-fila .cobro-vence.pronto { background: var(--amb
 .cobros-modo:focus-visible { outline: 2px solid var(--tq-600); outline-offset: 2px; }
 .cobros-modo.activo { background: var(--tq-600); border-color: var(--tq-600); color: #fff; }
 [data-tema="oscuro"] .cobros-modo.activo { background: var(--tq-900); border-color: var(--tq-900); }
-.cobros-titulo-semana h2 { font-size: 15.5px; }
+.cobros-titulo-semana h2, .cobros-titulo-mes h2 { font-size: 15.5px; }
+
+/* Leyenda de estados (27/11): fila propia, sin apretarse a 430px. */
+.cobros-leyenda {
+  display: flex; flex-wrap: wrap; gap: 6px 14px;
+  margin-top: 12px; padding: 8px 10px;
+  background: var(--bg-alt); border: 1px solid var(--linea);
+  border-radius: 12px;
+}
+.cobros-leyenda-item {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 11.5px; font-weight: 650; color: var(--tinta-2);
+  white-space: nowrap;
+}
+.cobros-leyenda-item .ico { flex: 0 0 auto; }
+.cobros-leyenda-item.vencido { color: var(--rosa); }
+.cobros-leyenda-item.hoy { color: var(--ambar); }
+.cobros-leyenda-item.porvencer { color: var(--tq-700); }
+.cobros-leyenda-item.pagado { color: var(--verde); }
+[data-tema="oscuro"] .cobros-leyenda-item.vencido { color: var(--rosa-pastel); }
+[data-tema="oscuro"] .cobros-leyenda-item.hoy { color: var(--ambar-pastel); }
+[data-tema="oscuro"] .cobros-leyenda-item.porvencer { color: var(--tq-700); }
+[data-tema="oscuro"] .cobros-leyenda-item.pagado { color: #9FE3C0; }
 .tira-dia.vencido b::after { background: var(--rosa); }
 .tira-dia.tiene b::after { background: var(--ambar); }
+
+/* Calendario mensual de Cobros (27/11): mismo grid que Agenda, con punto
+   de estado — 1 vs varios vencimientos y los 4 estados de la lista. */
+.mes-cobros { margin-top: 4px; }
+.mes-cobros .mes-dia { position: relative; }
+.mes-cobros .mes-dia.fuera { color: var(--tinta-suave); opacity: .55; }
+.mes-cobros .mes-dia.fuera .mes-punto { opacity: .5; }
+.mes-punto {
+  position: absolute; bottom: 5px; left: 50%; transform: translateX(-50%);
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--tq-500);
+  transition: width var(--t-rapida) var(--ease), height var(--t-rapida) var(--ease),
+    background var(--t-rapida) var(--ease);
+}
+/* Uno vs varios: el punto se estira cuando hay más de un vencimiento. */
+.mes-cobros .mes-dia.varios .mes-punto { width: 16px; border-radius: 999px; }
+.mes-cobros .mes-dia.cobro-vencido .mes-punto { background: var(--rosa); }
+.mes-cobros .mes-dia.cobro-hoy .mes-punto { background: var(--ambar); }
+.mes-cobros .mes-dia.cobro-porvencer .mes-punto { background: var(--tq-600); }
+.mes-cobros .mes-dia.cobro-pagado .mes-punto { background: var(--verde); }
+[data-tema="oscuro"] .mes-cobros .mes-dia.cobro-vencido .mes-punto { background: var(--rosa-pastel); }
+[data-tema="oscuro"] .mes-cobros .mes-dia.cobro-hoy .mes-punto { background: var(--ambar-pastel); }
+[data-tema="oscuro"] .mes-cobros .mes-dia.cobro-pagado .mes-punto { background: #9FE3C0; }
+[data-tema="oscuro"] .mes-cobros .mes-dia.fuera { color: var(--tinta-suave); opacity: .5; }
+.mes-cobros .mes-dia.seleccionado .mes-punto { box-shadow: 0 0 0 3px var(--tq-100); }
 .linea-cobros { margin-top: 15px; }
 .cobro-tarjetas { list-style: none; display: grid; gap: 8px; }
 .cobro-tarjeta {
@@ -1381,9 +1596,26 @@ html[data-tema="oscuro"] .cobro-fila .cobro-vence.pronto { background: var(--amb
 .cobro-tarjeta.pagado { border-left-color: var(--verde); }
 .cobro-tarjeta.pagado .cobro-tarjeta-estado { background: var(--verde-tinte); color: var(--verde); }
 .cobro-tarjeta .ico { flex: none; color: var(--tinta-2); }
-.cobro-dia-vacio { font-size: 11.5px; color: var(--tinta-2); margin-left: 14px; }
-[data-tema="oscuro"] .cobro-tarjeta.vencido .cobro-tarjeta-estado { color: var(--rosa-pastel); }
-[data-tema="oscuro"] .cobro-tarjeta.pagado .cobro-tarjeta-estado { color: var(--verde-tinte); }
+.cobro-dia-vacio {
+  font-size: 12px; color: var(--tinta-2); margin-left: 14px;
+  background: var(--bg-alt); border: 1px dashed var(--borde-crema);
+  border-radius: var(--r-med); padding: 11px 14px;
+  box-shadow: var(--sombra-crema);
+  display: flex; align-items: center; justify-content: center; gap: 7px;
+}
+.cobro-dia-vacio .ico { color: var(--tq-600); flex: none; }
+/* Hallazgo 2 (revisión 28-nov): en oscuro los chips «Mensual», «Por vencer» e
+   «Individual» sin override bajaban de AA (2.4:1, 2.3:1, 3.4:1). Mismo criterio
+   que ya se usa en «pronto»/«vencido»: fondo oscuro del tema + tinta pastel
+   legible. Ojo: `--ambar-tinte` NO se redefine en oscuro (queda #FCE5D2, claro),
+   así que el chip de «por vencer» usa `--ambar-suave-tinte` (#3A3020). */
+[data-tema="oscuro"] .cobro-tarjeta-estado { background: var(--ambar-suave-tinte); color: var(--ambar-pastel); }
+[data-tema="oscuro"] .cobro-tarjeta.vencido .cobro-tarjeta-estado { background: var(--rosa-tinte); color: var(--rosa-pastel); }
+[data-tema="oscuro"] .cobro-tarjeta.hoy .cobro-tarjeta-estado { background: var(--ambar-suave-tinte); color: var(--ambar-pastel); }
+[data-tema="oscuro"] .cobro-tarjeta.pagado .cobro-tarjeta-estado { background: var(--verde-tinte); color: #9FE3C0; }
+[data-tema="oscuro"] .mes-modalidades .chip-mod { background: var(--lila-tinte); color: #C9B6E8; }
+[data-tema="oscuro"] .mes-modalidades .chip-mod.individual { background: var(--azul-tinte); color: #A8CDEA; }
+[data-tema="oscuro"] .cobro-fila .cobro-vence:not(.vencido):not(.pronto) { color: var(--tq-100); }
 
 /* Fila de dos campos (hora + duración). */
 .campo-duo { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
