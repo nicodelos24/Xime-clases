@@ -14,8 +14,8 @@
   .vista.activa { display: block; }
 </style>
 <noscript><style>#v-mes, #v-semana, #v-alumnos, #v-cobros { display: none !important; }</style></noscript>
-<link rel="stylesheet" href="tokens.css?v=202611280246">
-<link rel="stylesheet" href="propuesta.css?v=202611280246">
+<link rel="stylesheet" href="tokens.css?v=202611280542">
+<link rel="stylesheet" href="propuesta.css?v=202611280542">
 </head>
 <body>
 <p class="marca">XIME CLASES · V5</p>
@@ -249,7 +249,8 @@
       </div>
       <div class="cobros-modos" role="group" aria-label="Vista de cobros">
         <button class="cobros-modo activo" data-modo="lista" type="button" aria-pressed="true">Lista</button>
-        <button class="cobros-modo" data-modo="calendario" type="button" aria-pressed="false">Calendario</button>
+        <button class="cobros-modo" data-modo="semana" type="button" aria-pressed="false">Semana</button>
+        <button class="cobros-modo" data-modo="mes" type="button" aria-pressed="false">Mes</button>
       </div>
       <div class="kpis kpis-cobros">
         <article class="kpi kpi-cobrado">
@@ -273,6 +274,19 @@
         </div>
         <div class="tira tira-cobros" id="tira-cobros" role="group" aria-label="Días de la semana"></div>
         <ol class="linea linea-cobros" id="linea-cobros"></ol>
+        <div class="cobros-leyenda" id="cobros-leyenda" aria-label="Estados de cobro"></div>
+      </div>
+      <div id="v-cobros-mes" hidden>
+        <div class="agenda-titulo cobros-titulo-mes">
+          <div class="mes-titulo-nav">
+            <button class="flecha" id="cobros-mes-anterior" type="button" aria-label="Mes anterior"><svg class="ico" width="20" height="20" aria-hidden="true"><use href="#i-izq"/></svg></button>
+            <h2></h2>
+            <button class="flecha" id="cobros-mes-siguiente" type="button" aria-label="Mes siguiente"><svg class="ico" width="20" height="20" aria-hidden="true"><use href="#i-der"/></svg></button>
+          </div>
+        </div>
+        <div class="mes mes-cobros" id="mes-cobros" role="grid" aria-label="Vencimientos del mes"></div>
+        <div class="cobros-leyenda" id="cobros-leyenda-mes" aria-label="Estados de cobro"></div>
+        <ol class="linea linea-cobros" id="linea-cobros-mes"></ol>
       </div>
       <div id="v-cobros-lista">
       <div class="filtros" id="filtros-cobros" role="group" aria-label="Filtrar y ordenar cobros">
@@ -330,7 +344,7 @@
     });
   })();
 </script>
-<script src="icons.js?v=202611280246"></script>
-<script type="module" src="propuesta.js?v=202611280246"></script>
+<script src="icons.js?v=202611280542"></script>
+<script type="module" src="propuesta.js?v=202611280542"></script>
 </body>
 </html>

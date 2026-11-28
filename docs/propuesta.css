@@ -1365,10 +1365,11 @@ html[data-tema="oscuro"] .cobro-fila .cobro-vence.pronto { background: var(--amb
 /* ---------- Agenda semanal de Cobros (26/11) ----------
    Misma tira y línea de tiempo que Clases; las tarjetas son de ALUMNO
    (avatar, grupo, monto, estado), nunca de clase. */
-.cobros-modos { display: flex; gap: 6px; margin: 2px 2px 11px; }
+/* Fila propia del selector (27/11): no se aprieta con la tira semanal. */
+.cobros-modos { display: flex; flex-wrap: wrap; gap: 6px; margin: 2px 2px 11px; }
 .cobros-modo {
-  flex: 1; border: 1px solid var(--borde-crema); background: var(--bg-alt);
-  color: var(--tinta-2); border-radius: 999px; padding: 8px 12px;
+  flex: 0 0 auto; border: 1px solid var(--borde-crema); background: var(--bg-alt);
+  color: var(--tinta-2); border-radius: 999px; padding: 8px 14px;
   font: inherit; font-size: 12.5px; font-weight: 700; cursor: pointer;
   transition: background var(--t-rapida) var(--ease), transform var(--t-rapida) var(--ease);
 }
@@ -1377,9 +1378,56 @@ html[data-tema="oscuro"] .cobro-fila .cobro-vence.pronto { background: var(--amb
 .cobros-modo:focus-visible { outline: 2px solid var(--tq-600); outline-offset: 2px; }
 .cobros-modo.activo { background: var(--tq-600); border-color: var(--tq-600); color: #fff; }
 [data-tema="oscuro"] .cobros-modo.activo { background: var(--tq-900); border-color: var(--tq-900); }
-.cobros-titulo-semana h2 { font-size: 15.5px; }
+.cobros-titulo-semana h2, .cobros-titulo-mes h2 { font-size: 15.5px; }
+
+/* Leyenda de estados (27/11): fila propia, sin apretarse a 430px. */
+.cobros-leyenda {
+  display: flex; flex-wrap: wrap; gap: 6px 14px;
+  margin-top: 12px; padding: 8px 10px;
+  background: var(--bg-alt); border: 1px solid var(--linea);
+  border-radius: 12px;
+}
+.cobros-leyenda-item {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 11.5px; font-weight: 650; color: var(--tinta-2);
+  white-space: nowrap;
+}
+.cobros-leyenda-item .ico { flex: 0 0 auto; }
+.cobros-leyenda-item.vencido { color: var(--rosa); }
+.cobros-leyenda-item.hoy { color: var(--ambar); }
+.cobros-leyenda-item.porvencer { color: var(--tq-700); }
+.cobros-leyenda-item.pagado { color: var(--verde); }
+[data-tema="oscuro"] .cobros-leyenda-item.vencido { color: var(--rosa-pastel); }
+[data-tema="oscuro"] .cobros-leyenda-item.hoy { color: var(--ambar-pastel); }
+[data-tema="oscuro"] .cobros-leyenda-item.porvencer { color: var(--tq-700); }
+[data-tema="oscuro"] .cobros-leyenda-item.pagado { color: #9FE3C0; }
 .tira-dia.vencido b::after { background: var(--rosa); }
 .tira-dia.tiene b::after { background: var(--ambar); }
+
+/* Calendario mensual de Cobros (27/11): mismo grid que Agenda, con punto
+   de estado — 1 vs varios vencimientos y los 4 estados de la lista. */
+.mes-cobros { margin-top: 4px; }
+.mes-cobros .mes-dia { position: relative; }
+.mes-cobros .mes-dia.fuera { color: var(--tinta-suave); opacity: .55; }
+.mes-cobros .mes-dia.fuera .mes-punto { opacity: .5; }
+.mes-punto {
+  position: absolute; bottom: 5px; left: 50%; transform: translateX(-50%);
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--tq-500);
+  transition: width var(--t-rapida) var(--ease), height var(--t-rapida) var(--ease),
+    background var(--t-rapida) var(--ease);
+}
+/* Uno vs varios: el punto se estira cuando hay más de un vencimiento. */
+.mes-cobros .mes-dia.varios .mes-punto { width: 16px; border-radius: 999px; }
+.mes-cobros .mes-dia.cobro-vencido .mes-punto { background: var(--rosa); }
+.mes-cobros .mes-dia.cobro-hoy .mes-punto { background: var(--ambar); }
+.mes-cobros .mes-dia.cobro-porvencer .mes-punto { background: var(--tq-600); }
+.mes-cobros .mes-dia.cobro-pagado .mes-punto { background: var(--verde); }
+[data-tema="oscuro"] .mes-cobros .mes-dia.cobro-vencido .mes-punto { background: var(--rosa-pastel); }
+[data-tema="oscuro"] .mes-cobros .mes-dia.cobro-hoy .mes-punto { background: var(--ambar-pastel); }
+[data-tema="oscuro"] .mes-cobros .mes-dia.cobro-pagado .mes-punto { background: #9FE3C0; }
+[data-tema="oscuro"] .mes-cobros .mes-dia.fuera { color: var(--tinta-suave); opacity: .5; }
+.mes-cobros .mes-dia.seleccionado .mes-punto { box-shadow: 0 0 0 3px var(--tq-100); }
 .linea-cobros { margin-top: 15px; }
 .cobro-tarjetas { list-style: none; display: grid; gap: 8px; }
 .cobro-tarjeta {

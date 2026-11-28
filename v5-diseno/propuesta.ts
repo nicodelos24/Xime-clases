@@ -1931,7 +1931,7 @@ function pintarAlumnos(): void {
           ${avatarAlumno(a.nombre, a.id, a.foto, 38, a.apellido)}<div><p class="al-nombre">${esc(nombreCompleto(a))}</p>${alumnoSub(a)}</div><span class="punto ${punto}"></span>
         </button></li>`;
       }).join('')
-    : `<p class="pv-vacio">${todas.length === 0 ? 'Todavía no hay alumnos. Tocá «Nuevo alumno» para cargar el primero.' : 'Ningún alumno con estos filtros'}</p>`;
+    : `<p class="pv-vacio"><svg class="ico" width="20" height="20" aria-hidden="true"><use href="#i-alumnos"></svg><span>${todas.length === 0 ? 'Todavía no hay alumnos. Tocá «Nuevo alumno» para cargar el primero.' : 'Ningún alumno con estos filtros'}</span></p>`;
   lista.querySelectorAll<HTMLButtonElement>('[data-ficha]').forEach((b) => {
     b.addEventListener('click', () => abrirFichaConCobro(repo.listarAlumnos().find((f) => f.id === b.dataset.ficha) ?? null, b));
   });
@@ -2369,6 +2369,173 @@ function filasAgendaCobros(r: ReturnType<typeof verCobros>): FilaAgendaCobro[] {
     || (estadoCobros === 'pagado' ? f.estado === 'pagado' : f.estado !== 'pagado'));
 }
 
+/** Semana o mes mirados en Cobros; el mes es «AAAA-MM-01» como en Agenda. */
+type ModoAgendaCobros = 'lista' | 'semana' | 'mes';
+let modoAgendaCobros: ModoAgendaCobros = 'lista';
+let mesCobros: string | null = null;
+let diaMesCobros: string | null = null;
+
+const etiquetaEstadoCobro: Record<FilaAgendaCobro['estado'], string> = {
+  vencido: 'Vencido', hoy: 'Vence hoy', porvencer: 'Por vencer', pagado: 'Pagado',
+};
+/** Estado predominante del día para el punto: lo que falta manda sobre lo cobrado. */
+function estadoPuntoCobros(cobros: readonly FilaAgendaCobro[]): FilaAgendaCobro['estado'] | null {
+  if (!cobros.length) return null;
+  const pendientes = cobros.filter((c) => c.estado !== 'pagado');
+  const conjunto = pendientes.length ? pendientes : cobros;
+  if (conjunto.some((c) => c.estado === 'vencido')) return 'vencido';
+  if (conjunto.some((c) => c.estado === 'hoy')) return 'hoy';
+  if (conjunto.some((c) => c.estado === 'porvencer')) return 'porvencer';
+  return 'pagado';
+}
+
+/**
+ * Leyenda de los cuatro estados: mismo criterio que la tira semanal y la
+ * lista. Se pinta una sola vez (llamada desde pintarCobros).
+ */
+function pintarLeyendaCobros(): void {
+  const items = (Object.keys(etiquetaEstadoCobro) as FilaAgendaCobro['estado'][]).map((estado) =>
+    `<span class="cobros-leyenda-item ${estado}"><svg class="ico" width="10" height="10" aria-hidden="true"><use href="#i-punto-lleno"/></svg>${etiquetaEstadoCobro[estado]}</span>`);
+  for (const id of ['cobros-leyenda', 'cobros-leyenda-mes']) {
+    const caja = $(`#${id}`);
+    if (caja) caja.innerHTML = items.join('');
+  }
+}
+
+/** Primer día del mes abierto en Cobros (misma regla que el almanaque de Agenda). */
+function primerDiaMesCobros(delta: number): string {
+  const base = mesCobros ?? (mesDe(hoyLocal(reloj.ahora())) + '-01');
+  return primerDiaDeMes(base, delta);
+}
+
+/**
+ * Panel del día: toma el día elegido, o el PRÓXIMO vencimiento si no hay
+ * ninguno elegido — así el panel arranca en lo que toca cobrar.
+ */
+function proximoVencimientoCobros(filas: readonly FilaAgendaCobro[], desde: string): string | null {
+  const futuros = filas
+    .filter((f) => f.fecha >= desde)
+    .sort((a, b) => a.fecha.localeCompare(b.fecha));
+  return futuros[0]?.fecha ?? null;
+}
+
+/** Calendario mensual de Cobros: punto por día con 1 vs varios y 4 estados. */
+function pintarMesCobros(): void {
+  const hoy = hoyLocal(reloj.ahora());
+  const primero = primerDiaMesCobros(0);
+  const { y, m } = parseFecha(primero);
+  const filas = filasAgendaCobros(verCobros());
+  const porFecha = new Map<string, FilaAgendaCobro[]>();
+  for (const f of filas) {
+    const lista = porFecha.get(f.fecha) ?? [];
+    lista.push(f);
+    porFecha.set(f.fecha, lista);
+  }
+  const h2 = $('#v-cobros-mes .cobros-titulo-mes h2') as HTMLElement | null;
+  if (h2) {
+    h2.textContent = etiquetaMes(primero);
+    h2.setAttribute('aria-label', etiquetaMes(primero));
+  }
+  const caja = $('#mes-cobros');
+  if (caja) {
+    const dow = ['LU', 'MA', 'MI', 'JU', 'VI', 'SÁ', 'DO']
+      .map((d) => `<p class="mes-dow">${d}</p>`).join('');
+    const primerLunes = lunesDe(primero);
+    const celdas = Array.from({ length: 42 }, (_, i) => sumarDias(primerLunes, i)).map((f) => {
+      const p = parseFecha(f);
+      const fuera = p.y !== y || p.m !== m;
+      const cobros = porFecha.get(f) ?? [];
+      const estado = estadoPuntoCobros(cobros);
+      const clase = [
+        'mes-dia',
+        fuera ? 'fuera' : '',
+        f === hoy ? 'activo' : '',
+        f === diaMesCobros ? 'seleccionado' : '',
+        estado ? `tiene cobro-${estado}` : '',
+        cobros.length > 1 ? 'varios' : '',
+      ].filter(Boolean).join(' ');
+      const puntos = cobros.length
+        ? `<i class="mes-punto mes-punto-${estado}" aria-hidden="true"></i>`
+        : '';
+      const etiqueta = cobros.length
+        ? `${cobros.length} ${cobros.length === 1 ? 'vencimiento' : 'vencimientos'}: ${cobros.map((c) => etiquetaEstadoCobro[c.estado]).join(', ')}`
+        : 'Sin vencimientos';
+      return `<button class="${clase}" type="button" data-fecha="${f}"${fuera ? ' tabindex="-1" aria-hidden="true"' : ''}
+        aria-label="${esc(etiquetaDiaCompleta(f))}: ${esc(etiqueta)}">${p.d}${puntos}</button>`;
+    }).join('');
+    caja.innerHTML = dow + celdas;
+    caja.querySelectorAll<HTMLButtonElement>('.mes-dia').forEach((b) => b.addEventListener('click', () => {
+      const f = b.dataset.fecha as string;
+      const p = parseFecha(f);
+      // Un día de la otra fila de mes cambia el mes abierto, como en Agenda.
+      if (p.y !== y || p.m !== m) {
+        mesCobros = `${String(p.y).padStart(4, '0')}-${String(p.m).padStart(2, '0')}-01`;
+      }
+      diaMesCobros = f;
+      pintarMesCobros();
+    }));
+  }
+  const elegido = diaMesCobros ?? proximoVencimientoCobros(filas, hoy) ?? hoy;
+  diaMesCobros = elegido;
+  pintarLineaCobrosMes(filas, elegido);
+}
+
+/** Panel del día en la vista mes: tarjetas de alumno, como la semanal. */
+function pintarLineaCobrosMes(filas: readonly FilaAgendaCobro[], elegido: string): void {
+  const linea = $('#linea-cobros-mes');
+  if (!linea) return;
+  const hoy = hoyLocal(reloj.ahora());
+  const porFecha = new Map<string, FilaAgendaCobro[]>();
+  for (const f of filas) {
+    if (f.fecha < primerDiaMesCobros(0)) continue;
+    const lista = porFecha.get(f.fecha) ?? [];
+    lista.push(f);
+    porFecha.set(f.fecha, lista);
+  }
+  const fechas = [...porFecha.keys()].sort();
+  const orden = fechas.includes(elegido)
+    ? [elegido, ...fechas.filter((f) => f !== elegido)]
+    : fechas;
+  const tarjetas = (fecha: string) => (porFecha.get(fecha) ?? []).map((c) => {
+    const ficha = repo.listarAlumnos().find((f) => f.id === c.alumno.id) ?? null;
+    const nomCobro = ficha ? nombreCompleto(ficha) : c.alumno.nombre;
+    const avatar = avatarAlumno(c.alumno.nombre, ficha?.id ?? c.alumno.id, ficha?.foto, 30, ficha?.apellido);
+    const monto = ficha ? (precio(ficha, ficha.formaPago === 'por-clase' ? 'clase-individual' : 'mensualidad', fecha) ?? 0) : 0;
+    const etiqueta = etiquetaEstadoCobro[c.estado];
+    return `<li>
+      <button type="button" class="cobro-tarjeta ${c.estado}" data-cobro="${esc(c.alumno.id)}" aria-haspopup="dialog"
+        aria-label="${esc(nomCobro)}, ${uyu(monto)}, ${etiqueta} el ${esc(fechaCorta(fecha))}">
+        ${avatar}
+        <span class="cobro-tarjeta-datos">
+          <span class="al-nombre">${esc(nomCobro)}</span>
+          <span class="cobro-meta">${esc(ficha?.grupo ? `Grupo ${ficha.grupo} · ` : '')}${uyu(monto)}</span>
+        </span>
+        <span class="cobro-tarjeta-estado">${etiqueta}</span>
+        <svg class="ico" width="13" height="13" aria-hidden="true"><use href="#i-der"/></svg>
+      </button>
+    </li>`;
+  }).join('');
+  const bloques = (fecha: string) => {
+    const etiqueta = `${etiquetaDia(fecha)}${fecha === hoy ? ' · hoy' : ''}`;
+    const cobros = porFecha.get(fecha) ?? [];
+    return `<li class="linea-dia">
+      <p class="linea-fecha">${esc(etiqueta)}</p>
+      ${cobros.length ? `<ul class="cobro-tarjetas">${tarjetas(fecha)}</ul>`
+        : '<p class="cobro-dia-vacio"><svg class="ico" width="14" height="14" aria-hidden="true"><use href="#i-cobros"></svg>Sin vencimientos</p>'}
+    </li>`;
+  };
+  // El día elegido primero; el resto del mes le sigue, como en la semanal.
+  const elegidoIdx = orden.indexOf(elegido);
+  const conElegido = elegidoIdx >= 0
+    ? [elegido, ...orden.filter((f) => f !== elegido)]
+    : [elegido, ...orden];
+  linea.innerHTML = conElegido.map(bloques).join('');
+  linea.querySelectorAll<HTMLButtonElement>('[data-cobro]').forEach((b) => b.addEventListener('click', () => {
+    const ficha = repo.listarAlumnos().find((f) => f.id === b.dataset.cobro) ?? null;
+    abrirFichaConCobro(ficha, b);
+  }));
+}
+
 /** Agenda semanal de Cobros: tarjetas de ALUMNO por día de vencimiento. */
 function pintarAgendaCobros(): void {
   const hoy = hoyLocal(reloj.ahora());
@@ -2540,9 +2707,9 @@ function pintarCobros() {
   const total = r.filas.length + filasIndividuales.length;
   const filtroActivo = estadoCobros !== 'todos';
   if (visibles === 0 && total > 0 && filtroActivo) {
-    listaCobros.innerHTML = `<li><p class="pv-vacio">Ningún cobro con este filtro</p></li>`;
+    listaCobros.innerHTML = `<li><p class="pv-vacio"><svg class="ico" width="20" height="20" aria-hidden="true"><use href="#i-cobros"></svg><span>Ningún cobro con este filtro</span></p></li>`;
   } else if (total === 0) {
-    listaCobros.innerHTML = `<li><p class="pv-vacio">Todavía no hay alumnos que cobrar</p></li>`;
+    listaCobros.innerHTML = `<li><p class="pv-vacio"><svg class="ico" width="20" height="20" aria-hidden="true"><use href="#i-cobros"></svg><span>Todavía no hay alumnos que cobrar</span></p></li>`;
   }
   // Chips: marca el estado y el orden elegidos; «Todos» activo solo si no hay
   // filtro. El texto del chip muestra cuántas filas hay con el filtro.
@@ -2562,25 +2729,31 @@ function pintarCobros() {
   const debo = r.filas.filter((f) => !f.pago && f.dias <= 7).length + filasIndividuales.filter((f) => !f.pago).length;
   const chipDeben = $('#filtros-cobros [data-estado="deben"] .n');
   if (chipDeben) chipDeben.textContent = debo ? String(debo) : '';
-  pintarAgendaCobros();
+  pintarLeyendaCobros();
+  if (modoAgendaCobros === 'semana') pintarAgendaCobros();
+  else if (modoAgendaCobros === 'mes') pintarMesCobros();
 }
 
-/* Modo Lista / Calendario dentro de Cobros (pedido de Nico 26/11). */
-function aplicarModoCobros(modo: 'lista' | 'calendario'): void {
+/* Modo Lista / Semana / Mes dentro de Cobros (pedido de Nico 26/11 y 27/11). */
+function aplicarModoCobros(modo: ModoAgendaCobros): void {
+  modoAgendaCobros = modo;
   const lista = $('#v-cobros-lista') as HTMLElement | null;
   const agenda = $('#v-cobros-calendario') as HTMLElement | null;
+  const mes = $('#v-cobros-mes') as HTMLElement | null;
   if (lista) lista.hidden = modo !== 'lista';
-  if (agenda) agenda.hidden = modo !== 'calendario';
+  if (agenda) agenda.hidden = modo !== 'semana';
+  if (mes) mes.hidden = modo !== 'mes';
   $$('#v-cobros .cobros-modo').forEach((b) => {
     const on = (b as HTMLElement).dataset.modo === modo;
     b.classList.toggle('activo', on);
     b.setAttribute('aria-pressed', String(on));
   });
-  if (modo === 'calendario') pintarAgendaCobros();
+  if (modo === 'semana') pintarAgendaCobros();
+  if (modo === 'mes') pintarMesCobros();
   actualizarPistaCobros();
 }
 $$('#v-cobros .cobros-modo').forEach((b) => b.addEventListener('click', () => {
-  aplicarModoCobros((b as HTMLElement).dataset.modo as 'lista' | 'calendario');
+  aplicarModoCobros((b as HTMLElement).dataset.modo as ModoAgendaCobros);
 }));
 $('#cobros-semana-anterior')?.addEventListener('click', () => {
   const lunes = lunesCobros ?? lunesDe(hoyLocal(reloj.ahora()));
@@ -2593,6 +2766,16 @@ $('#cobros-semana-siguiente')?.addEventListener('click', () => {
   lunesCobros = sumarDias(lunes, 7);
   diaCobrosSeleccionado = null;
   pintarAgendaCobros();
+});
+$('#cobros-mes-anterior')?.addEventListener('click', () => {
+  mesCobros = primerDiaMesCobros(-1);
+  diaMesCobros = null;
+  pintarMesCobros();
+});
+$('#cobros-mes-siguiente')?.addEventListener('click', () => {
+  mesCobros = primerDiaMesCobros(1);
+  diaMesCobros = null;
+  pintarMesCobros();
 });
 
 /* Filtro y orden de Cobros (rediseño 23-nov, B6): mismos chips que Alumnos,
@@ -3443,6 +3626,8 @@ setInterval(() => {
     diaCobros = hoy;
     lunesCobros = null;
     diaCobrosSeleccionado = null;
+    mesCobros = null;
+    diaMesCobros = null;
     pintarCobros();
     pintarAlumnos();
   }
