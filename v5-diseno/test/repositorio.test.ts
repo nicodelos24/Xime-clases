@@ -4,7 +4,7 @@ import { strict as assert } from 'node:assert';
 
 import {
   RepositorioClases, almacenMemoria, almacenLocalStorage, CLAVE_ESTADO, VERSION_ESTADO,
-  type Almacen,
+  modoDemo, reiniciarDatosDemo, CLAVE_RUTINAS, type Almacen,
 } from '../src/repositorio.ts';
 import { datosDemo } from '../src/demo.ts';
 import { lunesDe } from '../src/fechas.ts';
@@ -185,6 +185,58 @@ test('almacenLocalStorage usa localStorage y cae a memoria si no existe', () => 
   const sinStorage = almacenLocalStorage({});
   sinStorage.escribir('memoria');
   assert.equal(sinStorage.leer(), 'memoria', 'sin localStorage la sesión sigue funcionando');
+});
+
+test('modo demo guarda en sessionStorage: F5 conserva, cerrar la pestaña no deja rastro', () => {
+  const session = new Map<string, string>();
+  const local = new Map<string, string>();
+  const ventana = {
+    sessionStorage: {
+      getItem: (k: string) => session.get(k) ?? null,
+      setItem: (k: string, v: string) => { session.set(k, v); },
+      removeItem: (k: string) => { session.delete(k); },
+    },
+    localStorage: {
+      getItem: (k: string) => local.get(k) ?? null,
+      setItem: (k: string, v: string) => { local.set(k, v); },
+      removeItem: (k: string) => { local.delete(k); },
+    },
+  };
+  const almacen = almacenLocalStorage(ventana, true);
+  const repo = new RepositorioClases(almacen, relojFalso(JUEVES_10), datosDemo);
+  repo.reconciliar();
+  repo.cancelar('c-jue', { motivo: 'Lluvia', quien: 'Xime', ahora: JUEVES_10 });
+
+  assert.ok(session.has(CLAVE_ESTADO), 'la demo vive en sessionStorage');
+  assert.equal(local.size, 0, 'nada de PII en localStorage durante la demo');
+  assert.ok(session.get(CLAVE_ESTADO)!.includes('Carla'), 'el nombre de la demo está en la sesión');
+
+  // F5: mismo almacén, se conserva la cancelación.
+  const reabierto = new RepositorioClases(almacenLocalStorage(ventana, true), relojFalso(JUEVES_10), datosDemo);
+  reabierto.reconciliar();
+  assert.equal(reabierto.listar().find((c) => c.id === 'c-jue')?.cancelacion?.motivo, 'Lluvia');
+
+  // Cerrar la pestaña: sessionStorage desaparece y no queda copia en local.
+  session.clear();
+  const nuevo = almacenLocalStorage(ventana, true);
+  assert.equal(nuevo.leer(), null, 'al cerrar la pestaña no queda estado persistido');
+
+  // El botón «Reiniciar datos» limpia TODO, incluso un estado viejo en localStorage.
+  local.set(CLAVE_ESTADO, '{"version":2}');
+  local.set(CLAVE_RUTINAS, '[]');
+  local.set('xime.v5.prefijo-movil', '+598');
+  session.set(CLAVE_ESTADO, '{"version":2}');
+  reiniciarDatosDemo(ventana);
+  assert.equal(local.size, 0);
+  assert.equal(session.size, 0);
+});
+
+test('modoDemo detecta ?demo=1 sin depender de la UI', () => {
+  const ventana = { sessionStorage: { getItem: () => null, setItem: () => {} } };
+  // Sin location ni XIME_DEMO, con sessionStorage disponible: modo demo activo.
+  assert.equal(modoDemo(ventana), true);
+  // Con localStorage solo (navegador sin sessionStorage): persistencia normal.
+  assert.equal(modoDemo({}), false);
 });
 
 test('el demo es determinista para un instante dado y se ancla al día local', () => {

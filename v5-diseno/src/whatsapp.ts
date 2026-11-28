@@ -15,13 +15,65 @@ import { etiquetaDia, horaClase, type AlumnoDeClase, type Clase } from './clases
 export const PLANTILLA_CANCELACION =
   'Hola, la clase de hoy se canceló. La reprogramamos.';
 
-/** Normaliza un teléfono uruguayo a "59899123456" (sin + ni espacios). */
+/** Dígitos del prefijo uruguayo, sin signos. */
+const DIGITOS_UY = '598';
+
+/** Mensaje para la dueña, sin detalles técnicos (se muestra en el sheet). */
+export const ERROR_TELEFONO = 'Revisá el teléfono: usá 9 dígitos (por ejemplo 099 123 456) o el número con +598.';
+
+/**
+ * Normaliza un teléfono uruguayo a "59899123456" (sin + ni espacios).
+ * Lanza `ERROR_TELEFONO` si el valor no es un número uruguayo válido.
+ */
 export function normalizarTelefono(raw: string): string {
-  const soloDigitos = String(raw).replace(/[^\d]/g, '');
-  if (soloDigitos.startsWith('598') && soloDigitos.length === 11) return soloDigitos;
-  if (soloDigitos.length === 8) return `598${soloDigitos}`; // 99 123 456
-  if (soloDigitos.startsWith('0') && soloDigitos.length === 9) return `598${soloDigitos.slice(1)}`;
-  return soloDigitos;
+  const valor = String(raw ?? '').trim();
+  // `conPrefijo` (prefijo.ts:16) agrega «+598 » antes de llegar acá: se admite
+  // el +, los espacios, guiones y paréntesis, pero NUNCA letras, ? ni &.
+  if (!/^\+?[\d\s()-]+$/.test(valor)) throw new Error(ERROR_TELEFONO);
+  const soloDigitos = valor.replace(/\D/g, '');
+  const cantidad = soloDigitos.length;
+  // Con `conPrefijo` (+598 delante), «+598 0…» y «+598 9…» son la forma local;
+  // «59899123456» sin 0 es la forma internacional. Evita confundir el 0 del
+  // móvil uruguayo con el primer dígito del número.
+  const conPrefijo = valor.startsWith('+598');
+  const forma = conPrefijo
+    ? (cantidad === 12 && soloDigitos.startsWith('5980') ? 'uy-local'
+      : cantidad === 9 ? 'uy-corto' : 'uy-completo')
+    : soloDigitos.startsWith('598') ? 'uy-completo'
+    : soloDigitos.startsWith('0') ? 'uy-local' : 'uy-corto';
+  const correcto = (forma === 'uy-completo' && cantidad === 11)
+    || (forma === 'uy-local' && cantidad === (conPrefijo ? 12 : 9))
+    || (forma === 'uy-corto' && cantidad === 8);
+  if (!correcto) throw new Error(ERROR_TELEFONO);
+  if (soloDigitos.startsWith(DIGITOS_UY)) return `${DIGITOS_UY}${soloDigitos.slice(-8)}`; // +598 99 123 456
+  if (soloDigitos.startsWith('0')) return `${DIGITOS_UY}${soloDigitos.slice(-8)}`; // 099 123 456
+  if (conPrefijo) return `${DIGITOS_UY}${soloDigitos.slice(-8)}`; // +598 099 ... (conPrefijo)
+  return `${DIGITOS_UY}${soloDigitos}`; // 99 123 456
+}
+
+/** Verdadero si el valor es un teléfono uruguayo aceptable para wa.me. */
+export function telefonoValido(raw: string): boolean {
+  try { normalizarTelefono(raw); return true; } catch { return false; }
+}
+
+/**
+ * Formatea un número para mostrarlo en el sheet de cobros: válido → con +598
+ * legible; inválido → texto original marcado con un aviso en español. Así la
+ * dueña ve el problema antes de tocar «Avisar por WhatsApp».
+ * Helper para que propuesta.ts lo use al integrar (acá no se tocó ese archivo).
+ */
+export function telefonoParaMostrar(raw: string): { texto: string; error: string | null; valido: boolean } {
+  if (telefonoValido(raw)) {
+    const n = normalizarTelefono(raw);
+    return { texto: `+${n.slice(0, 3)} ${n.slice(3, 5)} ${n.slice(5, 8)} ${n.slice(8)}`, error: null, valido: true };
+  }
+  return { texto: String(raw ?? ''), error: ERROR_TELEFONO, valido: false };
+}
+
+/** Igual que `linkAvisoVencimiento`, pero con aviso claro si el teléfono no sirve. */
+export function linkAvisoSeguro(a: AvisoVencimiento, plantilla?: string): string | null {
+  if (!telefonoValido(a.telefono)) return null;
+  return linkAvisoVencimiento(a, plantilla);
 }
 
 /** Texto pre-cargado: la plantilla con el día y la hora de la clase. */

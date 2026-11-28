@@ -91,12 +91,51 @@ export function almacenMemoria(inicial: string | null = null): Almacen {
   };
 }
 
-type VentanaConStorage = {
-  localStorage?: {
-    getItem(clave: string): string | null;
-    setItem(clave: string, valor: string): void;
-  } | null;
+type AlmacenNavegador = {
+  getItem(clave: string): string | null;
+  setItem(clave: string, valor: string): void;
+  removeItem?(clave: string): void;
 };
+
+type VentanaConStorage = {
+  localStorage?: AlmacenNavegador | null;
+  sessionStorage?: AlmacenNavegador | null;
+};
+
+/**
+ * Modo demo (28-nov): los datos de la muestra se guardan en `sessionStorage`,
+ * que dura lo que dure la pestaña y se borra al cerrarla. La persistencia entre
+ * pantallas y el refresh (F5) siguen funcionando; lo que NO queda es una copia
+ * permanente de nombres/teléfonos/tarifas en el disco del navegador.
+ * `sessionStorage` → `localStorage` como respaldo si el navegador no lo expone.
+ * Puede activarse con `?demo=1` o con `XIME_DEMO=1` en el servidor de prueba.
+ */
+export function modoDemo(
+  ventana: Pick<VentanaConStorage, 'sessionStorage'> = globalThis as unknown as VentanaConStorage,
+): boolean {
+  try {
+    if (typeof location !== 'undefined' && new URLSearchParams(location.search).get('demo') === '1') return true;
+  } catch { /* sin URL: no activa demo */ }
+  try {
+    if (typeof process !== 'undefined' && process.env?.XIME_DEMO === '1') return true;
+  } catch { /* sin process: no activa demo */ }
+  return Boolean(ventana.sessionStorage);
+}
+
+/** Borra TODO rastro local de la demo (estado, rutinas y prefijo de móvil). */
+export function reiniciarDatosDemo(
+  ventana: VentanaConStorage = globalThis as unknown as VentanaConStorage,
+): void {
+  for (const almacen of [ventana.sessionStorage, ventana.localStorage]) {
+    if (!almacen) continue;
+    try {
+      for (const clave of [CLAVE_ESTADO, CLAVE_RUTINAS, 'xime.v5.prefijo-movil']) {
+        if (almacen.removeItem) almacen.removeItem(clave);
+        else almacen.setItem(clave, '');
+      }
+    } catch { /* storage bloqueado: la app sigue en memoria */ }
+  }
+}
 
 /**
  * `localStorage` del navegador, con respaldo en memoria si no existe o si
@@ -105,14 +144,18 @@ type VentanaConStorage = {
  */
 export function almacenLocalStorage(
   ventana: VentanaConStorage = globalThis as unknown as VentanaConStorage,
+  demo = modoDemo(ventana),
 ): Almacen {
   let ultimo: string | null = null;
   let soloMemoria = false;
+  const destino = (): AlmacenNavegador | null =>
+    demo ? (ventana.sessionStorage ?? ventana.localStorage ?? null) : (ventana.localStorage ?? null);
+  const nombre = demo ? 'sessionStorage' : 'localStorage';
   return {
     leer: () => {
       if (!soloMemoria) {
         try {
-          ultimo = ventana.localStorage?.getItem(CLAVE_ESTADO) ?? null;
+          ultimo = destino()?.getItem(CLAVE_ESTADO) ?? null;
         } catch {
           soloMemoria = true;
         }
@@ -122,8 +165,9 @@ export function almacenLocalStorage(
     escribir: (texto, requierePersistencia = false) => {
       if (!soloMemoria) {
         try {
-          if (!ventana.localStorage) throw new Error('localStorage no disponible');
-          ventana.localStorage.setItem(CLAVE_ESTADO, texto);
+          const almacen = destino();
+          if (!almacen) throw new Error(`${nombre} no disponible`);
+          almacen.setItem(CLAVE_ESTADO, texto);
           ultimo = texto;
           return;
         } catch {
@@ -135,7 +179,7 @@ export function almacenLocalStorage(
     },
     leerRutinas: () => {
       if (soloMemoria) return null;
-      try { return ventana.localStorage?.getItem(CLAVE_RUTINAS) ?? null; } catch { return null; }
+      try { return destino()?.getItem(CLAVE_RUTINAS) ?? null; } catch { return null; }
     },
     escribirRutinas: (texto, requierePersistencia = false) => {
       if (soloMemoria) {
@@ -143,8 +187,9 @@ export function almacenLocalStorage(
         return;
       }
       try {
-        if (!ventana.localStorage) throw new Error('localStorage no disponible');
-        ventana.localStorage.setItem(CLAVE_RUTINAS, texto);
+        const almacen = destino();
+        if (!almacen) throw new Error(`${nombre} no disponible`);
+        almacen.setItem(CLAVE_RUTINAS, texto);
       } catch {
         if (requierePersistencia) throw new Error('No se pudo guardar el respaldo. No se aplicaron cambios.');
       }

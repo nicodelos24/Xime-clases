@@ -5,6 +5,7 @@ import { strict as assert } from 'node:assert';
 import {
   PLANTILLA_CANCELACION, textoCancelacion, linkTexto, linkAlumno,
   normalizarTelefono, destinos, resumenEnvio, linkAvisoVencimiento, textoAvisoVencimiento,
+  telefonoValido, ERROR_TELEFONO, telefonoParaMostrar, linkAvisoSeguro,
 } from '../src/whatsapp.ts';
 import { cancelarClase, crearClase, type Clase } from '../src/clases.ts';
 
@@ -43,6 +44,47 @@ test('normalizarTelefono deja el formato del deep link', () => {
   assert.equal(normalizarTelefono('+598 99 987 654'), '59899987654');
   assert.equal(normalizarTelefono('99112233'), '59899112233');
   assert.equal(normalizarTelefono('59899123456'), '59899123456');
+});
+
+test('teléfono hostil NO arma un wa.me con otro destinatario (seguridad 28-nov)', () => {
+  const hostil = '099 123 456?text=HOLA&phone=59899999999';
+  assert.equal(telefonoValido(hostil), false);
+  assert.throws(() => normalizarTelefono(hostil), (e: Error) => e.message === ERROR_TELEFONO);
+  assert.throws(() => linkAlumno({ ...alumnos[0], telefono: hostil }, 'Hola'), /Revisá el teléfono/);
+  assert.throws(() => linkAvisoVencimiento({ telefono: hostil, nombre: 'Cata', vencimiento: '2026-12-01' }), /Revisá el teléfono/);
+  // Otros destinos que antes se aceptaban por quitar caracteres.
+  for (const malo of ['+54 9 11 5555 5555', '12345', '0991234567', '59899123456extra', '', 'abc']) {
+    assert.equal(telefonoValido(malo), false, `rechaza ${JSON.stringify(malo)}`);
+  }
+  // Mensaje para la dueña: castellano rioplatense y sin jerga técnica.
+  assert.match(ERROR_TELEFONO, /Revisá el teléfono/);
+  assert.doesNotMatch(ERROR_TELEFONO, /regex|E\.164|SyntaxError|undefined/i);
+});
+
+test('teléfonos válidos siguen llegando al mismo destinatario', () => {
+  for (const [entrada, esperado] of [
+    ['099 123 456', '59899123456'], ['+598 99 987 654', '59899987654'],
+    ['99112233', '59899112233'], ['59899123456', '59899123456'],
+    ['+598 099 123 456', '59899123456'], // lo que produce conPrefijo() sobre 099...
+  ] as const) {
+    assert.equal(telefonoValido(entrada), true, entrada);
+    assert.equal(normalizarTelefono(entrada), esperado, entrada);
+  }
+  const c = clase();
+  const mezclada = { ...c, alumnos: [alumnos[0], { ...alumnos[1], telefono: '12345' }] };
+  // Un número malo no se convierte en link a otro lado: falla con aviso claro.
+  assert.throws(() => destinos(mezclada, 'masivo', [], 'x'), /Revisá el teléfono/);
+});
+
+test('helpers para la UI: número inválido muestra aviso, no link (integración en propuesta.ts)', () => {
+  assert.deepEqual(telefonoParaMostrar('099 123 456'), { texto: '+598 99 123 456', error: null, valido: true });
+  assert.deepEqual(telefonoParaMostrar('+598 99 987 654'), { texto: '+598 99 987 654', error: null, valido: true });
+  const malo = telefonoParaMostrar('099 123 456?text=HOLA');
+  assert.equal(malo.valido, false);
+  assert.equal(malo.error, ERROR_TELEFONO);
+  assert.equal(malo.texto, '099 123 456?text=HOLA', 'muestra lo cargado, sin inventar');
+  assert.equal(linkAvisoSeguro({ telefono: malo.texto, nombre: 'Cata', vencimiento: '2026-12-01' }), null);
+  assert.ok(linkAvisoSeguro({ telefono: '099 123 456', nombre: 'Cata', vencimiento: '2026-12-01' })?.startsWith('https://wa.me/59899123456?text='));
 });
 
 test('el texto pre-cargado usa la plantilla por defecto y es editable en la app', () => {
